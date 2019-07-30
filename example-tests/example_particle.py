@@ -1,4 +1,4 @@
-import pythonModule as pfc
+import pyHiChi as pfc
 
 v = pfc.vector3d(1.2, 2.2, 3.4)
 v2 = pfc.vector3d(34, 5.6, 7.8)

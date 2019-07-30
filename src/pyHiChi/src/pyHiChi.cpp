@@ -37,7 +37,7 @@ std::vector<ParticleType> ParticleInfo::typesVector = { {constants::electronMass
 const ParticleType* ParticleInfo::types = &ParticleInfo::typesVector[0];
 short ParticleInfo::numTypes = sizeParticleTypes;
 
-PYBIND11_MODULE(pythonModule, object) {
+PYBIND11_MODULE(pyHiChi, object) {
 
     object.attr("pi") = constants::pi;
     object.attr("c") = constants::c;

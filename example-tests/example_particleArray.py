@@ -1,4 +1,4 @@
-import pythonModule as pfc
+import pyHiChi as pfc
 
 
 #ParticleArray - legacy, use Ensemble

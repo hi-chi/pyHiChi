@@ -1,4 +1,4 @@
-import pythonModule as pfc
+import pyHiChi as pfc
 import numpy as np
 
 def valueEAnalytical(pos, t):

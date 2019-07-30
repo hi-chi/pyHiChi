@@ -124,7 +124,7 @@ public:
 #ifdef __USE_OMP__
 			thread_id = omp_get_thread_num();
 #else
-			thread_id = 1;
+			thread_id = 0;
 #endif
 			FP3 pPos = particles[i].getPosition();
 			FP3 k = particles[i].getVelocity();
@@ -204,7 +204,7 @@ public:
 #ifdef __USE_OMP__
 			thread_id = omp_get_thread_num();
 #else
-			thread_id = 1;
+			thread_id = 0;
 #endif
 			FP3 pPos = particles[i].getPosition();
 			FP3 v = particles[i].getVelocity();
@@ -282,7 +282,7 @@ public:
 #ifdef __USE_OMP__
 		thread_id = omp_get_thread_num();
 #else
-		thread_id = 1;
+		thread_id = 0;
 #endif
 		vector<Particle3d>& AvalancheParticles = this->AvalancheParticles[thread_id];
 		vector<Particle3d>& AvalanchePhotons = this->AvalanchePhotons[thread_id];
