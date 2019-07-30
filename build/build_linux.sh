@@ -5,7 +5,7 @@ CXX_COMPILER=g++
 LINKER=ld
 
 # Default options are
-# -DUSE_MPI=ON -DUSE_OPENMP=ON -DUSE_GPU=OFF -DUSE_GTEST=ON
+# -DUSE_OPENMP=OFF -DUSE_GTEST=ON
 
 CPU_OPTIONS=
 MIC_OPTIONS=
@@ -32,7 +32,7 @@ fi
 clean=false
 python_path="python"
 USE_FFTW="OFF"
-USE_OMP="ON"
+USE_OMP="OFF"
 
 script=$0
 
@@ -45,20 +45,14 @@ case $key in
     USE_OMP="ON"
     shift # past argument
     ;;
-    -USE_OPENMP)
-    USE_OMP="$2"
-    shift # past argument
-    shift # past value
-    ;;
     -python)
     python_path="$2"
     shift # past argument
     shift # past value
     ;;
-    -USE_FFTW)
-    USE_FFTW="$2"
+    -fftw)
+    USE_FFTW="ON"
     shift # past argument
-    shift # past value
     ;;
     *)    # unknown option
     shift # past argument
