@@ -6,7 +6,7 @@ include_directories(include
     ../Core/include
     ../Modules/Particle/include
     ../Modules/Field/include
-	${FFT_INCLUDES})
+    ${FFT_INCLUDES})
 
 if (USE_OMP)
     find_package(OpenMP)
@@ -23,4 +23,8 @@ set(pyHiChi_source
 
 pybind11_add_module(pyHiChi ${pyHiChi_source})
 
-target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
+if (UNIX)
+    target_link_libraries(pyHiChi PUBLIC -Wl,--start-group ${FFT_LIBS} -Wl,--end-group)
+else()
+    target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
+endif()

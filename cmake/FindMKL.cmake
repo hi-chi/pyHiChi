@@ -36,12 +36,12 @@ if (USE_OMP)
         endif()
     endfunction()
 
-    find_library(MKL_CDFT_CORE_LIB mkl_cdft_core ${MKL_LIBRARIES_PATHS})
-    find_library(MKL_INTEL_ILP64_LIB mkl_intel_ilp64 ${MKL_LIBRARIES_PATHS})
-    find_library(MKL_INTEL_THREAD_LIB mkl_intel_thread ${MKL_LIBRARIES_PATHS})
-    find_library(MKL_CORE_LIB mkl_core ${MKL_LIBRARIES_PATHS})
-    find_library(MKL_BLACS_INTELMPI_ILP64_LIB mkl_blacs_intelmpi_ilp64 ${MKL_LIBRARIES_PATHS})
-    
+    # static linking is preferred
+    find_library( MKL_CDFT_CORE_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_cdft_core${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_cdft_core PATHS ${MKL_LIBRARIES_PATHS} )
+    find_library( MKL_INTEL_ILP64_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_intel_ilp64${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_intel_ilp64 PATHS ${MKL_LIBRARIES_PATHS} )
+    find_library( MKL_INTEL_THREAD_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_intel_thread${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_intel_thread PATHS ${MKL_LIBRARIES_PATHS} )
+    find_library( MKL_CORE_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_core${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_core PATHS ${MKL_LIBRARIES_PATHS} )
+    find_library( MKL_BLACS_INTELMPI_ILP64_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_blacs_intelmpi_ilp64${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_blacs_intelmpi_ilp64 PATHS ${MKL_LIBRARIES_PATHS} )
     
     if (MKL_INCLUDE_DIRS AND
          MKL_CDFT_CORE_LIB AND
@@ -62,25 +62,22 @@ if (USE_OMP)
                 find_libomp5_win32()
                 set(MKL_LIBRARIES ${MKL_LIBRARIES} ${IOMP5})
             elseif(UNIX)
-                set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -liomp5 -lpthread -lm -ldl")
-                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -liomp5 -lpthread -lm -ldl")
+                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -liomp5 -lpthread -lm -ldl")
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
             endif()
         endif()
-		
-		# GCC
+        
+        # GCC
         if (${CMAKE_CXX_COMPILER} MATCHES "gcc.*$")
-            set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -lgomp -lpthread -lm -ldl")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lgomp -lpthread -lm -ldl")
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgomp -lpthread -lm -ldl")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
         endif()
         
         # MSVC
-        if (MSVC) 
+        if (MSVC AND NOT ${CMAKE_CXX_COMPILER} MATCHES "icl.*$") 
             find_libomp5_win32()
             set(MKL_LIBRARIES ${MKL_LIBRARIES} ${IOMP5})
         endif()
-         
-        #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -I${MKLROOT}/include")
-        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 -I${MKLROOT}/include")
            
         # Handle the QUIETLY and REQUIRED arguments and set MKL_FOUND to TRUE if
         # all listed variables are TRUE.
@@ -99,15 +96,16 @@ if (USE_OMP)
         message(STATUS "MKL_BLACS_INTELMPI_ILP64_LIB=${MKL_BLACS_INTELMPI_ILP64_LIB}")
     endif()
     
+    
 else()  # USE_OMP
 
-    find_library(MKL_CDFT_CORE_LIB mkl_cdft_core ${MKL_LIBRARIES_PATHS})
-    find_library(MKL_INTEL_ILP64_LIB mkl_intel_ilp64 ${MKL_LIBRARIES_PATHS})
-    find_library(MKL_INTEL_SEQUENTIAL_LIB mkl_sequential ${MKL_LIBRARIES_PATHS})
-    find_library(MKL_CORE_LIB mkl_core ${MKL_LIBRARIES_PATHS})
-    find_library(MKL_BLACS_INTELMPI_ILP64_LIB mkl_blacs_intelmpi_ilp64 ${MKL_LIBRARIES_PATHS})
-    
-    
+    # static linking is preferred
+    find_library( MKL_CDFT_CORE_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_cdft_core${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_cdft_core PATHS ${MKL_LIBRARIES_PATHS} )
+    find_library( MKL_INTEL_ILP64_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_intel_ilp64${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_intel_ilp64 PATHS ${MKL_LIBRARIES_PATHS} )
+    find_library( MKL_INTEL_SEQUENTIAL_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_sequential${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_sequential PATHS ${MKL_LIBRARIES_PATHS} )
+    find_library( MKL_CORE_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_core${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_core PATHS ${MKL_LIBRARIES_PATHS} )
+    find_library( MKL_BLACS_INTELMPI_ILP64_LIB NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}mkl_blacs_intelmpi_ilp64${CMAKE_STATIC_LIBRARY_SUFFIX} mkl_blacs_intelmpi_ilp64 PATHS ${MKL_LIBRARIES_PATHS} )
+        
     if (MKL_INCLUDE_DIRS AND
          MKL_CDFT_CORE_LIB AND
          MKL_INTEL_ILP64_LIB AND
@@ -120,9 +118,11 @@ else()  # USE_OMP
                 ${MKL_INTEL_SEQUENTIAL_LIB} 
                 ${MKL_CORE_LIB} 
                 ${MKL_BLACS_INTELMPI_ILP64_LIB})
-         
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -I${MKLROOT}/include")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 -I${MKLROOT}/include")
+                
+        if (UNIX)
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread -lm -ldl")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
+        endif()
            
         # Handle the QUIETLY and REQUIRED arguments and set MKL_FOUND to TRUE if
         # all listed variables are TRUE.

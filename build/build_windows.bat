@@ -42,7 +42,7 @@ if "%1" NEQ "" (
 
 md visual_studio
 cd visual_studio
-cmake -G %GENERATOR% -DUSE_GTEST=ON -DUSE_OMP=%USE_OPENMP% -DUSE_FFTW=%USE_FFTW% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
+cmake -G %GENERATOR% -DUSE_TESTS=ON -DUSE_OMP=%USE_OPENMP% -DUSE_FFTW=%USE_FFTW% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
 cmake --build . --config Release
 
 xcopy /y src\pyHiChi\Release\* ..\..\bin\* > nul

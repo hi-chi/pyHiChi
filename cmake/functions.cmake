@@ -40,7 +40,7 @@ function(link_fft_libs)
 		if(USE_OMP)
             set(FFTW3_OMP_LIB ${FFTW_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}fftw3_omp${CMAKE_STATIC_LIBRARY_SUFFIX})
 		endif()
-        set(FFT_LIBS ${FFTW3_LIB} ${FFTW3_OMP_LIB} PARENT_SCOPE)
+        set(FFT_LIBS ${FFTW3_OMP_LIB} ${FFTW3_LIB} PARENT_SCOPE)
 		message(STATUS "using FFTW")
     endif()
     

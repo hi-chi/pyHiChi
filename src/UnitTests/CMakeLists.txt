@@ -44,7 +44,7 @@ elseif (UNIX)
     target_link_libraries(tests
         -Wl,-whole-archive
         gtest
-        ${FFT_LIBS}
+        -Wl,--start-group ${FFT_LIBS} -Wl,--end-group
         -Wl,-no-whole-archive)
 else()
     target_link_libraries(tests
