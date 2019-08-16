@@ -1,6 +1,6 @@
 #include "TestingUtility.h"
 
-#include "../../primitives/include/FourierTransform.h"
+#include "FourierTransform.h"
 
 class FourierTransformTest : public BaseFixture {
 public:

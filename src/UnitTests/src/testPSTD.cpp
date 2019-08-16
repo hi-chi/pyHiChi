@@ -1,6 +1,6 @@
 #include "TestingUtility.h"
 
-#include "../../fieldSolver/include/Pstd.h"
+#include "Pstd.h"
 
 class GridPSTDTest : public BaseGridFixture<PSTDGrid> {
 public:

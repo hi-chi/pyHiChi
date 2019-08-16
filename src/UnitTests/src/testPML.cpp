@@ -1,7 +1,7 @@
 #include "TestingUtility.h"
 
-#include "../../fieldSolver/include/Pstd.h"
-#include "../../fieldSolver/include/Psatd.h"
+#include "Pstd.h"
+#include "Psatd.h"
 
 template <class FieldSolverType, class GridType>
 class PMLTest : public BaseGridFixture<GridType> {

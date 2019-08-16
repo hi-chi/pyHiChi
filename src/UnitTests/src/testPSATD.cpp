@@ -1,6 +1,6 @@
 #include "TestingUtility.h"
 
-#include "../../fieldSolver/include/Psatd.h"
+#include "Psatd.h"
 
 class GridPSATDTest : public BaseGridFixture<PSATDGrid> {
 public:
