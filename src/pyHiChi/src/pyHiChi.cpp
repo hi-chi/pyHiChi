@@ -55,6 +55,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("volume", &FP3::volume)
 		.def("norm", &FP3::norm)
 		.def("norm2", &FP3::norm2)
+        .def("normalize", &FP3::normalize)
 		.def("toString", &FP3::toString)
 		.def("__str__", &FP3::toString)
 
@@ -205,6 +206,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("updateHalfB", &FDTD::updateHalfB)
 		.def("updateE", &FDTD::updateE)
 		.def("updateFields", &FDTD::updateFields)
+        .def("setTimeStep", &FDTD::setTimeStep)
 		;
 
 	py::class_<PeriodicalFieldGeneratorYee>(object, "PeriodicalBC")
@@ -241,6 +243,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::init<pyPSTDGrid*>())
         .def("setPML", &PSTD::setPML)
         .def("updateFields", &PSTD::updateFields)
+        .def("setTimeStep", &PSTD::setTimeStep)
         ;
 
     py::class_<pyPSATDGrid>(object, "PSATDGrid")
@@ -272,12 +275,14 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::init<pyPSATDGrid*>())
         .def("setPML", &PSATD::setPML)
         .def("updateFields", &PSATD::updateFields)
+        .def("setTimeStep", &PSATD::setTimeStep)
         ;
 
     py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
         .def(py::init<pyPSATDGrid*>())
         .def("setPML", &PSATDTimeStraggered::setPML)
         .def("updateFields", &PSATDTimeStraggered::updateFields)
+        .def("setTimeStep", &PSATDTimeStraggered::setTimeStep)
         ;
 
 	py::class_<ScalarQED_AEG_only_electron>(object, "QED")

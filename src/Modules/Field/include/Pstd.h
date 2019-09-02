@@ -19,6 +19,8 @@ namespace pfc {
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
 
+        void setTimeStep(FP dt);
+
     private:
 
         PmlSpectral<GridTypes::PSTDGridType>* getPml() {
@@ -38,6 +40,14 @@ namespace pfc {
     {
         pml.reset(new PmlPstd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
+    }
+
+    inline void PSTD::setTimeStep(FP dt)
+    {
+        if (grid->setTimeStep(dt)) {
+            complexGrid->setTimeStep(dt);
+            if (pml.get()) pml.reset(new PmlPstd(this, pml->sizePML));
+        }
     }
 
     inline void PSTD::updateFields()

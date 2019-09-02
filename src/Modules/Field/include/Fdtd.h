@@ -23,6 +23,8 @@ namespace pfc {
 		void updateHalfB();
 		void updateE();
 
+        void setTimeStep(FP dt);
+
 	private:
 
 		void updateHalfB3D();
@@ -52,6 +54,16 @@ namespace pfc {
 		pml.reset(new PmlFdtd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
 		updateInternalDims();
 	}
+
+    inline void FDTD::setTimeStep(FP dt)
+    {
+        if (grid->setTimeStep(dt)) {
+            if (pml->sizePML == Int3(0, 0, 0))
+                pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));
+            else pml.reset(new PmlFdtd(this, pml->sizePML));
+            generator.reset(new ReflectFieldGeneratorYee(this));
+        }
+    }
 
 	inline void FDTD::setFieldGenerator(FieldGeneratorYee * _generator)
 	{
