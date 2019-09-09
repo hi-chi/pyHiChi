@@ -22,6 +22,8 @@ namespace pfc
 		virtual void generateE();
 		RealFieldSolver<gridTypes>* fieldSolver;
 
+        virtual FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) = 0;
+
 	private:
 
 		// major index is index of edge, minor index is index of component
@@ -175,6 +177,10 @@ namespace pfc
 
 		virtual void generateB();
 		virtual void generateE();
+
+        FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
+            return new PeriodicalFieldGenerator(fieldSolver);
+        }
 	};
 
 	typedef PeriodicalFieldGenerator<GridTypes::YeeGridType> PeriodicalFieldGeneratorYee;
@@ -260,16 +266,20 @@ namespace pfc
 	}
 
 	template<GridTypes gridTypes>
-	class ReflectFieldGenerator : public FieldGenerator<gridTypes>
-	{
-	public:
-		ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
-			FieldGenerator<gridTypes>(fieldSolver) {
-		};
+    class ReflectFieldGenerator : public FieldGenerator<gridTypes>
+    {
+    public:
+        ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
+            FieldGenerator<gridTypes>(fieldSolver) {
+        };
 
-		virtual void generateB();
-		virtual void generateE();
-	};
+        virtual void generateB();
+        virtual void generateE();
+
+        FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
+            return new ReflectFieldGenerator(fieldSolver);
+        }
+    };
 
 	typedef ReflectFieldGenerator<GridTypes::YeeGridType> ReflectFieldGeneratorYee;
 

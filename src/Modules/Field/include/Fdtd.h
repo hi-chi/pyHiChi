@@ -61,7 +61,7 @@ namespace pfc {
             if (pml->sizePML == Int3(0, 0, 0))
                 pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));
             else pml.reset(new PmlFdtd(this, pml->sizePML));
-            generator.reset(new ReflectFieldGeneratorYee(this));
+            generator.reset(generator->createInstance(this));
         }
     }
 
