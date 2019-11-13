@@ -113,7 +113,8 @@ namespace pfc {
             FieldSolver<gridType>(_grid)
         {
             complexGrid = new Grid<complexFP, gridType>(FourierTransform::getSizeOfComplex(_grid->numCells),
-                _grid->dt, _grid->globalGridDims);
+                _grid->dt, FourierTransform::getSizeOfComplex(_grid->globalGridDims));
+            fourierTransform.initialize<gridType>(grid, complexGrid);
         }
 
         ~SpectralFieldSolver() {
@@ -134,6 +135,8 @@ namespace pfc {
         Int3 updateComplexEAreaBegin, updateComplexEAreaEnd;
         Int3 updateComplexBAreaBegin, updateComplexBAreaEnd;
 
+        FourierTransformGrid fourierTransform;
+
     private:
         // Copy and assignment are disallowed.
         SpectralFieldSolver(const SpectralFieldSolver &);
@@ -143,29 +146,29 @@ namespace pfc {
     template<GridTypes gridType>
     inline void SpectralFieldSolver<gridType>::doFourierTransformB(FourierTransformDirection direction)
     {
-        FourierTransform::doFourierTransform(this->grid->Bx, this->complexGrid->Bx, direction);
-        FourierTransform::doFourierTransform(this->grid->By, this->complexGrid->By, direction);
-        FourierTransform::doFourierTransform(this->grid->Bz, this->complexGrid->Bz, direction);
+        fourierTransform.doFourierTransform(B, x, direction);
+        fourierTransform.doFourierTransform(B, y, direction);
+        fourierTransform.doFourierTransform(B, z, direction);
     }
 
     template<GridTypes gridType>
     inline void SpectralFieldSolver<gridType>::doFourierTransformE(FourierTransformDirection direction)
     {
-        FourierTransform::doFourierTransform(this->grid->Ex, this->complexGrid->Ex, direction);
-        FourierTransform::doFourierTransform(this->grid->Ey, this->complexGrid->Ey, direction);
-        FourierTransform::doFourierTransform(this->grid->Ez, this->complexGrid->Ez, direction);
+        fourierTransform.doFourierTransform(E, x, direction);
+        fourierTransform.doFourierTransform(E, y, direction);
+        fourierTransform.doFourierTransform(E, z, direction);
     }
 
     template<GridTypes gridType>
     inline void SpectralFieldSolver<gridType>::doFourierTransformJ(FourierTransformDirection direction)
     {
-        FourierTransform::doFourierTransform(this->grid->Jx, this->complexGrid->Jx, direction);
-        FourierTransform::doFourierTransform(this->grid->Jy, this->complexGrid->Jy, direction);
-        FourierTransform::doFourierTransform(this->grid->Jz, this->complexGrid->Jz, direction);
+        fourierTransform.doFourierTransform(J, x, direction);
+        fourierTransform.doFourierTransform(J, y, direction);
+        fourierTransform.doFourierTransform(J, z, direction);
     }
 
     template<GridTypes gridType>
-    inline void pfc::SpectralFieldSolver<gridType>::doFourierTransform(FourierTransformDirection direction)
+    inline void SpectralFieldSolver<gridType>::doFourierTransform(FourierTransformDirection direction)
     {
         doFourierTransformE(direction);
         doFourierTransformB(direction);
