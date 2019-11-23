@@ -3,6 +3,7 @@
 #include "GridTypes.h"
 #include "ScalarField.h"
 #include "Vectors.h"
+#include "Constants.h"
 
 namespace pfc {
 
@@ -253,6 +254,8 @@ namespace pfc {
 			return getFieldPCS(coords, Jz, shiftEJz);
 		}
 
+        bool setTimeStep(FP dt);  // returns if dt was changed
+
 		/*void dumpE(FP3 * e, const Int3 * minCellIdx, const Int3 * maxCellIdx);
 		void dumpB(FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx);
 		void dumpCurrents(FP3 * currents, const Int3 * minCellIdx, const Int3 * maxCellIdx);
@@ -283,7 +286,7 @@ namespace pfc {
 
 		const Int3 globalGridDims; // important to initialize it first
 		const FP3 steps;
-		const FP dt;
+		FP dt;
 		const Int3 numInternalCells;
 		const Int3 numCells;
 		const FP3 origin;
@@ -326,6 +329,14 @@ namespace pfc {
 		{
 			return origin + FP3(i, j, k) * steps;
 		}
+
+        // if coords is inside of the area that grid defines
+        bool isInside(const FP3 & coords, const FP3 & shift) const
+        {
+            FP3 minCoords = origin + shift;
+            FP3 maxCoords = minCoords + (numCells - Int3(1, 1, 1)) * steps;
+            return coords >= minCoords && coords <= maxCoords;
+        }
 
 		FP getFieldCIC(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const;
 		FP getFieldTSC(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const;
@@ -377,6 +388,17 @@ namespace pfc {
 		setInterpolationType(Interpolation_CIC);
 	}
 
+    template<>
+    inline bool Grid<FP, GridTypes::YeeGridType>::setTimeStep(FP _dt)
+    {
+        double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
+        if (_dt <= 1.0 / (constants::c * tmp)) {  // Courant condition for FDTD
+            this->dt = _dt;
+            return true;
+        }
+        return false;
+    }
+
 	template<>
 	inline Grid<FP, GridTypes::StraightGridType>::Grid(const Int3 & _numInternalCells, FP _dt, const FP3 & minCoords, const FP3 & _steps,
 		const Int3 & _globalGridDims) :
@@ -403,6 +425,17 @@ namespace pfc {
 		setInterpolationType(Interpolation_CIC);
 	}
 
+    template<>
+    inline bool Grid<FP, GridTypes::StraightGridType>::setTimeStep(FP _dt)
+    {
+        double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
+        if (_dt <= 1.0 / (constants::c * tmp)) {  // Courant condition for FDTD
+            this->dt = _dt;
+            return true;
+        }
+        return false;
+    }
+
 
     // SPECTRAL GRIDS
 	template<>
@@ -424,6 +457,16 @@ namespace pfc {
         timeShiftE(0.0), timeShiftB(dt / 2), timeShiftJ(dt / 2),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
+    }
+
+    inline bool Grid<complexFP, GridTypes::PSTDGridType>::setTimeStep(FP _dt)
+    {
+        double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
+        if (_dt <= 2.0 / (constants::pi * constants::c * tmp)) {  // Courant condition for PSTD
+            this->dt = _dt;
+            return true;
+        }
+        return false;
     }
 
 	template<>
@@ -452,6 +495,16 @@ namespace pfc {
         setInterpolationType(Interpolation_CIC);
     }
 
+    inline bool Grid<FP, GridTypes::PSTDGridType>::setTimeStep(FP _dt)
+    {
+        double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
+        if (_dt <= 2.0 / (constants::pi * constants::c * tmp)) {  // Courant condition for PSTD
+            this->dt = _dt;
+            return true;
+        }
+        return false;
+    }
+
 	template<>
     inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
         const Int3 & _globalGridDims) :
@@ -471,6 +524,13 @@ namespace pfc {
         timeShiftE(0.0), timeShiftB(0.0), timeShiftJ(dt / 2),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
+    }
+
+    template<>
+    inline bool Grid<complexFP, GridTypes::PSATDGridType>::setTimeStep(FP _dt)
+    {
+        this->dt = _dt;
+        return true;
     }
 
 	template<>
@@ -497,6 +557,13 @@ namespace pfc {
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
+    }
+
+    template<>
+    inline bool Grid<FP, GridTypes::PSATDGridType>::setTimeStep(FP _dt)
+    {
+        this->dt = _dt;
+        return true;
     }
 
 
@@ -655,27 +722,35 @@ namespace pfc {
 	}
 
 	template< typename Data, GridTypes gT>
-	inline FP3 Grid<Data, gT>::getJ(const FP3& coords) const
-	{
-		/* For each component of J get grid index and internal coords,
-		use it as base index and coefficients of interpolation. */
-		Int3 idx;
-		FP3 internalCoords;
-		FP3 j;
+    inline FP3 Grid<Data, gT>::getJ(const FP3& coords) const
+    {
+        // zero fields are outside of area that grid defines
+        if (!isInside(coords, shiftEJx) || !isInside(coords, shiftEJy) || !isInside(coords, shiftEJz))
+            return FP3(0, 0, 0);
 
-		getGridCoords(coords, shiftEJx, idx, internalCoords);
-		j.x = Jx.interpolateCIC(idx, internalCoords);
-		getGridCoords(coords, shiftEJy, idx, internalCoords);
-		j.y = Jy.interpolateCIC(idx, internalCoords);
-		getGridCoords(coords, shiftEJz, idx, internalCoords);
-		j.z = Jz.interpolateCIC(idx, internalCoords);
+        /* For each component of J get grid index and internal coords,
+        use it as base index and coefficients of interpolation. */
+        Int3 idx;
+        FP3 internalCoords;
+        FP3 j;
 
-		return j;
-	}
+        getGridCoords(coords, shiftEJx, idx, internalCoords);
+        j.x = Jx.interpolateCIC(idx, internalCoords);
+        getGridCoords(coords, shiftEJy, idx, internalCoords);
+        j.y = Jy.interpolateCIC(idx, internalCoords);
+        getGridCoords(coords, shiftEJz, idx, internalCoords);
+        j.z = Jz.interpolateCIC(idx, internalCoords);
+
+        return j;
+    }
 
 	template< typename Data, GridTypes gT>
 	inline FP3 Grid<Data, gT>::getE(const FP3& coords) const
 	{
+        // zero fields are outside of area that grid defines
+        if (!isInside(coords, shiftEJx) || !isInside(coords, shiftEJy) || !isInside(coords, shiftEJz))
+            return FP3(0, 0, 0);
+
 		/* For each component of J get grid index and internal coords,
 		use it as base index and coefficients of interpolation. */
 		Int3 idx;
@@ -695,6 +770,10 @@ namespace pfc {
 	template< typename Data, GridTypes gT>
 	inline FP3 Grid<Data, gT>::getB(const FP3& coords) const
 	{
+        // zero fields are outside of area that grid defines
+        if (!isInside(coords, shiftBx) || !isInside(coords, shiftBy) || !isInside(coords, shiftBz))
+            return FP3(0, 0, 0);
+
 		/* For each component of J get grid index and internal coords,
 		use it as base index and coefficients of interpolation. */
 		Int3 idx;

@@ -429,6 +429,14 @@ struct Vector3
         return x * x + y * y + z * z;
     }
 
+    inline void normalize()
+    {
+        T no = norm();
+        x /= no;
+        y /= no;
+        z /= no;
+    }
+
 	inline std::string toString()
 	{
 		std::stringstream s;
@@ -772,6 +780,11 @@ inline FP dist(const FP3& v1, const FP3& v2)
 inline const FP3 operator * (const FP3& v1, const Int3& v2)
 {
 	return FP3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
+}
+
+inline const FP3 operator * (const Int3& v1, const FP3& v2)
+{
+    return FP3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
 }
 
 inline FP sqr(const FP3& v)

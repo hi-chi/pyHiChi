@@ -17,10 +17,14 @@ namespace pfc
 
 		FieldGenerator(RealFieldSolver<gridTypes>* fieldSolver);
 
+        // copy constructor, other fieldSolver is possible
+        FieldGenerator(const FieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0);
 
 		virtual void generateB();
 		virtual void generateE();
 		RealFieldSolver<gridTypes>* fieldSolver;
+
+        virtual FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) = 0;
 
 	private:
 
@@ -50,6 +54,28 @@ namespace pfc
 
 		fieldSolver->generator.reset(this);
 	}
+
+    template<GridTypes gridTypes>
+    inline FieldGenerator<gridTypes>::FieldGenerator(const FieldGenerator & gen,
+        RealFieldSolver<gridTypes>* fieldSolver = 0)
+    {
+        if (fieldSolver)
+            this->fieldSolver = fieldSolver;
+        else this->fieldSolver = gen.fieldSolver;
+
+        leftCoeff = gen.leftCoeff;
+        rightCoeff = gen.rightCoeff;
+
+        for (int f = 0; f < 3; ++f)
+            for (int d = 0; d < 3; ++d) {
+                eLeft[f][d] = gen.eLeft[f][d];
+                eRight[f][d] = gen.eRight[f][d];
+                bLeft[f][d] = gen.bLeft[f][d];
+                bRight[f][d] = gen.bRight[f][d];
+            }
+
+        this->fieldSolver->generator.reset(this);
+    }
 
 	template<GridTypes gridTypes>
 	void FieldGenerator<gridTypes>::generateB()
@@ -175,6 +201,10 @@ namespace pfc
 
 		virtual void generateB();
 		virtual void generateE();
+
+        FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
+            return new PeriodicalFieldGenerator(this, fieldSolver);
+        }
 	};
 
 	typedef PeriodicalFieldGenerator<GridTypes::YeeGridType> PeriodicalFieldGeneratorYee;
@@ -260,16 +290,20 @@ namespace pfc
 	}
 
 	template<GridTypes gridTypes>
-	class ReflectFieldGenerator : public FieldGenerator<gridTypes>
-	{
-	public:
-		ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
-			FieldGenerator<gridTypes>(fieldSolver) {
-		};
+    class ReflectFieldGenerator : public FieldGenerator<gridTypes>
+    {
+    public:
+        ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
+            FieldGenerator<gridTypes>(fieldSolver) {
+        };
 
-		virtual void generateB();
-		virtual void generateE();
-	};
+        virtual void generateB();
+        virtual void generateE();
+
+        FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
+            return new ReflectFieldGenerator(this, fieldSolver);
+        }
+    };
 
 	typedef ReflectFieldGenerator<GridTypes::YeeGridType> ReflectFieldGeneratorYee;
 
