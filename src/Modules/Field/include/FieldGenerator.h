@@ -197,13 +197,18 @@ namespace pfc
 	public:
 		PeriodicalFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
 			FieldGenerator<gridTypes>(fieldSolver) {
-		};
+		}
+
+        // copy constructor, other fieldSolver is possible
+        PeriodicalFieldGenerator(const PeriodicalFieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0) :
+            FieldGenerator<gridTypes>(gen, fieldSolver) {
+        }
 
 		virtual void generateB();
 		virtual void generateE();
 
         FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
-            return new PeriodicalFieldGenerator(this, fieldSolver);
+            return new PeriodicalFieldGenerator(*this, fieldSolver);
         }
 	};
 
@@ -297,11 +302,16 @@ namespace pfc
             FieldGenerator<gridTypes>(fieldSolver) {
         };
 
+        // copy constructor, other fieldSolver is possible
+        ReflectFieldGenerator(const ReflectFieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0) :
+            FieldGenerator<gridTypes>(gen, fieldSolver) {
+        }
+
         virtual void generateB();
         virtual void generateE();
 
         FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
-            return new ReflectFieldGenerator(this, fieldSolver);
+            return new ReflectFieldGenerator(*this, fieldSolver);
         }
     };
 
