@@ -1,4 +1,4 @@
-// Python-Interface.cpp : Определяет экспортированные функции для приложения DLL.
+// Python-Interface.cpp : Defines exported functions for the dll-file.
 //
 
 #include <algorithm>
@@ -25,6 +25,9 @@
 #include "Vectors.h"
 #include "Thinning.h"
 
+#include "draft.h"
+#include "PSRTD.h"
+
 
 namespace py = pybind11;
 using namespace pfc;
@@ -39,18 +42,33 @@ short ParticleInfo::numTypes = sizeParticleTypes;
 
 PYBIND11_MODULE(pyHiChi, object) {
 
-    object.attr("pi") = constants::pi;
-    object.attr("c") = constants::c;
-    object.attr("lightVelocity") = constants::lightVelocity;
-    object.attr("electronCharge") = constants::electronCharge;
-    object.attr("electronMass") = constants::electronMass;
-    object.attr("protonMass") = constants::protonMass;
-    object.attr("planck") = constants::planck;
-    object.attr("eV") = constants::eV;
-    object.attr("meV") = constants::meV;
+	object.attr("pi") = constants::pi;
+	object.attr("c") = constants::c;
+	object.attr("lightVelocity") = constants::lightVelocity;
+	object.attr("electronCharge") = constants::electronCharge;
+	object.attr("electronMass") = constants::electronMass;
+	object.attr("protonMass") = constants::protonMass;
+	object.attr("planck") = constants::planck;
+	object.attr("eV") = constants::eV;
+	object.attr("meV") = constants::meV;
+
+	//Arkady's tests: begin
+	object.attr("draftVersion") = 0.02;
+	object.def("arTest", &arTest, R"pbdoc(
+    //    arTest
+    //)pbdoc");
+
+	//object.def("add", &add, "A function which adds two numbers",
+	//	py::arg("i") = 1, py::arg("j") = 2);
+
+	py::class_<PSRTD_test>(object, "PSRTD_test") // temporary object for communications and tests
+		.def(py::init<int, int>(), py::arg("x"), py::arg("y") = 0)
+		;
+
+
+	//Arkady's tests: end.
 
 	py::class_<FP3>(object, "vector3d")
-		.def(py::init<>())
 		.def(py::init<FP, FP, FP>())
 		.def("volume", &FP3::volume)
 		.def("norm", &FP3::norm)
@@ -62,7 +80,58 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def_readwrite("y", &FP3::y)
 		.def_readwrite("z", &FP3::z)
 		;
-	
+
+	//draft.h: begin
+	py::class_<draft>(object, "draft") // temporary object for communications and tests
+		.def(py::init<>())
+		;
+
+	py::class_<pyFieldIterator>(object, "fieldIterator")
+		.def("begin", &pyFieldIterator::begin)
+		.def("next", &pyFieldIterator::next)
+		.def("setField", &pyFieldIterator::setField)
+		.def("selectPositions", &pyFieldIterator::selectPositions)
+		.def("thinOut", &pyFieldIterator::thinOut)
+		;
+
+	py::class_<pyField>(object, "field")
+		.def("get", &pyField::get)
+		.def("advance", &pyField::advance)
+		.def("getTime", &pyField::getTime)
+		.def("getAdvanceTimeSpent", &pyField::getAdvanceTimeSpent)
+		.def("getIterator", &pyField::getIterator)
+		.def("interpolateFrom", &pyField::interpolateFrom)
+		.def("resetTime", &pyField::resetTime)
+		;
+
+	py::class_<analyticalField>(object, "analyticalField")
+		.def(py::init<int64_t, int64_t, int64_t, int64_t, int64_t, int64_t>())
+		.def("init", &analyticalField::init)
+		;
+
+	py::class_<PSRTD>(object, "PSRTD")
+		//.def(py::init<FP3, FP3, FP3>())
+		.def(py::init<FP3, FP3, FP3, int>(), py::arg("minCoords"), py::arg("maxCoords"), py::arg("gridSize"), py::arg("fftw_plan") = 0)
+		.def("setAnalyticalValues", &PSRTD::setAnalyticalValues)
+		.def("init", &PSRTD::init)
+		;
+
+	py::class_<rotateZ>(object, "rotateZ")
+		.def(py::init<FP>())
+		.def("__call__", (pyField(rotateZ::*)(pyField&)) &rotateZ::operator())
+		;
+	py::class_<movingWindowX>(object, "movingWindowX")
+		.def(py::init<FP, FP, pyField&>())
+		.def("__call__", (pyField(movingWindowX::*)(pyField&)) &movingWindowX::operator())
+		;
+	py::class_<movingWindowCX>(object, "movingWindowCX")
+		.def(py::init<FP, FP, FP, pyField&>())
+		.def("__call__", (pyField(movingWindowCX::*)(pyField&)) &movingWindowCX::operator())
+		;
+
+	//draft.h: end
+
+
 	py::enum_<ParticleTypes>(object, "particleTypes")
 		.value("Electron", Electron)
 		.value("Positron", Positron)
@@ -87,7 +156,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("getCharge", &Particle3d::getCharge)
 		.def("getType", &Particle3d::getType)
 		;
-	
+
 	py::class_<ParticleProxy3d>(object, "particleProxy")
 		.def(py::init<Particle3d&>())
 		.def(py::init<ParticleProxy3d&>())
@@ -105,6 +174,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("getType", &ParticleProxy3d::getType)
 		;
 
+	/*Arkady: temporarly disabled to run draft tests
 	py::class_<ValueField>(object, "field")
 		.def(py::init<FP3, FP3>())
 		.def(py::init<FP, FP, FP, FP, FP, FP>())
@@ -113,6 +183,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("getB", &ValueField::getB)
 		.def("setB", &ValueField::setB)
 		;
+	*/
 
 	py::class_<ParticleArray3d>(object, "particleArray")
 		.def(py::init<>())
@@ -123,13 +194,13 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("delete", (void (ParticleArray3d::*)(int)) &ParticleArray3d::deleteParticle)
 		.def("delete", (void (ParticleArray3d::*)(ParticleArray3d::iterator&)) &ParticleArray3d::deleteParticle)
 		.def("__getitem__", [](ParticleArray3d& arr, size_t i) {
-			if (i >= arr.size()) throw py::index_error();
-			return arr[i];
-		})
+		if (i >= arr.size()) throw py::index_error();
+		return arr[i];
+	})
 		.def("__setitem__", [](ParticleArray3d &arr, size_t i, Particle3d v) {
-			if (i >= arr.size()) throw py::index_error();
-			arr[i] = v;
-		})
+		if (i >= arr.size()) throw py::index_error();
+		arr[i] = v;
+	})
 		.def("__iter__", [](ParticleArray3d &pArray) { return py::make_iterator(pArray.begin(), pArray.end()); },
 			py::keep_alive<0, 1>())
 		;
@@ -140,23 +211,23 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("add", &Ensemble3d::addParticle)
 		.def("size", &Ensemble3d::size)
 		.def("__getitem__", [](Ensemble3d& arr, size_t i) {
-			if (i >= sizeParticleTypes) throw py::index_error();
-			return arr[i];
-		})
+		if (i >= sizeParticleTypes) throw py::index_error();
+		return arr[i];
+	})
 		.def("__setitem__", [](Ensemble3d &arr, size_t i, ParticleArray3d v) {
-			if (i >= sizeParticleTypes) throw py::index_error();
-			arr[i] = v;
-		})
+		if (i >= sizeParticleTypes) throw py::index_error();
+		arr[i] = v;
+	})
 		.def("__getitem__", [](Ensemble3d& arr, string& name) {
-			if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
-				throw py::index_error();
-			return arr[name];
-		})
+		if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
+			throw py::index_error();
+		return arr[name];
+	})
 		.def("__setitem__", [](Ensemble3d &arr, string& name, ParticleArray3d v) {
-			if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
-				throw py::index_error();
-			arr[name] = v;
-		})
+		if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
+			throw py::index_error();
+		arr[name] = v;
+	})
 		;
 
 
@@ -212,21 +283,21 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def(py::init<FDTD*>())
 		;
 
-    py::class_<pyPSTDGrid>(object, "PSTDGrid")
-        .def(py::init<FP3, FP, FP3, FP3>())
-        .def("getFields", &pyPSTDGrid::getFields)
-        .def("getJ", &pyPSTDGrid::getJ)
-        .def("getE", &pyPSTDGrid::getE)
-        .def("getB", &pyPSTDGrid::getB)
-        .def("setJ", &pyPSTDGrid::setJ)
-        .def("setE", &pyPSTDGrid::setE)
-        .def("setB", &pyPSTDGrid::setB)
+	py::class_<pyPSTDGrid>(object, "PSTDGrid")
+		.def(py::init<FP3, FP, FP3, FP3>())
+		.def("getFields", &pyPSTDGrid::getFields)
+		.def("getJ", &pyPSTDGrid::getJ)
+		.def("getE", &pyPSTDGrid::getE)
+		.def("getB", &pyPSTDGrid::getB)
+		.def("setJ", &pyPSTDGrid::setJ)
+		.def("setE", &pyPSTDGrid::setE)
+		.def("setB", &pyPSTDGrid::setB)
 		.def("setJ", &pyPSTDGrid::pySetJ)
 		.def("setE", &pyPSTDGrid::pySetE)
 		.def("setB", &pyPSTDGrid::pySetB)
-        .def("setJ", &pyPSTDGrid::setJxyz)
-        .def("setE", &pyPSTDGrid::setExyz)
-        .def("setB", &pyPSTDGrid::setBxyz)
+		.def("setJ", &pyPSTDGrid::setJxyz)
+		.def("setE", &pyPSTDGrid::setExyz)
+		.def("setB", &pyPSTDGrid::setBxyz)
 		.def("setJ", &pyPSTDGrid::pySetJxyz)
 		.def("setE", &pyPSTDGrid::pySetExyz)
 		.def("setB", &pyPSTDGrid::pySetBxyz)
@@ -235,29 +306,29 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("setBt", &pyPSTDGrid::setBxyzt)
 		.def("analytical", &pyPSTDGrid::setAnalytical)
 		.def("setTime", &pyPSTDGrid::setTime)
-        ;
+		;
 
-    py::class_<PSTD>(object, "PSTD")
-        .def(py::init<pyPSTDGrid*>())
-        .def("setPML", &PSTD::setPML)
-        .def("updateFields", &PSTD::updateFields)
-        ;
+	py::class_<PSTD>(object, "PSTD")
+		.def(py::init<pyPSTDGrid*>())
+		.def("setPML", &PSTD::setPML)
+		.def("updateFields", &PSTD::updateFields)
+		;
 
-    py::class_<pyPSATDGrid>(object, "PSATDGrid")
-        .def(py::init<FP3, FP, FP3, FP3>())
-        .def("getFields", &pyPSATDGrid::getFields)
-        .def("getJ", &pyPSATDGrid::getJ)
-        .def("getE", &pyPSATDGrid::getE)
-        .def("getB", &pyPSATDGrid::getB)
-        .def("setJ", &pyPSATDGrid::setJ)
-        .def("setE", &pyPSATDGrid::setE)
-        .def("setB", &pyPSATDGrid::setB)
+	py::class_<pyPSATDGrid>(object, "PSATDGrid")
+		.def(py::init<FP3, FP, FP3, FP3>())
+		.def("getFields", &pyPSATDGrid::getFields)
+		.def("getJ", &pyPSATDGrid::getJ)
+		.def("getE", &pyPSATDGrid::getE)
+		.def("getB", &pyPSATDGrid::getB)
+		.def("setJ", &pyPSATDGrid::setJ)
+		.def("setE", &pyPSATDGrid::setE)
+		.def("setB", &pyPSATDGrid::setB)
 		.def("setJ", &pyPSATDGrid::pySetJ)
 		.def("setE", &pyPSATDGrid::pySetE)
 		.def("setB", &pyPSATDGrid::pySetB)
-        .def("setJ", &pyPSATDGrid::setJxyz)
-        .def("setE", &pyPSATDGrid::setExyz)
-        .def("setB", &pyPSATDGrid::setBxyz)
+		.def("setJ", &pyPSATDGrid::setJxyz)
+		.def("setE", &pyPSATDGrid::setExyz)
+		.def("setB", &pyPSATDGrid::setBxyz)
 		.def("setJ", &pyPSATDGrid::pySetJxyz)
 		.def("setE", &pyPSATDGrid::pySetExyz)
 		.def("setB", &pyPSATDGrid::pySetBxyz)
@@ -266,19 +337,20 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("setBt", &pyPSATDGrid::setBxyzt)
 		.def("analytical", &pyPSATDGrid::setAnalytical)
 		.def("setTime", &pyPSATDGrid::setTime)
-        ;
+//		.def("setTimeStep", &pyPSATDGrid::setTimeStep)
+		;
 
-    py::class_<PSATD>(object, "PSATD")
-        .def(py::init<pyPSATDGrid*>())
-        .def("setPML", &PSATD::setPML)
-        .def("updateFields", &PSATD::updateFields)
-        ;
+	py::class_<PSATD>(object, "PSATD")
+		.def(py::init<pyPSATDGrid*>())
+		.def("setPML", &PSATD::setPML)
+		.def("updateFields", &PSATD::updateFields)
+		;
 
-    py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
-        .def(py::init<pyPSATDGrid*>())
-        .def("setPML", &PSATDTimeStraggered::setPML)
-        .def("updateFields", &PSATDTimeStraggered::updateFields)
-        ;
+	py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
+		.def(py::init<pyPSATDGrid*>())
+		.def("setPML", &PSATDTimeStraggered::setPML)
+		.def("updateFields", &PSATDTimeStraggered::updateFields)
+		;
 
 	py::class_<ScalarQED_AEG_only_electron>(object, "QED")
 		.def(py::init<>())

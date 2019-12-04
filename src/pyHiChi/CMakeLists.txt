@@ -18,6 +18,8 @@ if (USE_OMP)
 endif()
 
 set(pyHiChi_source
+    include/draft.h
+    include/PSRTD.h
     include/pyGrid.h
     src/pyHiChi.cpp)
 
