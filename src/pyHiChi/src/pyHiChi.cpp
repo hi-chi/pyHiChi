@@ -25,8 +25,7 @@
 #include "Vectors.h"
 #include "Thinning.h"
 
-#include "draft.h"
-#include "PSRTD.h"
+#include "Mapping.h"
 
 
 namespace py = pybind11;
@@ -52,22 +51,6 @@ PYBIND11_MODULE(pyHiChi, object) {
 	object.attr("eV") = constants::eV;
 	object.attr("meV") = constants::meV;
 
-	//Arkady's tests: begin
-	object.attr("draftVersion") = 0.02;
-	object.def("arTest", &arTest, R"pbdoc(
-    //    arTest
-    //)pbdoc");
-
-	//object.def("add", &add, "A function which adds two numbers",
-	//	py::arg("i") = 1, py::arg("j") = 2);
-
-	py::class_<PSRTD_test>(object, "PSRTD_test") // temporary object for communications and tests
-		.def(py::init<int, int>(), py::arg("x"), py::arg("y") = 0)
-		;
-
-
-	//Arkady's tests: end.
-
 	py::class_<FP3>(object, "vector3d")
 		.def(py::init<FP, FP, FP>())
 		.def("volume", &FP3::volume)
@@ -80,57 +63,6 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def_readwrite("y", &FP3::y)
 		.def_readwrite("z", &FP3::z)
 		;
-
-	//draft.h: begin
-	py::class_<draft>(object, "draft") // temporary object for communications and tests
-		.def(py::init<>())
-		;
-
-	py::class_<pyFieldIterator>(object, "fieldIterator")
-		.def("begin", &pyFieldIterator::begin)
-		.def("next", &pyFieldIterator::next)
-		.def("setField", &pyFieldIterator::setField)
-		.def("selectPositions", &pyFieldIterator::selectPositions)
-		.def("thinOut", &pyFieldIterator::thinOut)
-		;
-
-	py::class_<pyField>(object, "field")
-		.def("get", &pyField::get)
-		.def("advance", &pyField::advance)
-		.def("getTime", &pyField::getTime)
-		.def("getAdvanceTimeSpent", &pyField::getAdvanceTimeSpent)
-		.def("getIterator", &pyField::getIterator)
-		.def("interpolateFrom", &pyField::interpolateFrom)
-		.def("resetTime", &pyField::resetTime)
-		;
-
-	py::class_<analyticalField>(object, "analyticalField")
-		.def(py::init<int64_t, int64_t, int64_t, int64_t, int64_t, int64_t>())
-		.def("init", &analyticalField::init)
-		;
-
-	py::class_<PSRTD>(object, "PSRTD")
-		//.def(py::init<FP3, FP3, FP3>())
-		.def(py::init<FP3, FP3, FP3, int>(), py::arg("minCoords"), py::arg("maxCoords"), py::arg("gridSize"), py::arg("fftw_plan") = 0)
-		.def("setAnalyticalValues", &PSRTD::setAnalyticalValues)
-		.def("init", &PSRTD::init)
-		;
-
-	py::class_<rotateZ>(object, "rotateZ")
-		.def(py::init<FP>())
-		.def("__call__", (pyField(rotateZ::*)(pyField&)) &rotateZ::operator())
-		;
-	py::class_<movingWindowX>(object, "movingWindowX")
-		.def(py::init<FP, FP, pyField&>())
-		.def("__call__", (pyField(movingWindowX::*)(pyField&)) &movingWindowX::operator())
-		;
-	py::class_<movingWindowCX>(object, "movingWindowCX")
-		.def(py::init<FP, FP, FP, pyField&>())
-		.def("__call__", (pyField(movingWindowCX::*)(pyField&)) &movingWindowCX::operator())
-		;
-
-	//draft.h: end
-
 
 	py::enum_<ParticleTypes>(object, "particleTypes")
 		.value("Electron", Electron)
@@ -267,6 +199,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("setBt", &pyYeeGrid::setBxyzt)
 		.def("analytical", &pyYeeGrid::setAnalytical)
 		.def("setTime", &pyYeeGrid::setTime)
+        .def("setMapping", &pyYeeGrid::setMapping)
 		;
 
 	py::class_<FDTD>(object, "FDTD")
@@ -306,6 +239,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("setBt", &pyPSTDGrid::setBxyzt)
 		.def("analytical", &pyPSTDGrid::setAnalytical)
 		.def("setTime", &pyPSTDGrid::setTime)
+        .def("setMapping", &pyPSTDGrid::setMapping)
 		;
 
 	py::class_<PSTD>(object, "PSTD")
@@ -337,7 +271,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("setBt", &pyPSATDGrid::setBxyzt)
 		.def("analytical", &pyPSATDGrid::setAnalytical)
 		.def("setTime", &pyPSATDGrid::setTime)
-//		.def("setTimeStep", &pyPSATDGrid::setTimeStep)
+        .def("setMapping", [](pyPSATDGrid& self, Mapping& m) { self.setMapping(&m); })
 		;
 
 	py::class_<PSATD>(object, "PSATD")
@@ -357,4 +291,16 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("processParticles", &ScalarQED_AEG_only_electron::processParticles)
 		.def("processParticlesNIter", &ScalarQED_AEG_only_electron::processParticlesNIter)
 		;
+
+    py::class_<Mapping>(object, "Mapping")
+        .def(py::init<>())
+        .def("getDirectCoords", &Mapping::getDirectCoords)
+        .def("getInverseCoords", &Mapping::getInverseCoords)
+        ;
+
+    py::class_<IdentityMapping>(object, "IdentityMapping")
+        .def(py::init<const FP3&, const FP3&>())
+        .def("getDirectCoords", &IdentityMapping::getDirectCoords)
+        .def("getInverseCoords", &IdentityMapping::getInverseCoords)
+        ;
 }
