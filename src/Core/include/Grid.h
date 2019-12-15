@@ -433,7 +433,7 @@ namespace pfc {
         steps(_steps),
         dt(_dt),
         numInternalCells(_numInternalCells),
-        numCells(numInternalCells + getNumExternalLeftCells() + getNumExternalRightCells()),
+        numCells(numInternalCells),
         Ex(numCells), Ey(numCells), Ez(numCells),
         Bx(numCells), By(numCells), Bz(numCells),
         Jx(numCells), Jy(numCells), Jz(numCells),
@@ -444,9 +444,7 @@ namespace pfc {
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
         timeShiftE(0.0), timeShiftB(dt / 2), timeShiftJ(dt / 2),
-        origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
-            minCoords.y - steps.y * getNumExternalLeftCells().y,
-            minCoords.z - steps.z * getNumExternalLeftCells().z),
+        origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
@@ -480,7 +478,7 @@ namespace pfc {
         steps(_steps),
         dt(_dt),
         numInternalCells(_numInternalCells),
-        numCells(numInternalCells + getNumExternalLeftCells() + getNumExternalRightCells()),
+        numCells(numInternalCells),
         Ex(numCells), Ey(numCells), Ez(numCells),
         Bx(numCells), By(numCells), Bz(numCells),
         Jx(numCells), Jy(numCells), Jz(numCells),
@@ -491,9 +489,7 @@ namespace pfc {
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
         timeShiftE(0.0), timeShiftB(0.0), timeShiftJ(dt / 2),
-        origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
-            minCoords.y - steps.y * getNumExternalLeftCells().y,
-            minCoords.z - steps.z * getNumExternalLeftCells().z),
+        origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
