@@ -20,6 +20,8 @@ namespace pfc {
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
 
+        void setTimeStep(FP dt);
+
         ScalarField<complexFP> tmpJx, tmpJy, tmpJz;
 
     protected:
@@ -45,6 +47,14 @@ namespace pfc {
     {
         pml.reset(new PmlPsatd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
+    }
+
+    inline void PSATDTimeStraggered::setTimeStep(FP dt)
+    {
+        if (grid->setTimeStep(dt)) {
+            complexGrid->setTimeStep(dt);
+            if (pml.get()) pml.reset(new PmlPsatd(this, pml->sizePML));
+        }
     }
 
     inline void PSATDTimeStraggered::saveJ()
@@ -158,6 +168,8 @@ namespace pfc {
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
 
+        void setTimeStep(FP dt);
+
     private:
 
         PmlSpectralTimeStraggered<GridTypes::PSATDGridType>* getPml() {
@@ -177,6 +189,14 @@ namespace pfc {
     {
         pml.reset(new PmlPsatd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
+    }
+
+    inline void PSATD::setTimeStep(FP dt)
+    {
+        if (grid->setTimeStep(dt)) {
+            complexGrid->setTimeStep(dt);
+            if (pml.get()) pml.reset(new PmlPsatd(this, pml->sizePML));
+        }
     }
 
     inline void PSATD::updateFields() {

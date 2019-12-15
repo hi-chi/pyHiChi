@@ -39,15 +39,15 @@ struct complexFP
         return (z1.real == z2.real) && (z1.imag == z2.imag);
     }
 
-    FP getModule() {
+    FP getModule() const {
         return sqrt(real * real + imag * imag);
     }
 
-    FP getArg() {
+    FP getArg() const {
         return atan(imag / real);
     }
 
-    complexFP getConj() {
+    complexFP getConj() const {
         return complexFP(real, -imag);
     }
 
@@ -67,6 +67,10 @@ struct complexFP
         return complexFP(z1.real * z2.real - z1.imag * z2.imag, z1.real * z2.imag + z2.real * z1.imag);
     }
 
+    friend complexFP operator/(const complexFP& z1, const complexFP& z2) {
+        return z1 * z2.getConj() * complexFP(1.0 / (z2.real*z2.real + z2.imag*z2.imag), 0);
+    }
+
     complexFP& operator+=(const complexFP& z) {
         real += z.real;
         imag += z.imag;
@@ -81,6 +85,11 @@ struct complexFP
 
     complexFP& operator*=(const complexFP& z) {
         *this = (*this)*z;
+        return *this;
+    }
+
+    complexFP& operator/=(const complexFP& z) {
+        *this = (*this)/z;
         return *this;
     }
 
