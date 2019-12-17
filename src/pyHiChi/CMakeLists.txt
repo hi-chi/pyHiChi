@@ -6,6 +6,7 @@ include_directories(include
     ../Core/include
     ../Modules/Particle/include
     ../Modules/Field/include
+    ../Modules/TightFocusing/include
     ${FFT_INCLUDES})
 
 if (USE_OMP)

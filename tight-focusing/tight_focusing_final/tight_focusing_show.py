@@ -44,7 +44,7 @@ def createFieldAx(a, b, c, text):
     return im
 
 
-def initVisual(minCoords_, maxCoords_, Nx_ = 100, Ny_ = 100, vmax_ = 10*10**8, vmin_ = 0):
+def initVisual(minCoords_, maxCoords_, Nx_ = 100, Ny_ = 100, vmax_ = 5*10**8, vmin_ = 0):
    global x, y, Nx, Ny, minCoords, maxCoords, fig, vmax, vmin
    Nx = Nx_
    Ny = Ny_
@@ -54,7 +54,7 @@ def initVisual(minCoords_, maxCoords_, Nx_ = 100, Ny_ = 100, vmax_ = 10*10**8, v
    vmax = vmax_
    x = np.arange(minCoords.x, maxCoords.x, (maxCoords.x - minCoords.x)/Nx)
    y = np.arange(minCoords.y, maxCoords.y, (maxCoords.y - minCoords.y)/Ny)
-   
+
 
 def show(grid, update, maxIter=150):
 
@@ -67,9 +67,6 @@ def show(grid, update, maxIter=150):
         for ix in range(Nx):
             for iy in range(Ny):
                 coordXY = hichi.vector3d(x[ix], y[iy], 0.0)
-                print(coordXY.x, minCoords.x, maxCoords.x)
-                print(coordXY.y, minCoords.y, maxCoords.y)
-                print(coordXY.z, minCoords.z, maxCoords.z)
                 E = grid.getE(coordXY)
                 field[iy, ix] = E.norm()
         return field
@@ -77,14 +74,11 @@ def show(grid, update, maxIter=150):
     def animate(i):
         if (i > maxIter):
 	        exit()
-        print("\r %d" % (i+1))
+        print("\r %d" % (i), end = "")
+        plt.savefig(dirResult + 'field%04d.png' % (i))
         update()
-        print("\r here1")
         field = getFields()
-        print("\r here2")
         im.set_array(field)
-        print("\r here3")
-        plt.savefig(dirResult + 'field%04d.png' % (i+1))
         return im,   
 
     ani = animation.FuncAnimation(fig, animate, interval=1, blit=True) 
