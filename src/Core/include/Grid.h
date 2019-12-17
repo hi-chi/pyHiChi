@@ -721,8 +721,8 @@ namespace pfc {
     inline FP3 Grid<Data, gT>::getJ(const FP3& coords) const
     {
         // zero fields are outside of area that grid defines
-        if (!isInside(coords, shiftEJx) || !isInside(coords, shiftEJy) || !isInside(coords, shiftEJz))
-            return FP3(0, 0, 0);
+        //if (!isInside(coords, shiftEJx) || !isInside(coords, shiftEJy) || !isInside(coords, shiftEJz))
+        //    return FP3(0, 0, 0);
 
         /* For each component of J get grid index and internal coords,
         use it as base index and coefficients of interpolation. */
@@ -744,8 +744,8 @@ namespace pfc {
 	inline FP3 Grid<Data, gT>::getE(const FP3& coords) const
 	{
         // zero fields are outside of area that grid defines
-        if (!isInside(coords, shiftEJx) || !isInside(coords, shiftEJy) || !isInside(coords, shiftEJz))
-            return FP3(0, 0, 0);
+        //if (!isInside(coords, shiftEJx) || !isInside(coords, shiftEJy) || !isInside(coords, shiftEJz))
+        //    return FP3(0, 0, 0);
 
 		/* For each component of J get grid index and internal coords,
 		use it as base index and coefficients of interpolation. */
@@ -767,8 +767,8 @@ namespace pfc {
 	inline FP3 Grid<Data, gT>::getB(const FP3& coords) const
 	{
         // zero fields are outside of area that grid defines
-        if (!isInside(coords, shiftBx) || !isInside(coords, shiftBy) || !isInside(coords, shiftBz))
-            return FP3(0, 0, 0);
+        //if (!isInside(coords, shiftBx) || !isInside(coords, shiftBy) || !isInside(coords, shiftBz))
+        //    return FP3(0, 0, 0);
 
 		/* For each component of J get grid index and internal coords,
 		use it as base index and coefficients of interpolation. */
