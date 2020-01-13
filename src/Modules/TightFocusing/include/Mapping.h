@@ -26,6 +26,10 @@ namespace pfc {
             time += timeStep;
         }
 
+		void setTime(FP time) {
+			this->time = time;
+		}
+
     protected:
 
         void setFailStatus(bool* status) {

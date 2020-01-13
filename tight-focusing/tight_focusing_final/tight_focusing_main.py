@@ -3,12 +3,17 @@ sys.path.append("../../build/src/pyHiChi/Release")
 import pyHiChi as hichi
 import tight_focusing_fields as sphericalPulse
 import tight_focusing_show as visual
+import tight_focusing_write_file as fileWriter
+import hichi_primitives
 import math as ma
 
 factor = 1
-gridSize = hichi.vector3d(factor*32, factor*128, factor*128)
+gridSize = hichi.vector3d(factor*64, factor*128, factor*128)
 
-timeStep = 0.2*sphericalPulse.wavelength/hichi.c
+dirResult = "./results/"
+
+ts = 0.2
+timeStep = ts*sphericalPulse.wavelength/hichi.c
 
 D = 2*sphericalPulse.pulseLength
 
@@ -31,7 +36,7 @@ gridStep = hichi.vector3d((gridMaxCoords.x - gridMinCoords.x) / gridSize.x, \
                           (gridMaxCoords.y - gridMinCoords.y) / gridSize.y, \
                           (gridMaxCoords.z - gridMinCoords.z) / gridSize.z)
 
-ifCut = False
+ifCut = True
 grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep, mapping, ifCut)
 
 fieldFuncs = sphericalPulse.getFieldFuncs()
@@ -44,10 +49,17 @@ def updateFields():
     global mapping
     mapping.advanceTime(timeStep)
     fieldSolver.updateFields()
+    
 
-visual.initVisual(minCoords, maxCoords)
-visual.show(grid, updateFields)
+#visual.initVisual(minCoords, maxCoords, 64, 128)
+#visual.show(grid, updateFields, maxIter=160)
 
+
+hichi_primitives.createDir(dirResult)
+
+fileWriter.write(grid, updateFields, minCoords, maxCoords, 300, 300, maxIter=160, dumpIter = 20)
+
+#fileWriter.writeOX(grid, updateFields, minCoords, maxCoords, 64, maxIter=80, dumpIter=80, dirResult = dirResult)
 
 
 

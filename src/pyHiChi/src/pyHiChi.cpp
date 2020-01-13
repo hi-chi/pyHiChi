@@ -279,6 +279,13 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("setTimeStep", &PSATD::setTimeStep)
         ;
 
+	py::class_<PSATDWithPoisson>(object, "PSATDWithPoisson")
+		.def(py::init<pyPSATDGrid*>())
+		.def("setPML", &PSATDWithPoisson::setPML)
+		.def("updateFields", &PSATDWithPoisson::updateFields)
+		.def("setTimeStep", &PSATDWithPoisson::setTimeStep)
+		;
+
     py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
         .def(py::init<pyPSATDGrid*>())
         .def("setPML", &PSATDTimeStraggered::setPML)
@@ -294,6 +301,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<Mapping>(object, "Mapping")
         .def("advanceTime", &Mapping::advanceTime)
+		.def("setTime", &Mapping::setTime)
         ;
 
     py::class_<pyYeeGridMapping, pyYeeGrid>(object, "YeeGridMapping")

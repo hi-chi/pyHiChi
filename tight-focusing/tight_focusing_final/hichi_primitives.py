@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from numba import cfunc, float64, jit, njit, jitclass
 
 @jitclass([('x', float64), ('y', float64), ('z', float64)])
@@ -55,3 +56,10 @@ def nullFunc3_(x, y, z):
     return 0
 
 nullFunc3 = func3ToC(nullFunc3_)
+      
+def createDir(dir):
+    if (os.path.exists(dir)): 
+        for (dirpath, dirnames, filenames) in os.walk(dir):
+            for file in filenames:
+                os.remove(dir + file)
+    else: os.mkdir(dir)

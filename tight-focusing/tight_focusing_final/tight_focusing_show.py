@@ -6,9 +6,10 @@ import math as ma
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
+import hichi_primitives
 
-Nx = 100
-Ny = 100
+Nx = 300
+Ny = 300
 
 minCoords = hichi.vector3d(0, 0, 0)
 maxCoords = hichi.vector3d(1, 1, 1)
@@ -22,13 +23,6 @@ fig = plt.figure()
 
 vmin = 0
 vmax = 0
-
-def createDir(dir):
-    if (os.path.exists(dir)): 
-        for (dirpath, dirnames, filenames) in os.walk(dir):
-            for file in filenames:
-                os.remove(dir + file)
-    else: os.mkdir(dir)
 
 
 def createFieldAx(a, b, c, text):
@@ -44,7 +38,7 @@ def createFieldAx(a, b, c, text):
     return im
 
 
-def initVisual(minCoords_, maxCoords_, Nx_ = 100, Ny_ = 100, vmax_ = 5*10**8, vmin_ = 0):
+def initVisual(minCoords_, maxCoords_, Nx_ = 300, Ny_ = 300, vmax_ = 5*10**8, vmin_ = 0):
    global x, y, Nx, Ny, minCoords, maxCoords, fig, vmax, vmin
    Nx = Nx_
    Ny = Ny_
@@ -56,11 +50,11 @@ def initVisual(minCoords_, maxCoords_, Nx_ = 100, Ny_ = 100, vmax_ = 5*10**8, vm
    y = np.arange(minCoords.y, maxCoords.y, (maxCoords.y - minCoords.y)/Ny)
 
 
-def show(grid, update, maxIter=150):
+def show(grid, update, maxIter=160):
 
     im = createFieldAx(1, 1, 1, "|E|")
     
-    createDir(dirResult)
+    hichi_primitives.createDir(dirResult)
 
     def getFields():
         field = np.zeros(shape=(Ny,Nx))
@@ -74,7 +68,6 @@ def show(grid, update, maxIter=150):
     def animate(i):
         if (i > maxIter):
 	        exit()
-        print("\r %d" % (i), end = "")
         plt.savefig(dirResult + 'field%04d.png' % (i))
         update()
         field = getFields()
