@@ -24,7 +24,7 @@ namespace pfc
 		virtual void generateE();
 		RealFieldSolver<gridTypes>* fieldSolver;
 
-        virtual FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) = 0;
+        virtual FieldGenerator<gridTypes>* createInstance(RealFieldSolver<gridTypes>* fieldSolver) = 0;
 
 	private:
 
@@ -57,7 +57,7 @@ namespace pfc
 
     template<GridTypes gridTypes>
     inline FieldGenerator<gridTypes>::FieldGenerator(const FieldGenerator & gen,
-        RealFieldSolver<gridTypes>* fieldSolver = 0)
+        RealFieldSolver<gridTypes>* fieldSolver)
     {
         if (fieldSolver)
             this->fieldSolver = fieldSolver;
@@ -207,7 +207,7 @@ namespace pfc
 		virtual void generateB();
 		virtual void generateE();
 
-        FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
+        FieldGenerator<gridTypes>* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
             return new PeriodicalFieldGenerator(*this, fieldSolver);
         }
 	};
@@ -310,7 +310,7 @@ namespace pfc
         virtual void generateB();
         virtual void generateE();
 
-        FieldGenerator* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
+        FieldGenerator<gridTypes>* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
             return new ReflectFieldGenerator(*this, fieldSolver);
         }
     };
