@@ -1,6 +1,7 @@
 #pragma once
 #include "Grid.h"
 #include "Mapping.h"
+#include "FieldConfiguration.h"
 
 #include "pybind11/pybind11.h"
 
@@ -75,6 +76,37 @@ namespace pfc
 				setExyzt(fEt[0], fEt[1], fEt[2], t);
 				setBxyzt(fBt[0], fBt[1], fBt[2], t);
 			}
+		}
+
+		void setFieldConfiguration(const FieldConfiguration* fieldConf) {
+#pragma omp parallel for
+			for (int i = 0; i < this->numCells.x; i++)
+	        for (int j = 0; j < this->numCells.y; j++)
+	        for (int k = 0; k < this->numCells.z; k++)
+	        {
+	        	FP3 cEx, cEy, cEz, cBx, cBy, cBz, cJx, cJy, cJz;
+
+	        	cEx = convertCoords(this->ExPosition(i, j, k));
+	        	cEy = convertCoords(this->EyPosition(i, j, k));
+	        	cEz = convertCoords(this->EzPosition(i, j, k));
+	        	this->Ex(i, j, k) = fieldConf->E(cEx.x, cEx.y, cEx.z).x;
+	        	this->Ey(i, j, k) = fieldConf->E(cEy.x, cEy.y, cEy.z).y;
+	        	this->Ez(i, j, k) = fieldConf->E(cEz.x, cEz.y, cEz.z).z;
+
+				cBx = convertCoords(this->ExPosition(i, j, k));
+				cBy = convertCoords(this->EyPosition(i, j, k));
+				cBz = convertCoords(this->EzPosition(i, j, k));
+				this->Bx(i, j, k) = fieldConf->B(cBx.x, cBx.y, cBx.z).x;
+				this->By(i, j, k) = fieldConf->B(cBy.x, cBy.y, cBy.z).y;
+				this->Bz(i, j, k) = fieldConf->B(cBz.x, cBz.y, cBz.z).z;
+
+				cJx = convertCoords(this->JxPosition(i, j, k));
+				cJy = convertCoords(this->JyPosition(i, j, k));
+				cJz = convertCoords(this->JzPosition(i, j, k));
+				this->Jx(i, j, k) = fieldConf->J(cJx.x, cJx.y, cJx.z).x;
+				this->Jy(i, j, k) = fieldConf->J(cJy.x, cJy.y, cJy.z).y;
+				this->Jz(i, j, k) = fieldConf->J(cJz.x, cJz.y, cJz.z).z;
+	        }
 		}
 
         void pySetExyz(py::function fEx, py::function fEy, py::function fEz)

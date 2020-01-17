@@ -1,16 +1,13 @@
 import sys
 sys.path.append("./../../build/src/pyHiChi/Release")
 import pyHiChi as pfc
-import numpy as np
-from numba import cfunc, float64, jit, njit, jitclass
 from hichi_primitives import *
 
-Exf = None
-Eyf = None
-Ezf = None
-Bxf = None
-Byf = None
-Bzf = None
+
+setField = None  # set field for grid, is defined below
+
+
+# --------- parameters of spherical wave, can be defined by calling any fuction below ------------------------------
 
 # constants and units
 TW = 1e+12 * 1e+7  # erg/s
@@ -27,24 +24,34 @@ totalPower = None  # assuming the uniform energy stream within the OpeningAngle 
 F_number = None
 edgeSmoothingAngle = None # in radians
 openingAngle = None
-timeFieldInit = None
 
 
-def createSphericalPulse(F_number_ = 0.3):
+# --------- creating spherical pulse from python -------------------
 
-    global wavelength, pulseLength, phase, R0, totalPower, F_number, edgeSmoothingAngle, openingAngle, timeFieldInit
-    global Exf, Eyf, Ezf, Bxf, Byf, Bzf
+Ex = None
+Ey = None
+Ez = None
+Bx = None
+By = None
+Bz = None
+
+def createSphericalPulsePython(F_number_ = 0.3, R0_ = 16e-4, wavelength_ = 1e-4, pulseLength_ = 2e-4, phase_ = 0,
+    totalPower_ = 50*TW, edgeSmoothingAngle_ = 0.1):
     
-    # field initializing
-    wavelength = 1e-4
-    pulseLength = 2e-4
-    phase = 0
-    R0 = 16*wavelength
-    totalPower = 50*TW  # assuming the uniform energy stream within the OpeningAngle (see below)
-                        # this yields amplitude sqrt(TotalPower*4/(LightVelocity*(cos(OpeningAngle) - 1)))
+    from numba import cfunc, float64, jit, njit, jitclass
     
+    import numpy as np
+
+    global F_number, R0, wavelength, pulseLength, phase, totalPower, edgeSmoothingAngle, openingAngle
+    global Ex, Ey, Ez, Bx, By, Bz, setField
+    
+    wavelength = wavelength_
+    pulseLength = pulseLength_
+    phase = phase_
+    R0 = R0_
+    totalPower = totalPower_
     F_number = F_number_
-    edgeSmoothingAngle = 0.1  # in radians
+    edgeSmoothingAngle = edgeSmoothingAngle_
     openingAngle = np.arctan(1.0/(2.0*F_number))
     timeFieldInit = -R0/pfc.c
     
@@ -57,17 +64,17 @@ def createSphericalPulse(F_number_ = 0.3):
     @njit
     def transverseShape(angle):
         return block(angle, -1.0, openingAngle - edgeSmoothingAngle*0.5) + \
-            sqr(np.cos(0.5*pfc.pi*(angle - openingAngle + edgeSmoothingAngle*0.5)/edgeSmoothingAngle)) * \
-            block(angle, openingAngle - edgeSmoothingAngle*0.5, openingAngle + edgeSmoothingAngle*0.5)
+            (sqr(np.cos(0.5*pfc.pi*(angle - openingAngle + edgeSmoothingAngle*0.5)/edgeSmoothingAngle)) * \
+            block(angle, openingAngle - edgeSmoothingAngle*0.5, openingAngle + edgeSmoothingAngle*0.5) \
+            if (not edgeSmoothingAngle == 0) else 0.0)
     
     exclusionRadius = 1e-5
     amp = np.sqrt(totalPower*4.0/(pfc.c*(1.0 - np.cos(openingAngle)))) # need to check!!!
     
-    @njit  # the bug of numba: cannot lower global constant object of user's class
+    @njit
     def getPolarisation():
         return vector3d(0.0, 1.0, 0.0)
-        
-    
+           
     @njit
     def mask(x, y, z, t = 0):
         R = np.sqrt(x*x + y*y + z*z)
@@ -76,10 +83,9 @@ def createSphericalPulse(F_number_ = 0.3):
             return (amp/R)*longitudinalFieldVariation(R + pfc.c*(t + timeFieldInit))*transverseShape(angle)*(x < 0)
         else:
             return 0
-    
-    
+      
     @cfunc("float64(float64,float64,float64)", nopython=True)
-    def Ex(x, y, z):
+    def Ex_(x, y, z):
         r = vector3d(x, y, z)
         s1 = cross(getPolarisation(), r)
         s1.normalize()
@@ -88,7 +94,7 @@ def createSphericalPulse(F_number_ = 0.3):
         return mask(x, y, z)*s0.x
         
     @cfunc("float64(float64,float64,float64)", nopython=True)
-    def Ey(x, y, z):
+    def Ey_(x, y, z):
         r = vector3d(x, y, z)
         s1 = cross(getPolarisation(), r)
         s1.normalize()
@@ -97,7 +103,7 @@ def createSphericalPulse(F_number_ = 0.3):
         return mask(x, y, z)*s0.y
         
     @cfunc("float64(float64,float64,float64)", nopython=True)
-    def Ez(x, y, z):
+    def Ez_(x, y, z):
         r = vector3d(x, y, z)
         s1 = cross(getPolarisation(), r)
         s1.normalize()
@@ -106,36 +112,64 @@ def createSphericalPulse(F_number_ = 0.3):
         return mask(x, y, z)*s0.z
         
     @cfunc("float64(float64,float64,float64)", nopython=True)
-    def Bx(x, y, z):
+    def Bx_(x, y, z):
         r = vector3d(x, y, z)
         s1 = cross(getPolarisation(), r)
         s1.normalize()
         return mask(x, y, z)*s1.x
         
     @cfunc("float64(float64,float64,float64)", nopython=True)
-    def By(x, y, z):
+    def By_(x, y, z):
         r = vector3d(x, y, z)
         s1 = cross(getPolarisation(), r)
         s1.normalize()
         return mask(x, y, z)*s1.y
         
     @cfunc("float64(float64,float64,float64)", nopython=True)
-    def Bz(x, y, z):
+    def Bz_(x, y, z):
         r = vector3d(x, y, z)
         s1 = cross(getPolarisation(), r)
         s1.normalize()
         return mask(x, y, z)*s1.z
-        
-    Exf = Ex    
-    Eyf = Ey    
-    Ezf = Ez   
-    Bxf = Bx    
-    Byf = By
-    Bzf = Bz        
+             
+    Ex = Ex_.address   
+    Ey = Ey_.address    
+    Ez = Ez_.address   
+    Bx = Bx_.address    
+    By = By_.address
+    Bz = Bz_.address
     
+    def setField_(grid):
+        grid.setE(Ex, Ey, Ez)
+        grid.setB(Bx, By, Bz)
+        
+    setField = setField_
+    
+    
+# --------- creating spherical pulse from C++ ---------------------------------------------------------------
 
-def getFieldFuncs():
-    return [[Exf.address, Eyf.address, Ezf.address], [Bxf.address, Byf.address, Bzf.address]]   
 
-createSphericalPulse()    
+def createSphericalPulseC(F_number_ = 0.3, R0_ = 16e-4, wavelength_ = 1e-4, pulseLength_ = 2e-4, phase_ = 0,
+    totalPower_ = 50*TW, edgeSmoothingAngle_ = 0.1):
 
+    global F_number, R0, wavelength, pulseLength, phase, totalPower, edgeSmoothingAngle, openingAngle
+    global setField
+    
+    wavelength = wavelength_
+    pulseLength = pulseLength_
+    phase = phase_
+    R0 = R0_
+    totalPower = totalPower_
+    F_number = F_number_
+    edgeSmoothingAngle = edgeSmoothingAngle_
+    openingAngle = np.arctan(1.0/(2.0*F_number))
+    
+    tightFocusing = pfc.TightFocusingField(F_number, R0, wavelength, pulseLength, phase, totalPower, edgeSmoothingAngle)
+    
+    def setField_(grid):
+        grid.set(tightFocusing)
+        
+    setField = setField_
+
+
+createSphericalPulseC()

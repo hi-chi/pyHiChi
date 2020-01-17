@@ -26,6 +26,7 @@
 #include "Thinning.h"
 
 #include "Mapping.h"
+#include "TightFocusingField.h"
 
 
 namespace py = pybind11;
@@ -196,6 +197,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("setJt", &pyYeeGrid::setJxyzt)
         .def("setEt", &pyYeeGrid::setExyzt)
         .def("setBt", &pyYeeGrid::setBxyzt)
+		.def("set", &pyYeeGrid::setFieldConfiguration)
         .def("analytical", &pyYeeGrid::setAnalytical)
         .def("setTime", &pyYeeGrid::setTime)
         ;
@@ -236,6 +238,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("setJt", &pyPSTDGrid::setJxyzt)
         .def("setEt", &pyPSTDGrid::setExyzt)
         .def("setBt", &pyPSTDGrid::setBxyzt)
+		.def("set", &pyPSTDGrid::setFieldConfiguration)
         .def("analytical", &pyPSTDGrid::setAnalytical)
         .def("setTime", &pyPSTDGrid::setTime)
         ;
@@ -268,6 +271,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("setJt", &pyPSATDGrid::setJxyzt)
         .def("setEt", &pyPSATDGrid::setExyzt)
         .def("setBt", &pyPSATDGrid::setBxyzt)
+		.def("set", &pyPSATDGrid::setFieldConfiguration)
         .def("analytical", &pyPSATDGrid::setAnalytical)
         .def("setTime", &pyPSATDGrid::setTime)
         ;
@@ -335,6 +339,14 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords)
         ;
 
+	py::class_<FieldConfiguration>(object, "FieldConfiguration")
+		.def("getE", &FieldConfiguration::E)
+		.def("getB", &FieldConfiguration::B)
+		;
+
+
+	// tight focusing
+
     py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
         .def(py::init<FP, FP, FP, FP>())
         .def(py::init<FP, FP, FP>())
@@ -343,5 +355,11 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getxMin", &TightFocusingMapping::getxMin)
         .def("getxMax", &TightFocusingMapping::getxMax)
         ;
+
+	py::class_<TightFocusingField, FieldConfiguration>(object, "TightFocusingField")
+		.def(py::init<FP, FP, FP, FP, FP, FP, FP>())
+		.def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3>())
+		.def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3, FP>())
+		;
 
 }
