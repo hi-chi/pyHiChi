@@ -1,5 +1,6 @@
 import sys
 import os
+sys.path.append("../../build/src/pyHiChi/Release")
 import pyHiChi as hichi
 import tight_focusing_fields as sphericalPulse
 import tight_focusing_write_file as fileWriter
@@ -67,9 +68,7 @@ for f_number in F_number_arr:
     
     mapping.setTime(0.0)
 
-    fieldFuncs = sphericalPulse.getFieldFuncs()
-    grid.setE(fieldFuncs[0][0], fieldFuncs[0][1], fieldFuncs[0][2])
-    grid.setB(fieldFuncs[1][0], fieldFuncs[1][1], fieldFuncs[1][2])
+    sphericalPulse.setField(grid)
     
     fileWriter.writeOX(grid, updateFields, minCoords, maxCoords, NxFull, maxIter=maxIter, dumpIter=maxIter,\
         fileName = "res_F_number_"+str(f_number)+"_iter_%d.csv", dirResult = DIR_RESULT, ifWriteZeroIter = False)
