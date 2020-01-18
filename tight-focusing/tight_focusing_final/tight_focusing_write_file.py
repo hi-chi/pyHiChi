@@ -1,10 +1,12 @@
 import sys
 import os
-sys.path.append("../../build/src/pyHiChi/Release")
 import pyHiChi as hichi
 import numpy as np
 
-def write(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160, dumpIter = 20, fileName = "res_x_%d.csv", dirResult = "./results/"):
+
+# run and write |E| to file, XOY plane
+def writeXOY(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160, dumpIter = 20,
+    fileName = "res_x_%d.csv", dirResult = "./results/"):
     
     x = np.arange(minCoords.x, maxCoords.x, (maxCoords.x - minCoords.x)/Nx)
     y = np.arange(minCoords.y, maxCoords.y, (maxCoords.y - minCoords.y)/Ny)
@@ -19,7 +21,6 @@ def write(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160, d
         return field
     
     for iter in range(maxIter + 1):
-        print("\r %d" % iter),
         update()
         if (iter % dumpIter == 0):
             field = getFields(grid)
@@ -28,9 +29,9 @@ def write(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160, d
                     for i in range(Nx):
                         file.write(str(field[j, i])+";")
                     file.write("\n")  
-    print
 
 
+# run and write |E| to file, OX axis
 def writeOX(grid, update, minCoords, maxCoords, Nx = 300, maxIter=160, dumpIter = 20, fileName = "res_x_%d.csv",\
     dirResult = "./results/", ifWriteZeroIter = True):
     
@@ -51,5 +52,4 @@ def writeOX(grid, update, minCoords, maxCoords, Nx = 300, maxIter=160, dumpIter 
             with open(dirResult + fileName % iter, "w") as file:
                 for i in range(Nx):
                     file.write(str(field[i])+"\n")  
-    print
 

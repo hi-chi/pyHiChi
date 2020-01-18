@@ -1,6 +1,5 @@
 import sys
 import os
-sys.path.append("../../build/src/pyHiChi/Release")
 import pyHiChi as hichi
 import math as ma
 import matplotlib
@@ -10,20 +9,20 @@ import matplotlib.ticker as ticker
 import numpy as np
 import hichi_primitives
 
-Nx = 300
-Ny = 300
+Nx = None
+Ny = None
 
-minCoords = hichi.vector3d(0, 0, 0)
-maxCoords = hichi.vector3d(1, 1, 1)
+minCoords = None
+maxCoords = None
 
-x = np.arange(minCoords.x, maxCoords.x, (maxCoords.x - minCoords.x)/Nx)
-y = np.arange(minCoords.y, maxCoords.y, (maxCoords.y - minCoords.y)/Ny)
+x = None
+y = None
+
+vmin = None
+vmax = None
 
 fig = plt.figure()
 matplotlib.rcParams.update({"font.size" : 17})
-
-vmin = 0
-vmax = 0
 
 
 def createFieldAx(a, b, c, text):
@@ -43,8 +42,11 @@ def createFieldAx(a, b, c, text):
     return im
 
 
+# should be called first
 def initVisual(minCoords_, maxCoords_, Nx_ = 300, Ny_ = 300, vmax_ = 5*10**8, vmin_ = 0):
    global x, y, Nx, Ny, minCoords, maxCoords, fig, vmax, vmin
+   fig.clf()
+   fig = plt.figure()
    Nx = Nx_
    Ny = Ny_
    minCoords = minCoords_
@@ -65,6 +67,7 @@ def getFields(grid):
     return field
 
 
+# animate
 def animate(grid, update, maxIter=160):
 
     im = createFieldAx(1, 1, 1, "|E|")
@@ -83,6 +86,7 @@ def animate(grid, update, maxIter=160):
     plt.show()
 
 
+# save pictures
 def savePictures(grid, update, maxIter=160, dirResult = "./pictures/"):
     
     im = createFieldAx(1, 1, 1, "|E|")
@@ -92,13 +96,13 @@ def savePictures(grid, update, maxIter=160, dirResult = "./pictures/"):
     
     field = getFields(grid)
     im.set_array(field)
-    plt.savefig(dirResult + 'field0000.png', dpi=1000)
+    plt.savefig(dirResult + 'field0000.png', dpi=500)
 
     for i in range(maxIter):
         update()
         field = getFields(grid)
         im.set_array(field)
-        plt.savefig(dirResult + 'field%04d.png' % (i+1), dpi=1000)
+        plt.savefig(dirResult + 'field%04d.png' % (i+1), dpi=500)
 
       
     

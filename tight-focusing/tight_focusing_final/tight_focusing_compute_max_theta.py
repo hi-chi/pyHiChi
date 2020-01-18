@@ -4,6 +4,7 @@ import os
 import pyHiChi as hichi
 import tight_focusing_fields as sphericalPulse
 import tight_focusing_write_file as fileWriter
+import tight_focusing_show as visual
 import math as ma
 import numpy as np
 import hichi_primitives
@@ -15,6 +16,8 @@ factor = 1
 Nx = 32*factor
 NxFull = 320*factor
 gridSize = hichi.vector3d(Nx, factor*256, factor*256)
+
+sphericalPulse.createSphericalPulseC()
 
 timeStep = 1*sphericalPulse.wavelength/hichi.c
 maxIter = 16
@@ -50,7 +53,7 @@ F_number_arr = 1.0/(2.0 * np.tan(thetaArr))
 #------- run -----------------------------
 
 
-hichi_primitives.createDir(DIR_RESULT)
+#hichi_primitives.createDir(DIR_RESULT)
 
 ifCut = True
 grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep, mapping, ifCut)
@@ -72,36 +75,35 @@ for f_number in F_number_arr:
     
     fileWriter.writeOX(grid, updateFields, minCoords, maxCoords, NxFull, maxIter=maxIter, dumpIter=maxIter,\
         fileName = "res_F_number_"+str(f_number)+"_iter_%d.csv", dirResult = DIR_RESULT, ifWriteZeroIter = False)
-    
-    
+
     
 #-------- plot ------------------
 
-# import matplotlib.pyplot as plt
-# import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
-# arrPlotMax = []
-# arrPlotX = []
+arrPlotMax = []
+arrPlotX = []
 
-# for f_number in F_number_arr:
+for f_number in F_number_arr:
  
-    # data = []
-    # with open(DIR_RESULT + "res_F_number_"+str(f_number)+"_iter_%d.csv" % maxIter, "r") as file:
-        # lines = file.readlines()
-        # for line in lines:
-            # data.append(float(line))
+    data = []
+    with open(DIR_RESULT + "res_F_number_"+str(f_number)+"_iter_%d.csv" % maxIter, "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            data.append(float(line))
     
-    # m = max(data)
-    # arrPlotMax.append(m)
-    # arrPlotX.append(minCoords.x + data.index(m) * ((maxCoords.x - minCoords.x) / NxFull))
+    m = max(data)
+    arrPlotMax.append(m)
+    arrPlotX.append(minCoords.x + data.index(m) * ((maxCoords.x - minCoords.x) / NxFull))
 
-# fig = plt.figure()
-# plt.plot(F_number_arr, arrPlotMax, "*-")
-# plt.savefig(DIR_RESULT + "max.png")
+fig = plt.figure()
+plt.plot(F_number_arr, arrPlotMax, "*-")
+plt.savefig(DIR_RESULT + "max.png")
 
-# fig = plt.figure()
-# plt.plot(F_number_arr, arrPlotX, "*-")
-# plt.savefig(DIR_RESULT + "xMax.png")
+fig = plt.figure()
+plt.plot(F_number_arr, arrPlotX, "*-")
+plt.savefig(DIR_RESULT + "xMax.png")
 
 
 

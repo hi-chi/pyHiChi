@@ -4,10 +4,17 @@ import pyHiChi as pfc
 from hichi_primitives import *
 
 
-setField = None  # set field for grid, is defined below
+# Spherical wave can be created by two ways: from Python and from C++
+# C++ is faster
+# To create spherical wave from Python, call 'createSphericalPulsePython' (defined below)
+# To create spherical wave from C++, call 'createSphericalPulseC' (defined below)
 
 
-# --------- parameters of spherical wave, can be defined by calling any fuction below ------------------------------
+setField = None  # set field for grid, it can be defined by calling any function below
+                 # this function is main, it should be called from other python scripts
+
+
+# --------- parameters of spherical wave, can be defined by calling any function below ------------------------------
 
 # constants and units
 TW = 1e+12 * 1e+7  # erg/s
@@ -170,6 +177,3 @@ def createSphericalPulseC(F_number_ = 0.3, R0_ = 16e-4, wavelength_ = 1e-4, puls
         grid.set(tightFocusing)
         
     setField = setField_
-
-
-createSphericalPulseC()
