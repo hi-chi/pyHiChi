@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.append("../../build/src/pyHiChi/Release")
+#sys.path.append("../../build/src/pyHiChi/Release")
 import pyHiChi as hichi
 import tight_focusing_fields as sphericalPulse
 import tight_focusing_write_file as fileWriter

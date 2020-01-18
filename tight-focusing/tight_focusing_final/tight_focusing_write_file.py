@@ -21,8 +21,8 @@ def write(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160, d
     for iter in range(maxIter + 1):
         print("\r %d" % iter),
         update()
-        field = getFields(grid)
         if (iter % dumpIter == 0):
+            field = getFields(grid)
             with open(dirResult + fileName % iter, "w") as file:
                 for j in range(Ny):
                     for i in range(Nx):
