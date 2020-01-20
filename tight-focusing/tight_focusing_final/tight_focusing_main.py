@@ -33,14 +33,14 @@ D = 2*sphericalPulse.pulseLength                   # width of band
                                                    # just set D = maxCoords.x - minCoords.x
                                                    
                                                    
-# creating of usual mapping 
+# creating of mapping 
 mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D)
 
 # creating of mapping with cutting at angle
 #cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
 #mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
 
-xMin = mapping.getxMin()  # bounds if the band
+xMin = mapping.getxMin()  # bounds of the band
 xMax = mapping.getxMax()
 
 # computing of step of grid
@@ -87,16 +87,16 @@ def updateFields():
 # ----------- run and save pictures for every iteration ----------------------
 initialize()
 visual.initVisual(minCoords, maxCoords, NxFull*2, Ny*2)
-visual.savePictures(grid, updateFields, maxIter=maxIter, dirResult = dirResult)
+visual.savePictures(grid, updateFields, maxIter=maxIter, dirResult = dirResult)  # DELETE OLD FILES IN dirResult!!!
 
 # ----------- run and save results 2d in .csv files --------------------------
 #initialize()
-#hichi_primitives.createDir("./2d_main/")
+#hichi_primitives.createDir("./2d_main/")  # DELETE OLD FILES IN ./2d_main/!!!
 #fileWriter.writeXOY(grid, updateFields, minCoords, maxCoords, NxFull*2, Ny*2, maxIter = maxIter, dumpIter = 1, dirResult = "./2d_main/")
 
 # ----------- run and save results 1d in .csv files --------------------------
 #initialize()
-#hichi_primitives.createDir("./1d_main/")
+#hichi_primitives.createDir("./1d_main/")  # DELETE OLD FILES IN ./1d_main/!!!
 #fileWriter.writeOX(grid, updateFields, minCoords, maxCoords, NxFull*2, maxIter = maxIter, dumpIter = 1, dirResult = "./1d_main/")
 
 

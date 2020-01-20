@@ -19,8 +19,8 @@ gridSize = hichi.vector3d(Nx, factor*256, factor*256)
 
 sphericalPulse.createSphericalPulseC()
 
-timeStep = 1*sphericalPulse.wavelength/hichi.c
-maxIter = 16
+timeStep = 2*sphericalPulse.wavelength/hichi.c
+maxIter = 12
 
 NFNumber = 20
 
@@ -31,8 +31,8 @@ mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLeng
 xMin = mapping.getxMin()
 xMax = mapping.getxMax()
 
-minCoords = hichi.vector3d(-20e-4, -20e-4, -20e-4)
-maxCoords = hichi.vector3d(20e-4, 20e-4, 20e-4)
+minCoords = hichi.vector3d(-25e-4, -25e-4, -25e-4)
+maxCoords = hichi.vector3d(25e-4, 25e-4, 25e-4)
 
 gridMinCoords = hichi.vector3d(xMin, minCoords.y, minCoords.z)
 gridMaxCoords = hichi.vector3d(xMax, maxCoords.y, maxCoords.z)
@@ -53,7 +53,7 @@ F_number_arr = 1.0/(2.0 * np.tan(thetaArr))
 #------- run -----------------------------
 
 
-#hichi_primitives.createDir(DIR_RESULT)
+hichi_primitives.createDir(DIR_RESULT)  # DELETE OLD FILES IN DIR_RESULT!!!
 
 ifCut = True
 grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep, mapping, ifCut)
@@ -74,8 +74,8 @@ for f_number in F_number_arr:
     sphericalPulse.setField(grid)
     
     fileWriter.writeOX(grid, updateFields, minCoords, maxCoords, NxFull, maxIter=maxIter, dumpIter=maxIter,\
-        fileName = "res_F_number_"+str(f_number)+"_iter_%d.csv", dirResult = DIR_RESULT, ifWriteZeroIter = False)
-
+        fileName = "res_F_number_"+str(f_number)[:5]+"_iter_%d.csv", dirResult = DIR_RESULT, ifWriteZeroIter = False)
+        
     
 #-------- plot ------------------
 
@@ -88,7 +88,7 @@ arrPlotX = []
 for f_number in F_number_arr:
  
     data = []
-    with open(DIR_RESULT + "res_F_number_"+str(f_number)+"_iter_%d.csv" % maxIter, "r") as file:
+    with open(DIR_RESULT + "res_F_number_"+str(f_number)[:5]+"_iter_%d.csv" % maxIter, "r") as file:
         lines = file.readlines()
         for line in lines:
             data.append(float(line))
@@ -98,12 +98,23 @@ for f_number in F_number_arr:
     arrPlotX.append(minCoords.x + data.index(m) * ((maxCoords.x - minCoords.x) / NxFull))
 
 fig = plt.figure()
-plt.plot(F_number_arr, arrPlotMax, "*-")
+plt.plot(F_number_arr, arrPlotMax, "-o")
+plt.xlabel('F_number')
+plt.ylabel('max |E|')
+plt.grid()
+fig.tight_layout()
 plt.savefig(DIR_RESULT + "max.png")
 
 fig = plt.figure()
-plt.plot(F_number_arr, arrPlotX, "*-")
+plt.plot(F_number_arr, arrPlotX, "-o")
+plt.xlabel('F_number')
+plt.ylabel('x_max')
+plt.grid()
+fig.tight_layout()
 plt.savefig(DIR_RESULT + "xMax.png")
+
+print(F_number_arr[arrPlotMax.index(max(arrPlotMax))], max(arrPlotMax), arrPlotX[arrPlotMax.index(max(arrPlotMax))])
+
 
 
 
