@@ -1,5 +1,4 @@
 import sys
-sys.path.append("./../../build/src/pyHiChi/Release")
 import pyHiChi as pfc
 from hichi_primitives import *
 

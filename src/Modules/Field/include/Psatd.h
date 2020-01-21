@@ -318,16 +318,15 @@ namespace pfc {
 
 					ComplexFP3 kEcross = cross((ComplexFP3)K, E), kBcross = cross((ComplexFP3)K, B),
 						kJcross = cross((ComplexFP3)K, J);
-					ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J), El = ComplexFP3(0.0, 0.0, 0.0);
+					ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J), El = (ComplexFP3)K * dot((ComplexFP3)K, E);
 
 					FP S = sin(normK*constants::c*dt), C = cos(normK*constants::c*dt);
 
-					complexFP coef1E = S * complexFP::i(), coef2E = -S / (normK*constants::c),
-						coef3E = S / (normK*constants::c) - dt;
+					complexFP coef1E = S * complexFP::i(), coef2E = -S / (normK*constants::c);
 
-					complexGrid->Ex(i, j, k) = C * E.x + coef1E * kBcross.x + (1 - C) * El.x + coef2E * J.x + coef3E * Jl.x;
-					complexGrid->Ey(i, j, k) = C * E.y + coef1E * kBcross.y + (1 - C) * El.y + coef2E * J.y + coef3E * Jl.y;
-					complexGrid->Ez(i, j, k) = C * E.z + coef1E * kBcross.z + (1 - C) * El.z + coef2E * J.z + coef3E * Jl.z;
+					complexGrid->Ex(i, j, k) = C * (E.x - El.x) + coef1E * kBcross.x + coef2E * (J.x - Jl.x);
+					complexGrid->Ey(i, j, k) = C * (E.y - El.y) + coef1E * kBcross.y + coef2E * (J.y - Jl.y);
+					complexGrid->Ez(i, j, k) = C * (E.z - El.z) + coef1E * kBcross.z + coef2E * (J.z - Jl.z);
 
 					complexFP coef1B = -S * complexFP::i(), coef2B = ((1 - C) / (normK*constants::c))*complexFP::i();
 
