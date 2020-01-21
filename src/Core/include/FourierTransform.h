@@ -43,7 +43,7 @@ namespace pfc
                 }
         }
 
-        template<typename GridTypes gridType>
+        template<GridTypes gridType>
         void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP)
         {
             size = gridFP->numCells;

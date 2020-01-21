@@ -459,6 +459,7 @@ namespace pfc {
     {
     }
 
+    template<>
     inline bool Grid<complexFP, GridTypes::PSTDGridType>::setTimeStep(FP _dt)
     {
         double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
@@ -495,6 +496,7 @@ namespace pfc {
         setInterpolationType(Interpolation_CIC);
     }
 
+    template<>
     inline bool Grid<FP, GridTypes::PSTDGridType>::setTimeStep(FP _dt)
     {
         double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));

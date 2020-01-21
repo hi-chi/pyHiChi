@@ -114,7 +114,7 @@ namespace pfc {
         {
             complexGrid = new Grid<complexFP, gridType>(FourierTransform::getSizeOfComplex(_grid->numCells),
                 _grid->dt, FourierTransform::getSizeOfComplex(_grid->globalGridDims));
-            fourierTransform.initialize<gridType>(grid, complexGrid);
+            fourierTransform.initialize<gridType>(_grid, complexGrid);
         }
 
         ~SpectralFieldSolver() {
