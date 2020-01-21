@@ -24,7 +24,7 @@ def writeXOY(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160
         update()
         if (iter % dumpIter == 0):
             field = getFields(grid)
-            with open(dirResult + fileName % iter, "w") as file:
+            with open(dirResult + "/" + fileName % iter, "w") as file:
                 for j in range(Ny):
                     for i in range(Nx):
                         file.write(str(field[j, i])+";")
@@ -49,7 +49,7 @@ def writeOX(grid, update, minCoords, maxCoords, Nx = 300, maxIter=160, dumpIter 
         update()
         if ((iter == 0 and ifWriteZeroIter) or (iter != 0 and iter % dumpIter == 0)):
             field = getFields(grid)
-            with open(dirResult + fileName % iter, "w") as file:
+            with open(dirResult + "/" + fileName % iter, "w") as file:
                 for i in range(Nx):
                     file.write(str(field[i])+"\n")  
 

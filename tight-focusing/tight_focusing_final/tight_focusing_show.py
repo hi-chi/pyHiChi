@@ -5,7 +5,6 @@ import math as ma
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import matplotlib.ticker as ticker
 import numpy as np
 import hichi_primitives
 
@@ -21,7 +20,7 @@ y = None
 vmin = None
 vmax = None
 
-fig = plt.figure()
+fig = None
 matplotlib.rcParams.update({"font.size" : 17})
 
 
@@ -32,10 +31,6 @@ def createFieldAx(a, b, c, text):
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.tick_params(axis='both', which='major')
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(0.001))
-    ax.xaxis.set_minor_locator(ticker.MultipleLocator(0.0005))
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(0.001))
-    ax.yaxis.set_minor_locator(ticker.MultipleLocator(0.0005))
     im = ax.imshow(field, cmap='RdBu', interpolation='none', extent=(minCoords.x, maxCoords.x, minCoords.y, maxCoords.y),\
         animated = True, aspect='auto', vmax=vmax, vmin=vmin)
     fig.colorbar(im, ax=ax)
@@ -43,9 +38,9 @@ def createFieldAx(a, b, c, text):
 
 
 # should be called first
-def initVisual(minCoords_, maxCoords_, Nx_ = 300, Ny_ = 300, vmax_ = 5*10**8, vmin_ = 0):
+def initVisual(minCoords_, maxCoords_, Nx_ = 300, Ny_ = 300, vmax_ = 0.5, vmin_ = 0):
    global x, y, Nx, Ny, minCoords, maxCoords, fig, vmax, vmin
-   fig.clf()
+   if (not fig == None): fig.clf()
    fig = plt.figure()
    Nx = Nx_
    Ny = Ny_
@@ -87,7 +82,7 @@ def animate(grid, update, maxIter=160):
 
 
 # save pictures
-def savePictures(grid, update, maxIter=160, dirResult = "./pictures/"):
+def savePictures(grid, update, maxIter=160, dirResult = "./pictures/", dpi = 500):
     
     im = createFieldAx(1, 1, 1, "|E|")
     fig.tight_layout()
@@ -96,13 +91,13 @@ def savePictures(grid, update, maxIter=160, dirResult = "./pictures/"):
     
     field = getFields(grid)
     im.set_array(field)
-    plt.savefig(dirResult + 'field0000.png', dpi=500)
+    plt.savefig(dirResult + '/field0000.png', dpi=500)
 
     for i in range(maxIter):
         update()
         field = getFields(grid)
         im.set_array(field)
-        plt.savefig(dirResult + 'field%04d.png' % (i+1), dpi=500)
+        plt.savefig(dirResult + '/field%04d.png' % (i+1), dpi=dpi)
 
       
     

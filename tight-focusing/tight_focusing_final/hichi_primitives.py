@@ -61,5 +61,5 @@ def createDir(dir):
     if (os.path.exists(dir)): 
         for (dirpath, dirnames, filenames) in os.walk(dir):
             for file in filenames:
-                os.remove(dir + file)
+                os.remove(dir + "/" + file)
     else: os.mkdir(dir)
