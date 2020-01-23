@@ -1,38 +1,38 @@
 import sys
 import os
-#sys.path.append("../../build/src/pyHiChi/Release")
 import pyHiChi as hichi
 import tight_focusing_fields as sphericalPulse
 import tight_focusing_write_file as fileWriter
-import tight_focusing_show as visual
 import math as ma
 import numpy as np
 import hichi_primitives
 
 DIR_SCRIPT = os.path.abspath("./").replace("\\", "/")
-DIR_RESULT = DIR_SCRIPT+"/results/"
+DIR_RESULT = DIR_SCRIPT+"/results_theta/"
 
 factor = 1
 Nx = 32*factor
 NxFull = 320*factor
-gridSize = hichi.vector3d(Nx, factor*256, factor*256)
+Ny = factor*256
+Nz = factor*256
+gridSize = hichi.vector3d(Nx, Ny, Nz)
 
 sphericalPulse.createSphericalPulseC()
 
-timeStep = 2*sphericalPulse.wavelength/hichi.c
-maxIter = 12
+timeStep = sphericalPulse.getDtCGS(16)
+maxIter = 1
 
 NFNumber = 20
 
-D = 2*sphericalPulse.pulseLength
+D = 2*sphericalPulse.pulselength
 
-mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D)
+mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
 
 xMin = mapping.getxMin()
 xMax = mapping.getxMax()
 
-minCoords = hichi.vector3d(-25e-4, -25e-4, -25e-4)
-maxCoords = hichi.vector3d(25e-4, 25e-4, 25e-4)
+minCoords = hichi.vector3d(-20, -20, -20)
+maxCoords = hichi.vector3d(20, 20, 20)
 
 gridMinCoords = hichi.vector3d(xMin, minCoords.y, minCoords.z)
 gridMaxCoords = hichi.vector3d(xMax, maxCoords.y, maxCoords.z)
@@ -44,10 +44,7 @@ gridStep = hichi.vector3d((gridMaxCoords.x - gridMinCoords.x) / gridSize.x, \
 thetaMax = ma.pi * 0.5 - 2*sphericalPulse.edgeSmoothingAngle
 thetaMin = 2*sphericalPulse.edgeSmoothingAngle
 thetaArr = np.arange(thetaMin, thetaMax, (thetaMax - thetaMin)/NFNumber)
-F_number_min = 1.0/(2.0 * ma.tan(thetaMax))
-F_number_max = 1.0/(2.0 * ma.tan(thetaMin))
 F_number_arr = 1.0/(2.0 * np.tan(thetaArr))
-#F_number_arr = np.arange(F_number_min, F_number_max, (F_number_max - F_number_min)/NFNumber)
 
 
 #------- run -----------------------------
@@ -65,14 +62,16 @@ def updateFields():
     mapping.advanceTime(timeStep)
     fieldSolver.updateFields()
 
-for f_number in F_number_arr:
+for theta in thetaArr:
+
+    f_number = 1.0/(2.0 * ma.tan(theta))
 
     sphericalPulse.createSphericalPulseC(F_number_ = f_number)
     
     mapping.setTime(0.0)
 
     sphericalPulse.setField(grid)
-    
+
     fileWriter.writeOX(grid, updateFields, minCoords, maxCoords, NxFull, maxIter=maxIter, dumpIter=maxIter,\
         fileName = "res_F_number_"+str(f_number)[:5]+"_iter_%d.csv", dirResult = DIR_RESULT, ifWriteZeroIter = False)
         

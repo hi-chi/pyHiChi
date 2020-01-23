@@ -6,7 +6,7 @@ import numpy as np
 
 # run and write |E| to file, XOY plane
 def writeXOY(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160, dumpIter = 20,
-    fileName = "res_x_%d.csv", dirResult = "./results/"):
+    fileName = "res_x_%d.csv", dirResult = "./results/", ifWriteZeroIter = True):
     
     x = np.arange(minCoords.x, maxCoords.x, (maxCoords.x - minCoords.x)/Nx)
     y = np.arange(minCoords.y, maxCoords.y, (maxCoords.y - minCoords.y)/Ny)
@@ -19,16 +19,22 @@ def writeXOY(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160
                 E = grid.getE(coordXY)
                 field[iy, ix] = E.norm()
         return field
+        
+    def write(grid, iter):
+        field = getFields(grid)
+        with open(dirResult + "/" + fileName % iter, "w") as file:
+            for j in range(Ny):
+                for i in range(Nx):
+                    file.write(str(field[j, i])+";")
+                file.write("\n")
+                
+    if (ifWriteZeroIter):
+        write(grid, iter)
     
-    for iter in range(maxIter + 1):
+    for iter in range(1, maxIter + 1):
         update()
         if (iter % dumpIter == 0):
-            field = getFields(grid)
-            with open(dirResult + "/" + fileName % iter, "w") as file:
-                for j in range(Ny):
-                    for i in range(Nx):
-                        file.write(str(field[j, i])+";")
-                    file.write("\n")  
+            write(grid, iter)
 
 
 # run and write |E| to file, OX axis
@@ -44,12 +50,18 @@ def writeOX(grid, update, minCoords, maxCoords, Nx = 300, maxIter=160, dumpIter 
             E = grid.getE(coordXY)
             field[ix] = E.norm()
         return field
+        
+    def write(grid, iter):
+        field = getFields(grid)
+        with open(dirResult + "/" + fileName % (iter), "w") as file:
+            for i in range(Nx):
+                file.write(str(field[i])+"\n")
+        
+    if (ifWriteZeroIter):
+        write(grid, iter)
 
-    for iter in range(maxIter + 1):
+    for iter in range(1, maxIter + 1):
         update()
-        if ((iter == 0 and ifWriteZeroIter) or (iter != 0 and iter % dumpIter == 0)):
-            field = getFields(grid)
-            with open(dirResult + "/" + fileName % iter, "w") as file:
-                for i in range(Nx):
-                    file.write(str(field[i])+"\n")  
+        if (iter % dumpIter == 0):
+            write(grid, iter)
 
