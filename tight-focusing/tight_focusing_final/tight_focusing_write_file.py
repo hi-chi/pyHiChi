@@ -29,7 +29,7 @@ def writeXOY(grid, update, minCoords, maxCoords, Nx = 300, Ny = 300, maxIter=160
                 file.write("\n")
                 
     if (ifWriteZeroIter):
-        write(grid, iter)
+        write(grid, 0)
     
     for iter in range(1, maxIter + 1):
         update()
@@ -58,7 +58,7 @@ def writeOX(grid, update, minCoords, maxCoords, Nx = 300, maxIter=160, dumpIter 
                 file.write(str(field[i])+"\n")
         
     if (ifWriteZeroIter):
-        write(grid, iter)
+        write(grid, 0)
 
     for iter in range(1, maxIter + 1):
         update()
