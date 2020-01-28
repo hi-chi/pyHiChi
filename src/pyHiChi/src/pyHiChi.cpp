@@ -26,7 +26,39 @@
 #include "Thinning.h"
 
 #include "Mapping.h"
+#include "TightFocusingMapping.h"
 #include "TightFocusingField.h"
+
+
+#define SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType) \
+    .def("set", &pyGridType::setFieldConfiguration<NullField>) \
+    .def("set", &pyGridType::setFieldConfiguration<TightFocusingField>)    
+
+
+#define SET_METHODS_FOR_PY_GRID(pyGridType) \
+    .def(py::init<FP3, FP, FP3, FP3>()) \
+    .def("getFields", &pyGridType::getFields) \
+    .def("getJ", &pyGridType::getJ) \
+    .def("getE", &pyGridType::getE) \
+    .def("getB", &pyGridType::getB) \
+    .def("setJ", &pyGridType::setJ) \
+    .def("setE", &pyGridType::setE) \
+    .def("setB", &pyGridType::setB) \
+    .def("setJ", &pyGridType::pySetJ) \
+    .def("setE", &pyGridType::pySetE) \
+    .def("setB", &pyGridType::pySetB) \
+    .def("setJ", &pyGridType::setJxyz) \
+    .def("setE", &pyGridType::setExyz) \
+    .def("setB", &pyGridType::setBxyz) \
+    .def("setJ", &pyGridType::pySetJxyz) \
+    .def("setE", &pyGridType::pySetExyz) \
+    .def("setB", &pyGridType::pySetBxyz) \
+    .def("setJt", &pyGridType::setJxyzt) \
+    .def("setEt", &pyGridType::setExyzt) \
+    .def("setBt", &pyGridType::setBxyzt) \
+    SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType) \
+    .def("analytical", &pyGridType::setAnalytical) \
+    .def("setTime", &pyGridType::setTime)
 
 
 namespace py = pybind11;
@@ -176,34 +208,13 @@ PYBIND11_MODULE(pyHiChi, object) {
     object.def("energyConservativeThinning", &Thinning<ParticleArray3d>::energyConservative);
     object.def("kMeansMergining", &Merging<ParticleArray3d>::merge_with_kmeans);
 
-    py::class_<pyYeeGrid>(object, "YeeGrid")
-        .def(py::init<FP3, FP, FP3, FP3>())
-        .def("getFields", &pyYeeGrid::getFields)
-        .def("getJ", &pyYeeGrid::getJ)
-        .def("getE", &pyYeeGrid::getE)
-        .def("getB", &pyYeeGrid::getB)
-        .def("setJ", &pyYeeGrid::setJ)
-        .def("setE", &pyYeeGrid::setE)
-        .def("setB", &pyYeeGrid::setB)
-        .def("setJ", &pyYeeGrid::pySetJ)
-        .def("setE", &pyYeeGrid::pySetE)
-        .def("setB", &pyYeeGrid::pySetB)
-        .def("setJ", &pyYeeGrid::setJxyz)
-        .def("setE", &pyYeeGrid::setExyz)
-        .def("setB", &pyYeeGrid::setBxyz)
-        .def("setJ", &pyYeeGrid::pySetJxyz)
-        .def("setE", &pyYeeGrid::pySetExyz)
-        .def("setB", &pyYeeGrid::pySetBxyz)
-        .def("setJt", &pyYeeGrid::setJxyzt)
-        .def("setEt", &pyYeeGrid::setExyzt)
-        .def("setBt", &pyYeeGrid::setBxyzt)
-		.def("set", &pyYeeGrid::setFieldConfiguration)
-        .def("analytical", &pyYeeGrid::setAnalytical)
-        .def("setTime", &pyYeeGrid::setTime)
-        ;
+	py::class_<pyYeeGrid>(object, "YeeGrid")
+		SET_METHODS_FOR_PY_GRID(pyYeeGrid)
+		;
 
     py::class_<FDTD>(object, "FDTD")
         .def(py::init<pyYeeGrid*>())
+		.def(py::init<pyYeeGridMapping*>())
         .def("setPML", &FDTD::setPML)
         .def("setBC", &FDTD::setFieldGenerator)
         .def("updateHalfB", &FDTD::updateHalfB)
@@ -218,66 +229,24 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<pyPSTDGrid>(object, "PSTDGrid")
-        .def(py::init<FP3, FP, FP3, FP3>())
-        .def("getFields", &pyPSTDGrid::getFields)
-        .def("getJ", &pyPSTDGrid::getJ)
-        .def("getE", &pyPSTDGrid::getE)
-        .def("getB", &pyPSTDGrid::getB)
-        .def("setJ", &pyPSTDGrid::setJ)
-        .def("setE", &pyPSTDGrid::setE)
-        .def("setB", &pyPSTDGrid::setB)
-        .def("setJ", &pyPSTDGrid::pySetJ)
-        .def("setE", &pyPSTDGrid::pySetE)
-        .def("setB", &pyPSTDGrid::pySetB)
-        .def("setJ", &pyPSTDGrid::setJxyz)
-        .def("setE", &pyPSTDGrid::setExyz)
-        .def("setB", &pyPSTDGrid::setBxyz)
-        .def("setJ", &pyPSTDGrid::pySetJxyz)
-        .def("setE", &pyPSTDGrid::pySetExyz)
-        .def("setB", &pyPSTDGrid::pySetBxyz)
-        .def("setJt", &pyPSTDGrid::setJxyzt)
-        .def("setEt", &pyPSTDGrid::setExyzt)
-        .def("setBt", &pyPSTDGrid::setBxyzt)
-		.def("set", &pyPSTDGrid::setFieldConfiguration)
-        .def("analytical", &pyPSTDGrid::setAnalytical)
-        .def("setTime", &pyPSTDGrid::setTime)
+        SET_METHODS_FOR_PY_GRID(pyPSTDGrid)
         ;
 
     py::class_<PSTD>(object, "PSTD")
         .def(py::init<pyPSTDGrid*>())
+		.def(py::init<pyPSTDGridMapping*>())
         .def("setPML", &PSTD::setPML)
         .def("updateFields", &PSTD::updateFields)
         .def("setTimeStep", &PSTD::setTimeStep)
         ;
 
     py::class_<pyPSATDGrid>(object, "PSATDGrid")
-        .def(py::init<FP3, FP, FP3, FP3>())
-        .def("getFields", &pyPSATDGrid::getFields)
-        .def("getJ", &pyPSATDGrid::getJ)
-        .def("getE", &pyPSATDGrid::getE)
-        .def("getB", &pyPSATDGrid::getB)
-        .def("setJ", &pyPSATDGrid::setJ)
-        .def("setE", &pyPSATDGrid::setE)
-        .def("setB", &pyPSATDGrid::setB)
-        .def("setJ", &pyPSATDGrid::pySetJ)
-        .def("setE", &pyPSATDGrid::pySetE)
-        .def("setB", &pyPSATDGrid::pySetB)
-        .def("setJ", &pyPSATDGrid::setJxyz)
-        .def("setE", &pyPSATDGrid::setExyz)
-        .def("setB", &pyPSATDGrid::setBxyz)
-        .def("setJ", &pyPSATDGrid::pySetJxyz)
-        .def("setE", &pyPSATDGrid::pySetExyz)
-        .def("setB", &pyPSATDGrid::pySetBxyz)
-        .def("setJt", &pyPSATDGrid::setJxyzt)
-        .def("setEt", &pyPSATDGrid::setExyzt)
-        .def("setBt", &pyPSATDGrid::setBxyzt)
-		.def("set", &pyPSATDGrid::setFieldConfiguration)
-        .def("analytical", &pyPSATDGrid::setAnalytical)
-        .def("setTime", &pyPSATDGrid::setTime)
+		SET_METHODS_FOR_PY_GRID(pyPSATDGrid)
         ;
 
     py::class_<PSATD>(object, "PSATD")
         .def(py::init<pyPSATDGrid*>())
+		.def(py::init<pyPSATDGridMapping*>())
         .def("setPML", &PSATD::setPML)
         .def("updateFields", &PSATD::updateFields)
         .def("setTimeStep", &PSATD::setTimeStep)
@@ -285,6 +254,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 
 	py::class_<PSATDWithPoisson>(object, "PSATDWithPoisson")
 		.def(py::init<pyPSATDGrid*>())
+		.def(py::init<pyPSATDGridMapping*>())
 		.def("setPML", &PSATDWithPoisson::setPML)
 		.def("updateFields", &PSATDWithPoisson::updateFields)
 		.def("setTimeStep", &PSATDWithPoisson::setTimeStep)
@@ -308,24 +278,22 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("setTime", &Mapping::setTime)
         ;
 
-    py::class_<pyYeeGridMapping, pyYeeGrid>(object, "YeeGridMapping")
-        .def(py::init<FP3, FP, FP3, FP3, Mapping*>())
-        .def("getE", &pyYeeGrid::getE)
-        .def("getB", &pyYeeGrid::getB)
+    py::class_<pyYeeGridMapping>(object, "YeeGridMapping")
+		SET_METHODS_FOR_PY_GRID(pyYeeGridMapping)
+		.def("setMapping", &pyYeeGridMapping::setMapping)
         ;
 
-    py::class_<pyPSTDGridMapping, pyPSTDGrid>(object, "PSTDGridMapping")
-        .def(py::init<FP3, FP, FP3, FP3, Mapping*>())
-        .def("getE", &pyPSTDGrid::getE)
-        .def("getB", &pyPSTDGrid::getB)
+    py::class_<pyPSTDGridMapping>(object, "PSTDGridMapping")
+		SET_METHODS_FOR_PY_GRID(pyPSTDGridMapping)
+		.def("setMapping", &pyPSTDGridMapping::setMapping)
         ;
 
-    py::class_<pyPSATDGridMapping, pyPSATDGrid>(object, "PSATDGridMapping")
-        .def(py::init<FP3, FP, FP3, FP3, Mapping*>())
-        .def(py::init<FP3, FP, FP3, FP3, Mapping*, bool>())
-        .def("getE", &pyPSATDGrid::getE)
-        .def("getB", &pyPSATDGrid::getB)
+    py::class_<pyPSATDGridMapping>(object, "PSATDGridMapping")
+		SET_METHODS_FOR_PY_GRID(pyPSATDGridMapping)
+		.def("setMapping", &pyPSATDGridMapping::setMapping)
         ;
+
+	// mappings
 
     py::class_<IdentityMapping, Mapping>(object, "IdentityMapping")
         .def(py::init<const FP3&, const FP3&>())
@@ -339,14 +307,6 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords)
         ;
 
-	py::class_<FieldConfiguration>(object, "FieldConfiguration")
-		.def("getE", &FieldConfiguration::E)
-		.def("getB", &FieldConfiguration::B)
-		;
-
-
-	// tight focusing
-
     py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
         .def(py::init<FP, FP, FP, FP>())
         .def(py::init<FP, FP, FP>())
@@ -354,12 +314,24 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getInverseCoords", &TightFocusingMapping::getInverseCoords)
         .def("getxMin", &TightFocusingMapping::getxMin)
         .def("getxMax", &TightFocusingMapping::getxMax)
+		.def("setIfCut", &TightFocusingMapping::setIfCut)
         ;
 
-	py::class_<TightFocusingField, FieldConfiguration>(object, "TightFocusingField")
+
+	// field configurations
+
+	py::class_<NullField>(object, "NullField")
+		.def(py::init<>())
+		.def("getE", &NullField::E)
+		.def("getB", &NullField::B)
+		;
+
+	py::class_<TightFocusingField>(object, "TightFocusingField")
 		.def(py::init<FP, FP, FP, FP, FP, FP, FP>())
 		.def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3>())
 		.def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3, FP>())
+		.def("getE", &TightFocusingField::E)
+		.def("getB", &TightFocusingField::B)
 		;
 
 }

@@ -7,7 +7,8 @@
 
 namespace pfc {
 
-	class TightFocusingField: public FieldConfiguration {
+	template<>
+	class FieldConfiguration<FieldConfigurationType::TightFocusingFieldConfigurationType> {
 
 	public:
 
@@ -22,7 +23,7 @@ namespace pfc {
 		FP3 polarisation;
 		FP exclusionRadius;
 
-		TightFocusingField(FP F_number, FP R0, FP wavelength, FP pulselength, FP phase, FP totalPower,
+		FieldConfiguration(FP F_number, FP R0, FP wavelength, FP pulselength, FP phase, FP totalPower,
 			FP edgeSmoothingAngle, FP3 polarisation = FP3(0.0, 1.0, 0.0), FP exclusionRadius = 1e-5) :
 			F_number(F_number), R0(R0), wavelength(wavelength), pulselength(pulselength), phase(phase),
 			totalPower(totalPower), edgeSmoothingAngle(edgeSmoothingAngle), polarisation(polarisation),
@@ -64,7 +65,7 @@ namespace pfc {
 		}
 
 
-		FP3 E(FP x, FP y, FP z) const override {
+		FP3 E(FP x, FP y, FP z) const {
 			FP3 r(x, y, z);
 			FP3 s1 = cross(this->polarisation, r);
 			s1.normalize();
@@ -73,7 +74,7 @@ namespace pfc {
 			return mask(x, y, z)*s0;
 		};
 
-		FP3 B(FP x, FP y, FP z) const override {
+		FP3 B(FP x, FP y, FP z) const {
 			FP3 r(x, y, z);
 			FP3 s1 = cross(this->polarisation, r);
 			s1.normalize();
@@ -81,5 +82,7 @@ namespace pfc {
 		};
 
 	};
+
+	typedef FieldConfiguration<FieldConfigurationType::TightFocusingFieldConfigurationType> TightFocusingField;
 
 }

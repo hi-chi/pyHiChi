@@ -10,35 +10,38 @@ import math as ma
 # ------------------- initializing -------------------------------------
 
 
-factor = 0.7
+factor = 0.5
 NxFull = int(factor*320)                           # size of grid in full area
 Ny = int(factor*256)
 Nz = int(factor*256)
-NxBand = int(32*factor)                            # size of grid in the band
+NxBand = NxFull #int(56*factor)                    # size of grid in the band
 gridSize = hichi.vector3d(NxBand, Ny, Nz)          # real size of grid
 
 # creating of spherical pulse
 sphericalPulse.createSphericalPulseC(F_number_ = 0.3)
 
-timeStep = sphericalPulse.getDtCGS(8.0)            # time step in CGS
-maxIter = 4                                        # number of iterations to compute       
+timeStep = sphericalPulse.getDtCGS(1.0)            # time step in CGS
+maxIter = 32                                       # number of iterations to compute       
 
 minCoords = hichi.vector3d(-20, -20, -20)          # bounds of full area
 maxCoords = hichi.vector3d(20, 20, 20)
 
-D = 2*sphericalPulse.pulselength                   # width of band
+D = 3.5*sphericalPulse.pulselength                 # width of band
 
 # to compute the task in the full area
 # just set
 #D = maxCoords.x - minCoords.x
                                                    
                                                    
-# creating of mapping 
+# creating of mapping
 mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
 
 # creating of mapping with cutting at angle
 #cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
 #mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
+
+# not to cut secondary pulses
+#mapping.setIfCut(False)
 
 xMin = mapping.getxMin()  # bounds of the band
 xMax = mapping.getxMax()
@@ -51,10 +54,9 @@ gridStep = hichi.vector3d((gridMaxCoords.x - gridMinCoords.x) / gridSize.x, \
                           (gridMaxCoords.z - gridMinCoords.z) / gridSize.z)
 
 # greating of grid for PSATDGridMapping
-# 'ifCut' is a parameter to cut secondary pulses or not
-ifCut = True
-grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep, mapping, ifCut)
-   
+grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep)
+grid.setMapping(mapping)
+
 # creating of field solver PSATD for existing grid
 fieldSolver = hichi.PSATDWithPoisson(grid)
 # fieldSolver = hichi.PSATD(grid)
@@ -73,7 +75,6 @@ def initialize():
 
 # function to update field
 def updateFields():
-    global mapping
     mapping.advanceTime(timeStep)  # mapping for tight focusing has a external parameter - time
                                    # so we need to advance time every iteration and to set it null in the beginning
     fieldSolver.updateFields()     # doing one iteration of PSATD
@@ -86,7 +87,7 @@ def updateFields():
 
 # ----------- run and save pictures for every iteration ----------------------
 initialize()
-visual.initVisual(minCoords, maxCoords, NxFull*5, Ny*5)
+visual.initVisual(minCoords, maxCoords, NxFull*4, Ny*4)
 visual.savePictures(grid, updateFields, maxIter=maxIter, dirResult = "./pictures/")  # DELETE OLD FILES IN dirResult!!!
 
 # ----------- run and save results 2d in .csv files --------------------------
