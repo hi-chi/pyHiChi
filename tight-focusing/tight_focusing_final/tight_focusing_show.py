@@ -81,7 +81,18 @@ def animate(grid, update, maxIter=160):
     plt.show()
 
 
-# save pictures
+# save one picture
+def savePicture(grid, dirResult = "./pictures/", name = "/res.png", dpi = 500):
+
+    im = createFieldAx(1, 1, 1, "|E|")
+    fig.tight_layout()
+    
+    field = getFields(grid)
+    im.set_array(field)
+    plt.savefig(dirResult + "/" + name, dpi=500)
+
+
+# run and save pictures
 def savePictures(grid, update, maxIter=160, dirResult = "./pictures/", dpi = 500):
     
     im = createFieldAx(1, 1, 1, "|E|")
