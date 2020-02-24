@@ -9,10 +9,10 @@ from hichi_primitives import *
 # To create spherical wave from C++, call 'createSphericalPulseC' (defined below)
 
 
-# --------- parameters of spherical wave, can be defined by calling any function below ------------------------------
+# --------- parameters of spherical wave, they are defined by calling one of functions below ------------------------------
 
 
-wavelength = None  # wavelength = 1
+wavelength = None  # wavelength = 1 always
 pulselength = None
 phase = None
 R0 = None
@@ -24,7 +24,7 @@ openingAngle = None
 def getDtCGS(dt):  # return dt in CGS  
     return dt*wavelength/hichi.c
     
-setField = None  # set field for grid, it can be defined by calling any function below
+setField = None  # function that is setting field for grid, it can be defined by calling any function below
                  # this function is main, it should be called from other python scripts
 
 

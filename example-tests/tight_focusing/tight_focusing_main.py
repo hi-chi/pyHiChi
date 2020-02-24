@@ -10,15 +10,15 @@ import math as ma
 # ------------------- initializing -------------------------------------
 
 
-factor = 0.5
+factor = 1.0
 NxFull = int(factor*320)                           # size of grid in full area
 Ny = int(factor*256)
 Nz = int(factor*256)
-NxBand = NxFull #int(56*factor)                    # size of grid in the band
+NxBand = int(56*factor)                            # size of grid in the band
 gridSize = hichi.vector3d(NxBand, Ny, Nz)          # real size of grid
 
 # creating of spherical pulse
-sphericalPulse.createSphericalPulseC(F_number_ = 0.3)
+sphericalPulse.createSphericalPulsePython(F_number_ = 0.3, R0_ = 16, pulselength_ = 2.0, phase_ = 0, edgeSmoothingAngle_ = 0.1)
 
 timeStep = sphericalPulse.getDtCGS(1.0)            # time step in CGS
 maxIter = 32                                       # number of iterations to compute       
@@ -28,8 +28,7 @@ maxCoords = hichi.vector3d(20, 20, 20)
 
 D = 3.5*sphericalPulse.pulselength                 # width of band
 
-# to compute the task in the full area
-# just set
+# to compute the task in the full area just set
 #D = maxCoords.x - minCoords.x
                                                    
                                                    
@@ -53,14 +52,14 @@ gridStep = hichi.vector3d((gridMaxCoords.x - gridMinCoords.x) / gridSize.x, \
                           (gridMaxCoords.y - gridMinCoords.y) / gridSize.y, \
                           (gridMaxCoords.z - gridMinCoords.z) / gridSize.z)
 
-# greating of grid for PSATDGridMapping
+# creating of grid for PSATDGridMapping
 grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep)
 grid.setMapping(mapping)
 
 # creating of field solver PSATD for existing grid
 fieldSolver = hichi.PSATDWithPoisson(grid)
 # fieldSolver = hichi.PSATD(grid)
-    
+
 def initialize():
     # mapping for tight focusing has a external parameter - time
     # so we need to advance time every iteration and to set it null in the beginning
@@ -75,7 +74,7 @@ def initialize():
 
 # function to update field
 def updateFields():
-    mapping.advanceTime(timeStep)  # mapping for tight focusing has a external parameter - time
+    mapping.advanceTime(timeStep)  # mapping for tight focusing has an external parameter time
                                    # so we need to advance time every iteration and to set it null in the beginning
     fieldSolver.updateFields()     # doing one iteration of PSATD
 
@@ -88,7 +87,7 @@ def updateFields():
 # ----------- run and save pictures for every iteration ----------------------
 initialize()
 visual.initVisual(minCoords, maxCoords, NxFull*4, Ny*4)
-visual.savePictures(grid, updateFields, maxIter=maxIter, dirResult = "./pictures/")  # DELETE OLD FILES IN dirResult!!!
+visual.savePictures(grid, updateFields, maxIter=maxIter, dirResult = "./pictures/")  # DELETE OLD FILES IN "./pictures/"!!!
 
 # ----------- run and save results 2d in .csv files --------------------------
 #initialize()
