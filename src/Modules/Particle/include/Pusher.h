@@ -89,3 +89,68 @@ public:
 private:
 	ScalarBorisPusher BorisPusher;
 };
+
+class ScalarRadiationReaction : public ScalarParticlePusher
+{
+public:
+
+	void operator()(ParticleProxy3d& particle, ValueField field, FP timeStep)
+	{
+		if (particle.getType() == Electron || particle.getType() == Positron)
+		{
+			
+			FP3 e = field.getE();
+			FP3 b = field.getB();
+			FP3 v = particle.getVelocity();
+			FP gamma = particle.getGamma();
+			FP c = Constants<FP>::lightVelocity();
+			FP electronCharge = Constants<FP>::electronCharge();
+			FP electronMass = Constants<FP>::electronMass();
+			FP3 dp = timeStep * (2.0 / 3.0) * sqr(sqr(electronCharge) / (electronMass * sqr(c))) *
+				(VP(e, b) + (1 / c) * (VP(b, VP(b, v)) + SP(v, e) * e) -
+				(1 / c) * sqr(gamma) * (sqr(e + (1 / c) * VP(v, b)) - sqr(SP(e, v) / c)) * v);
+			
+			particle.setMomentum(particle.getMomentum() + dp);
+		}
+	}
+
+	void operator()(Particle3d& particle, ValueField field, FP timeStep)
+	{
+		if (particle.getType() == Electron || particle.getType() == Positron)
+		{
+			FP3 e = field.getE();
+			FP3 b = field.getB();
+			FP3 v = particle.getVelocity();
+			FP gamma = particle.getGamma();
+			FP c = Constants<FP>::lightVelocity();
+			FP electronCharge = Constants<FP>::electronCharge();
+			FP electronMass = Constants<FP>::electronMass();
+			FP3 dp = timeStep * (2.0 / 3.0) * sqr(sqr(electronCharge) / (electronMass * sqr(c))) *
+				(VP(e, b) + (1 / c) * (VP(b, VP(b, v)) + SP(v, e) * e) -
+				(1 / c) * sqr(gamma) * (sqr(e + (1 / c) * VP(v, b)) - sqr(SP(e, v) / c)) * v);
+			particle.setMomentum(particle.getMomentum() + dp);
+		}
+	}
+};
+
+class VectorizedRadiationReaction : public VectorizedParticlePusher
+{
+public:
+	template<class T_Particle>
+	void operator()(T_Particle& particle, ValueField field, FP timeStep)
+	{
+		RadiationReaction.operator()(particle, field, timeStep);
+	}
+
+	template<class T_Particle, size_t T_size>
+	void operator()(Chunk<T_Particle, T_size> chunk, Chunk<ValueField, T_size> fields, FP timeStep)
+	{
+		for (int i = 0; i < T_size; i++)
+		{
+			RadiationReaction.operator()(chunk[i], fields[i], timeStep);
+		}
+	}
+
+private:
+	ScalarRadiationReaction RadiationReaction;
+};

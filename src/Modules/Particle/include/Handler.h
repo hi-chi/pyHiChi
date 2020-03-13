@@ -60,3 +60,27 @@ public:
 	}
 };
 
+
+class RadiationReaction
+{
+public:
+	template<class T_Particle>
+	void operator()(T_Particle* particle, ValueField field, FP timeStep)
+	{
+		ScalarRadiationReaction scalarPusher;
+		handleChunk(scalarPusher, *particle, field, timeStep);
+	}
+
+	template<class T_ParticleArray>
+	void operator()(T_ParticleArray* particleArray, std::vector<ValueField> fields, FP timeStep)
+	{
+		typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
+		ScalarRadiationReaction scalarPusher;
+		for (int i = 0; i < particleArray->size(); i++)
+		{
+			ParticleProxyType particle = (*particleArray)[i];
+			ValueField field = fields[i];
+			handleChunk(scalarPusher, particle, field, timeStep);
+		}
+	}
+};

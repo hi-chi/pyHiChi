@@ -168,6 +168,13 @@ PYBIND11_MODULE(pyHiChi, object) {
 		.def("__call__", (void (BorisPusher::*)(ParticleArray3d*, std::vector<ValueField>, FP)) &BorisPusher::operator())
 		;
 
+	py::class_<RadiationReaction>(object, "RadiationReaction")
+		.def(py::init<>())
+		.def("__call__", (void (RadiationReaction::*)(ParticleProxy3d*, ValueField, FP)) &RadiationReaction::operator())
+		.def("__call__", (void (RadiationReaction::*)(Particle3d*, ValueField, FP)) &RadiationReaction::operator())
+		.def("__call__", (void (RadiationReaction::*)(ParticleArray3d*, std::vector<ValueField>, FP)) &RadiationReaction::operator())
+		;
+
 	object.def("simpleThinning", &Thinning<ParticleArray3d>::simple);
 	object.def("levelingThinning", &Thinning<ParticleArray3d>::leveling);
 	object.def("numberConservativeThinning", &Thinning<ParticleArray3d>::numberConservative);
