@@ -118,6 +118,7 @@ namespace pfc
                 for (int d = 0; d < 3; d++) {
                     ScalarField<FP>& arrD = *(realFields[f][d]);
                     ScalarField<complexFP>& arrC = *(complexFields[f][d]);
+
 #ifdef __USE_OMP__
                     fftw_plan_with_nthreads(omp_get_max_threads());
 #endif

@@ -4,8 +4,10 @@
 #include "FormFactor.h"
 #include "Vectors.h"
 #include "VectorsProxy.h"
+#include "FP.h"
 
 namespace pfc {
+
 	/* Class for storing 3d scalar field on a regular grid.
 	Provides index-wise access, interpolation and deposition.*/
 	template <typename Data>
@@ -13,13 +15,21 @@ namespace pfc {
 	{
 	public:
 
-		ScalarField(const Int3& size);
-		ScalarField(const ScalarField& field);
-		ScalarField& operator =(const ScalarField& field);
+        ScalarField() {};
+        ScalarField(const Int3& size, const Int3& sizeStorage);  // sometimes sizeStorage need to be greater than size.volume()
+        ScalarField(const Int3& size) : ScalarField(size, size) {}
+		ScalarField(const ScalarField<Data>& field);
+        ScalarField(Data* data, const Int3& size, const Int3 & sizeStorage);  // do not create storage
+        ScalarField(Data* data, const Int3& size) : ScalarField(data, size, size) {}
+        ScalarField& operator =(const ScalarField& field);
 
 		std::vector<Data>& toVector() {
 			return elements;
 		}
+
+        Data* getData() {
+            return raw;
+        }
 
 		Int3 getSize() const
 		{
@@ -29,25 +39,25 @@ namespace pfc {
 		/* Read-only access by scalar indexes */
 		Data operator()(int i, int j, int k) const
 		{
-			return raw[k + (j + i * size.y) * size.z];
+			return raw[k + (j + i * sizeStorage.y) * sizeStorage.z];
 		}
 
 		/* Read-write access by scalar indexes */
 		Data& operator()(int i, int j, int k)
 		{
-			return raw[k + (j + i * size.y) * size.z];
+			return raw[k + (j + i * sizeStorage.y) * sizeStorage.z];
 		}
 
 		/* Read-only access by vector index */
 		Data operator()(const Int3& index) const
 		{
-			return raw[index.z + (index.y + index.x * size.y) * size.z];
+			return raw[index.z + (index.y + index.x * sizeStorage.y) * sizeStorage.z];
 		}
 
 		/* Read-write access by vector index */
 		Data& operator()(const Int3& index)
 		{
-			return raw[index.z + (index.y + index.x * size.y) * size.z];
+			return raw[index.z + (index.y + index.x * sizeStorage.y) * sizeStorage.z];
 		}
 
 		/* Interpolation: with given base index and coefficients */
@@ -64,18 +74,21 @@ namespace pfc {
 
 		FP interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const;
 
+        bool ifStorage = true;  // if false then elements is empty, raw is pointer to data
 		std::vector<Data> elements; // storage
 		Data* raw; // raw pointer to elements vector
 		Int3 size; // size of each dimension
+        Int3 sizeStorage; // size of memory buffer
 		Int3 dimensionCoeffInt; // 0 for fake dimensions, 1 otherwise
 		FP3 dimensionCoeffFP; // 0 for fake dimensions, 1 otherwise
 	};
 
 	template <class Data>
-	inline ScalarField<Data>::ScalarField(const Int3& _size)
+	inline ScalarField<Data>::ScalarField(const Int3& _size, const Int3& _sizeStorage)
 	{
 		size = _size;
-		elements.resize(size.volume());
+        sizeStorage = _sizeStorage;
+		elements.resize(sizeStorage.volume());
 		raw = elements.data();
 		for (int d = 0; d < 3; d++) {
 			dimensionCoeffInt[d] = (size[d] > 1) ? 1 : 0;
@@ -86,20 +99,41 @@ namespace pfc {
 
 	template <class Data>
 	inline ScalarField<Data>::ScalarField(const ScalarField& field)
-	{
-		size = field.size;
-		elements = field.elements;
-		raw = elements.data();
-		dimensionCoeffInt = field.dimensionCoeffInt;
-		dimensionCoeffFP = field.dimensionCoeffFP;
-	}
+    {
+        size = field.size;
+        sizeStorage = field.sizeStorage;
+        elements = field.elements;
+        raw = elements.data();
+        dimensionCoeffInt = field.dimensionCoeffInt;
+        dimensionCoeffFP = field.dimensionCoeffFP;
+    }
+
+    template<typename Data>
+    inline ScalarField<Data>::ScalarField(Data * data, const Int3 & _size, const Int3 & _sizeStorage)
+    {
+        size = _size;
+        sizeStorage = _sizeStorage;
+        ifStorage = false;
+        raw = data;
+        for (int d = 0; d < 3; d++) {
+            dimensionCoeffInt[d] = (size[d] > 1) ? 1 : 0;
+            dimensionCoeffFP[d] = (FP)dimensionCoeffInt[d];
+        }
+    }
 
 	template <class Data>
-	inline ScalarField<Data>& ScalarField<Data>::operator =(const ScalarField& field)
+	inline ScalarField<Data>& ScalarField<Data>::operator=(const ScalarField<Data>& field)
 	{
 		size = field.size;
-		elements = field.elements;
-		raw = elements.data();
+        sizeStorage = field.sizeStorage;
+        ifStorage = field.ifStorage;
+        if (ifStorage) {
+            elements = field.elements;
+            raw = elements.data();
+        }
+        else {
+            raw = field.raw;
+        }
 		dimensionCoeffInt = field.dimensionCoeffInt;
 		dimensionCoeffFP = field.dimensionCoeffFP;
 		return *this;
