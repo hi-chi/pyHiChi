@@ -108,9 +108,9 @@ TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(Lag)) {
 class FourierTransformGridTest : public BaseFixture {
 public:
 
-    const int nx = 6, ny = 3, nz = 4;
+    const int nx = 10, ny = 7, nz = 8;
     const FP a = 0.0, b = 10.0;
-    const FP dx = (b - a) / (nx + 4), dy = (b - a) / (ny + 4), dz = (b - a) / (nz + 4);
+    const FP dx = (b - a) / nx, dy = (b - a) / ny, dz = (b - a) / nz;
     const int stepX = 1, stepY = 3, stepZ = 6;
     const FP shiftX = stepX * dx, shiftY = stepY * dy, shiftZ = stepZ * dz;
     const FP dt = 1.0 / (constants::c * 4.0);
