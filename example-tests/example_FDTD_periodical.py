@@ -117,17 +117,17 @@ fig.colorbar(im23, ax=axes[1, 2])
 i = 0
 
 def updatefig(*args):
-    global i
-    updateData()
-    (Ex, Ey, Ez, Bx, By, Bz) = getFields()
-    im11.set_array(Ex)
-    im12.set_array(Ey)
-    im13.set_array(Ez)
-    im21.set_array(Bx)
-    im22.set_array(By)
-    im23.set_array(Bz)
-    i = i + 1
-    return im11, im12, im13, im21, im22, im23, 
+	global i
+	updateData()
+	(Ex, Ey, Ez, Bx, By, Bz) = getFields()
+	im11.set_array(Ex)
+	im12.set_array(Ey)
+	im13.set_array(Ez)
+	im21.set_array(Bx)
+	im22.set_array(By)
+	im23.set_array(Bz)
+	i = i + 1
+	return im11, im12, im13, im21, im22, im23, 
 	
 ani = animation.FuncAnimation(fig, updatefig, interval=50, blit=True)
 

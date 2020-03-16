@@ -24,11 +24,11 @@ dt = 0.001
 pusher = pfc.BorisPusher()
 rr = pfc.RadiationReaction()
 for k in range(11) :
-    print(pArray[0].getMomentum())
-    pusher(pArray, fieldsArray, dt)
-    rr(pArray, fieldsArray, dt)
-    t = dt * k
-    for j in range(11) :
+	print(pArray[0].getMomentum())
+	pusher(pArray, fieldsArray, dt)
+	rr(pArray, fieldsArray, dt)
+	t = dt * k
+	for j in range(11) :
 		fieldsArray[i].setE(valueEAnalytical(pos, t))
 		fieldsArray[i].setB(valueBAnalytical(pos, t))
 

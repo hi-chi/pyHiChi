@@ -15,5 +15,5 @@ pArray.delete(5)
 print(pArray[5].getPosition())
 
 for el in pArray :
-    print(el.getPosition())
+	print(el.getPosition())
 print(pArray.size())

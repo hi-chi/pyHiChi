@@ -22,12 +22,12 @@ for i in range(13) :
 print('Count Particles: ', Ensemble.size())
 print('Count Electron: ', Ensemble['Electron'].size()) #use index 'Electron' or pfc.Electron
 print('Count Positron: ', Ensemble['Positron'].size()) #same Electron
-print('Count Proton: ', Ensemble['Proton'].size())     #same Electron
-    
+print('Count Proton: ', Ensemble['Proton'].size())	 #same Electron
+	
 
 print('Positions Electron: ')
 for elem in Ensemble[pfc.Electron] :
-    print(elem.getPosition())
+	print(elem.getPosition())
 positronArray = Ensemble[pfc.Positron]
 print('Position second Positron')
 print(positronArray[1].getPosition())

@@ -68,7 +68,7 @@ Bx1 = np.zeros(shape=(N,N))
 Bx2 = np.zeros(shape=(N,N))
 
 for ix in range(N):
-    for iy in range(N):
+	for iy in range(N):
 		coordXZ = pfc.vector3d(x[ix], 0.0, z[iy])
 		E1 = grid1.getE(coordXZ)
 		Ex1[ix, iy] = E1.x
