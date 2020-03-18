@@ -2,14 +2,14 @@ import pyHiChi as pfc
 import random
 
 def newRandomArray(size) :
-	pArray = pfc.particleArray()  #type = Electron
-	for i in range(size) :
-		pos = pfc.vector3d(1.2*i, 3.4*i, 5.6*i)
-		mo = pfc.vector3d(9.8*i, 7.6*i, 54.3*i)
-		newP = pfc.particle(pos, mo, 0.5, pfc.Electron)
-		pArray.add(newP) #or pArray.pushBack
-	return pArray
-	
+    pArray = pfc.particleArray()  #type = Electron
+    for i in range(size) :
+        pos = pfc.vector3d(1.2*i, 3.4*i, 5.6*i)
+        mo = pfc.vector3d(9.8*i, 7.6*i, 54.3*i)
+        newP = pfc.particle(pos, mo, 0.5, pfc.Electron)
+        pArray.add(newP) #or pArray.pushBack
+    return pArray
+    
 #simple thinning
 pArray =  newRandomArray(1000)
 print(pArray.size())

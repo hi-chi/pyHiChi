@@ -6,7 +6,7 @@ using namespace pfc;
 
 
 TEST(DimensionTest, Values) {
-	ASSERT_EQ(One, 1);
-	ASSERT_EQ(Two, 2);
-	ASSERT_EQ(Three, 3);
+    ASSERT_EQ(One, 1);
+    ASSERT_EQ(Two, 2);
+    ASSERT_EQ(Three, 3);
 }

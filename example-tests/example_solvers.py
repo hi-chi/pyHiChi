@@ -9,32 +9,32 @@ minCoords = pfc.vector3d(0.0, 1.0, 0.0)
 maxCoords = pfc.vector3d(3.5, 7.0, 2*ma.pi)
 
 def valueEx(x, y, z):
-	Ex = np.sin(2*ma.pi/(maxCoords.z-minCoords.z)*z)
-	return Ex
+    Ex = np.sin(2*ma.pi/(maxCoords.z-minCoords.z)*z)
+    return Ex
 def valueEy(x, y, z):
-	Ey = 0
-	return Ey
+    Ey = 0
+    return Ey
 def valueEz(x, y, z):
-	Ez = 0
-	return Ez
+    Ez = 0
+    return Ez
 
 def valueBx(x, y, z):
-	Bx = 0
-	return Bx
+    Bx = 0
+    return Bx
 def valueBy(x, y, z):
-	By = np.sin(2*ma.pi/(maxCoords.z-minCoords.z)*z)
-	return By
+    By = np.sin(2*ma.pi/(maxCoords.z-minCoords.z)*z)
+    return By
 def valueBz(x, y, z):
-	Bz = 0
-	return Bz
+    Bz = 0
+    return Bz
 
 def step(minCoords, maxCoords, gridSize):
-	steps = pfc.vector3d(1, 1, 1)
-	steps.x = (maxCoords.x - minCoords.x)/(gridSize.x)
-	steps.y = (maxCoords.y - minCoords.y)/(gridSize.y)
-	steps.z = (maxCoords.z - minCoords.z)/(gridSize.z)
-	return steps
-	
+    steps = pfc.vector3d(1, 1, 1)
+    steps.x = (maxCoords.x - minCoords.x)/(gridSize.x)
+    steps.y = (maxCoords.y - minCoords.y)/(gridSize.y)
+    steps.z = (maxCoords.z - minCoords.z)/(gridSize.z)
+    return steps
+    
 stepsGrid = step(minCoords, maxCoords, gridSize)
 timeStep = 1e-12
 
@@ -59,30 +59,30 @@ z = np.arange(0, 2*ma.pi, 2*ma.pi/N)
 
 
 def getFields():
-	global grid, x, z, N
-	Ex = np.zeros(shape=(N,N))
-	Ey = np.zeros(shape=(N,N))
-	Ez = np.zeros(shape=(N,N))
-	Bx = np.zeros(shape=(N,N))
-	By = np.zeros(shape=(N,N))
-	Bz = np.zeros(shape=(N,N))
-	for ix in range(N):
-		for iy in range(N):
-			coordXZ = pfc.vector3d(x[ix], 0.0, z[iy])
-			E = grid.getE(coordXZ)
-			Ex[ix, iy] = E.x
-			Ey[ix, iy] = E.y
-			Ez[ix, iy] = E.z
-			B = grid.getB(coordXZ)
-			Bx[ix, iy] = B.x
-			By[ix, iy] = B.y
-			Bz[ix, iy] = B.z
-	return Ex, Ey, Ez, Bx, By, Bz
+    global grid, x, z, N
+    Ex = np.zeros(shape=(N,N))
+    Ey = np.zeros(shape=(N,N))
+    Ez = np.zeros(shape=(N,N))
+    Bx = np.zeros(shape=(N,N))
+    By = np.zeros(shape=(N,N))
+    Bz = np.zeros(shape=(N,N))
+    for ix in range(N):
+        for iy in range(N):
+            coordXZ = pfc.vector3d(x[ix], 0.0, z[iy])
+            E = grid.getE(coordXZ)
+            Ex[ix, iy] = E.x
+            Ey[ix, iy] = E.y
+            Ez[ix, iy] = E.z
+            B = grid.getB(coordXZ)
+            Bx[ix, iy] = B.x
+            By[ix, iy] = B.y
+            Bz[ix, iy] = B.z
+    return Ex, Ey, Ez, Bx, By, Bz
 
 def updateData():
-	for i in range(1):
-		fieldSolver.updateFields()
-	
+    for i in range(1):
+        fieldSolver.updateFields()
+    
 
 (Ex, Ey, Ez, Bx, By, Bz) = getFields()
 
@@ -108,16 +108,16 @@ fig.colorbar(im23, ax=axes[1, 2])
 
 
 def updatefig(*args):
-	updateData()
-	(Ex, Ey, Ez, Bx, By, Bz) = getFields()
-	im11.set_array(Ex)
-	im12.set_array(Ey)
-	im13.set_array(Ez)
-	im21.set_array(Bx)
-	im22.set_array(By)
-	im23.set_array(Bz)
-	return im11, im12, im13, im21, im22, im23, 
-	
+    updateData()
+    (Ex, Ey, Ez, Bx, By, Bz) = getFields()
+    im11.set_array(Ex)
+    im12.set_array(Ey)
+    im13.set_array(Ez)
+    im21.set_array(Bx)
+    im22.set_array(By)
+    im23.set_array(Bz)
+    return im11, im12, im13, im21, im22, im23, 
+    
 ani = animation.FuncAnimation(fig, updatefig, interval=10, blit=True)
 
 plt.show()

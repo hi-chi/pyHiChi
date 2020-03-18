@@ -16,7 +16,7 @@ public:
         gridSize = Int3(32, 1, 1);
         pmlSize = Int3(4, 0, 0);
         this->minCoords = FP3(0, 0, 0);
-		this->maxCoords = FP3(gridSize.x * constants::c, gridSize.y * constants::c, gridSize.z * constants::c);
+        this->maxCoords = FP3(gridSize.x * constants::c, gridSize.y * constants::c, gridSize.z * constants::c);
         createGrid();
         pmlLeftEnd.x = this->minCoords.x + pmlSize.x * this->grid->steps.x;
         pmlRightStart.x = this->maxCoords.x - pmlSize.x * this->grid->steps.x;
@@ -29,11 +29,11 @@ public:
         FP3 steps((this->maxCoords.x - this->minCoords.x) / gridSize.x,
             (this->maxCoords.y - this->minCoords.y) / gridSize.y,
             (this->maxCoords.z - this->minCoords.z) / gridSize.z);
-		this->grid = new GridType(gridSize, timeStep, this->minCoords, steps, gridSize);
+        this->grid = new GridType(gridSize, timeStep, this->minCoords, steps, gridSize);
     }
 
     void initializeGrid() {
-		auto grid = this->grid;
+        auto grid = this->grid;
         for (int i = pmlSize.x + grid->getNumExternalLeftCells().x;
             i < grid->numCells.x - pmlSize.x - grid->getNumExternalRightCells().x; i++)
             for (int j = 0; j < grid->numCells.y; j++)
@@ -55,7 +55,7 @@ public:
 
 
     void print() {
-		auto grid = this->grid;
+        auto grid = this->grid;
         for (int i = pmlSize.x + grid->getNumExternalLeftCells().x;
             i < grid->numCells.x - pmlSize.x - grid->getNumExternalRightCells().x; i++)
             std::cout << grid->Ey(i, 0, 0) << " ";
@@ -74,7 +74,7 @@ public:
 
     FP computeEnergy() {
         FP energy = 0;
-		auto grid = this->grid;
+        auto grid = this->grid;
         for (int i = 0; i < gridSize.x; i++)
             for (int j = 0; j < gridSize.y; j++)
                 for (int k = 0; k < gridSize.z; k++)
