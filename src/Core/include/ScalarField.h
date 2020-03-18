@@ -23,9 +23,9 @@ namespace pfc {
         ScalarField(Data* data, const Int3& size) : ScalarField(data, size, size) {}
         ScalarField& operator =(const ScalarField& field);
 
-		std::vector<Data>& toVector() {
-			return elements;
-		}
+        std::vector<Data>& toVector() {
+            return elements;
+        }
 
         Data* getData() {
             return raw;
@@ -60,20 +60,19 @@ namespace pfc {
 			return raw[index.z + (index.y + index.x * sizeStorage.y) * sizeStorage.z];
 		}
 
-		/* Interpolation: with given base index and coefficients */
-		FP interpolateCIC(const Int3& baseIdx, const FP3& coeffs) const;
-		FP interpolateTSC(const Int3& baseIdx, const FP3& coeffs) const;
-		FP interpolateSecondOrder(const Int3& baseIdx, const FP3& coeffs) const;
-		FP interpolateFourthOrder(const Int3& baseIdx, const FP3& coeffs) const;
-		FP interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const;
+        /* Interpolation: with given base index and coefficients */
+        FP interpolateCIC(const Int3& baseIdx, const FP3& coeffs) const;
+        FP interpolateTSC(const Int3& baseIdx, const FP3& coeffs) const;
+        FP interpolateSecondOrder(const Int3& baseIdx, const FP3& coeffs) const;
+        FP interpolateFourthOrder(const Int3& baseIdx, const FP3& coeffs) const;
+        FP interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const;
 
-		/* Make all elements zero */
-		inline void zeroize();
+        /* Make all elements zero */
+        inline void zeroize();
 
-	private:
+    private:
 
-		FP interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const;
-
+        FP interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const;
         bool ifStorage = true;  // if false then elements is empty, raw is pointer to data
 		std::vector<Data> elements; // storage
 		Data* raw; // raw pointer to elements vector
@@ -201,171 +200,171 @@ namespace pfc {
 		return result;
 	}
 
-	template <>
-	inline FP ScalarField<FP>::interpolateFourthOrder(const Int3& baseIdx, const FP3& coeffs) const
-	{
-		Int3 base = baseIdx * dimensionCoeffInt;
-		const Int3 minAllowedIdx = Int3(2, 2, 2) * dimensionCoeffInt;
-		const Int3 maxAllowedIdx = (size - Int3(4, 4, 4)) * dimensionCoeffInt;
-		if ((base >= minAllowedIdx) && (base <= maxAllowedIdx) == false)
-			return interpolateTSC(baseIdx, coeffs);
-		FP c[3][5];
-		formfactorFourthOrder(coeffs.x, c[0]);
-		formfactorFourthOrder(coeffs.y, c[1]);
-		formfactorFourthOrder(coeffs.z, c[2]);
-		for (int d = 0; d < 3; d++)
-			if (!dimensionCoeffInt[d]) {
-				c[d][0] = 0;
-				c[d][1] = 0;
-				c[d][2] = 1.0;
-				c[d][3] = 0;
-				c[d][4] = 0;
-			}
-		FP result = 0;
-		Int3 minIndex = Int3(-2, -2, -2) * dimensionCoeffInt;
-		Int3 maxIndex = Int3(2, 2, 2) * dimensionCoeffInt;
-		for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
-			for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
-				for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
-					result += c[0][ii + 2] * c[1][jj + 2] * c[2][kk + 2] * (*this)(base.x + ii, base.y + jj, base.z + kk);
-		return result;
-	}
+    template <>
+    inline FP ScalarField<FP>::interpolateFourthOrder(const Int3& baseIdx, const FP3& coeffs) const
+    {
+        Int3 base = baseIdx * dimensionCoeffInt;
+        const Int3 minAllowedIdx = Int3(2, 2, 2) * dimensionCoeffInt;
+        const Int3 maxAllowedIdx = (size - Int3(4, 4, 4)) * dimensionCoeffInt;
+        if ((base >= minAllowedIdx) && (base <= maxAllowedIdx) == false)
+            return interpolateTSC(baseIdx, coeffs);
+        FP c[3][5];
+        formfactorFourthOrder(coeffs.x, c[0]);
+        formfactorFourthOrder(coeffs.y, c[1]);
+        formfactorFourthOrder(coeffs.z, c[2]);
+        for (int d = 0; d < 3; d++)
+            if (!dimensionCoeffInt[d]) {
+                c[d][0] = 0;
+                c[d][1] = 0;
+                c[d][2] = 1.0;
+                c[d][3] = 0;
+                c[d][4] = 0;
+            }
+        FP result = 0;
+        Int3 minIndex = Int3(-2, -2, -2) * dimensionCoeffInt;
+        Int3 maxIndex = Int3(2, 2, 2) * dimensionCoeffInt;
+        for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
+            for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
+                for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
+                    result += c[0][ii + 2] * c[1][jj + 2] * c[2][kk + 2] * (*this)(base.x + ii, base.y + jj, base.z + kk);
+        return result;
+    }
 
-	template <>
-	inline FP ScalarField<FP>::interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const
-	{
-		FP c[3][4];
-		for (int i = 0; i < 4; i++)
-			c[0][i] = formfactorPCS(FP(i - 1) - coeffs.x);
-		for (int j = 0; j < 4; j++)
-			c[1][j] = formfactorPCS(FP(j - 1) - coeffs.y);
-		for (int k = 0; k < 4; k++)
-			c[2][k] = formfactorPCS(FP(k - 1) - coeffs.z);
-		for (int d = 0; d < 3; d++)
-			if (!dimensionCoeffInt[d]) {
-				c[d][0] = 1.0;
-				c[d][1] = 0;
-				c[d][2] = 0;
-				c[d][3] = 0;
-			}
-		FP result = 0;
-		Int3 base = (baseIdx - Int3(1, 1, 1)) * dimensionCoeffInt;
-		Int3 minIndex = Int3(0, 0, 0);
-		Int3 maxIndex = Int3(3, 3, 3) * dimensionCoeffInt;
-		for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
-			for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
-				for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
-					result += c[0][ii] * c[1][jj] * c[2][kk] * (*this)(base.x + ii, base.y + jj, base.z + kk);
-		return result;
-	}
+    template <>
+    inline FP ScalarField<FP>::interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const
+    {
+        FP c[3][4];
+        for (int i = 0; i < 4; i++)
+            c[0][i] = formfactorPCS(FP(i - 1) - coeffs.x);
+        for (int j = 0; j < 4; j++)
+            c[1][j] = formfactorPCS(FP(j - 1) - coeffs.y);
+        for (int k = 0; k < 4; k++)
+            c[2][k] = formfactorPCS(FP(k - 1) - coeffs.z);
+        for (int d = 0; d < 3; d++)
+            if (!dimensionCoeffInt[d]) {
+                c[d][0] = 1.0;
+                c[d][1] = 0;
+                c[d][2] = 0;
+                c[d][3] = 0;
+            }
+        FP result = 0;
+        Int3 base = (baseIdx - Int3(1, 1, 1)) * dimensionCoeffInt;
+        Int3 minIndex = Int3(0, 0, 0);
+        Int3 maxIndex = Int3(3, 3, 3) * dimensionCoeffInt;
+        for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
+            for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
+                for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
+                    result += c[0][ii] * c[1][jj] * c[2][kk] * (*this)(base.x + ii, base.y + jj, base.z + kk);
+        return result;
+    }
 
-	template <>
-	inline void ScalarField<FP>::zeroize()
-	{
+    template <>
+    inline void ScalarField<FP>::zeroize()
+    {
 #pragma omp parallel for
-		for (int idx = 0; idx < (int)elements.size(); idx++)
-			elements[idx] = 0;
-	}
+        for (int idx = 0; idx < (int)elements.size(); idx++)
+            elements[idx] = 0;
+    }
 
-	template <>
-	inline FP ScalarField<complex>::interpolateCIC(const Int3& baseIdx, const FP3& coeffs) const
-	{
-		FP3 c = coeffs * dimensionCoeffFP;
-		FP3 invC = FP3(1, 1, 1) - c;
-		Int3 base = baseIdx * dimensionCoeffInt;
-		Int3 next = base + dimensionCoeffInt;
-		return invC.x * (invC.y * (invC.z * (*this)(base.x, base.y, base.z).real + c.z * (*this)(base.x, base.y, next.z).real) +
-			c.y * (invC.z * (*this)(base.x, next.y, base.z).real + c.z * (*this)(base.x, next.y, next.z).real)) +
-			c.x * (invC.y * (invC.z * (*this)(next.x, base.y, base.z).real + c.z * (*this)(next.x, base.y, next.z).real) +
-				c.y * (invC.z * (*this)(next.x, next.y, base.z).real + c.z * (*this)(next.x, next.y, next.z).real));
-	}
-	
-	template <>
-	inline FP ScalarField<complex>::interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const
-	{
-		for (int d = 0; d < 3; d++)
-			if (!dimensionCoeffInt[d]) {
-				c[d][0] = 0;
-				c[d][1] = 1.0;
-				c[d][2] = 0;
-			}
-		FP result = 0;
-		Int3 minIndex = Int3(-1, -1, -1) * dimensionCoeffInt;
-		Int3 maxIndex = Int3(1, 1, 1) * dimensionCoeffInt;
-		Int3 base = baseIdx * dimensionCoeffInt;
-		for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
-			for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
-				for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
-					result += c[0][ii + 1] * c[1][jj + 1] * c[2][kk + 1] * (*this)(base.x + ii, base.y + jj, base.z + kk).real;
-		return result;
-	}
+    template <>
+    inline FP ScalarField<complex>::interpolateCIC(const Int3& baseIdx, const FP3& coeffs) const
+    {
+        FP3 c = coeffs * dimensionCoeffFP;
+        FP3 invC = FP3(1, 1, 1) - c;
+        Int3 base = baseIdx * dimensionCoeffInt;
+        Int3 next = base + dimensionCoeffInt;
+        return invC.x * (invC.y * (invC.z * (*this)(base.x, base.y, base.z).real + c.z * (*this)(base.x, base.y, next.z).real) +
+            c.y * (invC.z * (*this)(base.x, next.y, base.z).real + c.z * (*this)(base.x, next.y, next.z).real)) +
+            c.x * (invC.y * (invC.z * (*this)(next.x, base.y, base.z).real + c.z * (*this)(next.x, base.y, next.z).real) +
+                c.y * (invC.z * (*this)(next.x, next.y, base.z).real + c.z * (*this)(next.x, next.y, next.z).real));
+    }
+    
+    template <>
+    inline FP ScalarField<complex>::interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const
+    {
+        for (int d = 0; d < 3; d++)
+            if (!dimensionCoeffInt[d]) {
+                c[d][0] = 0;
+                c[d][1] = 1.0;
+                c[d][2] = 0;
+            }
+        FP result = 0;
+        Int3 minIndex = Int3(-1, -1, -1) * dimensionCoeffInt;
+        Int3 maxIndex = Int3(1, 1, 1) * dimensionCoeffInt;
+        Int3 base = baseIdx * dimensionCoeffInt;
+        for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
+            for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
+                for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
+                    result += c[0][ii + 1] * c[1][jj + 1] * c[2][kk + 1] * (*this)(base.x + ii, base.y + jj, base.z + kk).real;
+        return result;
+    }
 
-	template <>
-	inline FP ScalarField<complex>::interpolateFourthOrder(const Int3& baseIdx, const FP3& coeffs) const
-	{
-		Int3 base = baseIdx * dimensionCoeffInt;
-		const Int3 minAllowedIdx = Int3(2, 2, 2) * dimensionCoeffInt;
-		const Int3 maxAllowedIdx = (size - Int3(4, 4, 4)) * dimensionCoeffInt;
-		if ((base >= minAllowedIdx) && (base <= maxAllowedIdx) == false)
-			return interpolateTSC(baseIdx, coeffs);
-		FP c[3][5];
-		formfactorFourthOrder(coeffs.x, c[0]);
-		formfactorFourthOrder(coeffs.y, c[1]);
-		formfactorFourthOrder(coeffs.z, c[2]);
-		for (int d = 0; d < 3; d++)
-			if (!dimensionCoeffInt[d]) {
-				c[d][0] = 0;
-				c[d][1] = 0;
-				c[d][2] = 1.0;
-				c[d][3] = 0;
-				c[d][4] = 0;
-			}
-		FP result = 0;
-		Int3 minIndex = Int3(-2, -2, -2) * dimensionCoeffInt;
-		Int3 maxIndex = Int3(2, 2, 2) * dimensionCoeffInt;
-		for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
-			for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
-				for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
-					result += c[0][ii + 2] * c[1][jj + 2] * c[2][kk + 2] * (*this)(base.x + ii, base.y + jj, base.z + kk).real;
-		return result;
-	}
+    template <>
+    inline FP ScalarField<complex>::interpolateFourthOrder(const Int3& baseIdx, const FP3& coeffs) const
+    {
+        Int3 base = baseIdx * dimensionCoeffInt;
+        const Int3 minAllowedIdx = Int3(2, 2, 2) * dimensionCoeffInt;
+        const Int3 maxAllowedIdx = (size - Int3(4, 4, 4)) * dimensionCoeffInt;
+        if ((base >= minAllowedIdx) && (base <= maxAllowedIdx) == false)
+            return interpolateTSC(baseIdx, coeffs);
+        FP c[3][5];
+        formfactorFourthOrder(coeffs.x, c[0]);
+        formfactorFourthOrder(coeffs.y, c[1]);
+        formfactorFourthOrder(coeffs.z, c[2]);
+        for (int d = 0; d < 3; d++)
+            if (!dimensionCoeffInt[d]) {
+                c[d][0] = 0;
+                c[d][1] = 0;
+                c[d][2] = 1.0;
+                c[d][3] = 0;
+                c[d][4] = 0;
+            }
+        FP result = 0;
+        Int3 minIndex = Int3(-2, -2, -2) * dimensionCoeffInt;
+        Int3 maxIndex = Int3(2, 2, 2) * dimensionCoeffInt;
+        for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
+            for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
+                for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
+                    result += c[0][ii + 2] * c[1][jj + 2] * c[2][kk + 2] * (*this)(base.x + ii, base.y + jj, base.z + kk).real;
+        return result;
+    }
 
-	template <>
-	inline FP ScalarField<complex>::interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const
-	{
-		FP c[3][4];
-		for (int i = 0; i < 4; i++)
-			c[0][i] = formfactorPCS(FP(i - 1) - coeffs.x);
-		for (int j = 0; j < 4; j++)
-			c[1][j] = formfactorPCS(FP(j - 1) - coeffs.y);
-		for (int k = 0; k < 4; k++)
-			c[2][k] = formfactorPCS(FP(k - 1) - coeffs.z);
-		for (int d = 0; d < 3; d++)
-			if (!dimensionCoeffInt[d]) {
-				c[d][0] = 1.0;
-				c[d][1] = 0;
-				c[d][2] = 0;
-				c[d][3] = 0;
-			}
-		FP result = 0;
-		Int3 base = (baseIdx - Int3(1, 1, 1)) * dimensionCoeffInt;
-		Int3 minIndex = Int3(0, 0, 0);
-		Int3 maxIndex = Int3(3, 3, 3) * dimensionCoeffInt;
-		for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
-			for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
-				for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
-					result += c[0][ii] * c[1][jj] * c[2][kk] * (*this)(base.x + ii, base.y + jj, base.z + kk).real;
-		return result;
-	}
+    template <>
+    inline FP ScalarField<complex>::interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const
+    {
+        FP c[3][4];
+        for (int i = 0; i < 4; i++)
+            c[0][i] = formfactorPCS(FP(i - 1) - coeffs.x);
+        for (int j = 0; j < 4; j++)
+            c[1][j] = formfactorPCS(FP(j - 1) - coeffs.y);
+        for (int k = 0; k < 4; k++)
+            c[2][k] = formfactorPCS(FP(k - 1) - coeffs.z);
+        for (int d = 0; d < 3; d++)
+            if (!dimensionCoeffInt[d]) {
+                c[d][0] = 1.0;
+                c[d][1] = 0;
+                c[d][2] = 0;
+                c[d][3] = 0;
+            }
+        FP result = 0;
+        Int3 base = (baseIdx - Int3(1, 1, 1)) * dimensionCoeffInt;
+        Int3 minIndex = Int3(0, 0, 0);
+        Int3 maxIndex = Int3(3, 3, 3) * dimensionCoeffInt;
+        for (int ii = minIndex.x; ii <= maxIndex.x; ii++)
+            for (int jj = minIndex.y; jj <= maxIndex.y; jj++)
+                for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
+                    result += c[0][ii] * c[1][jj] * c[2][kk] * (*this)(base.x + ii, base.y + jj, base.z + kk).real;
+        return result;
+    }
 
-	template <>
-	inline void ScalarField<complex>::zeroize()
-	{
+    template <>
+    inline void ScalarField<complex>::zeroize()
+    {
 #pragma omp parallel for
-		for (int idx = 0; idx < (int)elements.size(); idx++)
-		{
-			elements[idx].real = 0;
-			elements[idx].imag = 0;
-		}
-	}
+        for (int idx = 0; idx < (int)elements.size(); idx++)
+        {
+            elements[idx].real = 0;
+            elements[idx].imag = 0;
+        }
+    }
 }

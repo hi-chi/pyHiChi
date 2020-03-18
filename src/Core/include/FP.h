@@ -13,23 +13,23 @@ inline FP sqr(FP x) { return x * x; }
 
 struct complexFP 
 {
-	FP real;
-	FP imag;
+    FP real;
+    FP imag;
 
     complexFP() {
         real = 0.0;
         imag = 0.0;
     }
 
-	complexFP(FP _real, FP _imag) {
-		real = _real;
-		imag = _imag;
-	}
+    complexFP(FP _real, FP _imag) {
+        real = _real;
+        imag = _imag;
+    }
 
-	complexFP(FP _real) {
-		real = _real;
-		imag = 0.0;
-	}
+    complexFP(FP _real) {
+        real = _real;
+        imag = 0.0;
+    }
 
     static complexFP createInTrig(FP module, FP arg) {
         return complexFP(module * cos(arg), module * sin(arg));

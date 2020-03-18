@@ -403,7 +403,7 @@ namespace pfc
 		FP globalT;
 		bool isAnalytical;
 
-	};
+    };
 
 
 	template<class TypeGrid>

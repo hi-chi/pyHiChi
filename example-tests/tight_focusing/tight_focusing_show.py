@@ -70,7 +70,7 @@ def animate(grid, update, maxIter=160):
     
     def animate_(i):
         if (i > maxIter):
-	        exit()
+            exit()
         update()
         field = getFields(grid)
         im.set_array(field)

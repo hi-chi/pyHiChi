@@ -229,7 +229,7 @@ namespace pfc {
                     }
                 }
         numCells = (int)cellIndex.size();
-		this->initializeSplitFieldsB(numCells);
+        this->initializeSplitFieldsB(numCells);
 
         coeffEa.resize(numNodes);
         coeffEb.resize(numNodes);
@@ -395,7 +395,7 @@ namespace pfc {
 
         numCells = (int)cellIndex.size();
         this->initializeSplitFieldsE(numCells);
-		this->initializeSplitFieldsB(numCells);
+        this->initializeSplitFieldsB(numCells);
 
         computeCoeffs();
     }
@@ -453,12 +453,12 @@ namespace pfc {
             int j = cellIndex[idx].y;
             int k = cellIndex[idx].z;
 
-			this->eyx[idx] *= coeff[idx].y;
-			this->ezx[idx] *= coeff[idx].z;
-			this->ezy[idx] *= coeff[idx].z;
-			this->exy[idx] *= coeff[idx].x;
-			this->exz[idx] *= coeff[idx].x;
-			this->eyz[idx] *= coeff[idx].y;
+            this->eyx[idx] *= coeff[idx].y;
+            this->ezx[idx] *= coeff[idx].z;
+            this->ezy[idx] *= coeff[idx].z;
+            this->exy[idx] *= coeff[idx].x;
+            this->exz[idx] *= coeff[idx].x;
+            this->eyz[idx] *= coeff[idx].y;
         }
     }
 
@@ -471,12 +471,12 @@ namespace pfc {
             int j = cellIndex[idx].y;
             int k = cellIndex[idx].z;
 
-			this->byx[idx] *= coeff[idx].y;
-			this->bzx[idx] *= coeff[idx].z;
-			this->bzy[idx] *= coeff[idx].z;
-			this->bxy[idx] *= coeff[idx].x;
-			this->bxz[idx] *= coeff[idx].x;
-			this->byz[idx] *= coeff[idx].y;
+            this->byx[idx] *= coeff[idx].y;
+            this->bzx[idx] *= coeff[idx].z;
+            this->bzy[idx] *= coeff[idx].z;
+            this->bxy[idx] *= coeff[idx].x;
+            this->bxz[idx] *= coeff[idx].x;
+            this->byz[idx] *= coeff[idx].y;
         }
     }
 

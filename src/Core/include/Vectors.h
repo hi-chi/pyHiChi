@@ -54,12 +54,12 @@ struct Vector1
         return x * x;
     }
 
-	inline std::string toString()
-	{
-		std::stringstream s;
-		s << *this;
-		return s.str();
-	}
+    inline std::string toString()
+    {
+        std::stringstream s;
+        s << *this;
+        return s.str();
+    }
 };
 
 template<typename T>
@@ -237,12 +237,12 @@ struct Vector2
         return x * x + y * y;
     }
 
-	inline std::string toString()
-	{
-		std::stringstream s;
-		s << *this;
-		return s.str();
-	}
+    inline std::string toString()
+    {
+        std::stringstream s;
+        s << *this;
+        return s.str();
+    }
 };
 
 template<typename T>
@@ -437,12 +437,12 @@ struct Vector3
         z /= no;
     }
 
-	inline std::string toString()
-	{
-		std::stringstream s;
-		s << *this;
-		return s.str();
-	}
+    inline std::string toString()
+    {
+        std::stringstream s;
+        s << *this;
+        return s.str();
+    }
 };
 
 template<typename T>
@@ -783,7 +783,7 @@ inline FP dist(const FP3& v1, const FP3& v2)
 
 inline const FP3 operator * (const FP3& v1, const Int3& v2)
 {
-	return FP3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
+    return FP3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
 }
 
 inline const FP3 operator * (const Int3& v1, const FP3& v2)
@@ -793,24 +793,24 @@ inline const FP3 operator * (const Int3& v1, const FP3& v2)
 
 inline FP sqr(const FP3& v)
 {
-	return v.x * v.x + v.y * v.y + v.z * v.z;
+    return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 
 inline FP SP(const FP3& v1, const FP3& v2)
 {
-	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
 inline const FP3 cross(const FP3& v1, const FP3& v2)
 {
-	return FP3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
-		v1.x * v2.y - v1.y * v2.x);
+    return FP3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
+        v1.x * v2.y - v1.y * v2.x);
 }
 
 inline const FP3 VP(const FP3& v1, const FP3& v2)
 {
-	return FP3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
-		v1.x * v2.y - v1.y * v2.x);
+    return FP3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
+        v1.x * v2.y - v1.y * v2.x);
 }
 
 typedef FP Vector3<FP>::* MemberOfFP3;

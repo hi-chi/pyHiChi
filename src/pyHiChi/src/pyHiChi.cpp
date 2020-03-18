@@ -66,9 +66,9 @@ using namespace pfc;
 
 
 std::vector<ParticleType> ParticleInfo::typesVector = { {constants::electronMass, constants::electronCharge},//electron
-									{constants::electronMass, -constants::electronCharge},//positron
-									{constants::protonMass, 0.0},//proton
-									{constants::electronMass, 0.0 } };//photon
+                                    {constants::electronMass, -constants::electronCharge},//positron
+                                    {constants::protonMass, 0.0},//proton
+                                    {constants::electronMass, 0.0 } };//photon
 const ParticleType* ParticleInfo::types = &ParticleInfo::typesVector[0];
 short ParticleInfo::numTypes = sizeParticleTypes;
 
@@ -85,6 +85,7 @@ PYBIND11_MODULE(pyHiChi, object) {
     object.attr("meV") = constants::meV;
 
     py::class_<FP3>(object, "vector3d")
+        .def(py::init<>())
         .def(py::init<FP, FP, FP>())
         .def("volume", &FP3::volume)
         .def("norm", &FP3::norm)
@@ -98,30 +99,6 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def_readwrite("z", &FP3::z)
         ;
 
-    py::enum_<ParticleTypes>(object, "particleTypes")
-        .value("Electron", Electron)
-        .value("Positron", Positron)
-        .value("Proton", Proton)
-        .value("Photon", Photon)
-        .export_values();
-
-    py::class_<Particle3d>(object, "particle")
-        .def(py::init<>())
-        .def(py::init<FP3, FP3>())
-        .def(py::init<FP3, FP3, FP, ParticleTypes>())
-        .def("getPosition", &Particle3d::getPosition)
-        .def("setPosition", &Particle3d::setPosition)
-        .def("getMomentum", &Particle3d::getMomentum)
-        .def("setMomentum", &Particle3d::setMomentum)
-        .def("getVelocity", &Particle3d::getVelocity)
-        .def("setVelocity", &Particle3d::setVelocity)
-        .def("getWeight", &Particle3d::getWeight)
-        .def("setWeight", &Particle3d::setWeight)
-        .def("getGamma", &Particle3d::getGamma)
-        .def("getMass", &Particle3d::getMass)
-        .def("getCharge", &Particle3d::getCharge)
-        .def("getType", &Particle3d::getType)
-        ;
 
     py::class_<ParticleProxy3d>(object, "particleProxy")
         .def(py::init<Particle3d&>())
@@ -148,7 +125,32 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getB", &ValueField::getB)
         .def("setB", &ValueField::setB)
         ;
+    
+    py::enum_<ParticleTypes>(object, "particleTypes")
+        .value("Electron", Electron)
+        .value("Positron", Positron)
+        .value("Proton", Proton)
+        .value("Photon", Photon)
+        .export_values();
 
+    py::class_<Particle3d>(object, "particle")
+        .def(py::init<>())
+        .def(py::init<FP3, FP3>())
+        .def(py::init<FP3, FP3, FP, ParticleTypes>())
+        .def("getPosition", &Particle3d::getPosition)
+        .def("setPosition", &Particle3d::setPosition)
+        .def("getMomentum", &Particle3d::getMomentum)
+        .def("setMomentum", &Particle3d::setMomentum)
+        .def("getVelocity", &Particle3d::getVelocity)
+        .def("setVelocity", &Particle3d::setVelocity)
+        .def("getWeight", &Particle3d::getWeight)
+        .def("setWeight", &Particle3d::setWeight)
+        .def("getGamma", &Particle3d::getGamma)
+        .def("getMass", &Particle3d::getMass)
+        .def("getCharge", &Particle3d::getCharge)
+        .def("getType", &Particle3d::getType)
+        ;
+    
     py::class_<ParticleArray3d>(object, "particleArray")
         .def(py::init<>())
         .def(py::init<ParticleTypes>())
@@ -158,13 +160,13 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("delete", (void (ParticleArray3d::*)(int)) &ParticleArray3d::deleteParticle)
         .def("delete", (void (ParticleArray3d::*)(ParticleArray3d::iterator&)) &ParticleArray3d::deleteParticle)
         .def("__getitem__", [](ParticleArray3d& arr, size_t i) {
-        if (i >= arr.size()) throw py::index_error();
-        return arr[i];
-    })
+            if (i >= arr.size()) throw py::index_error();
+            return arr[i];
+        })
         .def("__setitem__", [](ParticleArray3d &arr, size_t i, Particle3d v) {
-        if (i >= arr.size()) throw py::index_error();
-        arr[i] = v;
-    })
+            if (i >= arr.size()) throw py::index_error();
+            arr[i] = v;
+        })
         .def("__iter__", [](ParticleArray3d &pArray) { return py::make_iterator(pArray.begin(), pArray.end()); },
             py::keep_alive<0, 1>())
         ;
@@ -175,31 +177,38 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("add", &Ensemble3d::addParticle)
         .def("size", &Ensemble3d::size)
         .def("__getitem__", [](Ensemble3d& arr, size_t i) {
-        if (i >= sizeParticleTypes) throw py::index_error();
-        return arr[i];
-    })
+            if (i >= sizeParticleTypes) throw py::index_error();
+            return &(arr[i]);
+        })
         .def("__setitem__", [](Ensemble3d &arr, size_t i, ParticleArray3d v) {
-        if (i >= sizeParticleTypes) throw py::index_error();
-        arr[i] = v;
-    })
+            if (i >= sizeParticleTypes) throw py::index_error();
+            arr[i] = v;
+        })
         .def("__getitem__", [](Ensemble3d& arr, string& name) {
-        if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
-            throw py::index_error();
-        return arr[name];
-    })
+            if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
+                throw py::index_error();
+            return &(arr[name]);
+        })
         .def("__setitem__", [](Ensemble3d &arr, string& name, ParticleArray3d v) {
-        if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
-            throw py::index_error();
-        arr[name] = v;
-    })
+            if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
+                throw py::index_error();
+            arr[name] = v;
+        })
         ;
 
 
     py::class_<BorisPusher>(object, "BorisPusher")
         .def(py::init<>())
-        .def("__call__", (void (BorisPusher::*)(ParticleProxy3d&, ValueField, FP)) &BorisPusher::operator())
-        .def("__call__", (void (BorisPusher::*)(Particle3d&, ValueField, FP)) &BorisPusher::operator())
-        .def("__call__", (void (BorisPusher::*)(ParticleArray3d&, std::vector<ValueField>, FP)) &BorisPusher::operator())
+        .def("__call__", (void (BorisPusher::*)(ParticleProxy3d*, ValueField, FP)) &BorisPusher::operator())
+        .def("__call__", (void (BorisPusher::*)(Particle3d*, ValueField, FP)) &BorisPusher::operator())
+        .def("__call__", (void (BorisPusher::*)(ParticleArray3d*, std::vector<ValueField>, FP)) &BorisPusher::operator())
+        ;
+
+    py::class_<RadiationReaction>(object, "RadiationReaction")
+        .def(py::init<>())
+        .def("__call__", (void (RadiationReaction::*)(ParticleProxy3d*, ValueField, FP)) &RadiationReaction::operator())
+        .def("__call__", (void (RadiationReaction::*)(Particle3d*, ValueField, FP)) &RadiationReaction::operator())
+        .def("__call__", (void (RadiationReaction::*)(ParticleArray3d*, std::vector<ValueField>, FP)) &RadiationReaction::operator())
         ;
 
     object.def("simpleThinning", &Thinning<ParticleArray3d>::simple);
@@ -208,13 +217,13 @@ PYBIND11_MODULE(pyHiChi, object) {
     object.def("energyConservativeThinning", &Thinning<ParticleArray3d>::energyConservative);
     object.def("kMeansMergining", &Merging<ParticleArray3d>::merge_with_kmeans);
 
-	py::class_<pyYeeGrid>(object, "YeeGrid")
-		SET_METHODS_FOR_PY_GRID(pyYeeGrid)
-		;
+    py::class_<pyYeeGrid>(object, "YeeGrid")
+        SET_METHODS_FOR_PY_GRID(pyYeeGrid)
+        ;
 
     py::class_<FDTD>(object, "FDTD")
         .def(py::init<pyYeeGrid*>())
-		.def(py::init<pyYeeGridMapping*>())
+        .def(py::init<pyYeeGridMapping*>())
         .def("setPML", &FDTD::setPML)
         .def("setBC", &FDTD::setFieldGenerator)
         .def("updateHalfB", &FDTD::updateHalfB)
@@ -234,31 +243,31 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<PSTD>(object, "PSTD")
         .def(py::init<pyPSTDGrid*>())
-		.def(py::init<pyPSTDGridMapping*>())
+        .def(py::init<pyPSTDGridMapping*>())
         .def("setPML", &PSTD::setPML)
         .def("updateFields", &PSTD::updateFields)
         .def("setTimeStep", &PSTD::setTimeStep)
         ;
 
     py::class_<pyPSATDGrid>(object, "PSATDGrid")
-		SET_METHODS_FOR_PY_GRID(pyPSATDGrid)
+        SET_METHODS_FOR_PY_GRID(pyPSATDGrid)
         ;
 
     py::class_<PSATD>(object, "PSATD")
         .def(py::init<pyPSATDGrid*>())
-		.def(py::init<pyPSATDGridMapping*>())
+        .def(py::init<pyPSATDGridMapping*>())
         .def("setPML", &PSATD::setPML)
         .def("updateFields", &PSATD::updateFields)
         .def("setTimeStep", &PSATD::setTimeStep)
         ;
 
-	py::class_<PSATDWithPoisson>(object, "PSATDWithPoisson")
-		.def(py::init<pyPSATDGrid*>())
-		.def(py::init<pyPSATDGridMapping*>())
-		.def("setPML", &PSATDWithPoisson::setPML)
-		.def("updateFields", &PSATDWithPoisson::updateFields)
-		.def("setTimeStep", &PSATDWithPoisson::setTimeStep)
-		;
+    py::class_<PSATDWithPoisson>(object, "PSATDWithPoisson")
+        .def(py::init<pyPSATDGrid*>())
+        .def(py::init<pyPSATDGridMapping*>())
+        .def("setPML", &PSATDWithPoisson::setPML)
+        .def("updateFields", &PSATDWithPoisson::updateFields)
+        .def("setTimeStep", &PSATDWithPoisson::setTimeStep)
+        ;
 
     py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
         .def(py::init<pyPSATDGrid*>())
@@ -275,25 +284,25 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<Mapping>(object, "Mapping")
         .def("advanceTime", &Mapping::advanceTime)
-		.def("setTime", &Mapping::setTime)
+        .def("setTime", &Mapping::setTime)
         ;
 
     py::class_<pyYeeGridMapping>(object, "YeeGridMapping")
-		SET_METHODS_FOR_PY_GRID(pyYeeGridMapping)
-		.def("setMapping", &pyYeeGridMapping::setMapping)
+        SET_METHODS_FOR_PY_GRID(pyYeeGridMapping)
+        .def("setMapping", &pyYeeGridMapping::setMapping)
         ;
 
     py::class_<pyPSTDGridMapping>(object, "PSTDGridMapping")
-		SET_METHODS_FOR_PY_GRID(pyPSTDGridMapping)
-		.def("setMapping", &pyPSTDGridMapping::setMapping)
+        SET_METHODS_FOR_PY_GRID(pyPSTDGridMapping)
+        .def("setMapping", &pyPSTDGridMapping::setMapping)
         ;
 
     py::class_<pyPSATDGridMapping>(object, "PSATDGridMapping")
-		SET_METHODS_FOR_PY_GRID(pyPSATDGridMapping)
-		.def("setMapping", &pyPSATDGridMapping::setMapping)
+        SET_METHODS_FOR_PY_GRID(pyPSATDGridMapping)
+        .def("setMapping", &pyPSATDGridMapping::setMapping)
         ;
 
-	// mappings
+    // mappings
 
     py::class_<IdentityMapping, Mapping>(object, "IdentityMapping")
         .def(py::init<const FP3&, const FP3&>())
@@ -314,24 +323,24 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getInverseCoords", &TightFocusingMapping::getInverseCoords)
         .def("getxMin", &TightFocusingMapping::getxMin)
         .def("getxMax", &TightFocusingMapping::getxMax)
-		.def("setIfCut", &TightFocusingMapping::setIfCut)
+        .def("setIfCut", &TightFocusingMapping::setIfCut)
         ;
 
 
-	// field configurations
+    // field configurations
 
-	py::class_<NullField>(object, "NullField")
-		.def(py::init<>())
-		.def("getE", &NullField::E)
-		.def("getB", &NullField::B)
-		;
+    py::class_<NullField>(object, "NullField")
+        .def(py::init<>())
+        .def("getE", &NullField::E)
+        .def("getB", &NullField::B)
+        ;
 
-	py::class_<TightFocusingField>(object, "TightFocusingField")
-		.def(py::init<FP, FP, FP, FP, FP, FP, FP>())
-		.def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3>())
-		.def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3, FP>())
-		.def("getE", &TightFocusingField::E)
-		.def("getB", &TightFocusingField::B)
-		;
+    py::class_<TightFocusingField>(object, "TightFocusingField")
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP>())
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3>())
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3, FP>())
+        .def("getE", &TightFocusingField::E)
+        .def("getB", &TightFocusingField::B)
+        ;
 
 }

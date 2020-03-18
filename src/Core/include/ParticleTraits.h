@@ -15,11 +15,11 @@ public:
     typedef typename ParticleType::WeightType WeightType;
     typedef typename ParticleType::TypeIndexType TypeIndexType;
 
-	typedef typename ParticleType::PositionTypeProxy PositionTypeProxy;
-	typedef typename ParticleType::MomentumTypeProxy MomentumTypeProxy;
-	typedef typename ParticleType::GammaTypeProxy GammaTypeProxy;
-	typedef typename ParticleType::WeightTypeProxy WeightTypeProxy;
-	typedef typename ParticleType::TypeIndexTypeProxy TypeIndexTypeProxy;
+    typedef typename ParticleType::PositionTypeProxy PositionTypeProxy;
+    typedef typename ParticleType::MomentumTypeProxy MomentumTypeProxy;
+    typedef typename ParticleType::GammaTypeProxy GammaTypeProxy;
+    typedef typename ParticleType::WeightTypeProxy WeightTypeProxy;
+    typedef typename ParticleType::TypeIndexTypeProxy TypeIndexTypeProxy;
 };
 
 } // namespace pfc

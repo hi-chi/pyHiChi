@@ -3,39 +3,39 @@ import numpy as np
 import math as ma
 
 def valueE(x, y, z):
-	E = pfc.vector3d(0, np.cos(z), 0) #sin(x)
-	return E
+    E = pfc.vector3d(0, np.cos(z), 0) #sin(x)
+    return E
 
 def valueEx(x, y, z):
-	Ex = 0
-	return Ex
+    Ex = 0
+    return Ex
 def valueEy(x, y, z):
-	Ey = np.cos(z)
-	return Ey
+    Ey = np.cos(z)
+    return Ey
 def valueEz(x, y, z):
-	Ez = 0
-	return Ez
+    Ez = 0
+    return Ez
 
 def valueB(x, y, z):
-	B = pfc.vector3d(-np.cos(z), 0, 0)
-	return B
+    B = pfc.vector3d(-np.cos(z), 0, 0)
+    return B
 
 def valueBx(x, y, z):
-	Bx = -np.cos(z)
-	return Bx
+    Bx = -np.cos(z)
+    return Bx
 def valueBy(x, y, z):
-	By = 0
-	return By
+    By = 0
+    return By
 def valueBz(x, y, z):
-	Bz = 0
-	return Bz
+    Bz = 0
+    return Bz
 
 def step(minCoords, maxCoords, gridSize):
-	steps = pfc.vector3d(1, 1, 1)
-	steps.x = (maxCoords.x - minCoords.x)/(gridSize.x)
-	steps.y = (maxCoords.y - minCoords.y)/(gridSize.y)
-	steps.z = (maxCoords.z - minCoords.z)/(gridSize.z)
-	return steps
+    steps = pfc.vector3d(1, 1, 1)
+    steps.x = (maxCoords.x - minCoords.x)/(gridSize.x)
+    steps.y = (maxCoords.y - minCoords.y)/(gridSize.y)
+    steps.z = (maxCoords.z - minCoords.z)/(gridSize.z)
+    return steps
 
 gridSize = pfc.vector3d(5, 10, 11)
 minCoords = pfc.vector3d(0.0, 1.0, 0.0)
@@ -45,7 +45,7 @@ timeStep = 1e-16
 
 grid1 = pfc.YeeGrid(gridSize, timeStep, minCoords, stepsGrid)
 grid2 = pfc.YeeGrid(gridSize, timeStep, minCoords, stepsGrid)
-	
+    
 grid1.setE(valueE)
 grid1.setB(valueB)
 
@@ -69,15 +69,15 @@ Bx2 = np.zeros(shape=(N,N))
 
 for ix in range(N):
     for iy in range(N):
-		coordXZ = pfc.vector3d(x[ix], 0.0, z[iy])
-		E1 = grid1.getE(coordXZ)
-		Ex1[ix, iy] = E1.x
-		Ey1[ix, iy] = E1.y
-		Bx1[ix, iy] = grid1.getB(coordXZ).x
-		E2 = grid2.getE(coordXZ)
-		Ex2[ix, iy] = E2.x
-		Ey2[ix, iy] = E2.y
-		Bx2[ix, iy] = grid2.getB(coordXZ).x
+        coordXZ = pfc.vector3d(x[ix], 0.0, z[iy])
+        E1 = grid1.getE(coordXZ)
+        Ex1[ix, iy] = E1.x
+        Ey1[ix, iy] = E1.y
+        Bx1[ix, iy] = grid1.getB(coordXZ).x
+        E2 = grid2.getE(coordXZ)
+        Ex2[ix, iy] = E2.x
+        Ey2[ix, iy] = E2.y
+        Bx2[ix, iy] = grid2.getB(coordXZ).x
 
 
 fig, axes = plt.subplots(ncols=3, nrows=2)

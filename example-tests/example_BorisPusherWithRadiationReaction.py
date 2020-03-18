@@ -2,7 +2,7 @@ import pyHiChi as pfc
 import numpy as np
 
 def valueEAnalytical(pos, t):
-    E = pfc.vector3d(1, 0, 0) #sin(pos.x)
+    E = pfc.vector3d(10**-5, 10**-5, 10**-5) #sin(pos.x)
     return E
     
 def valueBAnalytical(pos, t):
@@ -14,17 +14,19 @@ pArray = pfc.particleArray()
 fieldsArray = []
 for i in range(11) :
     pos = pfc.vector3d(1.2*i, 3.4*i, 5.6*i)
-    mo = pfc.vector3d(i*10**16, 0, 0)
+    mo = pfc.vector3d(i*10, 0, 0)
     newP = pfc.particle(pos, mo, 0.5, pfc.Electron)
     pArray.add(newP)
     fieldsArray.append(pfc.field(valueEAnalytical(pos, t), valueBAnalytical(pos, t)))
     
-#Boris Pusher
-dt = 0.1
+#Boris Pusher with RadiationReaction
+dt = 0.001
 pusher = pfc.BorisPusher()
+rr = pfc.RadiationReaction()
 for k in range(11) :
-    print(pArray[1].getMomentum())
+    print(pArray[0].getMomentum())
     pusher(pArray, fieldsArray, dt)
+    rr(pArray, fieldsArray, dt)
     t = dt * k
     for j in range(11) :
         fieldsArray[i].setE(valueEAnalytical(pos, t))
