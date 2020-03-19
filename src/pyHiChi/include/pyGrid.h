@@ -440,7 +440,7 @@ namespace pfc
             FP3 inverseCoords = getInverseCoords(coords, &status);
             if (!status)
                 return FP3(0, 0, 0);
-            return pyGridAttributes::getE(inverseCoords);
+            return pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>::getE(inverseCoords);
         }
 
         FP3 getB(const FP3& coords) const {
@@ -448,7 +448,7 @@ namespace pfc
             FP3 inverseCoords = getInverseCoords(coords, &status);
             if (!status)
                 return FP3(0, 0, 0);
-            return pyGridAttributes::getB(inverseCoords);
+            return pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>::getB(inverseCoords);
         }
 
 		void setMapping(Mapping* mapping) {
