@@ -56,11 +56,12 @@ for D_div_L in D_div_L_arr:
     grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep)
     grid.setMapping(mapping)
     
-    fieldSolver = hichi.PSATDWithPoisson(grid)
+    fieldSolver = hichi.PSATD(grid)
     
     def initialize():
         mapping.setTime(0.0)  
         sphericalPulse.setField(grid)
+        fieldSolver.convertFieldsPoissonEquation()
     
     def update():
         mapping.advanceTime(timeStep)   

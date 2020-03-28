@@ -78,7 +78,8 @@ grid.setB(nullValue, nullValue, fieldValue)
 
 # create field solver
 # periodic boundary conditions are default
-fieldSolver = hichi.PSATDWithPoisson(grid)
+fieldSolver = hichi.PSATD(grid)
+fieldSolver.convertFieldsPoissonEquation()
 # equivalent with
 # fieldSolver = hichi.PSATDWithPoisson(gridMapping)
 

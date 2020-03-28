@@ -171,7 +171,7 @@ hichi_primitives.createDir(DIR_RESULT)  # DELETE OLD FILES IN DIR_RESULT!!!
 grid = hichi.PSATDGridMapping(gridSize, 0.0, gridMinCoords, gridStep)
 grid.setMapping(mapping)
 
-fieldSolver = hichi.PSATDWithPoisson(grid)
+fieldSolver = hichi.PSATD(grid)
 
 
 for f_number in F_number_arr:
@@ -181,6 +181,7 @@ for f_number in F_number_arr:
     mapping.setTime(0.0)
 
     sphericalPulse.setField(grid)
+    fieldSolver.convertFieldsPoissonEquation()
     
     res = run()
     
@@ -196,6 +197,7 @@ for f_number in F_number_arr:
     # mapping.setTime(0.0)
 
     # sphericalPulse.setField(grid)
+    # fieldSolver.convertFieldsPoissonEquation()
     
     # res = runUsingPreviousResults(DIR_SCRIPT + "/res.csv", f_number)
     
@@ -211,6 +213,7 @@ for f_number in F_number_arr:
     # # mapping.setTime(0.0)
 
     # # sphericalPulse.setField(grid)
+    # # fieldSolver.convertFieldsPoissonEquation()
     
     # # res = runConst()
     

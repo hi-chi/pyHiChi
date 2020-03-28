@@ -79,11 +79,12 @@ def run(Nx):
     grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep)
     grid.setMapping(mapping)
     
-    fieldSolver = hichi.PSATDWithPoisson(grid)
+    fieldSolver = hichi.PSATD(grid)
     
     mapping.setTime(0.0)
 
     sphericalPulse.setField(grid)
+    fieldSolver.convertFieldsPoissonEquation()
     
     updateFields(grid, mapping, fieldSolver)
     

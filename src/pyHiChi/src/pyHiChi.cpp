@@ -265,14 +265,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("setPML", &PSATD::setPML)
         .def("updateFields", &PSATD::updateFields)
         .def("setTimeStep", &PSATD::setTimeStep)
-        ;
-
-    py::class_<PSATDWithPoisson>(object, "PSATDWithPoisson")
-        .def(py::init<pyPSATDGrid*>())
-        .def(py::init<pyPSATDGridMapping*>())
-        .def("setPML", &PSATDWithPoisson::setPML)
-        .def("updateFields", &PSATDWithPoisson::updateFields)
-        .def("setTimeStep", &PSATDWithPoisson::setTimeStep)
+        .def("convertFieldsPoissonEquation", &PSATD::convertFieldsPoissonEquation)
         ;
 
     py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")

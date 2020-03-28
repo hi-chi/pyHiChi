@@ -10,11 +10,11 @@ import math as ma
 # ------------------- initializing -------------------------------------
 
 
-factor = 1.0
+factor = 0.5
 NxFull = int(factor*320)                           # size of grid in full area
 Ny = int(factor*256)
 Nz = int(factor*256)
-NxBand = int(56*factor)                            # size of grid in the band
+NxBand = NxFull#int(56*factor)                            # size of grid in the band
 gridSize = hichi.vector3d(NxBand, Ny, Nz)          # real size of grid
 
 # creating of spherical pulse
@@ -29,7 +29,7 @@ maxCoords = hichi.vector3d(20, 20, 20)
 D = 3.5*sphericalPulse.pulselength                 # width of band
 
 # to compute the task in the full area just set
-#D = maxCoords.x - minCoords.x
+D = maxCoords.x - minCoords.x
                                                    
                                                    
 # creating of mapping
@@ -40,7 +40,7 @@ mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseleng
 #mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
 
 # not to cut secondary pulses
-#mapping.setIfCut(False)
+mapping.setIfCut(False)
 
 xMin = mapping.getxMin()  # bounds of the band
 xMax = mapping.getxMax()
@@ -57,8 +57,8 @@ grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep)
 grid.setMapping(mapping)
 
 # creating of field solver PSATD for existing grid
-fieldSolver = hichi.PSATDWithPoisson(grid)
-# fieldSolver = hichi.PSATD(grid)
+fieldSolver = hichi.PSATD(grid)
+
 
 def initialize():
     # mapping for tight focusing has a external parameter - time
@@ -67,6 +67,9 @@ def initialize():
     
     # setting of start conditions
     sphericalPulse.setField(grid)
+    
+    # consider the Poisson equation
+    fieldSolver.convertFieldsPoissonEquation()
 
 
 # ------------------- running -----------------------------------------------
