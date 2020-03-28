@@ -435,6 +435,7 @@ namespace pfc
 	typedef pyGrid<YeeGrid> pyYeeGrid;
 	typedef pyGrid<PSTDGrid> pyPSTDGrid;
 	typedef pyGrid<PSATDGrid> pyPSATDGrid;
+	typedef pyGrid<PSATDTimeStraggeredGrid> pyPSATDTimeStraggeredGrid;
 
 
 	template<class TypeGrid>
@@ -506,4 +507,5 @@ namespace pfc
 	typedef pyGridMapping<YeeGrid> pyYeeGridMapping;
 	typedef pyGridMapping<PSTDGrid> pyPSTDGridMapping;
 	typedef pyGridMapping<PSATDGrid> pyPSATDGridMapping;
+	typedef pyGridMapping<PSATDTimeStraggeredGrid> pyPSATDTimeStraggeredGridMapping;
 }

@@ -9,11 +9,11 @@
 
 namespace pfc {
 
-    class PSATDTimeStraggered : public SpectralFieldSolver<PSATDGridType>
+    class PSATDTimeStraggered : public SpectralFieldSolver<PSATDTimeStraggeredGridType>
     {
 
     public:
-        PSATDTimeStraggered(PSATDGrid * grid);
+        PSATDTimeStraggered(PSATDTimeStraggeredGrid * grid);
 
         void updateFields();
 
@@ -24,19 +24,21 @@ namespace pfc {
 
         void setTimeStep(FP dt);
 
+        void convertFieldsPoissonEquation();
+
         ScalarField<complexFP> tmpJx, tmpJy, tmpJz;
 
     protected:
 
-        PmlSpectral<GridTypes::PSATDGridType>* getPml() {
-            return (PmlSpectral<GridTypes::PSATDGridType>*)pml.get();
+        PmlSpectral<GridTypes::PSATDTimeStraggeredGridType>* getPml() {
+            return (PmlSpectral<GridTypes::PSATDTimeStraggeredGridType>*)pml.get();
         }
 
         void saveJ();
     };
 
-    inline PSATDTimeStraggered::PSATDTimeStraggered(PSATDGrid* _grid) :
-        SpectralFieldSolver<GridTypes::PSATDGridType>(_grid),
+    inline PSATDTimeStraggered::PSATDTimeStraggered(PSATDTimeStraggeredGrid* _grid) :
+        SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>(_grid),
         tmpJx(FourierTransform::getSizeOfComplex(_grid->Jx.getSize())),
         tmpJy(FourierTransform::getSizeOfComplex(_grid->Jy.getSize())),
         tmpJz(FourierTransform::getSizeOfComplex(_grid->Jz.getSize()))
@@ -47,7 +49,7 @@ namespace pfc {
 
     inline void PSATDTimeStraggered::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPsatd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlPsatdTimeStraggered(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
     }
 
@@ -55,7 +57,7 @@ namespace pfc {
     {
         if (grid->setTimeStep(dt)) {
             complexGrid->setTimeStep(dt);
-            if (pml.get()) pml.reset(new PmlPsatd(this, pml->sizePML));
+            if (pml.get()) pml.reset(new PmlPsatdTimeStraggered(this, pml->sizePML));
         }
     }
 
@@ -83,6 +85,38 @@ namespace pfc {
         doFourierTransform(CtoR);
 
         if (pml.get()) getPml()->doSecondStep();
+    }
+
+    inline void PSATDTimeStraggered::convertFieldsPoissonEquation() {
+        doFourierTransform(RtoC);
+        const Int3 begin = updateComplexBAreaBegin;
+        const Int3 end = updateComplexBAreaEnd;
+        double dt = grid->dt / 2;
+#pragma omp parallel for
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+            {
+                //#pragma omp simd
+                for (int k = begin.z; k < end.z; k++)
+                {
+                    FP3 K = getWaveVector(Int3(i, j, k));
+                    FP normK = K.norm();
+
+                    if (normK == 0) {
+                        continue;
+                    }
+
+                    K = K / normK;
+
+                    ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
+                    ComplexFP3 El = (ComplexFP3)K * dot((ComplexFP3)K, E);
+
+                    complexGrid->Ex(i, j, k) -= El.x;
+                    complexGrid->Ey(i, j, k) -= El.y;
+                    complexGrid->Ez(i, j, k) -= El.z;
+                }
+            }
+        doFourierTransform(CtoR);
     }
 
     inline void PSATDTimeStraggered::updateHalfB()

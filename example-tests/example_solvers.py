@@ -40,6 +40,7 @@ timeStep = 1e-12
 
 grid = pfc.PSTDGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.PSATDGrid(gridSize, timeStep, minCoords, stepsGrid)
+# grid = pfc.PSATDTimeStraggeredGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.YeeGrid(gridSize, timeStep, minCoords, stepsGrid)
 grid.setE(valueEx, valueEy, valueEz)
 grid.setB(valueBx, valueBy, valueBz)

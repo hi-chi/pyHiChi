@@ -268,11 +268,17 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("convertFieldsPoissonEquation", &PSATD::convertFieldsPoissonEquation)
         ;
 
+    py::class_<pyPSATDTimeStraggeredGrid>(object, "PSATDTimeStraggeredGrid")
+        SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGrid)
+        ;
+
     py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
-        .def(py::init<pyPSATDGrid*>())
+        .def(py::init<pyPSATDTimeStraggeredGrid*>())
+        .def(py::init<pyPSATDTimeStraggeredGridMapping*>())
         .def("setPML", &PSATDTimeStraggered::setPML)
         .def("updateFields", &PSATDTimeStraggered::updateFields)
         .def("setTimeStep", &PSATDTimeStraggered::setTimeStep)
+        .def("convertFieldsPoissonEquation", &PSATDTimeStraggered::convertFieldsPoissonEquation)
         ;
 
     py::class_<ScalarQED_AEG_only_electron>(object, "QED")
@@ -302,6 +308,12 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::init<pyPSATDGrid*>())
         SET_METHODS_FOR_PY_GRID(pyPSATDGridMapping)
         .def("setMapping", &pyPSATDGridMapping::setMapping)
+        ;
+
+    py::class_<pyPSATDTimeStraggeredGridMapping>(object, "PSATDTimeStraggeredGridMapping")
+        .def(py::init<pyPSATDTimeStraggeredGrid*>())
+        SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGridMapping)
+        .def("setMapping", &pyPSATDTimeStraggeredGridMapping::setMapping)
         ;
 
     // mappings
