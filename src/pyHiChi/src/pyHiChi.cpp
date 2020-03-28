@@ -24,40 +24,39 @@
 #include "QED_AEG.h"
 #include "Vectors.h"
 #include "Thinning.h"
-
+#include "Enums.h"
 #include "Mapping.h"
-#include "TightFocusingMapping.h"
-#include "TightFocusingField.h"
+#include "FieldConfiguration.h"
 
 
-#define SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType) \
-    .def("set", &pyGridType::setFieldConfiguration<NullField>) \
+#define SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType)     \
+    .def("set", &pyGridType::setFieldConfiguration<NullField>)           \
     .def("set", &pyGridType::setFieldConfiguration<TightFocusingField>)    
 
 
-#define SET_METHODS_FOR_PY_GRID(pyGridType) \
-    .def(py::init<FP3, FP, FP3, FP3>()) \
-    .def("getFields", &pyGridType::getFields) \
-    .def("getJ", &pyGridType::getJ) \
-    .def("getE", &pyGridType::getE) \
-    .def("getB", &pyGridType::getB) \
-    .def("setJ", &pyGridType::setJ) \
-    .def("setE", &pyGridType::setE) \
-    .def("setB", &pyGridType::setB) \
-    .def("setJ", &pyGridType::pySetJ) \
-    .def("setE", &pyGridType::pySetE) \
-    .def("setB", &pyGridType::pySetB) \
-    .def("setJ", &pyGridType::setJxyz) \
-    .def("setE", &pyGridType::setExyz) \
-    .def("setB", &pyGridType::setBxyz) \
-    .def("setJ", &pyGridType::pySetJxyz) \
-    .def("setE", &pyGridType::pySetExyz) \
-    .def("setB", &pyGridType::pySetBxyz) \
-    .def("setJt", &pyGridType::setJxyzt) \
-    .def("setEt", &pyGridType::setExyzt) \
-    .def("setBt", &pyGridType::setBxyzt) \
-    SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType) \
-    .def("analytical", &pyGridType::setAnalytical) \
+#define SET_METHODS_FOR_PY_GRID(pyGridType)                              \
+    .def(py::init<FP3, FP, FP3, FP3>())                                  \
+    .def("getFields", &pyGridType::getFields)                            \
+    .def("getJ", &pyGridType::getJ)                                      \
+    .def("getE", &pyGridType::getE)                                      \
+    .def("getB", &pyGridType::getB)                                      \
+    .def("setJ", &pyGridType::setJ)                                      \
+    .def("setE", &pyGridType::setE)                                      \
+    .def("setB", &pyGridType::setB)                                      \
+    .def("setJ", &pyGridType::pySetJ)                                    \
+    .def("setE", &pyGridType::pySetE)                                    \
+    .def("setB", &pyGridType::pySetB)                                    \
+    .def("setJ", &pyGridType::setJxyz)                                   \
+    .def("setE", &pyGridType::setExyz)                                   \
+    .def("setB", &pyGridType::setBxyz)                                   \
+    .def("setJ", &pyGridType::pySetJxyz)                                 \
+    .def("setE", &pyGridType::pySetExyz)                                 \
+    .def("setB", &pyGridType::pySetBxyz)                                 \
+    .def("setJt", &pyGridType::setJxyzt)                                 \
+    .def("setEt", &pyGridType::setExyzt)                                 \
+    .def("setBt", &pyGridType::setBxyzt)                                 \
+    SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType)         \
+    .def("analytical", &pyGridType::setAnalytical)                       \
     .def("setTime", &pyGridType::setTime)
 
 
@@ -83,6 +82,13 @@ PYBIND11_MODULE(pyHiChi, object) {
     object.attr("planck") = constants::planck;
     object.attr("eV") = constants::eV;
     object.attr("meV") = constants::meV;
+
+    py::enum_<Coordinate>(object, "Axis")
+        .value("x", Coordinate::x)
+        .value("y", Coordinate::y)
+        .value("z", Coordinate::z)
+        .export_values()
+        ;
 
     py::class_<FP3>(object, "vector3d")
         .def(py::init<>())
@@ -288,16 +294,19 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<pyYeeGridMapping>(object, "YeeGridMapping")
+        .def(py::init<pyYeeGrid*>())
         SET_METHODS_FOR_PY_GRID(pyYeeGridMapping)
         .def("setMapping", &pyYeeGridMapping::setMapping)
         ;
 
     py::class_<pyPSTDGridMapping>(object, "PSTDGridMapping")
+        .def(py::init<pyPSTDGrid*>())
         SET_METHODS_FOR_PY_GRID(pyPSTDGridMapping)
         .def("setMapping", &pyPSTDGridMapping::setMapping)
         ;
 
     py::class_<pyPSATDGridMapping>(object, "PSATDGridMapping")
+        .def(py::init<pyPSATDGrid*>())
         SET_METHODS_FOR_PY_GRID(pyPSATDGridMapping)
         .def("setMapping", &pyPSATDGridMapping::setMapping)
         ;
@@ -306,21 +315,39 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<IdentityMapping, Mapping>(object, "IdentityMapping")
         .def(py::init<const FP3&, const FP3&>())
-        .def("getDirectCoords", &IdentityMapping::getDirectCoords)
-        .def("getInverseCoords", &IdentityMapping::getInverseCoords)
+        .def("getDirectCoords", &IdentityMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &IdentityMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
         ;
 
     py::class_<PeriodicalXMapping, Mapping>(object, "PeriodicalXMapping")
         .def(py::init<FP, FP>())
-        .def("getDirectCoords", &PeriodicalXMapping::getDirectCoords)
-        .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords)
+        .def("getDirectCoords", &PeriodicalXMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        ;
+
+    py::class_<RotationMapping, Mapping>(object, "RotationMapping")
+        .def(py::init<Coordinate, FP>())
+        .def("getDirectCoords", &RotationMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &RotationMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        ;
+
+    py::class_<ScaleMapping, Mapping>(object, "ScaleMapping")
+        .def(py::init<Coordinate, FP>())
+        .def("getDirectCoords", &ScaleMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &ScaleMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        ;
+
+    py::class_<ShiftMapping, Mapping>(object, "ShiftMapping")
+        .def(py::init<FP3>())
+        .def("getDirectCoords", &ShiftMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &ShiftMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
         ;
 
     py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
         .def(py::init<FP, FP, FP, FP>())
         .def(py::init<FP, FP, FP>())
-        .def("getDirectCoords", &TightFocusingMapping::getDirectCoords)
-        .def("getInverseCoords", &TightFocusingMapping::getInverseCoords)
+        .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &TightFocusingMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
         .def("getxMin", &TightFocusingMapping::getxMin)
         .def("getxMax", &TightFocusingMapping::getxMax)
         .def("setIfCut", &TightFocusingMapping::setIfCut)

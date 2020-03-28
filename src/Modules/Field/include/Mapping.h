@@ -151,6 +151,53 @@ namespace pfc {
     };
 
 
+    class ShiftMapping : public Mapping{
+
+    public:
+
+        ShiftMapping(const FP3& shift) : shift(shift) {}
+
+        FP3 getDirectCoords(const FP3& coords, bool* status = 0) override {
+            setOkStatus(status);
+            return coords + shift;
+        }
+
+        FP3 getInverseCoords(const FP3& coords, bool* status = 0) override {
+            setOkStatus(status);
+            return coords - shift;
+        }
+
+        FP3 shift;
+
+    };
+
+
+    class ScaleMapping : public Mapping {
+
+    public:
+
+        ScaleMapping(Coordinate axis, FP coef) : axis(axis), coef(coef) {}
+
+        FP3 getDirectCoords(const FP3& coords, bool* status = 0) override {
+            setOkStatus(status);
+            FP3 directCoords = coords;
+            directCoords[axis] *= coef;
+            return directCoords;
+        }
+
+        FP3 getInverseCoords(const FP3& coords, bool* status = 0) override {
+            setOkStatus(status);
+            FP3 inverseCoords = coords;
+            inverseCoords[axis] /= coef;
+            return inverseCoords;
+        }
+
+        FP coef;
+        Coordinate axis;
+
+    };
+
+
     class TightFocusingMapping : public PeriodicalXMapping {
 
     public:

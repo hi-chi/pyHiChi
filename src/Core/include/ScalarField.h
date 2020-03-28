@@ -23,6 +23,10 @@ namespace pfc {
         ScalarField(Data* data, const Int3& size) : ScalarField(data, size, size) {}
         ScalarField& operator =(const ScalarField& field);
 
+        ScalarField createShallowCopy() {  // comon memory
+            return ScalarField(raw, size, sizeStorage);
+        }
+
         std::vector<Data>& toVector() {
             return elements;
         }

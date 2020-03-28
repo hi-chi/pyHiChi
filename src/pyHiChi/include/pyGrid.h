@@ -31,6 +31,17 @@ namespace pfc
 			isAnalytical = false;
 		}
 
+        // create shallow copy
+        pyGridAttributes(TypeGrid* grid) :
+            TypeGrid(grid)
+        {
+            static_assert(std::is_member_function_pointer<decltype(&TDerived::convertCoords)>::value,
+                "Wrong instance of pyGrid");
+            fEt[0] = 0; fEt[1] = 0; fEt[2] = 0;
+            fBt[0] = 0; fBt[1] = 0; fBt[2] = 0;
+            isAnalytical = false;
+        }
+
 		void setTime(FP time) { globalT = time; }
 
 		void setAnalytical(int64_t _fEx, int64_t _fEy, int64_t _fEz, int64_t _fBx, int64_t _fBy, int64_t _fBz)
@@ -433,7 +444,11 @@ namespace pfc
 
         pyGridMapping(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps) :
-			pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>(_numInternalCells, _dt, minCoords, _steps) {}
+            pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>(_numInternalCells, _dt, minCoords, _steps) {}
+
+        // create shallow copy of grid
+        pyGridMapping(pyGrid<TypeGrid>* grid) :
+			pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>(static_cast<TypeGrid*>(grid)) {}
 
         FP3 getE(const FP3& coords) const {
             bool status = false;
@@ -473,7 +488,6 @@ namespace pfc
 				*status = (*status) && status_;
 			}
 			return coords_;
-			//return mappings[0]->getDirectCoords(coords, status);
 		}
 
 		inline FP3 getInverseCoords(const FP3& coords, bool* status) const {
@@ -485,7 +499,6 @@ namespace pfc
 				*status = (*status) && status_;
 			}
 			return coords_;
-			//return mappings[0]->getInverseCoords(coords, status);
 		}
 
     };

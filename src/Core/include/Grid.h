@@ -21,8 +21,9 @@ namespace pfc {
         Grid(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps,
             const Int3 & globalGridDims);
+        Grid(Grid<FP, gridType>* grid);   // create shallow copy, memory is common
         Grid(const Int3 & _numAllCells, FP _dt,
-            const Int3 & globalGridDims, Grid<FP, gridType>* grid = 0);  // create comlex grid
+            const Int3 & globalGridDims, Grid<FP, gridType>* grid = 0);  // create complex grid
                                                                          // if grid!=0 then memory will be common
 
         const FP3 BxPosition(int x, int y, int z) const
@@ -362,6 +363,31 @@ namespace pfc {
     typedef Grid<FP, GridTypes::StraightGridType> SimpleGrid;
     typedef Grid<FP, GridTypes::PSTDGridType> PSTDGrid;
     typedef Grid<FP, GridTypes::PSATDGridType> PSATDGrid;
+
+    template<typename Data, GridTypes gridType>
+    inline Grid<Data, gridType>::Grid(Grid<FP, gridType>* grid) :  // create shallow copy
+        globalGridDims(grid->globalGridDims),
+        steps(grid->steps),
+        dt(grid->dt),
+        numInternalCells(grid->numInternalCells),
+        numCells(grid->numCells),
+        shiftEJx(grid->shiftEJx), shiftEJy(grid->shiftEJy), shiftEJz(grid->shiftEJz),
+        shiftBx(grid->shiftBx), shiftBy(grid->shiftBy), shiftBz(grid->shiftBz),
+        timeShiftE(grid->timeShiftE), timeShiftB(grid->timeShiftB), timeShiftJ(grid->timeShiftJ),
+        origin(grid->origin),
+        dimensionality(grid->dimensionality)
+    {
+        setInterpolationType(grid->interpolationType);
+        Ex = grid->Ex.createShallowCopy();
+        Ey = grid->Ey.createShallowCopy();
+        Ez = grid->Ez.createShallowCopy();
+        Bx = grid->Bx.createShallowCopy();
+        By = grid->By.createShallowCopy();
+        Bz = grid->Bz.createShallowCopy();
+        Jx = grid->Jx.createShallowCopy();
+        Jy = grid->Jy.createShallowCopy();
+        Jz = grid->Jz.createShallowCopy();
+    }
 
     template <>
     inline Grid<FP, GridTypes::YeeGridType>::Grid(const Int3 & _numCells, FP _dt, const FP3 & minCoords, const FP3 & _steps,
