@@ -2,6 +2,7 @@
 #include <omp.h>
 #include "ScalarField.h"
 #include "Grid.h"
+#include "Enums.h"
 
 #ifdef __USE_FFT__
 #include "fftw3.h"
@@ -9,13 +10,6 @@
 
 namespace pfc
 {
-    enum Field {
-        E, B, J
-    };
-
-    enum Coordinate {
-        x, y, z
-    };
 
     enum FourierTransformDirection {
         RtoC, CtoR

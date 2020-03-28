@@ -4,6 +4,8 @@
 #include "Grid.h"
 #include "Vectors.h"
 #include "PmlPsatd.h"
+//#include <chrono>
+#include <omp.h>
 
 namespace pfc {
 
@@ -200,17 +202,32 @@ namespace pfc {
 	}
 
 	inline void PSATD::updateFields() {
+		// std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 		doFourierTransform(RtoC);
+		//std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+		//std::chrono::milliseconds timeRtoC = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+		//time.count()
 
+		//std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
 		if (pml.get()) getPml()->updateBSplit();
 		updateEB();
 		if (pml.get()) getPml()->updateESplit();
 		updateEB();
 		if (pml.get()) getPml()->updateBSplit();
+		//std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
+		//std::chrono::milliseconds timeSolver = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3);
 
+		//std::chrono::steady_clock::time_point t5 = std::chrono::steady_clock::now();
 		doFourierTransform(CtoR);
+		//std::chrono::steady_clock::time_point t6 = std::chrono::steady_clock::now();
+		//std::chrono::milliseconds timeCtoR = std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5);
 
 		if (pml.get()) getPml()->doSecondStep();
+
+		//std::string strRtoC = "Time RtoC: " + std::to_string(timeRtoC.count()) + "\n";
+		//std::string strSolver = "Time PSATD: " + std::to_string(timeSolver.count()) + "\n";
+		//std::string strCtoR = "Time CtoR: " + std::to_string(timeCtoR.count()) + "\n";
+		//std::cout << strRtoC << strSolver << strCtoR << std::endl;
 	}
 
 	inline void PSATD::updateEB()
