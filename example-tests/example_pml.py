@@ -101,9 +101,15 @@ fig, axes = plt.subplots(ncols=2, nrows=1)
 
 im11 = axes[0].imshow(Ey, cmap='RdBu', interpolation='none', extent=(0, 2, 0, 1), animated = True)
 fig.colorbar(im11, ax=axes[0])
+axes[0].set_title("Ey")
+axes[0].set_xlabel("x")
+axes[0].set_ylabel("y")
 
 im12 = axes[1].imshow(Bz, cmap='RdBu', interpolation='none', extent=(0, 2, 0, 1), animated = True)
 fig.colorbar(im12, ax=axes[1])
+axes[1].set_title("Bz")
+axes[1].set_xlabel("x")
+axes[1].set_ylabel("y")
 
 iter=0
 def updatefig(*args):
@@ -118,6 +124,8 @@ def updatefig(*args):
     return im11, im12
     
 ani = animation.FuncAnimation(fig, updatefig, interval=10, blit=True)
+
+plt.tight_layout()
 
 plt.show()
 
