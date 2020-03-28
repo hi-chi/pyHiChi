@@ -333,7 +333,7 @@ namespace pfc {
         // if coords is inside of the area that grid defines
         bool isInside(const FP3 & coords, const FP3 & shift) const
         {
-            FP3 minCoords = origin + shift;
+            FP3 minCoords = origin + shift * steps;
             FP3 maxCoords = minCoords + (numCells - Int3(1, 1, 1)) * steps;
             return coords >= minCoords && coords <= maxCoords;
         }
@@ -379,7 +379,7 @@ namespace pfc {
         shiftBx(FP3(0.5, 0, 0) * steps),
         shiftBy(FP3(0, 0.5, 0) * steps),
         shiftBz(FP3(0, 0, 0.5) * steps),
-        timeShiftE(0.0), timeShiftB(dt/2), timeShiftJ(0.0),
+        timeShiftE(0.0), timeShiftB(dt / 2), timeShiftJ(0.0),
         origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
             minCoords.y - steps.y * getNumExternalLeftCells().y,
             minCoords.z - steps.z * getNumExternalLeftCells().z),
