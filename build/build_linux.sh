@@ -32,6 +32,7 @@ fi
 clean=false
 python_path="python"
 USE_FFTW="OFF"
+USE_MKL="OFF"
 USE_OMP="OFF"
 
 script=$0
