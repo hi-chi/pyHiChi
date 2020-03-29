@@ -1,5 +1,3 @@
-# import sys
-# sys.path.append("../build/pythonModule/Release")
 import pyHiChi as pfc
 import numpy as np
 import math as ma
@@ -49,15 +47,13 @@ def valueBz(x, y, z):
         Bz = ma.sin(2*ma.pi/internalWidth*(x-pmlLeftEnd))
     return Bz
 
-# grid = pfc.PSTDGrid(gridSize, timeStep, minCoords, stepsGrid)
-grid = pfc.PSATDGrid(gridSize, timeStep, minCoords, stepsGrid)
+grid = pfc.PSTDGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.PSATDTimeStraggeredGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.YeeGrid(gridSize, timeStep, minCoords, stepsGrid) 
 grid.setE(valueEx, valueEy, valueEz)
 grid.setB(valueBx, valueBy, valueBz)
 
-# fieldSolver = pfc.PSTD(grid)
-fieldSolver = pfc.PSATD(grid)
+fieldSolver = pfc.PSTD(grid)
 # fieldSolver = pfc.PSATDTimeStraggered(grid)
 # fieldSolver = pfc.FDTD(grid)
 fieldSolver.setPML(int(pmlSize.x), int(pmlSize.y), int(pmlSize.z))

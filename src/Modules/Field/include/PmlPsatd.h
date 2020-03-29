@@ -22,6 +22,7 @@ namespace pfc {
         SpectralFieldSolver<TPSATDGridType>* fs = getFieldSolver();
         Int3 begin = fs->updateComplexBAreaBegin;
         Int3 end = fs->updateComplexBAreaEnd;
+#pragma omp parallel for
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
                 for (int k = begin.z; k < end.z; k++) {
@@ -30,7 +31,7 @@ namespace pfc {
                     if (normK == 0) continue;
                     K = K / normK;
 
-                    tmpFieldComplex(i, j, k) = 2 * sin(normK*constants::c*dt*0.5) * complexFP::i() *
+                    tmpFieldComplex(i, j, k) = 2.0 * sin(normK*constants::c*dt*0.5) * complexFP::i() *
                         (complexFP)(K.*coordK) * field(i, j, k);
                 }
         FourierTransform::doFourierTransform(tmpFieldReal, tmpFieldComplex, FourierTransformDirection::CtoR);

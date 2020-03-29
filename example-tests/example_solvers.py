@@ -1,5 +1,3 @@
-# import sys
-# sys.path.append("../build/pythonModule/Release")
 import pyHiChi as pfc
 import numpy as np
 import math as ma

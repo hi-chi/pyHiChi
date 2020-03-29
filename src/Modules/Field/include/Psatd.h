@@ -35,6 +35,7 @@ namespace pfc {
         }
 
         void saveJ();
+        void assignJ(ScalarField<complexFP>& J, ScalarField<complexFP>& tmpJ);
     };
 
     inline PSATDTimeStraggered::PSATDTimeStraggered(PSATDTimeStraggeredGrid* _grid) :
@@ -61,11 +62,22 @@ namespace pfc {
         }
     }
 
+    inline void PSATDTimeStraggered::assignJ(ScalarField<complexFP>& J, ScalarField<complexFP>& tmpJ)
+    {
+        const complexFP * const ptrJ = &(J.toVector()[0]);
+        complexFP * const ptrTmpJ = &(tmpJ.toVector()[0]);
+        const int n = J.toVector().size();
+
+#pragma omp parallel for
+        for (int i = 0; i < n; i++)
+            ptrTmpJ[i] = ptrJ[i];
+    }
+
     inline void PSATDTimeStraggered::saveJ()
     {
-        tmpJx.toVector().assign(complexGrid->Jx.toVector().begin(), complexGrid->Jx.toVector().end());
-        tmpJy.toVector().assign(complexGrid->Jy.toVector().begin(), complexGrid->Jy.toVector().end());
-        tmpJz.toVector().assign(complexGrid->Jz.toVector().begin(), complexGrid->Jz.toVector().end());
+        assignJ(complexGrid->Jx, tmpJx);
+        assignJ(complexGrid->Jy, tmpJy);
+        assignJ(complexGrid->Jz, tmpJz);
     }
 
     inline void PSATDTimeStraggered::updateFields()
