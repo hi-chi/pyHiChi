@@ -11,7 +11,7 @@ namespace pfc {
     {
     public:
         PmlPsatdBase(SpectralFieldSolver<TPSATDGridType>* solver, Int3 sizePML) :
-            PmlSpectralTimeStraggered((SpectralFieldSolver<TPSATDGridType>*)solver, sizePML) {}
+            PmlSpectralTimeStraggered<TPSATDGridType>((SpectralFieldSolver<TPSATDGridType>*)solver, sizePML) {}
 
         void computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt);
     };
@@ -19,7 +19,7 @@ namespace pfc {
     template <GridTypes TPSATDGridType>
     inline void PmlPsatdBase<TPSATDGridType>::computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt)
     {
-        SpectralFieldSolver<TPSATDGridType>* fs = getFieldSolver();
+        SpectralFieldSolver<TPSATDGridType>* fs = PmlSpectralTimeStraggered<TPSATDGridType>::getFieldSolver();
         Int3 begin = fs->updateComplexBAreaBegin;
         Int3 end = fs->updateComplexBAreaEnd;
 #pragma omp parallel for
@@ -31,10 +31,12 @@ namespace pfc {
                     if (normK == 0) continue;
                     K = K / normK;
 
-                    tmpFieldComplex(i, j, k) = 2.0 * sin(normK*constants::c*dt*0.5) * complexFP::i() *
+                    PmlSpectralTimeStraggered<TPSATDGridType>::tmpFieldComplex(i, j, k) =
+                        2.0 * sin(normK*constants::c*dt*0.5) * complexFP::i() *
                         (complexFP)(K.*coordK) * field(i, j, k);
                 }
-        FourierTransform::doFourierTransform(tmpFieldReal, tmpFieldComplex, FourierTransformDirection::CtoR);
+        FourierTransform::doFourierTransform(PmlSpectralTimeStraggered<TPSATDGridType>::tmpFieldReal,
+            PmlSpectralTimeStraggered<TPSATDGridType>::tmpFieldComplex, FourierTransformDirection::CtoR);
     }
 
 
