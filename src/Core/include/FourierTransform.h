@@ -82,9 +82,6 @@ namespace pfc
         template<GridTypes gridType>
         void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {}
 
-        template<GridTypes gridType>
-        void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {}
-
         void doDirectFourierTransform(Field field, Coordinate coord) {}
         void doInverseFourierTransform(Field field, Coordinate coord) {}
 #endif
