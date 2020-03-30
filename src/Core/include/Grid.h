@@ -536,15 +536,15 @@ namespace pfc {
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         Int3 sizeStorage(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1));
-        Ex = ScalarField<FP>(numCells, sizeStorage);
-        Ey = ScalarField<FP>(numCells, sizeStorage);
-        Ez = ScalarField<FP>(numCells, sizeStorage);
-        Bx = ScalarField<FP>(numCells, sizeStorage);
-        By = ScalarField<FP>(numCells, sizeStorage);
-        Bz = ScalarField<FP>(numCells, sizeStorage);
-        Jx = ScalarField<FP>(numCells, sizeStorage);
-        Jy = ScalarField<FP>(numCells, sizeStorage);
-        Jz = ScalarField<FP>(numCells, sizeStorage);
+        Ex = ScalarField<FP>(sizeStorage);
+        Ey = ScalarField<FP>(sizeStorage);
+        Ez = ScalarField<FP>(sizeStorage);
+        Bx = ScalarField<FP>(sizeStorage);
+        By = ScalarField<FP>(sizeStorage);
+        Bz = ScalarField<FP>(sizeStorage);
+        Jx = ScalarField<FP>(sizeStorage);
+        Jy = ScalarField<FP>(sizeStorage);
+        Jz = ScalarField<FP>(sizeStorage);
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -626,15 +626,15 @@ namespace pfc {
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         Int3 sizeStorage(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1));
-        Ex = ScalarField<FP>(numCells, sizeStorage);
-        Ey = ScalarField<FP>(numCells, sizeStorage);
-        Ez = ScalarField<FP>(numCells, sizeStorage);
-        Bx = ScalarField<FP>(numCells, sizeStorage);
-        By = ScalarField<FP>(numCells, sizeStorage);
-        Bz = ScalarField<FP>(numCells, sizeStorage);
-        Jx = ScalarField<FP>(numCells, sizeStorage);
-        Jy = ScalarField<FP>(numCells, sizeStorage);
-        Jz = ScalarField<FP>(numCells, sizeStorage);
+        Ex = ScalarField<FP>(sizeStorage);
+        Ey = ScalarField<FP>(sizeStorage);
+        Ez = ScalarField<FP>(sizeStorage);
+        Bx = ScalarField<FP>(sizeStorage);
+        By = ScalarField<FP>(sizeStorage);
+        Bz = ScalarField<FP>(sizeStorage);
+        Jx = ScalarField<FP>(sizeStorage);
+        Jy = ScalarField<FP>(sizeStorage);
+        Jz = ScalarField<FP>(sizeStorage);
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -712,15 +712,15 @@ namespace pfc {
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         Int3 sizeStorage(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1));
-        Ex = ScalarField<FP>(numCells, sizeStorage);
-        Ey = ScalarField<FP>(numCells, sizeStorage);
-        Ez = ScalarField<FP>(numCells, sizeStorage);
-        Bx = ScalarField<FP>(numCells, sizeStorage);
-        By = ScalarField<FP>(numCells, sizeStorage);
-        Bz = ScalarField<FP>(numCells, sizeStorage);
-        Jx = ScalarField<FP>(numCells, sizeStorage);
-        Jy = ScalarField<FP>(numCells, sizeStorage);
-        Jz = ScalarField<FP>(numCells, sizeStorage);
+        Ex = ScalarField<FP>(sizeStorage);
+        Ey = ScalarField<FP>(sizeStorage);
+        Ez = ScalarField<FP>(sizeStorage);
+        Bx = ScalarField<FP>(sizeStorage);
+        By = ScalarField<FP>(sizeStorage);
+        Bz = ScalarField<FP>(sizeStorage);
+        Jx = ScalarField<FP>(sizeStorage);
+        Jy = ScalarField<FP>(sizeStorage);
+        Jz = ScalarField<FP>(sizeStorage);
         setInterpolationType(Interpolation_CIC);
     }
 

@@ -16,15 +16,13 @@ namespace pfc {
 	public:
 
         ScalarField() {};
-        ScalarField(const Int3& size, const Int3& sizeStorage);  // sometimes sizeStorage need to be greater than size.volume()
-        ScalarField(const Int3& size) : ScalarField(size, size) {}
+        ScalarField(const Int3& size);
 		ScalarField(const ScalarField<Data>& field);
-        ScalarField(Data* data, const Int3& size, const Int3 & sizeStorage);  // do not create storage
-        ScalarField(Data* data, const Int3& size) : ScalarField(data, size, size) {}
+        ScalarField(Data* data, const Int3& size);
         ScalarField& operator =(const ScalarField& field);
 
         ScalarField createShallowCopy() {  // comon memory
-            return ScalarField(raw, size, sizeStorage);
+            return ScalarField(raw, size);
         }
 
         std::vector<Data>& toVector() {
@@ -43,25 +41,25 @@ namespace pfc {
 		/* Read-only access by scalar indexes */
 		Data operator()(int i, int j, int k) const
 		{
-			return raw[k + (j + i * sizeStorage.y) * sizeStorage.z];
+			return raw[k + (j + i * size.y) * size.z];
 		}
 
 		/* Read-write access by scalar indexes */
 		Data& operator()(int i, int j, int k)
 		{
-			return raw[k + (j + i * sizeStorage.y) * sizeStorage.z];
+			return raw[k + (j + i * size.y) * size.z];
 		}
 
 		/* Read-only access by vector index */
 		Data operator()(const Int3& index) const
 		{
-			return raw[index.z + (index.y + index.x * sizeStorage.y) * sizeStorage.z];
+			return raw[index.z + (index.y + index.x * size.y) * size.z];
 		}
 
 		/* Read-write access by vector index */
 		Data& operator()(const Int3& index)
 		{
-			return raw[index.z + (index.y + index.x * sizeStorage.y) * sizeStorage.z];
+			return raw[index.z + (index.y + index.x * size.y) * size.z];
 		}
 
         /* Interpolation: with given base index and coefficients */
@@ -81,17 +79,15 @@ namespace pfc {
 		std::vector<Data> elements; // storage
 		Data* raw; // raw pointer to elements vector
 		Int3 size; // size of each dimension
-        Int3 sizeStorage; // size of memory buffer
 		Int3 dimensionCoeffInt; // 0 for fake dimensions, 1 otherwise
 		FP3 dimensionCoeffFP; // 0 for fake dimensions, 1 otherwise
 	};
 
 	template <class Data>
-	inline ScalarField<Data>::ScalarField(const Int3& _size, const Int3& _sizeStorage)
+	inline ScalarField<Data>::ScalarField(const Int3& _size)
 	{
 		size = _size;
-        sizeStorage = _sizeStorage;
-		elements.resize(sizeStorage.volume());
+		elements.resize(size.volume());
 		raw = elements.data();
 		for (int d = 0; d < 3; d++) {
 			dimensionCoeffInt[d] = (size[d] > 1) ? 1 : 0;
@@ -104,7 +100,7 @@ namespace pfc {
 	inline ScalarField<Data>::ScalarField(const ScalarField& field)
     {
         size = field.size;
-        sizeStorage = field.sizeStorage;
+        size = field.size;
         elements = field.elements;
         raw = elements.data();
         dimensionCoeffInt = field.dimensionCoeffInt;
@@ -112,10 +108,9 @@ namespace pfc {
     }
 
     template<typename Data>
-    inline ScalarField<Data>::ScalarField(Data * data, const Int3 & _size, const Int3 & _sizeStorage)
+    inline ScalarField<Data>::ScalarField(Data * data, const Int3 & _size)
     {
         size = _size;
-        sizeStorage = _sizeStorage;
         ifStorage = false;
         raw = data;
         for (int d = 0; d < 3; d++) {
@@ -128,7 +123,7 @@ namespace pfc {
 	inline ScalarField<Data>& ScalarField<Data>::operator=(const ScalarField<Data>& field)
 	{
 		size = field.size;
-        sizeStorage = field.sizeStorage;
+        size = field.size;
         ifStorage = field.ifStorage;
         if (ifStorage) {
             elements = field.elements;

@@ -30,6 +30,8 @@ namespace pfc {
             this->time = time;
         }
 
+        virtual Mapping* createInstance() = 0;
+
     protected:
 
         void setFailStatus(bool* status) {
@@ -61,6 +63,10 @@ namespace pfc {
             return coords;
         }
 
+        Mapping* createInstance() override {
+            return new IdentityMapping(*this);
+        }
+
         FP3 a, b;
 
     };
@@ -85,6 +91,10 @@ namespace pfc {
             FP frac = std::modf((coords.x - xMin) / D, &tmp);
             inverseCoords.x = xMin + (frac >= 0 ? frac : (1 + frac)) * D;
             return inverseCoords;
+        }
+
+        Mapping* createInstance() override {
+            return new PeriodicalXMapping(*this);
         }
 
         FP xMin, xMax, D;
@@ -143,6 +153,10 @@ namespace pfc {
             return inverseCoords;
         }
 
+        Mapping* createInstance() override {
+            return new RotationMapping(*this);
+        }
+
         Coordinate axis;
         FP angle;  // in radians
         // mapping from inverse to direct coords
@@ -165,6 +179,10 @@ namespace pfc {
         FP3 getInverseCoords(const FP3& coords, bool* status = 0) override {
             setOkStatus(status);
             return coords - shift;
+        }
+
+        Mapping* createInstance() override {
+            return new ShiftMapping(*this);
         }
 
         FP3 shift;
@@ -190,6 +208,10 @@ namespace pfc {
             FP3 inverseCoords = coords;
             inverseCoords[axis] /= coef;
             return inverseCoords;
+        }
+
+        Mapping* createInstance() override {
+            return new ScaleMapping(*this);
         }
 
         FP coef;
@@ -292,6 +314,10 @@ namespace pfc {
             }
 
             return true;
+        }
+
+        Mapping* createInstance() override {
+            return new TightFocusingMapping(*this);
         }
 
         FP cutAngle, xL;

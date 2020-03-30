@@ -15,7 +15,7 @@ namespace pfc {
         {
             Int3 sizeComplex = FourierTransform::getSizeOfComplex(solver->grid->numCells);
             Int3 sizeStorage(sizeComplex.x, sizeComplex.y, 2 * sizeComplex.z);
-            tmpFieldReal = ScalarField<FP>(solver->grid->numCells, sizeStorage);
+            tmpFieldReal = ScalarField<FP>(sizeStorage);
             tmpFieldComplex = ScalarField<complexFP>(reinterpret_cast<complexFP*>(tmpFieldReal.getData()), sizeComplex);
         }
 

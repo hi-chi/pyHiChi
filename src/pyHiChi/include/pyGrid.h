@@ -468,7 +468,7 @@ namespace pfc
         }
 
 		void setMapping(Mapping* mapping) {
-			mappings.push_back(mapping);
+			mappings.push_back(std::unique_ptr<Mapping>(mapping->createInstance()));
 		}
 
 		inline FP3 convertCoords(const FP3& coords) const {
@@ -478,7 +478,7 @@ namespace pfc
 
     private:
 
-        std::vector<Mapping*> mappings;
+        std::vector<std::unique_ptr<Mapping>> mappings;
 		
 		inline FP3 getDirectCoords(const FP3& coords, bool* status) const {
 			FP3 coords_ = coords;
