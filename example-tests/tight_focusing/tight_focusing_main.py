@@ -10,11 +10,11 @@ import math as ma
 # ------------------- initializing -------------------------------------
 
 
-factor = 0.5
+factor = 1.0
 NxFull = int(factor*320)                           # size of grid in full area
 Ny = int(factor*256)
 Nz = int(factor*256)
-NxBand = NxFull#int(56*factor)                            # size of grid in the band
+NxBand = int(56*factor)                            # size of grid in the band
 gridSize = hichi.vector3d(NxBand, Ny, Nz)          # real size of grid
 
 # creating of spherical pulse
@@ -29,15 +29,15 @@ maxCoords = hichi.vector3d(20, 20, 20)
 D = 3.5*sphericalPulse.pulselength                 # width of band
 
 # to compute the task in the full area just set
-D = maxCoords.x - minCoords.x
+# D = maxCoords.x - minCoords.x
                                                    
                                                    
 # creating of mapping
 mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
 
 # creating of mapping with cutting at angle
-#cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
-#mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
+# cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
+# mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
 
 # not to cut secondary pulses
 mapping.setIfCut(False)
@@ -68,7 +68,7 @@ def initialize():
     # setting of start conditions
     sphericalPulse.setField(grid)
     
-    # consider the Poisson equation
+    # considering the Poisson equation
     fieldSolver.convertFieldsPoissonEquation()
 
 
