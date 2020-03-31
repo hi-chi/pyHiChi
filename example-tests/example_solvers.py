@@ -1,5 +1,3 @@
-# import sys
-# sys.path.append("../build/pythonModule/Release")
 import pyHiChi as pfc
 import numpy as np
 import math as ma
@@ -40,6 +38,7 @@ timeStep = 1e-12
 
 grid = pfc.PSTDGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.PSATDGrid(gridSize, timeStep, minCoords, stepsGrid)
+# grid = pfc.PSATDTimeStraggeredGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.YeeGrid(gridSize, timeStep, minCoords, stepsGrid)
 grid.setE(valueEx, valueEy, valueEz)
 grid.setB(valueBx, valueBy, valueBz)
@@ -90,21 +89,39 @@ fig, axes = plt.subplots(ncols=3, nrows=2)
 
 im11 = axes[0, 0].imshow(Ex, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5), animated = True)
 fig.colorbar(im11, ax=axes[0, 0])
+axes[0, 0].set_title("Ex")
+axes[0, 0].set_xlabel("x")
+axes[0, 0].set_ylabel("z")
 
 im12 = axes[0, 1].imshow(Ey, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5), animated = True)
 fig.colorbar(im12, ax=axes[0, 1])
+axes[0, 1].set_title("Ey")
+axes[0, 1].set_xlabel("x")
+axes[0, 1].set_ylabel("z")
 
 im13 = axes[0, 2].imshow(Ez, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5), animated = True)
 fig.colorbar(im13, ax=axes[0, 2])
+axes[0, 2].set_title("Ez")
+axes[0, 2].set_xlabel("x")
+axes[0, 2].set_ylabel("z")
 
 im21 = axes[1, 0].imshow(Bx, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5), animated = True)
 fig.colorbar(im21, ax=axes[1, 0])
+axes[1, 0].set_title("Bx")
+axes[1, 0].set_xlabel("x")
+axes[1, 0].set_ylabel("z")
 
 im22 = axes[1, 1].imshow(By, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5), animated = True)
 fig.colorbar(im22, ax=axes[1, 1])
+axes[1, 1].set_title("By")
+axes[1, 1].set_xlabel("x")
+axes[1, 1].set_ylabel("z")
 
 im23 = axes[1, 2].imshow(Bz, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5), animated = True)
 fig.colorbar(im23, ax=axes[1, 2])
+axes[1, 2].set_title("Bz")
+axes[1, 2].set_xlabel("x")
+axes[1, 2].set_ylabel("z")
 
 
 def updatefig(*args):
@@ -119,5 +136,7 @@ def updatefig(*args):
     return im11, im12, im13, im21, im22, im23, 
     
 ani = animation.FuncAnimation(fig, updatefig, interval=10, blit=True)
+
+plt.tight_layout()
 
 plt.show()

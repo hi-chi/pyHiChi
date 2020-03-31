@@ -1,6 +1,7 @@
 #include "TestingUtility.h"
 
 #include "FourierTransform.h"
+#include "Pstd.h"
 
 class FourierTransformTest : public BaseFixture {
 public:
@@ -105,12 +106,12 @@ TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(Lag)) {
 
 
 
-class FourierTransformGridTest : public BaseFixture {
+class FourierTransformSolverTest : public BaseFixture {
 public:
 
-    const int nx = 6, ny = 3, nz = 4;
+    const int nx = 10, ny = 7, nz = 8;
     const FP a = 0.0, b = 10.0;
-    const FP dx = (b - a) / (nx + 4), dy = (b - a) / (ny + 4), dz = (b - a) / (nz + 4);
+    const FP dx = (b - a) / nx, dy = (b - a) / ny, dz = (b - a) / nz;
     const int stepX = 1, stepY = 3, stepZ = 6;
     const FP shiftX = stepX * dx, shiftY = stepY * dy, shiftZ = stepZ * dz;
     const FP dt = 1.0 / (constants::c * 4.0);
@@ -120,10 +121,10 @@ public:
     Int3 minCoord;
     FP3 d;
 
-    std::unique_ptr<Grid<FP, GridTypes::PSTDGridType>> grid;
-    std::unique_ptr<Grid<complexFP, GridTypes::PSTDGridType>> complexGrid;
+    std::unique_ptr<PSTD> pstd;
 
-    FourierTransformGrid fourierTransform;
+    std::unique_ptr<Grid<FP, GridTypes::PSTDGridType>> grid;
+    Grid<complexFP, GridTypes::PSTDGridType>* complexGrid = 0;
 
     void SetUp() {
         size = Int3(nx, ny, nz);
@@ -131,13 +132,12 @@ public:
         d = FP3(dx, dy, dz);
 
         grid.reset(new Grid<FP, GridTypes::PSTDGridType>(size, dt, minCoord, d, size));
+        pstd.reset(new PSTD(grid.get()));
 
         sizeComplex = FourierTransform::getSizeOfComplex(grid->numCells);
-        complexGrid.reset(new Grid<complexFP, GridTypes::PSTDGridType>(sizeComplex,
-            grid->dt, FourierTransform::getSizeOfComplex(grid->globalGridDims)));
-        setBz(&FourierTransformGridTest::fSin3);
+        complexGrid = pstd->complexGrid;
 
-        fourierTransform.initialize<GridTypes::PSTDGridType>(grid.get(), complexGrid.get());
+        setBz(&FourierTransformSolverTest::fSin3);
 
         maxAbsoluteError = (FP)1e-7;
         maxRelativeError = (FP)1e-4;
@@ -152,7 +152,7 @@ public:
         return sin(2 * constants::pi * i * dx / (b - a));
     }
 
-    void setBz(FP(FourierTransformGridTest::* func)(int, int, int)) {
+    void setBz(FP(FourierTransformSolverTest::* func)(int, int, int)) {
         for (int i = 0; i < grid->numCells.x; i++)
             for (int j = 0; j < grid->numCells.y; j++)
                 for (int k = 0; k < grid->numCells.z; k++)
@@ -179,10 +179,10 @@ public:
 };
 
 
-TEST_F(FourierTransformGridTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform)) {
+TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform)) {
 
-    fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
-    fourierTransform.doFourierTransform(B, z, FourierTransformDirection::CtoR);
+    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
+    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::CtoR);
 
     for (int i = 0; i < grid->numCells.x; i++)
         for (int j = 0; j < grid->numCells.y; j++)
@@ -190,11 +190,11 @@ TEST_F(FourierTransformGridTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform))
                 ASSERT_NEAR_FP(fSin3(i, j, k), grid->Bz(i, j, k));
 }
 
-TEST_F(FourierTransformGridTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
+TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
 
-    setBz(&FourierTransformGridTest::fSin);
+    setBz(&FourierTransformSolverTest::fSin);
 
-    fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
+    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
 
     for (int i = 0; i < complexGrid->numCells.x; i++)
         for (int j = 0; j < complexGrid->numCells.y; j++)
@@ -203,11 +203,11 @@ TEST_F(FourierTransformGridTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
                     ASSERT_NEAR_MODULE_COMPLEXFP(complexFP(0), complexGrid->Bz(i, j, k));
 }
 
-TEST_F(FourierTransformGridTest, ADD_TEST_FFT_PREFIX(Lag)) {
+TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(Lag)) {
 
-    fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
+    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
     doShift();
-    fourierTransform.doFourierTransform(B, z, FourierTransformDirection::CtoR);
+    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::CtoR);
 
     for (int i = 0; i < grid->numCells.x; i++)
         for (int j = 0; j < grid->numCells.y; j++)
