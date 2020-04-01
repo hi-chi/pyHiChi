@@ -1,40 +1,10 @@
 import pyHiChi as hichi
-import math as ma
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
-from enum import Enum
 import os
-
-
-class Axis(Enum):
-    X = "x"
-    Y = "y"
-    Z = "z"
-
-
-class Field(Enum):
-    E = "E"
-    B = "B"
-    J = "J"
-    
-
-class Plane(Enum):
-    XOY = (Axis.X, Axis.Y)
-    XOZ = (Axis.X, Axis.Z)
-    YOZ = (Axis.Y, Axis.Z)
-    
-
-def getCoordValue(vector, axis):
-    if axis == Axis.X:
-        return vector.x
-    elif axis == Axis.Y:
-        return vector.y
-    elif axis == Axis.Z:
-        return vector.z
-    else:
-        raise ValueException("ERROR: wrong arg in Visual.getCoordValue")    
+from hichi_primitives import Axis, Plane, Field, getCoordValue   
     
     
 class Visual:

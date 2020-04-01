@@ -63,3 +63,31 @@ def createDir(dir):
             for file in filenames:
                 os.remove(dir + "/" + file)
     else: os.mkdir(dir)
+
+# useful enums
+from enum import Enum
+
+class Axis(Enum):
+    X = "x"
+    Y = "y"
+    Z = "z"
+
+class Field(Enum):
+    E = "E"
+    B = "B"
+    J = "J"    
+
+class Plane(Enum):
+    XOY = (Axis.X, Axis.Y)
+    XOZ = (Axis.X, Axis.Z)
+    YOZ = (Axis.Y, Axis.Z)
+    
+def getCoordValue(vector, axis):
+    if axis == Axis.X:
+        return vector.x
+    elif axis == Axis.Y:
+        return vector.y
+    elif axis == Axis.Z:
+        return vector.z
+    else:
+        raise ValueException("ERROR: wrong arg in Visual.getCoordValue") 
