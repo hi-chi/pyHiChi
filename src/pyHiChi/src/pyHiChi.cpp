@@ -5,6 +5,7 @@
 
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
+#include <pybind11/operators.h>
 
 #include "pyGrid.h"
 
@@ -99,6 +100,21 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("normalize", &FP3::normalize)
         .def("toString", &FP3::toString)
         .def("__str__", &FP3::toString)
+
+        .def(py::self + py::self)
+        .def(py::self += py::self)
+        .def(py::self - py::self)
+        .def(py::self -= py::self)
+        .def(-py::self)
+        .def(FP() * py::self)
+        .def(py::self * FP())
+        .def(py::self *= FP())
+        .def(py::self * py::self)
+        .def(py::self *= py::self)
+        .def(py::self / py::self)
+        .def(py::self /= py::self)
+        .def(py::self / FP())
+        .def(py::self /= FP())
 
         .def_readwrite("x", &FP3::x)
         .def_readwrite("y", &FP3::y)
