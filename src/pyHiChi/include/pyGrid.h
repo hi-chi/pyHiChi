@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include "Grid.h"
 #include "Mapping.h"
 
@@ -467,8 +468,8 @@ namespace pfc
             return pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>::getB(inverseCoords);
         }
 
-        void setMapping(Mapping* mapping) {
-            mappings.push_back(std::unique_ptr<Mapping>(mapping->createInstance()));
+        void setMapping(Mapping& mapping) {
+            mappings.push_back(std::reference_wrapper<Mapping>(mapping));
         }
 
         inline FP3 convertCoords(const FP3& coords) const {
@@ -478,14 +479,14 @@ namespace pfc
 
     private:
 
-        std::vector<std::unique_ptr<Mapping>> mappings;
+        std::vector<std::reference_wrapper<Mapping>> mappings;
         
         inline FP3 getDirectCoords(const FP3& coords, bool* status) const {
             FP3 coords_ = coords;
             bool status_ = true;
             *status = true;
             for (size_t i = 0; i < mappings.size(); i++) {
-                coords_ = mappings[i]->getDirectCoords(coords_, &status_);
+                coords_ = mappings[i].get().getDirectCoords(coords_, &status_);
                 *status = (*status) && status_;
             }
             return coords_;
@@ -496,7 +497,7 @@ namespace pfc
             bool status_ = true;
             *status = true;
             for (size_t i = mappings.size(); i >= 1; i--) {
-                coords_ = mappings[i-1]->getInverseCoords(coords_, &status_);
+                coords_ = mappings[i-1].get().getInverseCoords(coords_, &status_);
                 *status = (*status) && status_;
             }
             return coords_;

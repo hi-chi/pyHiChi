@@ -10,8 +10,6 @@ namespace pfc {
 
     public:
 
-        Mapping() : time(0.0) {}
-
         virtual FP3 getDirectCoords(const FP3& coords, bool* status = 0) {
             setFailStatus(status);
             return coords;
@@ -20,14 +18,6 @@ namespace pfc {
         virtual FP3 getInverseCoords(const FP3& coords, bool* status = 0) {
             setFailStatus(status);
             return coords;
-        }
-
-        void advanceTime(FP timeStep) {
-            time += timeStep;
-        }
-
-        void setTime(FP time) {
-            this->time = time;
         }
 
         virtual Mapping* createInstance() = 0;
@@ -40,8 +30,6 @@ namespace pfc {
         void setOkStatus(bool* status) {
             if (status) *status = true;
         }
-
-        FP time = 0.0;
 
     };
 
@@ -225,7 +213,7 @@ namespace pfc {
     public:
 
         TightFocusingMapping(FP R0, FP L, FP D, FP cutAngle = 0.5*constants::pi) :
-            PeriodicalXMapping(-R0 - D + 0.5*L, -R0 + 0.5*L),
+            PeriodicalXMapping(-R0 - D + 0.5*L, -R0 + 0.5*L), time(0.0),
             xL(-R0 - 0.5*L), cutAngle(cutAngle), ifCut(true) {}
 
         void setIfCut(bool ifCut = true) {
@@ -320,8 +308,17 @@ namespace pfc {
             return new TightFocusingMapping(*this);
         }
 
+        void advanceTime(FP timeStep) {
+            time += timeStep;
+        }
+
+        void setTime(FP time) {
+            this->time = time;
+        }
+
         FP cutAngle, xL;
         bool ifCut = true;
+        FP time = 0.0;
 
     };
 

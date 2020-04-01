@@ -288,8 +288,6 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<Mapping>(object, "Mapping")
-        .def("advanceTime", &Mapping::advanceTime)
-        .def("setTime", &Mapping::setTime)
         ;
 
     py::class_<pyYeeGridMapping>(object, "YeeGridMapping")
@@ -356,6 +354,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getxMin", &TightFocusingMapping::getxMin)
         .def("getxMax", &TightFocusingMapping::getxMax)
         .def("setIfCut", &TightFocusingMapping::setIfCut)
+        .def("advanceTime", &TightFocusingMapping::advanceTime)
+        .def("setTime", &TightFocusingMapping::setTime)
         ;
 
 
