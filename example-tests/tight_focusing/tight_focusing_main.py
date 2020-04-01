@@ -1,16 +1,14 @@
 import sys
+sys.path.append("../python_modules")
 import pyHiChi as hichi
 import tight_focusing_fields as sphericalPulse
-import tight_focusing_show as visual
-import tight_focusing_write_file as fileWriter
-import hichi_primitives
 import math as ma
 
 
 # ------------------- initializing -------------------------------------
 
 
-factor = 1.0
+factor = 0.5
 NxFull = int(factor*320)                           # size of grid in full area
 Ny = int(factor*256)
 Nz = int(factor*256)
@@ -36,11 +34,11 @@ D = 3.5*sphericalPulse.pulselength                 # width of band
 mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
 
 # creating of mapping with cutting at angle
-# cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
-# mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
+#cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
+#mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
 
 # not to cut secondary pulses
-mapping.setIfCut(False)
+#mapping.setIfCut(False)
 
 xMin = mapping.getxMin()  # bounds of the band
 xMax = mapping.getxMax()
@@ -76,6 +74,7 @@ def initialize():
 
 
 # function to update field
+
 def updateFields():
     mapping.advanceTime(timeStep)  # mapping for tight focusing has an external parameter time
                                    # so we need to advance time every iteration and to set it null in the beginning
@@ -83,25 +82,92 @@ def updateFields():
 
 
 # ----------- run and show animation (size of grid should be not large) ------
-#initialize()
-#visual.initVisual(minCoords, maxCoords, NxFull*2, Ny*2)
-#visual.animate(grid, updateFields, maxIter=maxIter)
+
+from hichi_visualisation import *
+from hichi_primitives import Axis, Plane, Field
+
+visual = Visual(grid, minCoords, maxCoords, dpi=500, fontsize=17)
+
+def animateInPlane(visual, nIter):
+    visual.animateInPlane(shape=(NxFull*2, Ny*2), funcUpdate=updateFields, nIter=nIter,
+                          plane=Plane.XOY, lastCoordinateValue=0.0,
+                          field=Field.E, norm=True,
+                          valueLimits=(0.0, 0.5),
+                          interval=1
+                          )
+                            
+def animateInAxis(visual, nIter):
+    visual.animateInAxis(nPoints=NxFull*2, funcUpdate=updateFields, nIter=nIter,
+                         axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+                         field=Field.E, norm=True,
+                         yLimits=(-1.0, 8.0),
+                         interval=30
+                         )                            
+                            
+initialize()
+animateInPlane(visual, maxIter)  # it should be the last function in the current script
+#animateInAxis(visual, maxIter)  # it should be the last function in the current script
+
 
 # ----------- run and save pictures for every iteration ----------------------
+'''
+from hichi_visualisation import *
+from hichi_primitives import Axis, Plane, Field, createDir
+
+createDir("./pictures")
+visual = Visual(grid, minCoords, maxCoords, "./pictures", dpi=500, fontsize=17)
+
+def savePicInPlane(visual, iter):
+    visual.savePictureInPlane(shape=(NxFull*4, Ny*4), plane=Plane.XOY, lastCoordinateValue=0.0,
+                              field=Field.E, norm=True,
+                              valueLimits=(0.0, 0.5),
+                              namePicture="field%04d.png" % iter
+                              )
+                            
+def savePicInAxis(visual, iter):
+    visual.savePictureInAxis(nPoints=NxFull*4, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+                             field=Field.E, norm=True,
+                             yLimits=(-1.0, 8.0),
+                             namePicture="field%04d.png" % iter
+                             )                            
+                            
 initialize()
-visual.initVisual(minCoords, maxCoords, NxFull*4, Ny*4)
-visual.savePictures(grid, updateFields, maxIter=maxIter, dirResult = "./pictures/")  # DELETE OLD FILES IN "./pictures/"!!!
+for i in range(maxIter):
+    savePicInPlane(visual, i)
+    #savePicInAxis(visual, i)
+    updateFields()
+'''
 
-# ----------- run and save results 2d in .csv files --------------------------
-#initialize()
-#hichi_primitives.createDir("./2d_main/")  # DELETE OLD FILES IN ./2d_main/!!!
-#fileWriter.writeXOY(grid, updateFields, minCoords, maxCoords, NxFull*2, Ny*2, maxIter = maxIter, dumpIter = 1, dirResult = "./2d_main/")
+# ----------- run and save results in .csv files --------------------------
+'''
+from hichi_writing import Writer, Reader
+from hichi_primitives import Axis, Plane, Field, createDir
 
-# ----------- run and save results 1d in .csv files --------------------------
-#initialize()
-#hichi_primitives.createDir("./1d_main/")  # DELETE OLD FILES IN ./1d_main/!!!
-#fileWriter.writeOX(grid, updateFields, minCoords, maxCoords, NxFull*2, maxIter = maxIter, dumpIter = 1, dirResult = "./1d_main/")
+createDir("./csv")
+writer = Writer(grid, minCoords, maxCoords, "./csv")
 
+def saveFileInPlane(writer, iter):
+    writer.saveFileInPlane(shape=(NxFull*4, Ny*4), plane=Plane.XOY, lastCoordinateValue=0.0,
+                           field=Field.E, norm=True,
+                           nameFile="field%04d.csv" % iter
+                           )
+                            
+def saveFileInAxis(writer, iter):
+    writer.saveFileInAxis(nPoints=NxFull*4, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+                          field=Field.E, norm=True,
+                          nameFile="field%04d.csv" % iter
+                          )                            
+                            
+initialize()
+for i in range(maxIter):
+    saveFileInPlane(writer, i)
+    #saveFileInAxis(writer, i)
+    updateFields()
 
-
-
+# it is possible to read crated file to numpy.array   
+import numpy as np
+reader = Reader("./csv")
+field = reader.readFile2d("field0000.csv")
+#field = reader.readFile1d("field0000.csv")
+print(field)
+'''
