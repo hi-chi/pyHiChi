@@ -439,6 +439,7 @@ namespace pfc {
     template<GridTypes gridTypes>
     inline void PmlSpectral<gridTypes>::doFirstStep()
     {
+        //std::cout << "PmlSpectral" << std::endl;
         updateBSplit();
         updateESplit();
     }

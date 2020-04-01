@@ -32,7 +32,6 @@ fi
 clean=false
 python_path="python"
 USE_FFTW="OFF"
-USE_MKL="OFF"
 USE_OMP="OFF"
 
 script=$0
@@ -55,10 +54,6 @@ case $key in
     USE_FFTW="ON"
     shift # past argument
     ;;
-    -mkl_fft)
-    USE_MKL="ON"
-    shift # past argument
-    ;;
     *)    # unknown option
     shift # past argument
     ;;
@@ -70,9 +65,6 @@ if [ $USE_OMP = "ON" ]; then
 fi
 if [ $USE_FFTW = "ON" ]; then
     CPU_OPTIONS="$CPU_OPTIONS -DUSE_FFTW=ON"
-fi
-if [ $USE_MKL = "ON" ]; then
-    CPU_OPTIONS="$CPU_OPTIONS -DUSE_MKL=ON"
 fi
 CPU_OPTIONS="$CPU_OPTIONS -DPYTHON_EXECUTABLE:FILEPATH=$python_path"
 

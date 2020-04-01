@@ -6,8 +6,6 @@ include_directories(include
     ../Core/include
     ../Modules/Particle/include
     ../Modules/Field/include
-    ../Modules/Field/include/Mapping
-    ../Modules/Field/include/FieldConfiguration
     ${FFT_INCLUDES})
 
 if (USE_OMP)

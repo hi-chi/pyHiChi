@@ -11,7 +11,6 @@ set(CORE_HEADER_DIR ${CORE_INCLUDE_DIR})
 
 set(core_headers
     ${CORE_HEADER_DIR}/Constants.h
-    ${CORE_HEADER_DIR}/Enums.h
     ${CORE_HEADER_DIR}/Dimension.h
     ${CORE_HEADER_DIR}/Ensemble.h
     ${CORE_HEADER_DIR}/FieldValue.h

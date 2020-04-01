@@ -5,8 +5,7 @@ namespace pfc {
         YeeGridType = 0,
         StraightGridType = 1,
         PSTDGridType = 2,
-        PSATDGridType = 3, 
-        PSATDTimeStraggeredGridType = 4
+        PSATDGridType = 3
     };
 
     /* Yee grid for FDTD method. Implementation is based on Computational

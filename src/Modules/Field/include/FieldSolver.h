@@ -113,7 +113,7 @@ namespace pfc {
             FieldSolver<gridType>(_grid)
         {
             complexGrid = new Grid<complexFP, gridType>(FourierTransform::getSizeOfComplex(_grid->numCells),
-                _grid->dt, FourierTransform::getSizeOfComplex(_grid->globalGridDims), _grid);
+                _grid->dt, FourierTransform::getSizeOfComplex(_grid->globalGridDims));
             fourierTransform.initialize<gridType>(_grid, complexGrid);
         }
 

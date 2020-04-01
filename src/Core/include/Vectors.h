@@ -661,10 +661,6 @@ typedef Vector3<int> Int3;
 typedef Vector3<FP> FP3;
 typedef Vector3<complexFP> ComplexFP3;
 
-inline Int3 operator%(const Int3& v1, const Int3& v2) {
-    return Int3((v1.x + v2.x) % v2.x, (v1.y + v2.y) % v2.y, (v1.z + v2.z) % v2.z);
-}
-
 template<typename Real>
 inline const Vector1<int> floor(const Vector1<Real>& v)
 {

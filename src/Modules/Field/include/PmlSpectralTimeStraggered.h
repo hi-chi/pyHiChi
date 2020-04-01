@@ -11,13 +11,10 @@ namespace pfc {
     {
     public:
         PmlSpectralTimeStraggered(SpectralFieldSolver<gridTypes>* solver, Int3 sizePML) :
-            PmlSpectral<gridTypes>((SpectralFieldSolver<gridTypes>*)solver, sizePML)
-        {
-            Int3 sizeComplex = FourierTransform::getSizeOfComplex(solver->grid->numCells);
-            Int3 sizeStorage(sizeComplex.x, sizeComplex.y, 2 * sizeComplex.z);
-            tmpFieldReal = ScalarField<FP>(sizeStorage);
-            tmpFieldComplex = ScalarField<complexFP>(reinterpret_cast<complexFP*>(tmpFieldReal.getData()), sizeComplex);
-        }
+            PmlSpectral<gridTypes>((SpectralFieldSolver<gridTypes>*)solver, sizePML),
+            tmpFieldReal(solver->grid->numCells),
+            tmpFieldComplex(FourierTransform::getSizeOfComplex(solver->grid->numCells))
+        {}
 
         virtual void updateBxSplit();
         virtual void updateBySplit();
@@ -34,8 +31,8 @@ namespace pfc {
 
         virtual void computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt) {};
 
+        ScalarField<complexFP> tmpFieldComplex;
         ScalarField<FP> tmpFieldReal;
-        ScalarField<complexFP> tmpFieldComplex;  // has shared memory with tmpFieldReal
 
     protected:
         SpectralFieldSolver<gridTypes>* getFieldSolver() {

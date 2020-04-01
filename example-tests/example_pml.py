@@ -1,3 +1,5 @@
+# import sys
+# sys.path.append("../build/pythonModule/Release")
 import pyHiChi as pfc
 import numpy as np
 import math as ma
@@ -48,12 +50,13 @@ def valueBz(x, y, z):
     return Bz
 
 grid = pfc.PSTDGrid(gridSize, timeStep, minCoords, stepsGrid)
-# grid = pfc.PSATDTimeStraggeredGrid(gridSize, timeStep, minCoords, stepsGrid)
+# grid = pfc.PSATDGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.YeeGrid(gridSize, timeStep, minCoords, stepsGrid) 
 grid.setE(valueEx, valueEy, valueEz)
 grid.setB(valueBx, valueBy, valueBz)
 
 fieldSolver = pfc.PSTD(grid)
+# fieldSolver = pfc.PSATD(grid)
 # fieldSolver = pfc.PSATDTimeStraggered(grid)
 # fieldSolver = pfc.FDTD(grid)
 fieldSolver.setPML(int(pmlSize.x), int(pmlSize.y), int(pmlSize.z))
@@ -98,15 +101,9 @@ fig, axes = plt.subplots(ncols=2, nrows=1)
 
 im11 = axes[0].imshow(Ey, cmap='RdBu', interpolation='none', extent=(0, 2, 0, 1), animated = True)
 fig.colorbar(im11, ax=axes[0])
-axes[0].set_title("Ey")
-axes[0].set_xlabel("x")
-axes[0].set_ylabel("y")
 
 im12 = axes[1].imshow(Bz, cmap='RdBu', interpolation='none', extent=(0, 2, 0, 1), animated = True)
 fig.colorbar(im12, ax=axes[1])
-axes[1].set_title("Bz")
-axes[1].set_xlabel("x")
-axes[1].set_ylabel("y")
 
 iter=0
 def updatefig(*args):
@@ -121,8 +118,6 @@ def updatefig(*args):
     return im11, im12
     
 ani = animation.FuncAnimation(fig, updatefig, interval=10, blit=True)
-
-plt.tight_layout()
 
 plt.show()
 

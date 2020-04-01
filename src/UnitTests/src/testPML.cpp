@@ -87,7 +87,7 @@ public:
 
 typedef PMLTest<PSTD, PSTDGrid> PMLTestPSTD;
 typedef PMLTest<PSATD, PSATDGrid> PMLTestPSATD;
-typedef PMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid> PMLTestPSATDTimeStraggered;
+typedef PMLTest<PSATDTimeStraggered, PSATDGrid> PMLTestPSATDTimeStraggered;
 
 TEST_F(PMLTestPSTD, ADD_TEST_FFT_PREFIX(PmlPstd)) {
     const int numSteps = (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / grid->dt);

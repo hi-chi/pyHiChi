@@ -2,12 +2,12 @@
 
 #include "Psatd.h"
 
-class GridPSATDTimeStraggeredTest : public BaseGridFixture<PSATDTimeStraggeredGrid> {
+class GridPSATDTimeStraggeredTest : public BaseGridFixture<PSATDGrid> {
 public:
     PSATDTimeStraggered * psatd;
 
     virtual void SetUp() {
-        BaseGridFixture<PSATDTimeStraggeredGrid>::SetUp();
+        BaseGridFixture<PSATDGrid>::SetUp();
         initializeGrid();
         psatd = new PSATDTimeStraggered(grid);
     }
