@@ -2,6 +2,7 @@
 #include <omp.h>
 #include "ScalarField.h"
 #include "Grid.h"
+#include "Enums.h"
 
 #ifdef __USE_FFT__
 #include "fftw3.h"
@@ -9,13 +10,6 @@
 
 namespace pfc
 {
-    enum Field {
-        E, B, J
-    };
-
-    enum Coordinate {
-        x, y, z
-    };
 
     enum FourierTransformDirection {
         RtoC, CtoR
@@ -82,9 +76,9 @@ namespace pfc
 
 #else
         FourierTransformGrid() {}
-        template<typename GridTypes gridType>
+        template<GridTypes gridType>
         FourierTransformGrid(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {}
-
+        
         template<GridTypes gridType>
         void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {}
 
@@ -118,6 +112,7 @@ namespace pfc
                 for (int d = 0; d < 3; d++) {
                     ScalarField<FP>& arrD = *(realFields[f][d]);
                     ScalarField<complexFP>& arrC = *(complexFields[f][d]);
+
 #ifdef __USE_OMP__
                     fftw_plan_with_nthreads(omp_get_max_threads());
 #endif

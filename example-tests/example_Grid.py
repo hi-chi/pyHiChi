@@ -84,21 +84,41 @@ fig, axes = plt.subplots(ncols=3, nrows=2)
 
 bar11 = axes[0, 0].imshow(Ex1, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5))
 fig.colorbar(bar11, ax=axes[0, 0])
+axes[0, 0].set_title("Ex1")
+axes[0, 0].set_xlabel("x")
+axes[0, 0].set_ylabel("z")
 
 bar12 = axes[0, 1].imshow(Ey1, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5))
 fig.colorbar(bar12, ax=axes[0, 1])
+axes[0, 1].set_title("Ey1")
+axes[0, 1].set_xlabel("x")
+axes[0, 1].set_ylabel("z")
 
 bar13 = axes[0, 2].imshow(Bx1, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5))
 fig.colorbar(bar13, ax=axes[0, 2])
+axes[0, 2].set_title("Bx1")
+axes[0, 2].set_xlabel("x")
+axes[0, 2].set_ylabel("z")
 
 bar21 = axes[1, 0].imshow(Ex2, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5))
 fig.colorbar(bar21, ax=axes[1, 0])
+axes[1, 0].set_title("Ex2")
+axes[1, 0].set_xlabel("x")
+axes[1, 0].set_ylabel("z")
 
 bar22 = axes[1, 1].imshow(Ey2, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5))
 fig.colorbar(bar22, ax=axes[1, 1])
+axes[1, 1].set_title("Ey2")
+axes[1, 1].set_xlabel("x")
+axes[1, 1].set_ylabel("z")
 
 bar23 = axes[1, 2].imshow(Bx2, cmap='RdBu', interpolation='none', extent=(0, 2*ma.pi, 0, 3.5))
 cbar = fig.colorbar(bar23, ax=axes[1, 2])
+axes[1, 2].set_title("Bx2")
+axes[1, 2].set_xlabel("x")
+axes[1, 2].set_ylabel("z")
+
+plt.tight_layout()
 
 plt.show()
 

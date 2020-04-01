@@ -467,6 +467,12 @@ inline const Vector3<T> operator - (const Vector3<T>& v1, const Vector3<T>& v2)
 }
 
 template<typename T>
+inline const Vector3<T> operator - (const Vector3<T>& v1)
+{
+    return Vector3<T>(-v1.x, -v1.y, -v1.z);
+}
+
+template<typename T>
 inline Vector3<T>& operator -= (Vector3<T>& v1, const Vector3<T>& v2)
 {
     v1.x -= v2.x;
@@ -660,6 +666,10 @@ struct VectorDimensionHelper<Vector3<T> > {
 typedef Vector3<int> Int3;
 typedef Vector3<FP> FP3;
 typedef Vector3<complexFP> ComplexFP3;
+
+inline Int3 operator%(const Int3& v1, const Int3& v2) {
+    return Int3((v1.x + v2.x) % v2.x, (v1.y + v2.y) % v2.y, (v1.z + v2.z) % v2.z);
+}
 
 template<typename Real>
 inline const Vector1<int> floor(const Vector1<Real>& v)

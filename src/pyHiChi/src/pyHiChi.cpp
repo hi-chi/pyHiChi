@@ -1,10 +1,11 @@
-// Python-Interface.cpp : Определяет экспортированные функции для приложения DLL.
+// Python-Interface.cpp : Defines exported functions for the dll-file.
 //
 
 #include <algorithm>
 
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
+#include <pybind11/operators.h>
 
 #include "pyGrid.h"
 
@@ -24,6 +25,40 @@
 #include "QED_AEG.h"
 #include "Vectors.h"
 #include "Thinning.h"
+#include "Enums.h"
+#include "Mapping.h"
+#include "FieldConfiguration.h"
+
+
+#define SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType)     \
+    .def("set", &pyGridType::setFieldConfiguration<NullField>)           \
+    .def("set", &pyGridType::setFieldConfiguration<TightFocusingField>)    
+
+
+#define SET_METHODS_FOR_PY_GRID(pyGridType)                              \
+    .def(py::init<FP3, FP, FP3, FP3>())                                  \
+    .def("getFields", &pyGridType::getFields)                            \
+    .def("getJ", &pyGridType::getJ)                                      \
+    .def("getE", &pyGridType::getE)                                      \
+    .def("getB", &pyGridType::getB)                                      \
+    .def("setJ", &pyGridType::setJ)                                      \
+    .def("setE", &pyGridType::setE)                                      \
+    .def("setB", &pyGridType::setB)                                      \
+    .def("setJ", &pyGridType::pySetJ)                                    \
+    .def("setE", &pyGridType::pySetE)                                    \
+    .def("setB", &pyGridType::pySetB)                                    \
+    .def("setJ", &pyGridType::setJxyz)                                   \
+    .def("setE", &pyGridType::setExyz)                                   \
+    .def("setB", &pyGridType::setBxyz)                                   \
+    .def("setJ", &pyGridType::pySetJxyz)                                 \
+    .def("setE", &pyGridType::pySetExyz)                                 \
+    .def("setB", &pyGridType::pySetBxyz)                                 \
+    .def("setJt", &pyGridType::setJxyzt)                                 \
+    .def("setEt", &pyGridType::setExyzt)                                 \
+    .def("setBt", &pyGridType::setBxyzt)                                 \
+    SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType)         \
+    .def("analytical", &pyGridType::setAnalytical)                       \
+    .def("setTime", &pyGridType::setTime)
 
 
 namespace py = pybind11;
@@ -49,6 +84,13 @@ PYBIND11_MODULE(pyHiChi, object) {
     object.attr("eV") = constants::eV;
     object.attr("meV") = constants::meV;
 
+    py::enum_<Coordinate>(object, "Axis")
+        .value("x", Coordinate::x)
+        .value("y", Coordinate::y)
+        .value("z", Coordinate::z)
+        .export_values()
+        ;
+
     py::class_<FP3>(object, "vector3d")
         .def(py::init<>())
         .def(py::init<FP, FP, FP>())
@@ -59,9 +101,51 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("toString", &FP3::toString)
         .def("__str__", &FP3::toString)
 
+        .def(py::self + py::self)
+        .def(py::self += py::self)
+        .def(py::self - py::self)
+        .def(py::self -= py::self)
+        .def(-py::self)
+        .def(FP() * py::self)
+        .def(py::self * FP())
+        .def(py::self *= FP())
+        .def(py::self * py::self)
+        .def(py::self *= py::self)
+        .def(py::self / py::self)
+        .def(py::self /= py::self)
+        .def(py::self / FP())
+        .def(py::self /= FP())
+
         .def_readwrite("x", &FP3::x)
         .def_readwrite("y", &FP3::y)
         .def_readwrite("z", &FP3::z)
+        ;
+
+
+    py::class_<ParticleProxy3d>(object, "particleProxy")
+        .def(py::init<Particle3d&>())
+        .def(py::init<ParticleProxy3d&>())
+        .def("getPosition", &ParticleProxy3d::getPosition)
+        .def("setPosition", &ParticleProxy3d::setPosition)
+        .def("getMomentum", &ParticleProxy3d::getMomentum)
+        .def("setMomentum", &ParticleProxy3d::setMomentum)
+        .def("getVelocity", &ParticleProxy3d::getVelocity)
+        .def("setVelocity", &ParticleProxy3d::setVelocity)
+        .def("getWeight", &ParticleProxy3d::getWeight)
+        .def("setWeight", &ParticleProxy3d::setWeight)
+        .def("getGamma", &ParticleProxy3d::getGamma)
+        .def("getMass", &ParticleProxy3d::getMass)
+        .def("getCharge", &ParticleProxy3d::getCharge)
+        .def("getType", &ParticleProxy3d::getType)
+        ;
+
+    py::class_<ValueField>(object, "field")
+        .def(py::init<FP3, FP3>())
+        .def(py::init<FP, FP, FP, FP, FP, FP>())
+        .def("getE", &ValueField::getE)
+        .def("setE", &ValueField::setE)
+        .def("getB", &ValueField::getB)
+        .def("setB", &ValueField::setB)
         ;
     
     py::enum_<ParticleTypes>(object, "particleTypes")
@@ -89,32 +173,6 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getType", &Particle3d::getType)
         ;
     
-    py::class_<ParticleProxy3d>(object, "particleProxy")
-        .def(py::init<Particle3d&>())
-        .def(py::init<ParticleProxy3d&>())
-        .def("getPosition", &ParticleProxy3d::getPosition)
-        .def("setPosition", &ParticleProxy3d::setPosition)
-        .def("getMomentum", &ParticleProxy3d::getMomentum)
-        .def("setMomentum", &ParticleProxy3d::setMomentum)
-        .def("getVelocity", &ParticleProxy3d::getVelocity)
-        .def("setVelocity", &ParticleProxy3d::setVelocity)
-        .def("getWeight", &ParticleProxy3d::getWeight)
-        .def("setWeight", &ParticleProxy3d::setWeight)
-        .def("getGamma", &ParticleProxy3d::getGamma)
-        .def("getMass", &ParticleProxy3d::getMass)
-        .def("getCharge", &ParticleProxy3d::getCharge)
-        .def("getType", &ParticleProxy3d::getType)
-        ;
-
-    py::class_<ValueField>(object, "field")
-        .def(py::init<FP3, FP3>())
-        .def(py::init<FP, FP, FP, FP, FP, FP>())
-        .def("getE", &ValueField::getE)
-        .def("setE", &ValueField::setE)
-        .def("getB", &ValueField::getB)
-        .def("setB", &ValueField::setB)
-        ;
-
     py::class_<ParticleArray3d>(object, "particleArray")
         .def(py::init<>())
         .def(py::init<ParticleTypes>())
@@ -182,32 +240,12 @@ PYBIND11_MODULE(pyHiChi, object) {
     object.def("kMeansMergining", &Merging<ParticleArray3d>::merge_with_kmeans);
 
     py::class_<pyYeeGrid>(object, "YeeGrid")
-        .def(py::init<FP3, FP, FP3, FP3>())
-        .def("getFields", &pyYeeGrid::getFields)
-        .def("getJ", &pyYeeGrid::getJ)
-        .def("getE", &pyYeeGrid::getE)
-        .def("getB", &pyYeeGrid::getB)
-        .def("setJ", &pyYeeGrid::setJ)
-        .def("setE", &pyYeeGrid::setE)
-        .def("setB", &pyYeeGrid::setB)
-        .def("setJ", &pyYeeGrid::pySetJ)
-        .def("setE", &pyYeeGrid::pySetE)
-        .def("setB", &pyYeeGrid::pySetB)
-        .def("setJ", &pyYeeGrid::setJxyz)
-        .def("setE", &pyYeeGrid::setExyz)
-        .def("setB", &pyYeeGrid::setBxyz)
-        .def("setJ", &pyYeeGrid::pySetJxyz)
-        .def("setE", &pyYeeGrid::pySetExyz)
-        .def("setB", &pyYeeGrid::pySetBxyz)
-        .def("setJt", &pyYeeGrid::setJxyzt)
-        .def("setEt", &pyYeeGrid::setExyzt)
-        .def("setBt", &pyYeeGrid::setBxyzt)
-        .def("analytical", &pyYeeGrid::setAnalytical)
-        .def("setTime", &pyYeeGrid::setTime)
+        SET_METHODS_FOR_PY_GRID(pyYeeGrid)
         ;
 
     py::class_<FDTD>(object, "FDTD")
         .def(py::init<pyYeeGrid*>())
+        .def(py::init<pyYeeGridMapping*>())
         .def("setPML", &FDTD::setPML)
         .def("setBC", &FDTD::setFieldGenerator)
         .def("updateHalfB", &FDTD::updateHalfB)
@@ -222,74 +260,41 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<pyPSTDGrid>(object, "PSTDGrid")
-        .def(py::init<FP3, FP, FP3, FP3>())
-        .def("getFields", &pyPSTDGrid::getFields)
-        .def("getJ", &pyPSTDGrid::getJ)
-        .def("getE", &pyPSTDGrid::getE)
-        .def("getB", &pyPSTDGrid::getB)
-        .def("setJ", &pyPSTDGrid::setJ)
-        .def("setE", &pyPSTDGrid::setE)
-        .def("setB", &pyPSTDGrid::setB)
-        .def("setJ", &pyPSTDGrid::pySetJ)
-        .def("setE", &pyPSTDGrid::pySetE)
-        .def("setB", &pyPSTDGrid::pySetB)
-        .def("setJ", &pyPSTDGrid::setJxyz)
-        .def("setE", &pyPSTDGrid::setExyz)
-        .def("setB", &pyPSTDGrid::setBxyz)
-        .def("setJ", &pyPSTDGrid::pySetJxyz)
-        .def("setE", &pyPSTDGrid::pySetExyz)
-        .def("setB", &pyPSTDGrid::pySetBxyz)
-        .def("setJt", &pyPSTDGrid::setJxyzt)
-        .def("setEt", &pyPSTDGrid::setExyzt)
-        .def("setBt", &pyPSTDGrid::setBxyzt)
-        .def("analytical", &pyPSTDGrid::setAnalytical)
-        .def("setTime", &pyPSTDGrid::setTime)
+        SET_METHODS_FOR_PY_GRID(pyPSTDGrid)
         ;
 
     py::class_<PSTD>(object, "PSTD")
         .def(py::init<pyPSTDGrid*>())
+        .def(py::init<pyPSTDGridMapping*>())
         .def("setPML", &PSTD::setPML)
         .def("updateFields", &PSTD::updateFields)
         .def("setTimeStep", &PSTD::setTimeStep)
         ;
 
     py::class_<pyPSATDGrid>(object, "PSATDGrid")
-        .def(py::init<FP3, FP, FP3, FP3>())
-        .def("getFields", &pyPSATDGrid::getFields)
-        .def("getJ", &pyPSATDGrid::getJ)
-        .def("getE", &pyPSATDGrid::getE)
-        .def("getB", &pyPSATDGrid::getB)
-        .def("setJ", &pyPSATDGrid::setJ)
-        .def("setE", &pyPSATDGrid::setE)
-        .def("setB", &pyPSATDGrid::setB)
-        .def("setJ", &pyPSATDGrid::pySetJ)
-        .def("setE", &pyPSATDGrid::pySetE)
-        .def("setB", &pyPSATDGrid::pySetB)
-        .def("setJ", &pyPSATDGrid::setJxyz)
-        .def("setE", &pyPSATDGrid::setExyz)
-        .def("setB", &pyPSATDGrid::setBxyz)
-        .def("setJ", &pyPSATDGrid::pySetJxyz)
-        .def("setE", &pyPSATDGrid::pySetExyz)
-        .def("setB", &pyPSATDGrid::pySetBxyz)
-        .def("setJt", &pyPSATDGrid::setJxyzt)
-        .def("setEt", &pyPSATDGrid::setExyzt)
-        .def("setBt", &pyPSATDGrid::setBxyzt)
-        .def("analytical", &pyPSATDGrid::setAnalytical)
-        .def("setTime", &pyPSATDGrid::setTime)
+        SET_METHODS_FOR_PY_GRID(pyPSATDGrid)
         ;
 
     py::class_<PSATD>(object, "PSATD")
         .def(py::init<pyPSATDGrid*>())
+        .def(py::init<pyPSATDGridMapping*>())
         .def("setPML", &PSATD::setPML)
         .def("updateFields", &PSATD::updateFields)
         .def("setTimeStep", &PSATD::setTimeStep)
+        .def("convertFieldsPoissonEquation", &PSATD::convertFieldsPoissonEquation)
+        ;
+
+    py::class_<pyPSATDTimeStraggeredGrid>(object, "PSATDTimeStraggeredGrid")
+        SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGrid)
         ;
 
     py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
-        .def(py::init<pyPSATDGrid*>())
+        .def(py::init<pyPSATDTimeStraggeredGrid*>())
+        .def(py::init<pyPSATDTimeStraggeredGridMapping*>())
         .def("setPML", &PSATDTimeStraggered::setPML)
         .def("updateFields", &PSATDTimeStraggered::updateFields)
         .def("setTimeStep", &PSATDTimeStraggered::setTimeStep)
+        .def("convertFieldsPoissonEquation", &PSATDTimeStraggered::convertFieldsPoissonEquation)
         ;
 
     py::class_<ScalarQED_AEG_only_electron>(object, "QED")
@@ -297,4 +302,93 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("processParticles", &ScalarQED_AEG_only_electron::processParticles)
         .def("processParticlesNIter", &ScalarQED_AEG_only_electron::processParticlesNIter)
         ;
+
+    py::class_<Mapping>(object, "Mapping")
+        ;
+
+    py::class_<pyYeeGridMapping>(object, "YeeGridMapping")
+        .def(py::init<pyYeeGrid*>())
+        SET_METHODS_FOR_PY_GRID(pyYeeGridMapping)
+        .def("setMapping", &pyYeeGridMapping::setMapping)
+        ;
+
+    py::class_<pyPSTDGridMapping>(object, "PSTDGridMapping")
+        .def(py::init<pyPSTDGrid*>())
+        SET_METHODS_FOR_PY_GRID(pyPSTDGridMapping)
+        .def("setMapping", &pyPSTDGridMapping::setMapping)
+        ;
+
+    py::class_<pyPSATDGridMapping>(object, "PSATDGridMapping")
+        .def(py::init<pyPSATDGrid*>())
+        SET_METHODS_FOR_PY_GRID(pyPSATDGridMapping)
+        .def("setMapping", &pyPSATDGridMapping::setMapping)
+        ;
+
+    py::class_<pyPSATDTimeStraggeredGridMapping>(object, "PSATDTimeStraggeredGridMapping")
+        .def(py::init<pyPSATDTimeStraggeredGrid*>())
+        SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGridMapping)
+        .def("setMapping", &pyPSATDTimeStraggeredGridMapping::setMapping)
+        ;
+
+    // mappings
+
+    py::class_<IdentityMapping, Mapping>(object, "IdentityMapping")
+        .def(py::init<const FP3&, const FP3&>())
+        .def("getDirectCoords", &IdentityMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &IdentityMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        ;
+
+    py::class_<PeriodicalXMapping, Mapping>(object, "PeriodicalXMapping")
+        .def(py::init<FP, FP>())
+        .def("getDirectCoords", &PeriodicalXMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        ;
+
+    py::class_<RotationMapping, Mapping>(object, "RotationMapping")
+        .def(py::init<Coordinate, FP>())
+        .def("getDirectCoords", &RotationMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &RotationMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        ;
+
+    py::class_<ScaleMapping, Mapping>(object, "ScaleMapping")
+        .def(py::init<Coordinate, FP>())
+        .def("getDirectCoords", &ScaleMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &ScaleMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        ;
+
+    py::class_<ShiftMapping, Mapping>(object, "ShiftMapping")
+        .def(py::init<FP3>())
+        .def("getDirectCoords", &ShiftMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &ShiftMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        ;
+
+    py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
+        .def(py::init<FP, FP, FP, FP>())
+        .def(py::init<FP, FP, FP>())
+        .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getInverseCoords", &TightFocusingMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getxMin", &TightFocusingMapping::getxMin)
+        .def("getxMax", &TightFocusingMapping::getxMax)
+        .def("setIfCut", &TightFocusingMapping::setIfCut)
+        .def("advanceTime", &TightFocusingMapping::advanceTime)
+        .def("setTime", &TightFocusingMapping::setTime)
+        ;
+
+
+    // field configurations
+
+    py::class_<NullField>(object, "NullField")
+        .def(py::init<>())
+        .def("getE", &NullField::E)
+        .def("getB", &NullField::B)
+        ;
+
+    py::class_<TightFocusingField>(object, "TightFocusingField")
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP>())
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3>())
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3, FP>())
+        .def("getE", &TightFocusingField::E)
+        .def("getB", &TightFocusingField::B)
+        ;
+
 }

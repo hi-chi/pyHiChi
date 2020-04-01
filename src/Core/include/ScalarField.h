@@ -4,8 +4,10 @@
 #include "FormFactor.h"
 #include "Vectors.h"
 #include "VectorsProxy.h"
+#include "FP.h"
 
 namespace pfc {
+
     /* Class for storing 3d scalar field on a regular grid.
     Provides index-wise access, interpolation and deposition.*/
     template <typename Data>
@@ -13,12 +15,22 @@ namespace pfc {
     {
     public:
 
+        ScalarField() {};
         ScalarField(const Int3& size);
-        ScalarField(const ScalarField& field);
+        ScalarField(const ScalarField<Data>& field);
+        ScalarField(Data* data, const Int3& size);
         ScalarField& operator =(const ScalarField& field);
+
+        ScalarField createShallowCopy() {  // comon memory
+            return ScalarField(raw, size);
+        }
 
         std::vector<Data>& toVector() {
             return elements;
+        }
+
+        Data* getData() {
+            return raw;
         }
 
         Int3 getSize() const
@@ -63,7 +75,7 @@ namespace pfc {
     private:
 
         FP interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const;
-
+        bool ifStorage = true;  // if false then elements is empty, raw is pointer to data
         std::vector<Data> elements; // storage
         Data* raw; // raw pointer to elements vector
         Int3 size; // size of each dimension
@@ -94,12 +106,30 @@ namespace pfc {
         dimensionCoeffFP = field.dimensionCoeffFP;
     }
 
+    template<typename Data>
+    inline ScalarField<Data>::ScalarField(Data * data, const Int3 & _size)
+    {
+        size = _size;
+        ifStorage = false;
+        raw = data;
+        for (int d = 0; d < 3; d++) {
+            dimensionCoeffInt[d] = (size[d] > 1) ? 1 : 0;
+            dimensionCoeffFP[d] = (FP)dimensionCoeffInt[d];
+        }
+    }
+
     template <class Data>
-    inline ScalarField<Data>& ScalarField<Data>::operator =(const ScalarField& field)
+    inline ScalarField<Data>& ScalarField<Data>::operator=(const ScalarField<Data>& field)
     {
         size = field.size;
-        elements = field.elements;
-        raw = elements.data();
+        ifStorage = field.ifStorage;
+        if (ifStorage) {
+            elements = field.elements;
+            raw = elements.data();
+        }
+        else {
+            raw = field.raw;
+        }
         dimensionCoeffInt = field.dimensionCoeffInt;
         dimensionCoeffFP = field.dimensionCoeffFP;
         return *this;
@@ -110,8 +140,8 @@ namespace pfc {
     {
         FP3 c = coeffs * dimensionCoeffFP;
         FP3 invC = FP3(1, 1, 1) - c;
-        Int3 base = baseIdx * dimensionCoeffInt;
-        Int3 next = base + dimensionCoeffInt;
+        Int3 base = (baseIdx * dimensionCoeffInt) % size;  // % size for spectral grids
+        Int3 next = (base + dimensionCoeffInt) % size;
         return invC.x * (invC.y * (invC.z * (*this)(base.x, base.y, base.z) + c.z * (*this)(base.x, base.y, next.z)) +
                             c.y * (invC.z * (*this)(base.x, next.y, base.z) + c.z * (*this)(base.x, next.y, next.z))) +
                   c.x * (invC.y * (invC.z * (*this)(next.x, base.y, base.z) + c.z * (*this)(next.x, base.y, next.z)) +
