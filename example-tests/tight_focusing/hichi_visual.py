@@ -39,7 +39,7 @@ def getCoordValue(vector, axis):
     
 class Visual:
     
-    def __init__(self, grid, minCoords, maxCoords, dir, dpi=500, fontsize=17):
+    def __init__(self, grid, minCoords, maxCoords, dir="./", dpi=500, fontsize=17):
         self.grid = grid
         self.minCoords = minCoords
         self.maxCoords = maxCoords
@@ -48,10 +48,10 @@ class Visual:
         matplotlib.rcParams.update({"font.size" : fontsize})
         
     
-    def createPictureInPlane(self, shape, plane=Plane.XOY, lastCoordinateValue=0.0,
-                             field=Field.E, fieldCoord=Axis.X, norm=False,
-                             valueLimits=(None, None),
-                             namePicture="field.png"):
+    def savePictureInPlane(self, shape, plane=Plane.XOY, lastCoordinateValue=0.0,
+                           field=Field.E, fieldCoord=Axis.X, norm=False,
+                           valueLimits=(None, None),
+                           namePicture="field.png"):
         title = ("$|%s|$" % (field.value)) if norm else ("$%s%s$" %(field.value, fieldCoord.value))
         xlabel = plane.value[0].value
         ylabel = plane.value[1].value
@@ -74,10 +74,10 @@ class Visual:
         plt.close(fig=fig)
         
         
-    def createPictureInAxis(self, nPoints, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
-                            field=Field.E, fieldCoord=Axis.X, norm=False, linePlot="-", label="",
-                            yLimits=None,
-                            namePicture="field.png"):
+    def savePictureInAxis(self, nPoints, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+                          field=Field.E, fieldCoord=Axis.X, norm=False, linePlot="-", label="",
+                          yLimits=None,
+                          namePicture="field.png"):
         ylabel = ("$|%s|$" % (field.value)) if norm else ("$%s%s$" %(field.value, fieldCoord.value))
         xlabel = axis.value
         title = ""
@@ -96,7 +96,70 @@ class Visual:
         fig.tight_layout()
                 
         plt.savefig(os.path.join(self.dir, namePicture), dpi=self.dpi)
-        plt.close(fig=fig)        
+        plt.close(fig=fig)     
+
+
+    def animateInPlane(self, funcUpdate, nIter, shape, plane=Plane.XOY, lastCoordinateValue=0.0,
+                       field=Field.E, fieldCoord=Axis.X, norm=False,
+                       valueLimits=(None, None), interval=1):
+        title = ("$|%s|$" % (field.value)) if norm else ("$%s%s$" %(field.value, fieldCoord.value))
+        xlabel = plane.value[0].value
+        ylabel = plane.value[1].value
+        minCoords = (getCoordValue(self.minCoords, plane.value[0]), getCoordValue(self.minCoords, plane.value[1]))
+        maxCoords = (getCoordValue(self.maxCoords, plane.value[0]), getCoordValue(self.maxCoords, plane.value[1]))
+        
+        fig = plt.figure()
+        ax, im = self.createAxPlane_(fig, shape, title, xlabel, ylabel, minCoords, maxCoords, valueLimits)
+        
+        coords0 = np.linspace(minCoords[0], maxCoords[0], shape[0])
+        coords1 = np.linspace(minCoords[1], maxCoords[1], shape[1])         
+
+        fig.tight_layout()
+                
+        def animate_(i):
+            if (i > nIter):
+                exit()
+            funcUpdate()
+            fields = self.getFieldPlane_((coords0, coords1), shape, plane, lastCoordinateValue,
+                self.generateFuncGet_(field, fieldCoord, norm))
+            im.set_array(fields)
+            return im,   
+    
+        ani = animation.FuncAnimation(fig, animate_, interval=interval, blit=True)
+        plt.show()  
+
+
+    def animateInAxis(self, funcUpdate, nIter, nPoints, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+                      field=Field.E, fieldCoord=Axis.X, norm=False, linePlot="-", label="",
+                      yLimits=None, interval=10):
+        ylabel = ("$|%s|$" % (field.value)) if norm else ("$%s%s$" %(field.value, fieldCoord.value))
+        xlabel = axis.value
+        title = ""
+        minCoords = getCoordValue(self.minCoords, axis)
+        maxCoords = getCoordValue(self.maxCoords, axis)
+        
+        fig = plt.figure()
+        ax = self.createAxAxis_(fig, title, xlabel, ylabel, minCoords, maxCoords, yLimits)
+        
+        coords = np.linspace(minCoords, maxCoords, nPoints)
+        fields = self.getFieldAxis_(coords, nPoints, axis, lastCoordinateValue,
+            self.generateFuncGet_(field, fieldCoord, norm))
+            
+        line, = ax.plot(coords, fields, linePlot, label=label)
+        
+        fig.tight_layout()               
+                
+        def animate_(i):
+            if (i > nIter):
+                exit()
+            funcUpdate()
+            fields = self.getFieldAxis_(coords, nPoints, axis, lastCoordinateValue,
+                self.generateFuncGet_(field, fieldCoord, norm))
+            line.set_data(coords, fields)
+            return line,   
+    
+        ani = animation.FuncAnimation(fig, animate_, interval=interval, blit=True)
+        plt.show()   
         
         
     def createAxPlane_(self, fig, shape, title, xlabel, ylabel, minCoords, maxCoords, valueLimits):

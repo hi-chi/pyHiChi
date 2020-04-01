@@ -83,33 +83,56 @@ def updateFields():
 
 
 # ----------- run and show animation (size of grid should be not large) ------
-#initialize()
-#visual.initVisual(minCoords, maxCoords, NxFull*2, Ny*2)
-#visual.animate(grid, updateFields, maxIter=maxIter)
+'''
+from hichi_visual import *
+
+visual = Visual(grid, minCoords, maxCoords, dpi=500, fontsize=17)
+
+def animateInPlane(visual, nIter):
+    visual.animateInPlane(shape=(NxFull*2, Ny*2), funcUpdate=updateFields, nIter=nIter,
+                          plane=Plane.XOY, lastCoordinateValue=0.0,
+                          field=Field.E, norm=True,
+                          valueLimits=(0.0, 0.5),
+                          interval=1
+                          )
+                            
+def animateInAxis(visual, nIter):
+    visual.animateInAxis(nPoints=NxFull*2, funcUpdate=updateFields, nIter=nIter,
+                         axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+                         field=Field.E, norm=True,
+                         yLimits=(-1.0, 8.0),
+                         interval=30
+                         )                            
+                            
+initialize()
+animateInPlane(visual, maxIter)  # it should be the last function in the current script
+#animateInAxis(visual, maxIter)  # it should be the last function in the current script
+'''
 
 # ----------- run and save pictures for every iteration ----------------------
+
 from hichi_visual import *
 
 hichi_primitives.createDir("./pictures")
 visual = Visual(grid, minCoords, maxCoords, "./pictures", dpi=500, fontsize=17)
 
 def savePicInPlane(visual, iter):
-    visual.createPictureInPlane(shape=(NxFull*4, Ny*4), plane=Plane.XOY, lastCoordinateValue=0.0,
+    visual.savePictureInPlane(shape=(NxFull*4, Ny*4), plane=Plane.XOY, lastCoordinateValue=0.0,
                                 field=Field.E, norm=True,
                                 valueLimits=(0.0, 0.5),
                                 namePicture="field%04d.png" % iter)
                             
 def savePicInAxis(visual, iter):
-    visual.createPictureInAxis(nPoints=NxFull*4, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+    visual.savePictureInAxis(nPoints=NxFull*4, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
                                field=Field.E, norm=True,
                                yLimits=(-1.0, 8.0),
                                namePicture="field%04d.png" % iter)                            
                             
 initialize()
 for i in range(maxIter):
-    savePicInPlane(visual, i)
+    #savePicInPlane(visual, i)
+    savePicInAxis(visual, i)
     updateFields()
-savePicInPlane(visual, maxIter)
 
 
 # ----------- run and save results 2d in .csv files --------------------------
