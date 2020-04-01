@@ -1,7 +1,7 @@
 import sys
 import pyHiChi as hichi
 import tight_focusing_fields as sphericalPulse
-import tight_focusing_show as visual
+#import tight_focusing_show as visual
 import tight_focusing_write_file as fileWriter
 import hichi_primitives
 import math as ma
@@ -10,7 +10,7 @@ import math as ma
 # ------------------- initializing -------------------------------------
 
 
-factor = 1.0
+factor = 0.3
 NxFull = int(factor*320)                           # size of grid in full area
 Ny = int(factor*256)
 Nz = int(factor*256)
@@ -36,11 +36,11 @@ D = 3.5*sphericalPulse.pulselength                 # width of band
 mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
 
 # creating of mapping with cutting at angle
-# cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
-# mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
+#cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
+#mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
 
 # not to cut secondary pulses
-mapping.setIfCut(False)
+#mapping.setIfCut(False)
 
 xMin = mapping.getxMin()  # bounds of the band
 xMax = mapping.getxMax()
@@ -88,9 +88,29 @@ def updateFields():
 #visual.animate(grid, updateFields, maxIter=maxIter)
 
 # ----------- run and save pictures for every iteration ----------------------
+from hichi_visual import *
+
+hichi_primitives.createDir("./pictures")
+visual = Visual(grid, minCoords, maxCoords, "./pictures", dpi=500, fontsize=17)
+
+def savePicInPlane(visual, iter):
+    visual.createPictureInPlane(shape=(NxFull*4, Ny*4), plane=Plane.XOY, lastCoordinateValue=0.0,
+                                field=Field.E, norm=True,
+                                valueLimits=(0.0, 0.5),
+                                namePicture="field%04d.png" % iter)
+                            
+def savePicInAxis(visual, iter):
+    visual.createPictureInAxis(nPoints=NxFull*4, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+                               field=Field.E, norm=True,
+                               yLimits=(-1.0, 8.0),
+                               namePicture="field%04d.png" % iter)                            
+                            
 initialize()
-visual.initVisual(minCoords, maxCoords, NxFull*4, Ny*4)
-visual.savePictures(grid, updateFields, maxIter=maxIter, dirResult = "./pictures/")  # DELETE OLD FILES IN "./pictures/"!!!
+for i in range(maxIter):
+    savePicInPlane(visual, i)
+    updateFields()
+savePicInPlane(visual, maxIter)
+
 
 # ----------- run and save results 2d in .csv files --------------------------
 #initialize()
