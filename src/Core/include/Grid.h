@@ -20,11 +20,12 @@ namespace pfc {
 
         Grid(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps,
-            const Int3 & globalGridDims);
-        Grid(Grid<FP, gridType>* grid);   // create shallow copy, memory is common
+            const Int3 & globalGridDims, FP _globalTime = 0.0);
+        Grid(Grid<FP, gridType>* grid);    // create shallow copy, memory is common
         Grid(const Int3 & _numAllCells, FP _dt,
-            const Int3 & globalGridDims, Grid<FP, gridType>* grid = 0);  // create complex grid
-                                                                         // if grid!=0 then memory will be common
+            const Int3 & globalGridDims, FP _globalTime = 0.0, 
+            Grid<FP, gridType>* grid = 0);  // create complex grid
+                                            // if grid!=0 then memory will be common
 
         const FP3 BxPosition(int x, int y, int z) const
         {
@@ -286,9 +287,10 @@ namespace pfc {
         void setInterpolationType(InterpolationType type);
         InterpolationType getInterpolationType() const;
 
-        const Int3 globalGridDims; // important to initialize it first
+        const Int3 globalGridDims;  // important to initialize it first
         const FP3 steps;
         FP dt;
+        FP globalTime = 0.0;  // refreshed from field solver
         const Int3 numInternalCells;
         const Int3 numCells;
         const FP3 origin;
@@ -370,6 +372,7 @@ namespace pfc {
         globalGridDims(grid->globalGridDims),
         steps(grid->steps),
         dt(grid->dt),
+        globalTime(grid->globalTime),
         numInternalCells(grid->numInternalCells),
         numCells(grid->numCells),
         shiftEJx(grid->shiftEJx), shiftEJy(grid->shiftEJy), shiftEJz(grid->shiftEJz),
@@ -392,10 +395,11 @@ namespace pfc {
 
     template <>
     inline Grid<FP, GridTypes::YeeGridType>::Grid(const Int3 & _numCells, FP _dt, const FP3 & minCoords, const FP3 & _steps,
-        const Int3 & _globalGridDims) :
+        const Int3 & _globalGridDims, FP _globalTime) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         dt(_dt),
+        globalTime(_globalTime),
         numInternalCells(_numCells),
         numCells(numInternalCells + getNumExternalLeftCells() + getNumExternalRightCells()),
         Ex(numCells), Ey(numCells), Ez(numCells),
@@ -429,10 +433,11 @@ namespace pfc {
 
     template<>
     inline Grid<FP, GridTypes::StraightGridType>::Grid(const Int3 & _numInternalCells, FP _dt, const FP3 & minCoords, const FP3 & _steps,
-        const Int3 & _globalGridDims) :
+        const Int3 & _globalGridDims, FP _globalTime) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         dt(_dt),
+        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells + getNumExternalLeftCells() + getNumExternalRightCells()),
         Ex(numCells), Ey(numCells), Ez(numCells),
@@ -468,9 +473,10 @@ namespace pfc {
     // SPECTRAL GRIDS
     template<>
     inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSTDGridType>* grid) :
+        const Int3 & _globalGridDims, FP _globalTime, Grid<FP, GridTypes::PSTDGridType>* grid) :
         globalGridDims(_globalGridDims),
         dt(_dt),
+        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         shiftEJx(FP3(0, 0, 0) * steps),
@@ -519,10 +525,11 @@ namespace pfc {
 
     template<>
     inline Grid<FP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
+        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims, FP _globalTime) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         dt(_dt),
+        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         shiftEJx(FP3(0, 0, 0) * steps),
@@ -562,9 +569,10 @@ namespace pfc {
 
     template<>
     inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSATDGridType>* grid) :
+        const Int3 & _globalGridDims, FP _globalTime, Grid<FP, GridTypes::PSATDGridType>* grid) :
         globalGridDims(_globalGridDims),
         dt(_dt),
+        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         shiftEJx(FP3(0, 0, 0) * steps),
@@ -609,10 +617,11 @@ namespace pfc {
 
     template<>
     inline Grid<FP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
+        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims, FP _globalTime) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         dt(_dt),
+        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         shiftEJx(FP3(0, 0, 0) * steps),
@@ -648,9 +657,10 @@ namespace pfc {
 
     template<>
     inline Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSATDTimeStraggeredGridType>* grid) :
+        const Int3 & _globalGridDims, FP _globalTime, Grid<FP, GridTypes::PSATDTimeStraggeredGridType>* grid) :
         globalGridDims(_globalGridDims),
         dt(_dt),
+        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         shiftEJx(FP3(0, 0, 0) * steps),
@@ -695,10 +705,11 @@ namespace pfc {
 
     template<>
     inline Grid<FP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
+        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims, FP _globalTime) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         dt(_dt),
+        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         shiftEJx(FP3(0, 0, 0) * steps),
