@@ -1,7 +1,8 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 
-maxIter = 32
+maxIter = 4
 
 D_arr = []
 time_RtoC_av = []
@@ -9,6 +10,8 @@ time_PSATD_av = []
 time_CtoR_av = []
 time_init = []
 time_iter_av = []
+
+ALL_TIME = 0.0
 
 with open("restime.txt", "r") as file:
     lines = [[el for el in line.split() if not el == ""] for line in file.readlines() if not line == "\n"]
@@ -51,6 +54,7 @@ with open("restime.txt", "r") as file:
         elif STATUS == 1:  # read init
             if len(line) == 7 and line[3] == "init":
                 time_init.append(float(line[5]))
+                ALL_TIME += float(line[5])
                 STATUS = 2
             else:
                 print("Error, status %d" % 1)
@@ -88,6 +92,7 @@ with open("restime.txt", "r") as file:
             if len(line) == 8 and line[4] == "iter" and int(line[3]) == iter:
                 iter += 1
                 time_iter_sum += float(line[6])
+                ALL_TIME += float(line[6])
                 STATUS = 0 if iter == maxIter else 2
             else:
                 print("Error, status %d" % 5)
@@ -103,21 +108,25 @@ print("time_PSATD_av", time_PSATD_av)
 print("time_CtoR_av ", time_CtoR_av )
 print("time_init    ", time_init    )
 print("time_iter_av ", time_iter_av )
+print("ALL TIME =", ALL_TIME/1000/60/60, "h =", ALL_TIME/1000/60, "min =", ALL_TIME/1000, "s")
 
+matplotlib.rcParams.update({"font.size" : 17})
 
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
 
-ax.plot(D_arr, time_RtoC_av, "-->", label = "RtoC")
-ax.plot(D_arr, time_CtoR_av, "-->", label = "CtoR")
-ax.plot(D_arr, time_PSATD_av, "-->", label = "PSATD")
-ax.plot(D_arr, time_iter_av, "-->", label = "time of one iteration")
-ax.plot(D_arr, time_init, "-->", label = "initialization time")
+ax.plot(D_arr, np.array(time_RtoC_av)/1000, "-->", label = "RtoC")
+ax.plot(D_arr, np.array(time_CtoR_av)/1000, "-->", label = "CtoR")
+ax.plot(D_arr, np.array(time_PSATD_av)/1000, "-->", label = "PSATD")
+ax.plot(D_arr, np.array(time_iter_av)/1000, "-->", label = "time of one iteration")
+ax.plot(D_arr, np.array(time_init)/1000, "-->", label = "initialization time")
 
 ax.set_xlabel("$D/L$")
-ax.set_ylabel("time, ms")
+ax.set_ylabel("time, s")
 
 ax.legend()
+
+plt.tight_layout()
 plt.savefig("graph", dpi = 500)
 
     
