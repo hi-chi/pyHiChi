@@ -116,9 +116,9 @@ namespace pfc
                         this->Ey(i, j, k) = fieldConf->E(cEy.x, cEy.y, cEy.z).y;
                         this->Ez(i, j, k) = fieldConf->E(cEz.x, cEz.y, cEz.z).z;
 
-                        cBx = derived->convertCoords(this->ExPosition(i, j, k));
-                        cBy = derived->convertCoords(this->EyPosition(i, j, k));
-                        cBz = derived->convertCoords(this->EzPosition(i, j, k));
+                        cBx = derived->convertCoords(this->BxPosition(i, j, k));
+                        cBy = derived->convertCoords(this->ByPosition(i, j, k));
+                        cBz = derived->convertCoords(this->BzPosition(i, j, k));
                         this->Bx(i, j, k) = fieldConf->B(cBx.x, cBx.y, cBx.z).x;
                         this->By(i, j, k) = fieldConf->B(cBy.x, cBy.y, cBy.z).y;
                         this->Bz(i, j, k) = fieldConf->B(cBz.x, cBz.y, cBz.z).z;
