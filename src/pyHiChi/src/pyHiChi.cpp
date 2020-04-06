@@ -341,11 +341,11 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<PeriodicalXMapping, Mapping>(object, "PeriodicalXMapping")
-        .def(py::init<FP, FP>())
-        .def("getDirectCoords", &PeriodicalXMapping::getDirectCoords, py::arg("coords"),
+    py::class_<PeriodicalMapping, Mapping>(object, "PeriodicalMapping")
+        .def(py::init<Coordinate, FP, FP>())
+        .def("getDirectCoords", &PeriodicalMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords, py::arg("coords"),
+        .def("getInverseCoords", &PeriodicalMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
