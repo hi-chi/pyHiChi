@@ -97,6 +97,9 @@ namespace pfc {
         doFourierTransform(CtoR);
 
         if (pml.get()) getPml()->doSecondStep();
+
+        grid->globalTime += grid->dt;
+        complexGrid->globalTime += grid->dt;
     }
 
     inline void PSATDTimeStraggered::convertFieldsPoissonEquation() {
@@ -254,7 +257,6 @@ namespace pfc {
         doFourierTransform(RtoC);
         //std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
         //std::chrono::milliseconds timeRtoC = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-        //time.count()
 
         //std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
         if (pml.get()) getPml()->updateBSplit();
@@ -271,6 +273,9 @@ namespace pfc {
         //std::chrono::milliseconds timeCtoR = std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5);
 
         if (pml.get()) getPml()->doSecondStep();
+
+        grid->globalTime += grid->dt;
+        complexGrid->globalTime += grid->dt;
 
         //std::string strRtoC = "Time RtoC: " + std::to_string(timeRtoC.count()) + "\n";
         //std::string strSolver = "Time PSATD: " + std::to_string(timeSolver.count()) + "\n";

@@ -58,7 +58,8 @@
     .def("setBt", &pyGridType::setBxyzt)                                 \
     SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType)         \
     .def("analytical", &pyGridType::setAnalytical)                       \
-    .def("setTime", &pyGridType::setTime)
+    .def("setTime", &pyGridType::setTime)                                \
+    .def("getTime", &pyGridType::getTime)
 
 
 namespace py = pybind11;
@@ -334,44 +335,54 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<IdentityMapping, Mapping>(object, "IdentityMapping")
         .def(py::init<const FP3&, const FP3&>())
-        .def("getDirectCoords", &IdentityMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
-        .def("getInverseCoords", &IdentityMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getDirectCoords", &IdentityMapping::getDirectCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
+        .def("getInverseCoords", &IdentityMapping::getInverseCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
     py::class_<PeriodicalXMapping, Mapping>(object, "PeriodicalXMapping")
         .def(py::init<FP, FP>())
-        .def("getDirectCoords", &PeriodicalXMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
-        .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getDirectCoords", &PeriodicalXMapping::getDirectCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
+        .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
     py::class_<RotationMapping, Mapping>(object, "RotationMapping")
         .def(py::init<Coordinate, FP>())
-        .def("getDirectCoords", &RotationMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
-        .def("getInverseCoords", &RotationMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getDirectCoords", &RotationMapping::getDirectCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
+        .def("getInverseCoords", &RotationMapping::getInverseCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
     py::class_<ScaleMapping, Mapping>(object, "ScaleMapping")
         .def(py::init<Coordinate, FP>())
-        .def("getDirectCoords", &ScaleMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
-        .def("getInverseCoords", &ScaleMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getDirectCoords", &ScaleMapping::getDirectCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
+        .def("getInverseCoords", &ScaleMapping::getInverseCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
     py::class_<ShiftMapping, Mapping>(object, "ShiftMapping")
         .def(py::init<FP3>())
-        .def("getDirectCoords", &ShiftMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
-        .def("getInverseCoords", &ShiftMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getDirectCoords", &ShiftMapping::getDirectCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
+        .def("getInverseCoords", &ShiftMapping::getInverseCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
     py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
         .def(py::init<FP, FP, FP, FP>())
         .def(py::init<FP, FP, FP>())
-        .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"), py::arg("status") = 0)
-        .def("getInverseCoords", &TightFocusingMapping::getInverseCoords, py::arg("coords"), py::arg("status") = 0)
+        .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
+        .def("getInverseCoords", &TightFocusingMapping::getInverseCoords, py::arg("coords"),
+            py::arg("time") = 0.0, py::arg("status") = 0)
         .def("getxMin", &TightFocusingMapping::getxMin)
         .def("getxMax", &TightFocusingMapping::getxMax)
         .def("setIfCut", &TightFocusingMapping::setIfCut)
-        .def("advanceTime", &TightFocusingMapping::advanceTime)
-        .def("setTime", &TightFocusingMapping::setTime)
         ;
 
 

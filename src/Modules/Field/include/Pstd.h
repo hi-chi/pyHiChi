@@ -66,6 +66,9 @@ namespace pfc {
         doFourierTransform(CtoR);
 
         if (pml.get()) getPml()->doSecondStep();
+
+        grid->globalTime += grid->dt;
+        complexGrid->globalTime += grid->dt;
     }
 
     inline void PSTD::updateHalfB()

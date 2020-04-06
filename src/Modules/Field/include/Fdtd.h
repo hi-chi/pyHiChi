@@ -117,6 +117,7 @@ namespace pfc {
         pml->updateE();
         generator->generateE();
         updateHalfB();
+        grid->globalTime += grid->dt;
     }
 
     // Update grid values of magnetic field in FDTD.

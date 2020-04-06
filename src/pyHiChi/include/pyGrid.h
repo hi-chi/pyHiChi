@@ -1,5 +1,5 @@
 #pragma once
-#include <functional>
+#include <memory>
 #include "Grid.h"
 #include "Mapping.h"
 
@@ -43,7 +43,8 @@ namespace pfc
             isAnalytical = false;
         }
 
-        void setTime(FP time) { globalT = time; }
+        void setTime(FP time) { TypeGrid::globalTime = time; }
+        FP getTime() { return TypeGrid::globalTime; }
 
         void setAnalytical(int64_t _fEx, int64_t _fEy, int64_t _fEz, int64_t _fBx, int64_t _fBy, int64_t _fBz)
         {
@@ -60,9 +61,9 @@ namespace pfc
                 FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEt[0];
                 FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEt[1];
                 FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEt[2];
-                result[0] = fx(coords.x, coords.y, coords.z, globalT + this->timeShiftE);
-                result[1] = fy(coords.x, coords.y, coords.z, globalT + this->timeShiftE);
-                result[2] = fz(coords.x, coords.y, coords.z, globalT + this->timeShiftE);
+                result[0] = fx(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftE);
+                result[1] = fy(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftE);
+                result[2] = fz(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftE);
             }
             else {
                 result = TypeGrid::getE(coords);
@@ -78,9 +79,9 @@ namespace pfc
                 FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBt[0];
                 FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBt[1];
                 FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBt[2];
-                result[0] = fx(coords.x, coords.y, coords.z, globalT + this->timeShiftB);
-                result[1] = fy(coords.x, coords.y, coords.z, globalT + this->timeShiftB);
-                result[2] = fz(coords.x, coords.y, coords.z, globalT + this->timeShiftB);
+                result[0] = fx(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftB);
+                result[1] = fy(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftB);
+                result[2] = fz(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftB);
             }
             else {
                 result = TypeGrid::getB(coords);
@@ -412,7 +413,6 @@ namespace pfc
     private:
 
         int64_t fEt[3], fBt[3];
-        FP globalT;
         bool isAnalytical;
 
     };
@@ -468,8 +468,8 @@ namespace pfc
             return pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>::getB(inverseCoords);
         }
 
-        void setMapping(Mapping& mapping) {
-            mappings.push_back(std::reference_wrapper<Mapping>(mapping));
+        void setMapping(Mapping* mapping) {
+            mappings.push_back(std::unique_ptr<Mapping>(mapping->createInstance()));
         }
 
         inline FP3 convertCoords(const FP3& coords) const {
@@ -479,14 +479,14 @@ namespace pfc
 
     private:
 
-        std::vector<std::reference_wrapper<Mapping>> mappings;
+        std::vector<std::unique_ptr<Mapping>> mappings;
         
         inline FP3 getDirectCoords(const FP3& coords, bool* status) const {
             FP3 coords_ = coords;
             bool status_ = true;
             *status = true;
             for (size_t i = 0; i < mappings.size(); i++) {
-                coords_ = mappings[i].get().getDirectCoords(coords_, &status_);
+                coords_ = mappings[i]->getDirectCoords(coords_, TypeGrid::globalTime, &status_);
                 *status = (*status) && status_;
             }
             return coords_;
@@ -497,7 +497,7 @@ namespace pfc
             bool status_ = true;
             *status = true;
             for (size_t i = mappings.size(); i >= 1; i--) {
-                coords_ = mappings[i-1].get().getInverseCoords(coords_, &status_);
+                coords_ = mappings[i-1]->getInverseCoords(coords_, TypeGrid::globalTime, &status_);
                 *status = (*status) && status_;
             }
             return coords_;

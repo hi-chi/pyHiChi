@@ -16,7 +16,11 @@ NxBand = int(56*factor)                            # size of grid in the band
 gridSize = hichi.vector3d(NxBand, Ny, Nz)          # real size of grid
 
 # creating of spherical pulse
-sphericalPulse.createSphericalPulsePython(F_number_ = 0.3, R0_ = 16, pulselength_ = 2.0, phase_ = 0, edgeSmoothingAngle_ = 0.1)
+sphericalPulse.createSphericalPulsePython(F_number_ = 0.3,
+                                          R0_ = 16,
+                                          pulselength_ = 2.0,
+                                          phase_ = 0,
+                                          edgeSmoothingAngle_ = 0.1)
 
 timeStep = sphericalPulse.getDtCGS(1.0)            # time step in CGS
 maxIter = 32                                       # number of iterations to compute       
@@ -34,11 +38,11 @@ D = 3.5*sphericalPulse.pulselength                 # width of band
 mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
 
 # creating of mapping with cutting at angle
-#cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
-#mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
+# cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
+# mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
 
 # not to cut secondary pulses
-#mapping.setIfCut(False)
+# mapping.setIfCut(False)
 
 xMin = mapping.getxMin()  # bounds of the band
 xMax = mapping.getxMax()
@@ -46,9 +50,7 @@ xMax = mapping.getxMax()
 # computing of step of grid
 gridMinCoords = hichi.vector3d(xMin, minCoords.y, minCoords.z)
 gridMaxCoords = hichi.vector3d(xMax, maxCoords.y, maxCoords.z)
-gridStep = hichi.vector3d((gridMaxCoords.x - gridMinCoords.x) / gridSize.x, \
-                          (gridMaxCoords.y - gridMinCoords.y) / gridSize.y, \
-                          (gridMaxCoords.z - gridMinCoords.z) / gridSize.z)
+gridStep = (gridMaxCoords - gridMinCoords) / gridSize
 
 # creating of grid for PSATDGridMapping
 grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep)
@@ -59,10 +61,6 @@ fieldSolver = hichi.PSATD(grid)
 
 
 def initialize():
-    # mapping for tight focusing has a external parameter - time
-    # so we need to advance time every iteration and to set it null in the beginning
-    mapping.setTime(0.0)  
-    
     # setting of start conditions
     sphericalPulse.setField(grid)
     
@@ -70,15 +68,9 @@ def initialize():
     fieldSolver.convertFieldsPoissonEquation()
 
 
-# ------------------- running -----------------------------------------------
-
-
-# function to update field
-
 def updateFields():
-    mapping.advanceTime(timeStep)  # mapping for tight focusing has an external parameter time
-                                   # so we need to advance time every iteration and to set it null in the beginning
-    fieldSolver.updateFields()     # doing one iteration of PSATD
+    # doing one iteration of PSATD
+    fieldSolver.updateFields()
 
 
 # ----------- run and show animation (size of grid should be not large) ------
@@ -101,7 +93,7 @@ def animateInAxis(visual, nIter):
                          axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
                          field=Field.E, norm=True,
                          yLimits=(-1.0, 8.0),
-                         interval=30
+                         interval=50
                          )                            
                             
 initialize()

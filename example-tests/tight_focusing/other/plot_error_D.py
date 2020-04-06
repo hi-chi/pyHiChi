@@ -1,6 +1,7 @@
 import sys
 import os
-sys.path.append("./../")
+sys.path.append("../")
+sys.path.append("../python_modules")
 import pyHiChi as hichi
 import tight_focusing_fields as sphericalPulse
 import math as ma
@@ -45,7 +46,6 @@ DArr = NxArr * gridStep.x
 
 def updateFields(grid, mapping, fieldSolver):
     fieldSolver.setTimeStep(timeStep)
-    mapping.advanceTime(timeStep)
     fieldSolver.updateFields()
     
     
@@ -80,8 +80,6 @@ def run(Nx):
     grid.setMapping(mapping)
     
     fieldSolver = hichi.PSATD(grid)
-    
-    mapping.setTime(0.0)
 
     sphericalPulse.setField(grid)
     fieldSolver.convertFieldsPoissonEquation()

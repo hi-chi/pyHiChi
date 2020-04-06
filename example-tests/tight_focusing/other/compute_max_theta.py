@@ -50,7 +50,6 @@ F_number_arr = np.arange(FNumber(thetaMin), FNumber(thetaMax), (FNumber(thetaMax
 
 def updateFields(timeStep):
     fieldSolver.setTimeStep(sphericalPulse.getDtCGS(timeStep))
-    mapping.advanceTime(sphericalPulse.getDtCGS(timeStep))
     fieldSolver.updateFields()
 
 
@@ -177,8 +176,6 @@ fieldSolver = hichi.PSATD(grid)
 for f_number in F_number_arr:
 
     sphericalPulse.createSphericalPulsePython(F_number_ = f_number)
-    
-    mapping.setTime(0.0)
 
     sphericalPulse.setField(grid)
     fieldSolver.convertFieldsPoissonEquation()
@@ -193,8 +190,6 @@ for f_number in F_number_arr:
 # for f_number in F_number_arr:
 
     # sphericalPulse.createSphericalPulseC(F_number_ = f_number)
-    
-    # mapping.setTime(0.0)
 
     # sphericalPulse.setField(grid)
     # fieldSolver.convertFieldsPoissonEquation()
@@ -209,8 +204,6 @@ for f_number in F_number_arr:
 # # for f_number in F_number_arr:
 
     # # sphericalPulse.createSphericalPulseC(F_number_ = f_number)
-    
-    # # mapping.setTime(0.0)
 
     # # sphericalPulse.setField(grid)
     # # fieldSolver.convertFieldsPoissonEquation()
