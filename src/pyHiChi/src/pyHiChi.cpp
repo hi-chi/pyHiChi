@@ -201,7 +201,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("size", &Ensemble3d::size)
         .def("__getitem__", [](Ensemble3d& arr, size_t i) {
             if (i >= sizeParticleTypes) throw py::index_error();
-            return &(arr[i]);
+            return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[i]);
         })
         .def("__setitem__", [](Ensemble3d &arr, size_t i, ParticleArray3d v) {
             if (i >= sizeParticleTypes) throw py::index_error();
@@ -210,7 +210,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("__getitem__", [](Ensemble3d& arr, string& name) {
             if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
                 throw py::index_error();
-            return &(arr[name]);
+            return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[name]);
         })
         .def("__setitem__", [](Ensemble3d &arr, string& name, ParticleArray3d v) {
             if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
@@ -341,11 +341,11 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<PeriodicalXMapping, Mapping>(object, "PeriodicalXMapping")
-        .def(py::init<FP, FP>())
-        .def("getDirectCoords", &PeriodicalXMapping::getDirectCoords, py::arg("coords"),
+    py::class_<PeriodicalMapping, Mapping>(object, "PeriodicalMapping")
+        .def(py::init<Coordinate, FP, FP>())
+        .def("getDirectCoords", &PeriodicalMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getInverseCoords", &PeriodicalXMapping::getInverseCoords, py::arg("coords"),
+        .def("getInverseCoords", &PeriodicalMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
