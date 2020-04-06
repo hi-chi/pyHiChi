@@ -257,7 +257,6 @@ namespace pfc {
         doFourierTransform(RtoC);
         //std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
         //std::chrono::milliseconds timeRtoC = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-        //time.count()
 
         //std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
         if (pml.get()) getPml()->updateBSplit();
