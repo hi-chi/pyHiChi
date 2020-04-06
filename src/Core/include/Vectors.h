@@ -432,9 +432,11 @@ struct Vector3
     inline void normalize()
     {
         T no = norm();
-        x /= no;
-        y /= no;
-        z /= no;
+        if (no != 0) {
+            x /= no;
+            y /= no;
+            z /= no;
+        }
     }
 
     inline std::string toString()
