@@ -4,10 +4,10 @@ include_directories(
     ../Core/include
     ../Modules/Particle/include
     ../Modules/Field/include
-    ../pyHiChi/include
     ${FFT_INCLUDES})
 
 add_executable(application
+    include/pyGrid.h
     src/main.cpp)
 
 if (APPLE)
