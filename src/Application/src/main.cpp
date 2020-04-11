@@ -56,10 +56,10 @@ int main(int argc, char **argv)
     pyPSATDGridMapping grid(GRID_SIZE, TIME_STEP, gridMinCoords, gridStep);
     grid.setMapping(&mapping);
 
-    PSATD fieldSolver(&grid);
+    // PSATD fieldSolver(&grid);
 
     grid.setFieldConfiguration<TightFocusingField>(&startConditions);
-    fieldSolver.convertFieldsPoissonEquation();
+    // fieldSolver.convertFieldsPoissonEquation();
 
     std::chrono::steady_clock::time_point endTimeInit = std::chrono::steady_clock::now();
     std::chrono::seconds timeInit =
