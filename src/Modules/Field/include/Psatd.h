@@ -42,9 +42,9 @@ namespace pfc {
     template <bool ifPoisson>
     inline PSATDTimeStraggeredT<ifPoisson>::PSATDTimeStraggeredT(PSATDTimeStraggeredGrid* _grid) :
         SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>(_grid),
-        tmpJx(FourierTransform::getSizeOfComplex(_grid->Jx.getSize())),
-        tmpJy(FourierTransform::getSizeOfComplex(_grid->Jy.getSize())),
-        tmpJz(FourierTransform::getSizeOfComplex(_grid->Jz.getSize()))
+        tmpJx(complexGrid->sizeStorage),
+        tmpJy(complexGrid->sizeStorage),
+        tmpJz(complexGrid->sizeStorage)
     {
         updateDims();
         updateInternalDims();
@@ -69,9 +69,9 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::assignJ(ScalarField<complexFP>& J, ScalarField<complexFP>& tmpJ)
     {
-        const complexFP * const ptrJ = &(J.toVector()[0]);
-        complexFP * const ptrTmpJ = &(tmpJ.toVector()[0]);
-        const int n = J.toVector().size();
+        const complexFP * const ptrJ = J.getData();
+        complexFP * const ptrTmpJ = tmpJ.getData();
+        const int n = J.getSize().volume();
 
 #pragma omp parallel for
         for (int i = 0; i < n; i++)
@@ -89,7 +89,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::updateFields()
     {
-        doFourierTransform(RtoC);
+        doFourierTransform(fourier_transform::Direction::RtoC);
 
         if (pml.get()) getPml()->updateBSplit();
         updateHalfB();
@@ -101,7 +101,7 @@ namespace pfc {
         updateHalfB();
 
         saveJ();
-        doFourierTransform(CtoR);
+        doFourierTransform(fourier_transform::Direction::CtoR);
 
         if (pml.get()) getPml()->doSecondStep();
 
@@ -111,7 +111,7 @@ namespace pfc {
 
     template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::convertFieldsPoissonEquation() {
-        doFourierTransform(RtoC);
+        doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
         double dt = grid->dt / 2;
@@ -139,7 +139,7 @@ namespace pfc {
                     complexGrid->Ez(i, j, k) -= El.z;
                 }
             }
-        doFourierTransform(CtoR);
+        doFourierTransform(fourier_transform::Direction::CtoR);
     }
 
     template <bool ifPoisson>
@@ -310,7 +310,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::updateFields() {
         // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-        doFourierTransform(RtoC);
+        doFourierTransform(fourier_transform::Direction::RtoC);
         //std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
         //std::chrono::milliseconds timeRtoC = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
 
@@ -324,7 +324,7 @@ namespace pfc {
         //std::chrono::milliseconds timeSolver = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3);
 
         //std::chrono::steady_clock::time_point t5 = std::chrono::steady_clock::now();
-        doFourierTransform(CtoR);
+        doFourierTransform(fourier_transform::Direction::CtoR);
         //std::chrono::steady_clock::time_point t6 = std::chrono::steady_clock::now();
         //std::chrono::milliseconds timeCtoR = std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5);
 
@@ -341,7 +341,7 @@ namespace pfc {
 
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::convertFieldsPoissonEquation() {
-        doFourierTransform(RtoC);
+        doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
         double dt = grid->dt / 2;
@@ -369,7 +369,7 @@ namespace pfc {
                     complexGrid->Ez(i, j, k) -= El.z;
                 }
             }
-        doFourierTransform(CtoR);
+        doFourierTransform(fourier_transform::Direction::CtoR);
     }
 
     template <bool ifPoisson>
