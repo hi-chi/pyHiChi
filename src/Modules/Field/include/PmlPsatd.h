@@ -35,7 +35,7 @@ namespace pfc {
                         2.0 * sin(normK*constants::c*dt*0.5) * complexFP::i() *
                         (complexFP)(K.*coordK) * field(i, j, k);
                 }
-        fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
+        PmlSpectralTimeStraggered<TPSATDGridType>::fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
     }
 
 
