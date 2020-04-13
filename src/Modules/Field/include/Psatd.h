@@ -217,7 +217,7 @@ namespace pfc {
             }
     }
 
-    // provides k \cdot E = 0 always
+    // provides k \cdot E = 0 always (k \cdot J = 0 too)
     template <>
     inline void PSATDTimeStraggeredT<true>::updateE()
     {
@@ -252,9 +252,9 @@ namespace pfc {
                     complexFP coeff1 = 2 * complexFP::i()*S, coeff2 = 2 * S / (normK*constants::c),
                         coeff3 = coeff2 - dt;
 
-                    complexGrid->Ex(i, j, k) += -El.x + coeff1 * crossKB.x - coeff2 * J.x + coeff3 * Jl.x;
-                    complexGrid->Ey(i, j, k) += -El.y + coeff1 * crossKB.y - coeff2 * J.y + coeff3 * Jl.y;
-                    complexGrid->Ez(i, j, k) += -El.z + coeff1 * crossKB.z - coeff2 * J.z + coeff3 * Jl.z;
+                    complexGrid->Ex(i, j, k) += -El.x + coeff1 * crossKB.x - coeff2 * (J.x - Jl.x);
+                    complexGrid->Ey(i, j, k) += -El.y + coeff1 * crossKB.y - coeff2 * (J.y - Jl.y);
+                    complexGrid->Ez(i, j, k) += -El.z + coeff1 * crossKB.z - coeff2 * (J.z - Jl.z);
                 }
             }
     }
@@ -424,7 +424,7 @@ namespace pfc {
             }
     }
 
-    // provides k \cdot E = 0 always
+    // provides k \cdot E = 0 always (k \cdot J = 0 too)
     template <>
     inline void PSATDT<true>::updateEB()
     {
@@ -464,9 +464,9 @@ namespace pfc {
                     complexFP coef1E = S * complexFP::i(), coef2E = -S / (normK*constants::c),
                         coef3E = S / (normK*constants::c) - dt;
 
-                    complexGrid->Ex(i, j, k) = C * (E.x - El.x) + coef1E * kBcross.x + (1 - C) * El.x + coef2E * J.x + coef3E * Jl.x;
-                    complexGrid->Ey(i, j, k) = C * (E.y - El.y) + coef1E * kBcross.y + (1 - C) * El.y + coef2E * J.y + coef3E * Jl.y;
-                    complexGrid->Ez(i, j, k) = C * (E.z - El.z) + coef1E * kBcross.z + (1 - C) * El.z + coef2E * J.z + coef3E * Jl.z;
+                    complexGrid->Ex(i, j, k) = C * (E.x - El.x) + coef1E * kBcross.x + coef2E * (J.x - Jl.x);
+                    complexGrid->Ey(i, j, k) = C * (E.y - El.y) + coef1E * kBcross.y + coef2E * (J.y - Jl.y);
+                    complexGrid->Ez(i, j, k) = C * (E.z - El.z) + coef1E * kBcross.z + coef2E * (J.z - Jl.z);
 
                     complexFP coef1B = -S * complexFP::i(), coef2B = ((1 - C) / (normK*constants::c))*complexFP::i();
 

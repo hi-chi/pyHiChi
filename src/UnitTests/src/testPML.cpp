@@ -90,7 +90,7 @@ typedef PMLTest<PSATD, PSATDGrid> PMLTestPSATD;
 typedef PMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid> PMLTestPSATDTimeStraggered;
 
 TEST_F(PMLTestPSTD, ADD_TEST_FFT_PREFIX(PmlPstd)) {
-    const int numSteps = 1;// (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / grid->dt);
+    const int numSteps = (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / grid->dt);
 
     FP startEnergy = computeEnergy();
 
