@@ -34,7 +34,7 @@ namespace pfc
 
         // create shallow copy
         pyGridAttributes(TypeGrid* grid) :
-            TypeGrid(grid)
+            TypeGrid(*grid, true)
         {
             static_assert(std::is_member_function_pointer<decltype(&TDerived::convertCoords)>::value,
                 "Wrong instance of pyGrid");

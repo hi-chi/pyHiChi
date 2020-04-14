@@ -57,15 +57,13 @@ grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep)
 grid.setMapping(mapping)
 
 # creating of field solver PSATD for existing grid
-fieldSolver = hichi.PSATD(grid)
+# the Poisson equation will be satisfied
+fieldSolver = hichi.PSATDPoisson(grid)
 
 
 def initialize():
     # setting of start conditions
     sphericalPulse.setField(grid)
-    
-    # considering the Poisson equation
-    fieldSolver.convertFieldsPoissonEquation()
 
 
 def updateFields():

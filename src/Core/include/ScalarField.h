@@ -17,15 +17,17 @@ namespace pfc {
 
         ScalarField() {};
         ScalarField(const Int3& size);
-        ScalarField(const ScalarField<Data>& field);
+        ScalarField(const ScalarField<Data>& field, bool ifShallowCopy = false);
         ScalarField(Data* data, const Int3& size);
         ScalarField& operator =(const ScalarField& field);
 
-        ScalarField createShallowCopy() {  // comon memory
+        ScalarField createShallowCopy() {  // common memory
             return ScalarField(raw, size);
         }
 
         std::vector<Data>& toVector() {
+            if (!ifStorage)
+                throw "Can't convert scalar field to std::vector";
             return elements;
         }
 
@@ -75,7 +77,7 @@ namespace pfc {
     private:
 
         FP interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const;
-        bool ifStorage = true;  // if false then elements is empty, raw is pointer to data
+        bool ifStorage = true;  // if it's false then "elements" is empty, "raw" is a pointer to the data
         std::vector<Data> elements; // storage
         Data* raw; // raw pointer to elements vector
         Int3 size; // size of each dimension
@@ -97,11 +99,17 @@ namespace pfc {
     }
 
     template <class Data>
-    inline ScalarField<Data>::ScalarField(const ScalarField& field)
+    inline ScalarField<Data>::ScalarField(const ScalarField& field, bool ifShallowCopy)
     {
         size = field.size;
-        elements = field.elements;
-        raw = elements.data();
+        ifStorage = ifStorage;
+        if (!ifShallowCopy) {
+            elements = field.elements;
+            raw = elements.data();
+        }
+        else {
+            raw = field.raw;
+        }
         dimensionCoeffInt = field.dimensionCoeffInt;
         dimensionCoeffFP = field.dimensionCoeffFP;
     }
