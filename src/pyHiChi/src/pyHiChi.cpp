@@ -201,7 +201,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("size", &Ensemble3d::size)
         .def("__getitem__", [](Ensemble3d& arr, size_t i) {
             if (i >= sizeParticleTypes) throw py::index_error();
-            return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[i]);
+            return &(arr[i]);
         })
         .def("__setitem__", [](Ensemble3d &arr, size_t i, ParticleArray3d v) {
             if (i >= sizeParticleTypes) throw py::index_error();
@@ -210,7 +210,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("__getitem__", [](Ensemble3d& arr, string& name) {
             if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
                 throw py::index_error();
-            return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[name]);
+            return &(arr[name]);
         })
         .def("__setitem__", [](Ensemble3d &arr, string& name, ParticleArray3d v) {
             if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
@@ -284,6 +284,15 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("setTimeStep", &PSATD::setTimeStep)
         .def("convertFieldsPoissonEquation", &PSATD::convertFieldsPoissonEquation)
         ;
+    
+    py::class_<PSATDPoisson>(object, "PSATDPoisson")
+        .def(py::init<pyPSATDGrid*>())
+        .def(py::init<pyPSATDGridMapping*>())
+        .def("setPML", &PSATDPoisson::setPML)
+        .def("updateFields", &PSATDPoisson::updateFields)
+        .def("setTimeStep", &PSATDPoisson::setTimeStep)
+        .def("convertFieldsPoissonEquation", &PSATDPoisson::convertFieldsPoissonEquation)
+        ;
 
     py::class_<pyPSATDTimeStraggeredGrid>(object, "PSATDTimeStraggeredGrid")
         SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGrid)
@@ -296,6 +305,15 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("updateFields", &PSATDTimeStraggered::updateFields)
         .def("setTimeStep", &PSATDTimeStraggered::setTimeStep)
         .def("convertFieldsPoissonEquation", &PSATDTimeStraggered::convertFieldsPoissonEquation)
+        ;
+    
+    py::class_<PSATDTimeStraggeredPoisson>(object, "PSATDTimeStraggeredPoisson")
+        .def(py::init<pyPSATDTimeStraggeredGrid*>())
+        .def(py::init<pyPSATDTimeStraggeredGridMapping*>())
+        .def("setPML", &PSATDTimeStraggeredPoisson::setPML)
+        .def("updateFields", &PSATDTimeStraggeredPoisson::updateFields)
+        .def("setTimeStep", &PSATDTimeStraggeredPoisson::setTimeStep)
+        .def("convertFieldsPoissonEquation", &PSATDTimeStraggeredPoisson::convertFieldsPoissonEquation)
         ;
 
     py::class_<ScalarQED_AEG_only_electron>(object, "QED")

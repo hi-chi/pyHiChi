@@ -18,12 +18,16 @@ public:
     ScalarField<FP> field;
     ScalarField<complexFP> complexField;
 
+    FourierTransformField fourierTransform;
+
     FourierTransformTest() :
         size(nx, ny, nz),
-        sizeComplex(FourierTransform::getSizeOfComplex(Int3(nx, ny, nz))),
+        sizeComplex(fourier_transform::getSizeOfComplexArray(Int3(nx, ny, nz))),
         field(size),
         complexField(sizeComplex)
     {
+        fourierTransform.initialize(&field, &complexField, size);
+        
         setField(&FourierTransformTest::fSin3);
 
         maxAbsoluteError = (FP)1e-7;
@@ -70,8 +74,8 @@ public:
 
 TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform)) {
 
-    FourierTransform::doFourierTransform(field, complexField, FourierTransformDirection::RtoC);
-    FourierTransform::doFourierTransform(field, complexField, FourierTransformDirection::CtoR);
+    fourierTransform.doFourierTransform(fourier_transform::Direction::RtoC);
+    fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
 
     for (int i = 0; i < size.x; i++)
         for (int j = 0; j < size.y; j++)
@@ -83,7 +87,7 @@ TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
 
     setField(&FourierTransformTest::fSin);
 
-    FourierTransform::doFourierTransform(field, complexField, FourierTransformDirection::RtoC);
+    fourierTransform.doFourierTransform(fourier_transform::Direction::RtoC);
 
     for (int i = 0; i < sizeComplex.x; i++)
         for (int j = 0; j < sizeComplex.y; j++)
@@ -94,9 +98,9 @@ TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
 
 TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(Lag)) {
 
-    FourierTransform::doFourierTransform(field, complexField, FourierTransformDirection::RtoC);
+    fourierTransform.doFourierTransform(fourier_transform::Direction::RtoC);
     doShift();
-    FourierTransform::doFourierTransform(field, complexField, FourierTransformDirection::CtoR);
+    fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
 
     for (int i = 0; i < size.x; i++)
         for (int j = 0; j < size.y; j++)
@@ -134,7 +138,7 @@ public:
         grid.reset(new Grid<FP, GridTypes::PSTDGridType>(size, dt, minCoord, d, size));
         pstd.reset(new PSTD(grid.get()));
 
-        sizeComplex = FourierTransform::getSizeOfComplex(grid->numCells);
+        sizeComplex = fourier_transform::getSizeOfComplexArray(grid->numCells);
         complexGrid = pstd->complexGrid;
 
         setBz(&FourierTransformSolverTest::fSin3);
@@ -181,8 +185,8 @@ public:
 
 TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform)) {
 
-    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
-    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::CtoR);
+    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::RtoC);
+    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::CtoR);
 
     for (int i = 0; i < grid->numCells.x; i++)
         for (int j = 0; j < grid->numCells.y; j++)
@@ -194,7 +198,7 @@ TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
 
     setBz(&FourierTransformSolverTest::fSin);
 
-    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
+    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::RtoC);
 
     for (int i = 0; i < complexGrid->numCells.x; i++)
         for (int j = 0; j < complexGrid->numCells.y; j++)
@@ -205,9 +209,9 @@ TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
 
 TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(Lag)) {
 
-    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::RtoC);
+    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::RtoC);
     doShift();
-    pstd->fourierTransform.doFourierTransform(B, z, FourierTransformDirection::CtoR);
+    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::CtoR);
 
     for (int i = 0; i < grid->numCells.x; i++)
         for (int j = 0; j < grid->numCells.y; j++)

@@ -52,7 +52,7 @@ namespace pfc {
 
     inline void PSTD::updateFields()
     {
-        doFourierTransform(RtoC);
+        doFourierTransform(fourier_transform::Direction::RtoC);
 
         if (pml.get()) getPml()->updateBSplit();
         updateHalfB();
@@ -63,7 +63,7 @@ namespace pfc {
         if (pml.get()) getPml()->updateBSplit();
         updateHalfB();
 
-        doFourierTransform(CtoR);
+        doFourierTransform(fourier_transform::Direction::CtoR);
 
         if (pml.get()) getPml()->doSecondStep();
 
