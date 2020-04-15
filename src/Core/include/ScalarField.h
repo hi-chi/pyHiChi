@@ -266,8 +266,10 @@ namespace pfc {
     template <>
     inline void ScalarField<FP>::zeroize()
     {
+        const int n = size.volume();
 #pragma omp parallel for
-        for (int idx = 0; idx < (int)elements.size(); idx++)
+#pragma ivdep
+        for (int idx = 0; idx < n; idx++)
             elements[idx] = 0;
     }
 
@@ -365,8 +367,10 @@ namespace pfc {
     template <>
     inline void ScalarField<complex>::zeroize()
     {
+        const int n = size.volume();
 #pragma omp parallel for
-        for (int idx = 0; idx < (int)elements.size(); idx++)
+#pragma ivdep
+        for (int idx = 0; idx < n; idx++)
         {
             elements[idx].real = 0;
             elements[idx].imag = 0;

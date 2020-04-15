@@ -55,29 +55,32 @@ namespace pfc {
         {}
 
 
-        FP sign(FP x) const {
+        __forceinline FP sign(FP x) const {
             return (x >= 0 ? 1.0 : -1.0);
         }
 
-        FP block(FP x, FP xmin, FP xmax) const {
+        __forceinline FP block(FP x, FP xmin, FP xmax) const {
             return (sign(x - xmin) + sign(xmax - x))*0.5;
         }
 
-        FP longitudinalFieldVariation(FP x_ct) const {
+        __forceinline FP longitudinalFieldVariation(FP x_ct) const {
             FP cSin = sin(2.0 * constants::pi * x_ct / wavelength + phase);
             FP cCos = cos(constants::pi * x_ct / pulselength);
             FP cBlock = block(x_ct, -0.5*pulselength, 0.5*pulselength);
             return cSin * cCos * cCos * cBlock;
         }
 
-        FP transverseShape(FP angle) const {
-            FP cMainBlock = block(angle, -1.0, openingAngle - edgeSmoothingAngle * 0.5);
-            FP cEdgeSmAngleBlock = block(angle, openingAngle - edgeSmoothingAngle * 0.5, openingAngle + edgeSmoothingAngle * 0.5);
-            FP cCos = cos(0.5*constants::pi*(angle - openingAngle + edgeSmoothingAngle * 0.5) / edgeSmoothingAngle);
-            return (edgeSmoothingAngle == 0.0) ? cMainBlock : (cMainBlock + cCos * cCos * cEdgeSmAngleBlock);
+        __forceinline FP transverseShape(FP angle) const {
+            FP a = openingAngle - edgeSmoothingAngle * 0.5, b = openingAngle + edgeSmoothingAngle * 0.5;
+            FP cMainBlock = block(angle, -1.0, a);
+            if (edgeSmoothingAngle == 0.0)
+                return cMainBlock;
+            FP cEdgeSmAngleBlock = block(angle, a, b);
+            FP cCos = cos(0.5 * constants::pi * (angle - a) / edgeSmoothingAngle);
+            return cMainBlock + cCos * cCos * cEdgeSmAngleBlock;
         }
         
-        FP mask(FP x, FP y, FP z) const {
+        __forceinline FP mask(FP x, FP y, FP z) const {
             FP R = sqrt(x * x + y * y + z * z);
             if (R > exclusionRadius) {
                 FP angle = asin(sqrt(y * y + z * z) / R);
@@ -91,26 +94,22 @@ namespace pfc {
             FP3 r(x, y, z);
             FP3 s1 = cross(this->polarisation, r);
             FP3 s0 = cross(r, s1);
-            s0.normalize();
-            return mask(x, y, z)*s0;
+            return s0.norm() != 0.0 ? (mask(x, y, z) / s0.norm()) * s0 : FP3(0.0, 0.0, 0.0);
         };
 
         FP3 getB(FP x, FP y, FP z) const {
             FP3 r(x, y, z);
             FP3 s1 = cross(this->polarisation, r);
-            s1.normalize();
-            return mask(x, y, z)*s1;
+            return s1.norm() != 0.0 ? (mask(x, y, z) / s1.norm()) * s1 : FP3(0.0, 0.0, 0.0);
         };
 
-        void getEB(FP x, FP y, FP z, FP3* E, FP3* B) const {
+        __forceinline void getEB(FP x, FP y, FP z, FP3* E, FP3* B) const {
             FP3 r(x, y, z);
             FP3 s1 = cross(this->polarisation, r);
             FP3 s0 = cross(r, s1);
-            s0.normalize();
-            s1.normalize();
             FP m = mask(x, y, z);
-            *E = m*s0;
-            *B = m*s1;
+            *E = s0.norm() != 0.0 ? (m / s0.norm()) * s0 : FP3(0.0, 0.0, 0.0);
+            *B = s1.norm() != 0.0 ? (m / s1.norm()) * s1 : FP3(0.0, 0.0, 0.0);
         };
 
     };

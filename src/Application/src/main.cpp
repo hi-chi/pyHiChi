@@ -12,7 +12,7 @@
 using namespace pfc;
 
 
-const FP FACTOR = 1.3;
+const FP FACTOR = 2.0;
 const int NX_FULL = (int)(FACTOR * 320);
 const int NY = (int)(FACTOR * 256);
 const int NZ = (int)(FACTOR * 256);

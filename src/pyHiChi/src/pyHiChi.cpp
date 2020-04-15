@@ -392,7 +392,6 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
-        .def(py::init<FP, FP, FP, FP>())
         .def(py::init<FP, FP, FP>())
         .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)

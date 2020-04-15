@@ -102,27 +102,77 @@ namespace pfc
         template <class FieldConficurationType>
         void setFieldConfiguration(const FieldConficurationType* fieldConf) {
             TDerived* derived = static_cast<TDerived*>(this);
+            if (this->isSpatialStraggered()) {
 #pragma omp parallel for
-            for (int i = 0; i < this->numCells.x; i++)
-                for (int j = 0; j < this->numCells.y; j++)
-                    for (int k = 0; k < this->numCells.z; k++)
-                    {
-                        FP3 cEx, cEy, cEz, cBx, cBy, cBz, cJx, cJy, cJz;
+                for (int i = 0; i < this->numCells.x; i++)
+                    for (int j = 0; j < this->numCells.y; j++)
+                        for (int k = 0; k < this->numCells.z; k++)
+                        {
+                            FP3 cEx, cEy, cEz, cBx, cBy, cBz, cJx, cJy, cJz;
 
-                        cEx = derived->convertCoords(this->ExPosition(i, j, k));
-                        cEy = derived->convertCoords(this->EyPosition(i, j, k));
-                        cEz = derived->convertCoords(this->EzPosition(i, j, k));
-                        this->Ex(i, j, k) = fieldConf->E(cEx.x, cEx.y, cEx.z).x;
-                        this->Ey(i, j, k) = fieldConf->E(cEy.x, cEy.y, cEy.z).y;
-                        this->Ez(i, j, k) = fieldConf->E(cEz.x, cEz.y, cEz.z).z;
+                            cEx = derived->convertCoords(this->ExPosition(i, j, k));
+                            cEy = derived->convertCoords(this->EyPosition(i, j, k));
+                            cEz = derived->convertCoords(this->EzPosition(i, j, k));
+                            this->Ex(i, j, k) = fieldConf->getE(cEx.x, cEx.y, cEx.z).x;
+                            this->Ey(i, j, k) = fieldConf->getE(cEy.x, cEy.y, cEy.z).y;
+                            this->Ez(i, j, k) = fieldConf->getE(cEz.x, cEz.y, cEz.z).z;
 
-                        cBx = derived->convertCoords(this->BxPosition(i, j, k));
-                        cBy = derived->convertCoords(this->ByPosition(i, j, k));
-                        cBz = derived->convertCoords(this->BzPosition(i, j, k));
-                        this->Bx(i, j, k) = fieldConf->B(cBx.x, cBx.y, cBx.z).x;
-                        this->By(i, j, k) = fieldConf->B(cBy.x, cBy.y, cBy.z).y;
-                        this->Bz(i, j, k) = fieldConf->B(cBz.x, cBz.y, cBz.z).z;
+                            cBx = derived->convertCoords(this->BxPosition(i, j, k));
+                            cBy = derived->convertCoords(this->ByPosition(i, j, k));
+                            cBz = derived->convertCoords(this->BzPosition(i, j, k));
+                            this->Bx(i, j, k) = fieldConf->getB(cBx.x, cBx.y, cBx.z).x;
+                            this->By(i, j, k) = fieldConf->getB(cBy.x, cBy.y, cBy.z).y;
+                            this->Bz(i, j, k) = fieldConf->getB(cBz.x, cBz.y, cBz.z).z;
+                        }
+            }
+            else {  // B and E are determined at the same node
+#pragma omp parallel for
+                for (int i = 0; i < this->numCells.x; i++)
+                    for (int j = 0; j < this->numCells.y; j++) {
+
+                        const int chunkSize = 32;
+                        const int nChunks = this->numCells.z / chunkSize;
+                        const int chunkRem = this->numCells.z % chunkSize;
+
+                        for (int chunk = 0; chunk < nChunks + 1; chunk++) {
+
+                            FP3 convCoords[chunkSize];
+                            int kLast = chunk == nChunks ? chunkRem : chunkSize;
+
+                            FP3 startPosition = this->ExPosition(i, j, chunk * chunkSize);
+
+                            for (int k = 0; k < kLast; k++) {
+                                FP3 position(startPosition.x, startPosition.y, startPosition.z + k * steps.z);
+                                convCoords[k] = derived->convertCoords(position);
+                            }
+
+#pragma ivdep
+#pragma simd
+                            for (int k = 0; k < kLast; k++) {
+                                FP3 E, B;
+                                fieldConf->getEB(convCoords[k].x, convCoords[k].y, convCoords[k].z, &E, &B);
+                                this->Ex(i, j, k + chunk * chunkSize) = E.x;
+                                this->Ey(i, j, k + chunk * chunkSize) = E.y;
+                                this->Ez(i, j, k + chunk * chunkSize) = E.z;
+                                this->Bx(i, j, k + chunk * chunkSize) = B.x;
+                                this->By(i, j, k + chunk * chunkSize) = B.y;
+                                this->Bz(i, j, k + chunk * chunkSize) = B.z;
+                            }
+                        }
+
+                        //for (int k = 0; k < this->numCells.z; k++) {
+                        //    FP3 convCoords = derived->convertCoords(this->ExPosition(i, j, k));
+                        //    FP3 E, B;
+                        //    fieldConf->getEB(convCoords.x, convCoords.y, convCoords.z, &E, &B);
+                        //    this->Ex(i, j, k) = E.x;
+                        //    this->Ey(i, j, k) = E.y;
+                        //    this->Ez(i, j, k) = E.z;
+                        //    this->Bx(i, j, k) = B.x;
+                        //    this->By(i, j, k) = B.y;
+                        //    this->Bz(i, j, k) = B.z;
+                        //}
                     }
+            }
         }
 
         void pySetExyz(py::function fEx, py::function fEy, py::function fEz)

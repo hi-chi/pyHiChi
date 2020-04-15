@@ -419,7 +419,7 @@ struct Vector3
         return x * y * z;
     }
 
-    inline T norm() const
+    __forceinline T norm() const
     {
         return sqrt(x * x + y * y + z * z);
     }
@@ -809,7 +809,7 @@ inline FP SP(const FP3& v1, const FP3& v2)
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
-inline const FP3 cross(const FP3& v1, const FP3& v2)
+__forceinline const FP3 cross(const FP3& v1, const FP3& v2)
 {
     return FP3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
         v1.x * v2.y - v1.y * v2.x);
