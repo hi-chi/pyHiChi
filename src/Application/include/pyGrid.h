@@ -104,27 +104,46 @@ namespace pfc
         template <class FieldConficurationType>
         void setFieldConfiguration(const FieldConficurationType* fieldConf) {
             TDerived* derived = static_cast<TDerived*>(this);
+            if (this->isSpatialStraggered()) {
 #pragma omp parallel for
-            for (int i = 0; i < this->numCells.x; i++)
-                for (int j = 0; j < this->numCells.y; j++)
-                    for (int k = 0; k < this->numCells.z; k++)
-                    {
-                        FP3 cEx, cEy, cEz, cBx, cBy, cBz, cJx, cJy, cJz;
+                for (int i = 0; i < this->numCells.x; i++)
+                    for (int j = 0; j < this->numCells.y; j++)
+                        for (int k = 0; k < this->numCells.z; k++)
+                        {
+                            FP3 cEx, cEy, cEz, cBx, cBy, cBz, cJx, cJy, cJz;
 
-                        cEx = derived->convertCoords(this->ExPosition(i, j, k));
-                        cEy = derived->convertCoords(this->EyPosition(i, j, k));
-                        cEz = derived->convertCoords(this->EzPosition(i, j, k));
-                        this->Ex(i, j, k) = fieldConf->E(cEx.x, cEx.y, cEx.z).x;
-                        this->Ey(i, j, k) = fieldConf->E(cEy.x, cEy.y, cEy.z).y;
-                        this->Ez(i, j, k) = fieldConf->E(cEz.x, cEz.y, cEz.z).z;
+                            cEx = derived->convertCoords(this->ExPosition(i, j, k));
+                            cEy = derived->convertCoords(this->EyPosition(i, j, k));
+                            cEz = derived->convertCoords(this->EzPosition(i, j, k));
+                            this->Ex(i, j, k) = fieldConf->getE(cEx.x, cEx.y, cEx.z).x;
+                            this->Ey(i, j, k) = fieldConf->getE(cEy.x, cEy.y, cEy.z).y;
+                            this->Ez(i, j, k) = fieldConf->getE(cEz.x, cEz.y, cEz.z).z;
 
-                        cBx = derived->convertCoords(this->BxPosition(i, j, k));
-                        cBy = derived->convertCoords(this->ByPosition(i, j, k));
-                        cBz = derived->convertCoords(this->BzPosition(i, j, k));
-                        this->Bx(i, j, k) = fieldConf->B(cBx.x, cBx.y, cBx.z).x;
-                        this->By(i, j, k) = fieldConf->B(cBy.x, cBy.y, cBy.z).y;
-                        this->Bz(i, j, k) = fieldConf->B(cBz.x, cBz.y, cBz.z).z;
-                    }
+                            cBx = derived->convertCoords(this->BxPosition(i, j, k));
+                            cBy = derived->convertCoords(this->ByPosition(i, j, k));
+                            cBz = derived->convertCoords(this->BzPosition(i, j, k));
+                            this->Bx(i, j, k) = fieldConf->getB(cBx.x, cBx.y, cBx.z).x;
+                            this->By(i, j, k) = fieldConf->getB(cBy.x, cBy.y, cBy.z).y;
+                            this->Bz(i, j, k) = fieldConf->getB(cBz.x, cBz.y, cBz.z).z;
+                        }
+            }
+            else {  // B and E are determined in the same node
+#pragma omp parallel for
+                for (int i = 0; i < this->numCells.x; i++)
+                    for (int j = 0; j < this->numCells.y; j++)
+                        for (int k = 0; k < this->numCells.z; k++)
+                        {
+                            FP3 c = derived->convertCoords(this->ExPosition(i, j, k));
+                            FP3 E, B;
+                            fieldConf->getEB(c.x, c.y, c.z, &E, &B);
+                            this->Ex(i, j, k) = E.x;
+                            this->Ey(i, j, k) = E.y;
+                            this->Ez(i, j, k) = E.z;
+                            this->Bx(i, j, k) = B.x;
+                            this->By(i, j, k) = B.y;
+                            this->Bz(i, j, k) = B.z;
+                        }
+            }
         }
 
         //void pySetExyz(py::function fEx, py::function fEy, py::function fEz)

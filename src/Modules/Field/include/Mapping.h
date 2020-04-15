@@ -216,7 +216,7 @@ namespace pfc {
 
         TightFocusingMapping(FP R0, FP L, FP D, FP cutAngle = 0.5*constants::pi) :
             PeriodicalMapping(Coordinate::x, -R0 - D + 0.5*L, -R0 + 0.5*L),
-            xL(-R0 - 0.5*L), cutAngle(cutAngle), ifCut(true) {}
+            xL(-R0 - 0.5*L), tanCutAngle(tan(cutAngle)), cosCutAngle(cos(cutAngle)), ifCut(true) {}
 
         void setIfCut(bool ifCut = true) {
             this->ifCut = ifCut;
@@ -237,11 +237,11 @@ namespace pfc {
             int shiftSign = 0;
 
             if (cMax + ct < 0) {
-                nPeriods = int(((cMax + ct)*cos(cutAngle) - (cMin + ct)) / D) + 1;  // целая часть сверху
+                nPeriods = int(((cMax + ct)*cosCutAngle - (cMin + ct)) / D) + 1;  // целая часть сверху
                 shiftSign = 1;
             }
             else if (cMin + ct > 0) {
-                nPeriods = int(((cMax + ct) - (cMin + ct)*cos(cutAngle)) / D) + 1;  // целая часть сверху
+                nPeriods = int(((cMax + ct) - (cMin + ct)*cosCutAngle) / D) + 1;  // целая часть сверху
                 shiftSign = -1;
             }
             else nPeriods = 1;
@@ -280,12 +280,12 @@ namespace pfc {
         bool ifInArea(const FP3& coords, FP time) {
             FP ct = constants::c*time;
             FP r = coords.norm();
-            FP angle = atan(abs(sqrt(coords.y*coords.y + coords.z*coords.z) / coords.x));
+            FP tanAngle = sqrt(coords.y*coords.y + coords.z*coords.z) / coords.x;
 
             if (cMax + ct < 0) {
                 if ((r >= -xL - ct) || (r < -cMax - ct) || (coords.x > 0))
                     return false;
-                if (angle > cutAngle)
+                if (abs(tanAngle) > tanCutAngle)
                     return false;
             }
             else if ((cMax + ct >= 0) && (xL + ct <= 0))
@@ -299,7 +299,7 @@ namespace pfc {
             {
                 if ((r <= xL + ct) || (r > cMax + ct) || (coords.x < 0))
                     return false;
-                if (angle > cutAngle)
+                if (abs(tanAngle) > tanCutAngle)
                     return false;
             }
 
@@ -310,7 +310,8 @@ namespace pfc {
             return new TightFocusingMapping(*this);
         }
 
-        FP cutAngle, xL;
+        FP xL;
+        FP tanCutAngle, cosCutAngle;
         bool ifCut = true;
 
     };

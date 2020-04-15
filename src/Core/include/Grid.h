@@ -286,6 +286,28 @@ namespace pfc {
             return getNumExternalLeftCells();
         }
 
+        // some functions to determine if there are some time or spatial differences between E, B, J
+        // if there is time difference between E, B, J
+        bool isTimeStraggered() {
+            return GridTypesUtilities<gridType>::isTimeStraggered();
+        }
+        // if there is spatial difference between Ex, Ey, Ez
+        bool isESpatialStraggered() {
+            return GridTypesUtilities<gridType>::isESpatialStraggered();
+        }
+        // if there is spatial difference between Bx, By, Bz
+        bool isBSpatialStraggered() {
+            return GridTypesUtilities<gridType>::isBSpatialStraggered();
+        }
+        // if there is spatial difference between Jx, Jy, Jz
+        bool isJSpatialStraggered() {
+            return GridTypesUtilities<gridType>::isJSpatialStraggered();
+        }
+        // if there is spatial difference between E, B, J
+        bool isSpatialStraggered() {
+            return GridTypesUtilities<gridType>::isSpatialStraggered();
+        }
+
         void setInterpolationType(InterpolationType type);
         InterpolationType getInterpolationType() const;
 

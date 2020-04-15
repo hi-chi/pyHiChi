@@ -12,10 +12,10 @@
 using namespace pfc;
 
 
-const int FACTOR = 1.0;
-const int NX_FULL = int(FACTOR * 320);
-const int NY = int(FACTOR * 256);
-const int NZ = int(FACTOR * 256);
+const FP FACTOR = 1.3;
+const int NX_FULL = (int)(FACTOR * 320);
+const int NY = (int)(FACTOR * 256);
+const int NZ = (int)(FACTOR * 256);
 const int NX_BAND = int(56 * FACTOR);
 const FP3 GRID_SIZE(NX_BAND, NY, NZ);
 
@@ -39,6 +39,8 @@ const FP D = 3.5 * PULSELENGTH;
 
 int main(int argc, char **argv)
 {
+    omp_set_num_threads(1);
+
     TightFocusingField startConditions(F_NUMBER, R0, WAVELENGTH,
         PULSELENGTH, PHASE, TOTAL_POWER, EDGE_SMOOTHING_ANGLE);
 
@@ -56,16 +58,13 @@ int main(int argc, char **argv)
     pyPSATDGridMapping grid(GRID_SIZE, TIME_STEP, gridMinCoords, gridStep);
     grid.setMapping(&mapping);
 
-    // PSATD fieldSolver(&grid);
-
     grid.setFieldConfiguration<TightFocusingField>(&startConditions);
-    // fieldSolver.convertFieldsPoissonEquation();
 
     std::chrono::steady_clock::time_point endTimeInit = std::chrono::steady_clock::now();
-    std::chrono::seconds timeInit =
-        std::chrono::duration_cast<std::chrono::seconds>(endTimeInit - startTimeInit);
+    std::chrono::milliseconds timeInit =
+        std::chrono::duration_cast<std::chrono::milliseconds>(endTimeInit - startTimeInit);
 
-    std::cout << "Initialisation time is " << timeInit.count() << " s" << std::endl;
+    std::cout << "Initialisation time is " << timeInit.count() << " ms" << std::endl;
 
     return 0;
 }

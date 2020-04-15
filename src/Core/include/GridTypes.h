@@ -24,4 +24,37 @@ namespace pfc {
     that correspond to points outside of the main grid area, size of internal and
     external area are given as constant members. */
 
+    // auxiliary class to compare some properties of a grid type
+    template <GridTypes gridTypes>
+    class GridTypesUtilities {
+    public:
+        
+        // if there is time difference between E, B, J
+        static bool isTimeStraggered() {
+            return gridTypes == GridTypes::YeeGridType ||
+                gridTypes == GridTypes::PSTDGridType ||
+                gridTypes == GridTypes::PSATDTimeStraggeredGridType;
+        }
+
+        // if there is spatial difference between Ex, Ey, Ez
+        static bool isESpatialStraggered() {
+            return gridTypes == GridTypes::YeeGridType;
+        }
+
+        // if there is spatial difference between Bx, By, Bz
+        static bool isBSpatialStraggered() {
+            return gridTypes == GridTypes::YeeGridType;
+        }
+
+        // if there is spatial difference between Jx, Jy, Jz
+        static bool isJSpatialStraggered() {
+            return gridTypes == GridTypes::YeeGridType;
+        }
+
+        // if there is spatial difference between E, B, J
+        static bool isSpatialStraggered() {
+            return gridTypes == GridTypes::YeeGridType;
+        }
+    };
+
 } // namespace pfc
