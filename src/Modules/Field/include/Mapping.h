@@ -280,13 +280,10 @@ namespace pfc {
         bool ifInArea(const FP3& coords, FP time) {
             FP ct = constants::c*time;
             FP r = coords.norm();
-            //FP tanAngle = sqrt(coords.y*coords.y + coords.z*coords.z) / coords.x;
 
             if (cMax + ct < 0) {
                 if ((r >= -xL - ct) || (r < -cMax - ct) || (coords.x > 0))
                     return false;
-                //if (abs(tanAngle) > tanCutAngle)
-                //    return false;
             }
             else if ((cMax + ct >= 0) && (xL + ct <= 0))
             {
@@ -299,8 +296,6 @@ namespace pfc {
             {
                 if ((r <= xL + ct) || (r > cMax + ct) || (coords.x < 0))
                     return false;
-                //if (abs(tanAngle) > tanCutAngle)
-                //    return false;
             }
 
             return true;

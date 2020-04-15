@@ -39,7 +39,6 @@ const FP D = 3.5 * PULSELENGTH;
 
 int main(int argc, char **argv)
 {
-    omp_set_num_threads(1);
 
     TightFocusingField startConditions(F_NUMBER, R0, WAVELENGTH,
         PULSELENGTH, PHASE, TOTAL_POWER, EDGE_SMOOTHING_ANGLE);
