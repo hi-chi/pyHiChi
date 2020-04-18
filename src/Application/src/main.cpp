@@ -12,7 +12,7 @@
 using namespace pfc;
 
 
-const FP FACTOR = 2.0;
+const FP FACTOR = 1.3;
 const int NX_FULL = (int)(FACTOR * 320);
 const int NY = (int)(FACTOR * 256);
 const int NZ = (int)(FACTOR * 256);
@@ -39,6 +39,7 @@ const FP D = 3.5 * PULSELENGTH;
 
 int main(int argc, char **argv)
 {
+    omp_set_num_threads(1);
 
     TightFocusingField startConditions(F_NUMBER, R0, WAVELENGTH,
         PULSELENGTH, PHASE, TOTAL_POWER, EDGE_SMOOTHING_ANGLE);

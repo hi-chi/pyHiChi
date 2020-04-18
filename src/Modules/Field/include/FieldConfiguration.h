@@ -16,12 +16,12 @@ namespace pfc {
     class FieldConfiguration<FieldConfigurationType::NullFieldConfigurationType> {
     public:
 
-        FP3 getE(FP x, FP y, FP z) const { return FP3(); }
-        FP3 getB(FP x, FP y, FP z) const { return FP3(); }
+        __forceinline FP3 getE(FP x, FP y, FP z) const { return FP3(); }
+        __forceinline FP3 getB(FP x, FP y, FP z) const { return FP3(); }
 
         // if E and B are computed in a similar way this function will work quicklier
         // than getE and getB separately
-        void getEB(FP x, FP y, FP z, FP3* E, FP3* B) const {
+        __forceinline void getEB(FP x, FP y, FP z, FP3* E, FP3* B) const {
             *E = FP3();
             *B = FP3();
         }
@@ -90,14 +90,14 @@ namespace pfc {
         }
 
 
-        FP3 getE(FP x, FP y, FP z) const {
+        __forceinline FP3 getE(FP x, FP y, FP z) const {
             FP3 r(x, y, z);
             FP3 s1 = cross(this->polarisation, r);
             FP3 s0 = cross(r, s1);
             return s0.norm() != 0.0 ? (mask(x, y, z) / s0.norm()) * s0 : FP3(0.0, 0.0, 0.0);
         };
 
-        FP3 getB(FP x, FP y, FP z) const {
+        __forceinline FP3 getB(FP x, FP y, FP z) const {
             FP3 r(x, y, z);
             FP3 s1 = cross(this->polarisation, r);
             return s1.norm() != 0.0 ? (mask(x, y, z) / s1.norm()) * s1 : FP3(0.0, 0.0, 0.0);

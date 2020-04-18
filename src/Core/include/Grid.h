@@ -13,7 +13,10 @@ namespace pfc {
     };
 
     template<typename Data, GridTypes gridType>
-    class Grid
+    class Grid :
+        // next labels define some properties of grid
+        public LabelFieldsSpatialStraggered<gridType>,
+        public LabelFieldsTimeStraggered<gridType>,
     {
 
     public:
@@ -29,39 +32,39 @@ namespace pfc {
         // copy constructor, can make shallow copies
         Grid(const Grid& grid, bool ifShallowCopy = false);
 
-        const FP3 BxPosition(int x, int y, int z) const
+        __forceinline const FP3 BxPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftBx;
         }
-        const FP3 ByPosition(int x, int y, int z) const
+        __forceinline const FP3 ByPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftBy;
         }
-        const FP3 BzPosition(int x, int y, int z) const
+        __forceinline const FP3 BzPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftBz;
         }
-        const FP3 ExPosition(int x, int y, int z) const
+        __forceinline const FP3 ExPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJx;
         }
-        const FP3 EyPosition(int x, int y, int z) const
+        __forceinline const FP3 EyPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJy;
         }
-        const FP3 EzPosition(int x, int y, int z) const
+        __forceinline const FP3 EzPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJz;
         }
-        const FP3 JxPosition(int x, int y, int z) const
+        __forceinline const FP3 JxPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJx;
         }
-        const FP3 JyPosition(int x, int y, int z) const
+        __forceinline const FP3 JyPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJy;
         }
-        const FP3 JzPosition(int x, int y, int z) const
+        __forceinline const FP3 JzPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJz;
         }
@@ -286,28 +289,6 @@ namespace pfc {
             return getNumExternalLeftCells();
         }
 
-        // some functions to determine if there are some time or spatial differences between E, B, J
-        // if there is time difference between E, B, J
-        bool isTimeStraggered() {
-            return GridTypesUtilities<gridType>::isTimeStraggered();
-        }
-        // if there is spatial difference between Ex, Ey, Ez
-        bool isESpatialStraggered() {
-            return GridTypesUtilities<gridType>::isESpatialStraggered();
-        }
-        // if there is spatial difference between Bx, By, Bz
-        bool isBSpatialStraggered() {
-            return GridTypesUtilities<gridType>::isBSpatialStraggered();
-        }
-        // if there is spatial difference between Jx, Jy, Jz
-        bool isJSpatialStraggered() {
-            return GridTypesUtilities<gridType>::isJSpatialStraggered();
-        }
-        // if there is spatial difference between E, B, J
-        bool isSpatialStraggered() {
-            return GridTypesUtilities<gridType>::isSpatialStraggered();
-        }
-
         void setInterpolationType(InterpolationType type);
         InterpolationType getInterpolationType() const;
 
@@ -354,13 +335,13 @@ namespace pfc {
 
         /* Get base coords of element (i, j, k) so that its real coords are
         base coords + corresponding shift. */
-        const FP3 baseCoords(int i, int j, int k) const
+        __forceinline const FP3 baseCoords(int i, int j, int k) const
         {
             return origin + FP3(i, j, k) * steps;
         }
 
         // if coords is inside of the area that grid defines
-        bool isInside(const FP3 & coords, const FP3 & shift) const
+        __forceinline bool isInside(const FP3 & coords, const FP3 & shift) const
         {
             FP3 minCoords = origin + shift;
             FP3 maxCoords = minCoords + (numCells - Int3(1, 1, 1)) * steps;
