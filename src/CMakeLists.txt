@@ -4,7 +4,6 @@ add_subdirectory(Core)
 add_subdirectory(Modules/Particle)
 add_subdirectory(Modules/Field)
 add_subdirectory(pyHiChi)
-add_subdirectory(Application)
 
 if (USE_TESTS)
    add_subdirectory(UnitTests)
