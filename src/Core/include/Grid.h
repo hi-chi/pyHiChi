@@ -16,7 +16,7 @@ namespace pfc {
     class Grid :
         // next labels define some properties of grid
         public LabelFieldsSpatialStraggered<gridType>,
-        public LabelFieldsTimeStraggered<gridType>,
+        public LabelFieldsTimeStraggered<gridType>
     {
 
     public:
