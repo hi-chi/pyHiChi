@@ -28,12 +28,12 @@ namespace pfc {
 
     template <GridTypes gridTypes>
     struct LabelFieldsSpatialStraggered {
-        static bool ifFieldsSpatialStraggered = gridTypes == GridTypes::YeeGridType;
+        static const bool ifFieldsSpatialStraggered = gridTypes == GridTypes::YeeGridType;
     };
 
     template <GridTypes gridTypes>
     struct LabelFieldsTimeStraggered {
-        static bool ifFieldsTimeStraggered = gridTypes == GridTypes::YeeGridType ||
+        static const bool ifFieldsTimeStraggered = gridTypes == GridTypes::YeeGridType ||
             gridTypes == GridTypes::PSTDGridType ||
             gridTypes == GridTypes::PSATDTimeStraggeredGridType;
     };
