@@ -158,7 +158,7 @@ namespace pfc
                             FP3 startPosition = this->ExPosition(i, j, chunk * chunkSize);
 #pragma ivdep
                             for (int k = 0; k < kLast; k++) {
-                                FP3 position(startPosition.x, startPosition.y, startPosition.z + k * steps.z);
+                                FP3 position(startPosition.x, startPosition.y, startPosition.z + k * this->steps.z);
                                 coords[k] = derived->convertCoords(position);
                             }
 #pragma ivdep
