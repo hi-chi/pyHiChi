@@ -21,7 +21,7 @@ namespace pfc {
         typedef typename pArray::ParticleRef ParticleRef;
         typedef typename pArray::ConstParticleRef ConstParticleRef;
         typedef typename pArray::ParticleProxyType ParticleProxyType;
-        typedef typename pArray ParticleArray;
+        typedef pArray ParticleArray;
 
         inline int size() const 
         { 
