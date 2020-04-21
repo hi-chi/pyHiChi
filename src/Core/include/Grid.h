@@ -25,9 +25,10 @@ namespace pfc {
             const FP3 & minCoords, const FP3 & _steps,
             const Int3 & globalGridDims, FP _globalTime = 0.0);
         Grid(const Int3 & _numAllCells, FP _dt,
-            const Int3 & globalGridDims, FP _globalTime = 0.0, 
-            Grid<FP, gridType>* grid = 0);  // create complex grid
-                                            // if grid!=0 then memory will be common
+            const Int3 & globalGridDims, FP _globalTime);  // for complex grid
+        Grid(const Int3 & _numAllCells, FP _dt,
+            const Int3 & globalGridDims, FP _globalTime, 
+            Grid<FP, gridType>* grid);  // grid and this will have common memory
 
         // copy constructor, can make shallow copies
         Grid(const Grid& grid, bool ifShallowCopy = false);
@@ -481,15 +482,21 @@ namespace pfc {
 
 
     // SPECTRAL GRIDS
+
+    // PSTD
+
     template<>
     inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, FP _globalTime, Grid<FP, GridTypes::PSTDGridType>* grid) :
+        const Int3 & _globalGridDims, FP _globalTime) :
         globalGridDims(_globalGridDims),
         dt(_dt),
         globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
+        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
+        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
+        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
         shiftEJx(FP3(0, 0, 0) * steps),
         shiftEJy(FP3(0, 0, 0) * steps),
         shiftEJz(FP3(0, 0, 0) * steps),
@@ -499,28 +506,37 @@ namespace pfc {
         timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
-        if (grid) {
-            Ex = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage);
-            Ey = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage);
-            Ez = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage);
-            Bx = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage);
-            By = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage);
-            Bz = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage);
-            Jx = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage);
-            Jy = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage);
-            Jz = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage);
-        }
-        else {
-            Ex = ScalarField<complexFP>(sizeStorage);
-            Ey = ScalarField<complexFP>(sizeStorage);
-            Ez = ScalarField<complexFP>(sizeStorage);
-            Bx = ScalarField<complexFP>(sizeStorage);
-            By = ScalarField<complexFP>(sizeStorage);
-            Bz = ScalarField<complexFP>(sizeStorage);
-            Jx = ScalarField<complexFP>(sizeStorage);
-            Jy = ScalarField<complexFP>(sizeStorage);
-            Jz = ScalarField<complexFP>(sizeStorage);
-        }
+        setInterpolationType(Interpolation_CIC);
+    }
+
+    template<>
+    inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
+        const Int3 & _globalGridDims, FP _globalTime, Grid<FP, GridTypes::PSTDGridType>* grid) :
+        globalGridDims(_globalGridDims),
+        dt(_dt),
+        globalTime(_globalTime),
+        numInternalCells(_numInternalCells),
+        numCells(numInternalCells),
+        sizeStorage(numCells),
+        Ex(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage),
+        Ey(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage),
+        Ez(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage),
+        Bx(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage),
+        By(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage),
+        Bz(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage),
+        Jx(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage),
+        Jy(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage),
+        Jz(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage),
+        shiftEJx(FP3(0, 0, 0) * steps),
+        shiftEJy(FP3(0, 0, 0) * steps),
+        shiftEJz(FP3(0, 0, 0) * steps),
+        shiftBx(FP3(0, 0, 0) * steps),
+        shiftBy(FP3(0, 0, 0) * steps),
+        shiftBz(FP3(0, 0, 0) * steps),
+        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+    {
+        setInterpolationType(Interpolation_CIC);
     }
 
     template<>
@@ -544,6 +560,9 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
+        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
+        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
+        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
         shiftEJx(FP3(0, 0, 0) * steps),
         shiftEJy(FP3(0, 0, 0) * steps),
         shiftEJz(FP3(0, 0, 0) * steps),
@@ -554,15 +573,6 @@ namespace pfc {
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
-        Ex = ScalarField<FP>(sizeStorage);
-        Ey = ScalarField<FP>(sizeStorage);
-        Ez = ScalarField<FP>(sizeStorage);
-        Bx = ScalarField<FP>(sizeStorage);
-        By = ScalarField<FP>(sizeStorage);
-        Bz = ScalarField<FP>(sizeStorage);
-        Jx = ScalarField<FP>(sizeStorage);
-        Jy = ScalarField<FP>(sizeStorage);
-        Jz = ScalarField<FP>(sizeStorage);
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -577,6 +587,31 @@ namespace pfc {
         return false;
     }
 
+    // PSATD
+
+    template<>
+    inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
+        const Int3 & _globalGridDims, FP _globalTime) :
+        globalGridDims(_globalGridDims),
+        dt(_dt),
+        globalTime(_globalTime),
+        numInternalCells(_numInternalCells),
+        numCells(numInternalCells),
+        sizeStorage(numCells),
+        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
+        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
+        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
+        shiftEJx(FP3(0, 0, 0) * steps),
+        shiftEJy(FP3(0, 0, 0) * steps),
+        shiftEJz(FP3(0, 0, 0) * steps),
+        shiftBx(FP3(0, 0, 0) * steps),
+        shiftBy(FP3(0, 0, 0) * steps),
+        shiftBz(FP3(0, 0, 0) * steps),
+        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+    {
+        setInterpolationType(Interpolation_CIC);
+    }
 
     template<>
     inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
@@ -587,6 +622,15 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
+        Ex(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage),
+        Ey(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage),
+        Ez(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage),
+        Bx(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage),
+        By(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage),
+        Bz(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage),
+        Jx(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage),
+        Jy(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage),
+        Jz(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage),
         shiftEJx(FP3(0, 0, 0) * steps),
         shiftEJy(FP3(0, 0, 0) * steps),
         shiftEJz(FP3(0, 0, 0) * steps),
@@ -596,28 +640,7 @@ namespace pfc {
         timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
-        if (grid) {
-            Ex = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage);
-            Ey = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage);
-            Ez = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage);
-            Bx = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage);
-            By = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage);
-            Bz = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage);
-            Jx = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage);
-            Jy = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage);
-            Jz = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage);
-        }
-        else {
-            Ex = ScalarField<complexFP>(sizeStorage);
-            Ey = ScalarField<complexFP>(sizeStorage);
-            Ez = ScalarField<complexFP>(sizeStorage);
-            Bx = ScalarField<complexFP>(sizeStorage);
-            By = ScalarField<complexFP>(sizeStorage);
-            Bz = ScalarField<complexFP>(sizeStorage);
-            Jx = ScalarField<complexFP>(sizeStorage);
-            Jy = ScalarField<complexFP>(sizeStorage);
-            Jz = ScalarField<complexFP>(sizeStorage);
-        }
+        setInterpolationType(Interpolation_CIC);
     }
 
     template<>
@@ -637,6 +660,9 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
+        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
+        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
+        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
         shiftEJx(FP3(0, 0, 0) * steps),
         shiftEJy(FP3(0, 0, 0) * steps),
         shiftEJz(FP3(0, 0, 0) * steps),
@@ -647,15 +673,6 @@ namespace pfc {
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
-        Ex = ScalarField<FP>(sizeStorage);
-        Ey = ScalarField<FP>(sizeStorage);
-        Ez = ScalarField<FP>(sizeStorage);
-        Bx = ScalarField<FP>(sizeStorage);
-        By = ScalarField<FP>(sizeStorage);
-        Bz = ScalarField<FP>(sizeStorage);
-        Jx = ScalarField<FP>(sizeStorage);
-        Jy = ScalarField<FP>(sizeStorage);
-        Jz = ScalarField<FP>(sizeStorage);
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -664,6 +681,32 @@ namespace pfc {
     {
         this->dt = _dt;
         return true;
+    }
+
+    // PSATDTimeStraggered
+
+    template<>
+    inline Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
+        const Int3 & _globalGridDims, FP _globalTime) :
+        globalGridDims(_globalGridDims),
+        dt(_dt),
+        globalTime(_globalTime),
+        numInternalCells(_numInternalCells),
+        numCells(numInternalCells),
+        sizeStorage(numCells),
+        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
+        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
+        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
+        shiftEJx(FP3(0, 0, 0) * steps),
+        shiftEJy(FP3(0, 0, 0) * steps),
+        shiftEJz(FP3(0, 0, 0) * steps),
+        shiftBx(FP3(0, 0, 0) * steps),
+        shiftBy(FP3(0, 0, 0) * steps),
+        shiftBz(FP3(0, 0, 0) * steps),
+        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+    {
+        setInterpolationType(Interpolation_CIC);       
     }
 
 
@@ -676,6 +719,15 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
+        Ex(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage),
+        Ey(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage),
+        Ez(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage),
+        Bx(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage),
+        By(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage),
+        Bz(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage),
+        Jx(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage),
+        Jy(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage),
+        Jz(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage),
         shiftEJx(FP3(0, 0, 0) * steps),
         shiftEJy(FP3(0, 0, 0) * steps),
         shiftEJz(FP3(0, 0, 0) * steps),
@@ -685,28 +737,7 @@ namespace pfc {
         timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
-        if (grid) {
-            Ex = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage);
-            Ey = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage);
-            Ez = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage);
-            Bx = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage);
-            By = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage);
-            Bz = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage);
-            Jx = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage);
-            Jy = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage);
-            Jz = ScalarField<complexFP>(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage);
-        }
-        else {
-            Ex = ScalarField<complexFP>(sizeStorage);
-            Ey = ScalarField<complexFP>(sizeStorage);
-            Ez = ScalarField<complexFP>(sizeStorage);
-            Bx = ScalarField<complexFP>(sizeStorage);
-            By = ScalarField<complexFP>(sizeStorage);
-            Bz = ScalarField<complexFP>(sizeStorage);
-            Jx = ScalarField<complexFP>(sizeStorage);
-            Jy = ScalarField<complexFP>(sizeStorage);
-            Jz = ScalarField<complexFP>(sizeStorage);
-        }
+        setInterpolationType(Interpolation_CIC);
     }
 
     template<>
@@ -726,6 +757,9 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
+        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
+        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
+        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
         shiftEJx(FP3(0, 0, 0) * steps),
         shiftEJy(FP3(0, 0, 0) * steps),
         shiftEJz(FP3(0, 0, 0) * steps),
@@ -736,15 +770,6 @@ namespace pfc {
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
-        Ex = ScalarField<FP>(sizeStorage);
-        Ey = ScalarField<FP>(sizeStorage);
-        Ez = ScalarField<FP>(sizeStorage);
-        Bx = ScalarField<FP>(sizeStorage);
-        By = ScalarField<FP>(sizeStorage);
-        Bz = ScalarField<FP>(sizeStorage);
-        Jx = ScalarField<FP>(sizeStorage);
-        Jy = ScalarField<FP>(sizeStorage);
-        Jz = ScalarField<FP>(sizeStorage);
         setInterpolationType(Interpolation_CIC);
     }
 
