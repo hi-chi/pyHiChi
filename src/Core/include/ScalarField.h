@@ -8,6 +8,48 @@
 
 namespace pfc {
 
+    // NUMA allocator for ScalarField
+    template <class Data>
+    class NUMA_Allocator {
+    public:
+
+        using value_type = Data;
+        using propagate_on_container_move_assignment = true_type;
+        using is_always_equal = true_type;
+
+        constexpr NUMA_Allocator() noexcept {}
+        constexpr NUMA_Allocator(const NUMA_Allocator&) noexcept = default;
+        template<class OtherData>
+        constexpr NUMA_Allocator(const NUMA_Allocator<OtherData>&) noexcept {}
+
+        value_type * allocate(const size_t num)
+        {
+            size_t size_vt = sizeof(value_type);
+            size_t len = num * size_vt;
+            char * p = reinterpret_cast<char*>(std::malloc(len));
+#pragma omp parallel for
+#pragma ivdep
+            for (int i = 0; i < len; i += size_vt)
+                for (int j = 0; j < size_vt; j++)
+                    p[i + j] = 0;
+            return reinterpret_cast<value_type*>(p);
+        }
+
+        void deallocate(value_type * const p, const size_t num)
+        {
+            std::free(p);
+        }
+
+        friend int operator==(const NUMA_Allocator& a1, const NUMA_Allocator& a2) {
+            return true;
+        }
+
+        friend int operator!=(const NUMA_Allocator& a1, const NUMA_Allocator& a2) {
+            return false;
+        }
+
+    };
+
     /* Class for storing 3d scalar field on a regular grid.
     Provides index-wise access, interpolation and deposition.*/
     template <typename Data>
@@ -25,7 +67,7 @@ namespace pfc {
             return ScalarField(raw, size);
         }
 
-        std::vector<Data>& toVector() {
+        std::vector<Data, NUMA_Allocator<Data>>& toVector() {
             if (!ifStorage)
                 throw "Can't convert scalar field to std::vector";
             return elements;
@@ -35,8 +77,7 @@ namespace pfc {
             return raw;
         }
 
-        Int3 getSize() const
-        {
+        Int3 getSize() const {
             return size;
         }
 
@@ -71,14 +112,11 @@ namespace pfc {
         FP interpolateFourthOrder(const Int3& baseIdx, const FP3& coeffs) const;
         FP interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const;
 
-        /* Make all elements zero */
-        inline void zeroize();
-
     private:
 
         FP interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const;
         bool ifStorage = true;  // if it's false then "elements" is empty, "raw" is a pointer to the data
-        std::vector<Data> elements; // storage
+        std::vector<Data, NUMA_Allocator<Data>> elements; // storage
         Data* raw; // raw pointer to elements vector
         Int3 size; // size of each dimension
         Int3 dimensionCoeffInt; // 0 for fake dimensions, 1 otherwise
@@ -95,7 +133,6 @@ namespace pfc {
             dimensionCoeffInt[d] = (size[d] > 1) ? 1 : 0;
             dimensionCoeffFP[d] = (FP)dimensionCoeffInt[d];
         }
-        zeroize();
     }
 
     template <class Data>
@@ -264,16 +301,6 @@ namespace pfc {
     }
 
     template <>
-    inline void ScalarField<FP>::zeroize()
-    {
-        const int n = size.volume();
-#pragma omp parallel for
-#pragma ivdep
-        for (int idx = 0; idx < n; idx++)
-            elements[idx] = 0;
-    }
-
-    template <>
     inline FP ScalarField<complex>::interpolateCIC(const Int3& baseIdx, const FP3& coeffs) const
     {
         FP3 c = coeffs * dimensionCoeffFP;
@@ -362,18 +389,5 @@ namespace pfc {
                 for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
                     result += c[0][ii] * c[1][jj] * c[2][kk] * (*this)(base.x + ii, base.y + jj, base.z + kk).real;
         return result;
-    }
-
-    template <>
-    inline void ScalarField<complex>::zeroize()
-    {
-        const int n = size.volume();
-#pragma omp parallel for
-#pragma ivdep
-        for (int idx = 0; idx < n; idx++)
-        {
-            elements[idx].real = 0;
-            elements[idx].imag = 0;
-        }
     }
 }
