@@ -9,6 +9,7 @@
 namespace pfc {
 
     // NUMA allocator for ScalarField
+    // Based upon ideas by Georg Hager and Gerhard Wellein
     template <class Data>
     class NUMA_Allocator {
     public:
