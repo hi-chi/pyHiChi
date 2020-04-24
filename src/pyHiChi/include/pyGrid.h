@@ -423,7 +423,7 @@ namespace pfc
             const int nChunks = this->numCells.z / chunkSize;
             const int chunkRem = this->numCells.z % chunkSize;
 
-#pragma omp parallel for
+#pragma omp parallel for collapse(3)
             for (int i = 0; i < this->numCells.x; i++)
                 for (int j = 0; j < this->numCells.y; j++)
                     for (int chunk = 0; chunk < nChunks + 1; chunk++) {
@@ -480,7 +480,7 @@ namespace pfc
             const int nChunks = this->numCells.z / chunkSize;
             const int chunkRem = this->numCells.z % chunkSize;
 
-#pragma omp parallel for
+#pragma omp parallel for collapse(3)
             for (int i = 0; i < this->numCells.x; i++)
                 for (int j = 0; j < this->numCells.y; j++)
                     for (int chunk = 0; chunk < nChunks + 1; chunk++) {
