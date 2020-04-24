@@ -401,7 +401,7 @@ namespace pfc
     class pySpatialStraggeredGridAttributes<TypeGrid, TDerived, true> :
         public pyGridAttributes<TypeGrid, TDerived>
     {
-        using BaseClass = typename pyGridAttributes<TypeGrid, TDerived>;
+        using BaseClass = pyGridAttributes<TypeGrid, TDerived>;
 
     public:
 
@@ -459,7 +459,7 @@ namespace pfc
     class pySpatialStraggeredGridAttributes<TypeGrid, TDerived, false> :
         public pyGridAttributes<TypeGrid, TDerived>
     {
-        using BaseClass = typename pyGridAttributes<TypeGrid, TDerived>;
+        using BaseClass = pyGridAttributes<TypeGrid, TDerived>;
         
     public:
 
@@ -489,7 +489,7 @@ namespace pfc
                         FP3 startPosition = this->ExPosition(i, j, chunk * chunkSize);
 #pragma ivdep
                         for (int k = 0; k < kLast; k++) {
-                            FP3 position(startPosition.x, startPosition.y, startPosition.z + k * steps.z);
+                            FP3 position(startPosition.x, startPosition.y, startPosition.z + k * this->steps.z);
                             coords[k] = derived->convertCoords(position);
                         }
 #pragma ivdep
@@ -515,7 +515,7 @@ namespace pfc
     class pyGrid : public pySpatialStraggeredGridAttributes<TypeGrid, pyGrid<TypeGrid>,
         TypeGrid::ifFieldsSpatialStraggered>
     {
-        using BaseClass = typename pySpatialStraggeredGridAttributes<TypeGrid, pyGrid<TypeGrid>,
+        using BaseClass = pySpatialStraggeredGridAttributes<TypeGrid, pyGrid<TypeGrid>,
             TypeGrid::ifFieldsSpatialStraggered>;
 
     public:
@@ -539,7 +539,7 @@ namespace pfc
     class pyGridMapping : public pySpatialStraggeredGridAttributes<TypeGrid, pyGridMapping<TypeGrid>,
         TypeGrid::ifFieldsSpatialStraggered>
     {
-        using BaseClass = typename pySpatialStraggeredGridAttributes<TypeGrid, pyGridMapping<TypeGrid>,
+        using BaseClass = pySpatialStraggeredGridAttributes<TypeGrid, pyGridMapping<TypeGrid>,
             TypeGrid::ifFieldsSpatialStraggered>;
 
     public:
