@@ -75,7 +75,7 @@ for D_div_L in D_div_L_arr:
         sys.stdout.flush()
     
     END_D = time.time()
-    print("Python: time of al is %f ms" % (iter, (END_D - START_D)*1000))
+    print("Python: time of al is %f ms" % (END_D - START_D)*1000)
 
 END_SCRIPT = time.time()
 print("Python: time of script is %f, min" % ((END_SCRIPT - START_SCRIPT)/60))
