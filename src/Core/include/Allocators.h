@@ -29,7 +29,7 @@ namespace pfc {
             char * p = reinterpret_cast<char*>(std::malloc(len));
 #pragma omp parallel for
             for (int thr = 0; thr < num_threads; thr++) {
-                const int cur_block_size = thr == num_threads - 1 ? block_size_rem : block_size;
+                const size_t cur_block_size = thr == num_threads - 1 ? block_size_rem : block_size;
                 std::memset(p + thr * block_size, 0, cur_block_size);
             }
             return reinterpret_cast<value_type*>(p);
