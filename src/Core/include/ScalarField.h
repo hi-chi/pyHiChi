@@ -5,6 +5,7 @@
 #include "Vectors.h"
 #include "VectorsProxy.h"
 #include "FP.h"
+#include "Allocators.h"
 
 namespace pfc {
 
@@ -25,7 +26,7 @@ namespace pfc {
             return ScalarField(raw, size);
         }
 
-        std::vector<Data>& toVector() {
+        std::vector<Data, NUMA_Allocator<Data>>& toVector() {
             if (!ifStorage)
                 throw "Can't convert scalar field to std::vector";
             return elements;
@@ -35,8 +36,7 @@ namespace pfc {
             return raw;
         }
 
-        Int3 getSize() const
-        {
+        Int3 getSize() const {
             return size;
         }
 
@@ -71,14 +71,11 @@ namespace pfc {
         FP interpolateFourthOrder(const Int3& baseIdx, const FP3& coeffs) const;
         FP interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const;
 
-        /* Make all elements zero */
-        inline void zeroize();
-
     private:
 
         FP interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const;
         bool ifStorage = true;  // if it's false then "elements" is empty, "raw" is a pointer to the data
-        std::vector<Data> elements; // storage
+        std::vector<Data, NUMA_Allocator<Data>> elements; // storage
         Data* raw; // raw pointer to elements vector
         Int3 size; // size of each dimension
         Int3 dimensionCoeffInt; // 0 for fake dimensions, 1 otherwise
@@ -95,7 +92,6 @@ namespace pfc {
             dimensionCoeffInt[d] = (size[d] > 1) ? 1 : 0;
             dimensionCoeffFP[d] = (FP)dimensionCoeffInt[d];
         }
-        zeroize();
     }
 
     template <class Data>
@@ -264,14 +260,6 @@ namespace pfc {
     }
 
     template <>
-    inline void ScalarField<FP>::zeroize()
-    {
-#pragma omp parallel for
-        for (int idx = 0; idx < (int)elements.size(); idx++)
-            elements[idx] = 0;
-    }
-
-    template <>
     inline FP ScalarField<complex>::interpolateCIC(const Int3& baseIdx, const FP3& coeffs) const
     {
         FP3 c = coeffs * dimensionCoeffFP;
@@ -360,16 +348,5 @@ namespace pfc {
                 for (int kk = minIndex.z; kk <= maxIndex.z; kk++)
                     result += c[0][ii] * c[1][jj] * c[2][kk] * (*this)(base.x + ii, base.y + jj, base.z + kk).real;
         return result;
-    }
-
-    template <>
-    inline void ScalarField<complex>::zeroize()
-    {
-#pragma omp parallel for
-        for (int idx = 0; idx < (int)elements.size(); idx++)
-        {
-            elements[idx].real = 0;
-            elements[idx].imag = 0;
-        }
     }
 }

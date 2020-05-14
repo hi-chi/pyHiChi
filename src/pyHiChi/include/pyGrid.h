@@ -99,32 +99,6 @@ namespace pfc
             }
         }
 
-        template <class FieldConficurationType>
-        void setFieldConfiguration(const FieldConficurationType* fieldConf) {
-            TDerived* derived = static_cast<TDerived*>(this);
-#pragma omp parallel for
-            for (int i = 0; i < this->numCells.x; i++)
-                for (int j = 0; j < this->numCells.y; j++)
-                    for (int k = 0; k < this->numCells.z; k++)
-                    {
-                        FP3 cEx, cEy, cEz, cBx, cBy, cBz, cJx, cJy, cJz;
-
-                        cEx = derived->convertCoords(this->ExPosition(i, j, k));
-                        cEy = derived->convertCoords(this->EyPosition(i, j, k));
-                        cEz = derived->convertCoords(this->EzPosition(i, j, k));
-                        this->Ex(i, j, k) = fieldConf->E(cEx.x, cEx.y, cEx.z).x;
-                        this->Ey(i, j, k) = fieldConf->E(cEy.x, cEy.y, cEy.z).y;
-                        this->Ez(i, j, k) = fieldConf->E(cEz.x, cEz.y, cEz.z).z;
-
-                        cBx = derived->convertCoords(this->BxPosition(i, j, k));
-                        cBy = derived->convertCoords(this->ByPosition(i, j, k));
-                        cBz = derived->convertCoords(this->BzPosition(i, j, k));
-                        this->Bx(i, j, k) = fieldConf->B(cBx.x, cBx.y, cBx.z).x;
-                        this->By(i, j, k) = fieldConf->B(cBy.x, cBy.y, cBy.z).y;
-                        this->Bz(i, j, k) = fieldConf->B(cBz.x, cBz.y, cBz.z).z;
-                    }
-        }
-
         void pySetExyz(py::function fEx, py::function fEy, py::function fEz)
         {
             TDerived* derived = static_cast<TDerived*>(this);
@@ -418,20 +392,142 @@ namespace pfc
     };
 
 
-    template<class TypeGrid>
-    class pyGrid : public pyGridAttributes<TypeGrid, pyGrid<TypeGrid>>
+    template <class TypeGrid, class TDerived, bool ifSpatialStraggered>
+    class pySpatialStraggeredGridAttributes :
+        public pyGridAttributes<TypeGrid, TDerived> {};
+
+
+    template <class TypeGrid, class TDerived>
+    class pySpatialStraggeredGridAttributes<TypeGrid, TDerived, true> :
+        public pyGridAttributes<TypeGrid, TDerived>
     {
+        using BaseClass = pyGridAttributes<TypeGrid, TDerived>;
+
+    public:
+
+        using BaseClass::getB;
+        using BaseClass::getE;
+
+        pySpatialStraggeredGridAttributes(const Int3 & _numInternalCells,
+            FP _dt, const FP3 & minCoords, const FP3 & _steps) :
+            BaseClass(_numInternalCells, _dt,
+                minCoords, _steps) {}
+
+        pySpatialStraggeredGridAttributes(TypeGrid* grid) :
+            BaseClass(grid) {}
+
+        template <class FieldConfigurationType>
+        void setFieldConfiguration(const FieldConfigurationType* fieldConf) {
+            TDerived* derived = static_cast<TDerived*>(this);
+            const int chunkSize = 32;
+            const int nChunks = this->numCells.z / chunkSize;
+            const int chunkRem = this->numCells.z % chunkSize;
+
+#pragma omp parallel for collapse(2)
+            for (int i = 0; i < this->numCells.x; i++)
+                for (int j = 0; j < this->numCells.y; j++)
+                    for (int chunk = 0; chunk < nChunks + 1; chunk++) {
+                        FP3 cEx[chunkSize], cEy[chunkSize], cEz[chunkSize];
+                        FP3 cBx[chunkSize], cBy[chunkSize], cBz[chunkSize];
+                        int kLast = chunk == nChunks ? chunkRem : chunkSize;
+#pragma ivdep
+                        for (int k = 0; k < kLast; k++) {
+                            cEx[k] = derived->convertCoords(this->ExPosition(i, j, chunk * chunkSize));
+                            cEy[k] = derived->convertCoords(this->EyPosition(i, j, chunk * chunkSize));
+                            cEz[k] = derived->convertCoords(this->EzPosition(i, j, chunk * chunkSize));
+
+                            cBx[k] = derived->convertCoords(this->BxPosition(i, j, chunk * chunkSize));
+                            cBy[k] = derived->convertCoords(this->ByPosition(i, j, chunk * chunkSize));
+                            cBz[k] = derived->convertCoords(this->BzPosition(i, j, chunk * chunkSize));
+                        }
+#pragma ivdep
+#pragma omp simd
+                        for (int k = 0; k < kLast; k++) {
+                            this->Ex(i, j, k) = fieldConf->getE(cEx[k].x, cEx[k].y, cEx[k].z).x;
+                            this->Ey(i, j, k) = fieldConf->getE(cEy[k].x, cEy[k].y, cEy[k].z).y;
+                            this->Ez(i, j, k) = fieldConf->getE(cEz[k].x, cEz[k].y, cEz[k].z).z;
+
+                            this->Bx(i, j, k) = fieldConf->getB(cBx[k].x, cBx[k].y, cBx[k].z).x;
+                            this->By(i, j, k) = fieldConf->getB(cBy[k].x, cBy[k].y, cBy[k].z).y;
+                            this->Bz(i, j, k) = fieldConf->getB(cBz[k].x, cBz[k].y, cBz[k].z).z;
+                        }
+                    }
+        }
+    };
+
+    template <class TypeGrid, class TDerived>
+    class pySpatialStraggeredGridAttributes<TypeGrid, TDerived, false> :
+        public pyGridAttributes<TypeGrid, TDerived>
+    {
+        using BaseClass = pyGridAttributes<TypeGrid, TDerived>;
+        
+    public:
+
+        using BaseClass::getB;
+        using BaseClass::getE;
+
+        pySpatialStraggeredGridAttributes(const Int3 & _numInternalCells,
+            FP _dt, const FP3 & minCoords, const FP3 & _steps) :
+            BaseClass(_numInternalCells, _dt, minCoords, _steps) {}
+
+        pySpatialStraggeredGridAttributes(TypeGrid* grid) :
+            BaseClass(grid) {}
+
+        template <class FieldConfigurationType>
+        void setFieldConfiguration(const FieldConfigurationType* fieldConf) {
+            TDerived* derived = static_cast<TDerived*>(this);
+            const int chunkSize = 32;
+            const int nChunks = this->numCells.z / chunkSize;
+            const int chunkRem = this->numCells.z % chunkSize;
+
+#pragma omp parallel for collapse(2)
+            for (int i = 0; i < this->numCells.x; i++)
+                for (int j = 0; j < this->numCells.y; j++)
+                    for (int chunk = 0; chunk < nChunks + 1; chunk++) {
+                        FP3 coords[chunkSize];
+                        int kLast = chunk == nChunks ? chunkRem : chunkSize;
+                        FP3 startPosition = this->ExPosition(i, j, chunk * chunkSize);
+#pragma ivdep
+                        for (int k = 0; k < kLast; k++) {
+                            FP3 position(startPosition.x, startPosition.y, startPosition.z + k * this->steps.z);
+                            coords[k] = derived->convertCoords(position);
+                        }
+#pragma ivdep
+#pragma omp simd
+                        for (int k = 0; k < kLast; k++) {
+                            FP3 E, B;
+                            fieldConf->getEB(coords[k].x, coords[k].y, coords[k].z, &E, &B);
+
+                            this->Ex(i, j, k + chunk * chunkSize) = E.x;
+                            this->Ey(i, j, k + chunk * chunkSize) = E.y;
+                            this->Ez(i, j, k + chunk * chunkSize) = E.z;
+
+                            this->Bx(i, j, k + chunk * chunkSize) = B.x;
+                            this->By(i, j, k + chunk * chunkSize) = B.y;
+                            this->Bz(i, j, k + chunk * chunkSize) = B.z;
+                        }
+                    }
+        }
+    };
+
+
+    template<class TypeGrid>
+    class pyGrid : public pySpatialStraggeredGridAttributes<TypeGrid, pyGrid<TypeGrid>,
+        TypeGrid::ifFieldsSpatialStraggered>
+    {
+        using BaseClass = pySpatialStraggeredGridAttributes<TypeGrid, pyGrid<TypeGrid>,
+            TypeGrid::ifFieldsSpatialStraggered>;
+
     public:
 
         pyGrid(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps) :
-            pyGridAttributes<TypeGrid, pyGrid<TypeGrid>>(_numInternalCells, _dt, minCoords, _steps) {}
+            BaseClass(_numInternalCells, _dt, minCoords, _steps) {}
 
         inline FP3 convertCoords(const FP3& coords) const {
             return coords;
         }
     };
-
 
     typedef pyGrid<YeeGrid> pyYeeGrid;
     typedef pyGrid<PSTDGrid> pyPSTDGrid;
@@ -440,24 +536,28 @@ namespace pfc
 
 
     template<class TypeGrid>
-    class pyGridMapping : public pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>
+    class pyGridMapping : public pySpatialStraggeredGridAttributes<TypeGrid, pyGridMapping<TypeGrid>,
+        TypeGrid::ifFieldsSpatialStraggered>
     {
+        using BaseClass = pySpatialStraggeredGridAttributes<TypeGrid, pyGridMapping<TypeGrid>,
+            TypeGrid::ifFieldsSpatialStraggered>;
+
     public:
 
         pyGridMapping(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps) :
-            pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>(_numInternalCells, _dt, minCoords, _steps) {}
+            BaseClass(_numInternalCells, _dt, minCoords, _steps) {}
 
         // create shallow copy of grid
         pyGridMapping(pyGrid<TypeGrid>* grid) :
-            pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>(static_cast<TypeGrid*>(grid)) {}
+            BaseClass(static_cast<TypeGrid*>(grid)) {}
 
         FP3 getE(const FP3& coords) const {
             bool status = false;
             FP3 inverseCoords = getInverseCoords(coords, &status);
             if (!status)
                 return FP3(0, 0, 0);
-            return pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>::getE(inverseCoords);
+            return BaseClass::getE(inverseCoords);
         }
 
         FP3 getB(const FP3& coords) const {
@@ -465,7 +565,7 @@ namespace pfc
             FP3 inverseCoords = getInverseCoords(coords, &status);
             if (!status)
                 return FP3(0, 0, 0);
-            return pyGridAttributes<TypeGrid, pyGridMapping<TypeGrid>>::getB(inverseCoords);
+            return BaseClass::getB(inverseCoords);
         }
 
         void setMapping(Mapping* mapping) {
@@ -480,7 +580,7 @@ namespace pfc
     private:
 
         std::vector<std::unique_ptr<Mapping>> mappings;
-        
+
         inline FP3 getDirectCoords(const FP3& coords, bool* status) const {
             FP3 coords_ = coords;
             bool status_ = true;
@@ -497,7 +597,7 @@ namespace pfc
             bool status_ = true;
             *status = true;
             for (size_t i = mappings.size(); i >= 1; i--) {
-                coords_ = mappings[i-1]->getInverseCoords(coords_, TypeGrid::globalTime, &status_);
+                coords_ = mappings[i - 1]->getInverseCoords(coords_, TypeGrid::globalTime, &status_);
                 *status = (*status) && status_;
             }
             return coords_;

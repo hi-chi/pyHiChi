@@ -24,4 +24,18 @@ namespace pfc {
     that correspond to points outside of the main grid area, size of internal and
     external area are given as constant members. */
 
+    // auxiliary structs to describe some properties of a grid type
+
+    template <GridTypes gridTypes>
+    struct LabelFieldsSpatialStraggered {
+        static const bool ifFieldsSpatialStraggered = gridTypes == GridTypes::YeeGridType;
+    };
+
+    template <GridTypes gridTypes>
+    struct LabelFieldsTimeStraggered {
+        static const bool ifFieldsTimeStraggered = gridTypes == GridTypes::YeeGridType ||
+            gridTypes == GridTypes::PSTDGridType ||
+            gridTypes == GridTypes::PSATDTimeStraggeredGridType;
+    };
+
 } // namespace pfc
