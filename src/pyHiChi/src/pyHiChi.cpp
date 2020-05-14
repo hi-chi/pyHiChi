@@ -201,7 +201,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("size", &Ensemble3d::size)
         .def("__getitem__", [](Ensemble3d& arr, size_t i) {
             if (i >= sizeParticleTypes) throw py::index_error();
-            return &(arr[i]);
+            return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[i]);
         })
         .def("__setitem__", [](Ensemble3d &arr, size_t i, ParticleArray3d v) {
             if (i >= sizeParticleTypes) throw py::index_error();
@@ -210,7 +210,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("__getitem__", [](Ensemble3d& arr, string& name) {
             if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
                 throw py::index_error();
-            return &(arr[name]);
+            return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[name]);
         })
         .def("__setitem__", [](Ensemble3d &arr, string& name, ParticleArray3d v) {
             if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
