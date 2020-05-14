@@ -10,7 +10,7 @@ import time
 
 START_SCRIPT = time.time()
 
-factor = 0.5
+factor = 3.5
 NxFull = int(factor*320)                           # size of grid in full area
 Ny = int(factor*256)
 Nz = int(factor*256)
@@ -30,14 +30,14 @@ D_div_L_arr = range(2, 22, 2)
 
 for D_div_L in D_div_L_arr:
 
+    START_D = time.time()
+
     D = D_div_L*sphericalPulse.pulselength             # width of band
     print("D = %d L" % D_div_L)
     sys.stdout.flush()    
     
     NxBand = int(D*NxFull/(maxCoords.x-minCoords.x))   # size of grid in the band
     gridSize = hichi.vector3d(NxBand, Ny, Nz)          # real size of grid
-    
-    START_INIT = time.time()
     
     mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
     
@@ -56,16 +56,15 @@ for D_div_L in D_div_L_arr:
     fieldSolver = hichi.PSATD(grid)
     
     def initialize():
+        START_INIT = time.time()
         sphericalPulse.setField(grid)
-        fieldSolver.convertFieldsPoissonEquation()
+        END_INIT = time.time()
+        print("Python: time of init is %f ms" % ((END_INIT - START_INIT)*1000))
     
     def update(): 
         fieldSolver.updateFields()
 
     initialize()
-    
-    END_INIT = time.time()
-    print("Python: time of init is %f ms" % ((END_INIT - START_INIT)*1000))
     sys.stdout.flush()
     
     for iter in range(maxIter):
@@ -74,6 +73,9 @@ for D_div_L in D_div_L_arr:
         END_ITER = time.time()
         print("Python: time of %d iter is %f ms" % (iter, (END_ITER - START_ITER)*1000))
         sys.stdout.flush()
+    
+    END_D = time.time()
+    print("Python: time of all is %f ms" % ((END_D - START_D)*1000))
 
 END_SCRIPT = time.time()
 print("Python: time of script is %f, min" % ((END_SCRIPT - START_SCRIPT)/60))

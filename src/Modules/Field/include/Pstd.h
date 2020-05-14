@@ -76,7 +76,7 @@ namespace pfc {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
         double dt = grid->dt / 2;
-#pragma omp parallel for
+#pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -99,7 +99,7 @@ namespace pfc {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
         double dt = grid->dt;
-#pragma omp parallel for
+#pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {

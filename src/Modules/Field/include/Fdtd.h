@@ -159,7 +159,7 @@ namespace pfc {
         //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
-#pragma omp parallel for
+#pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -286,7 +286,7 @@ namespace pfc {
         //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
-#pragma omp parallel for
+#pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {

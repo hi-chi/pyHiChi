@@ -392,7 +392,6 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
-        .def(py::init<FP, FP, FP, FP>())
         .def(py::init<FP, FP, FP>())
         .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
@@ -408,16 +407,16 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<NullField>(object, "NullField")
         .def(py::init<>())
-        .def("getE", &NullField::E)
-        .def("getB", &NullField::B)
+        .def("getE", &NullField::getE)
+        .def("getB", &NullField::getB)
         ;
 
     py::class_<TightFocusingField>(object, "TightFocusingField")
         .def(py::init<FP, FP, FP, FP, FP, FP, FP>())
         .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3>())
         .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3, FP>())
-        .def("getE", &TightFocusingField::E)
-        .def("getB", &TightFocusingField::B)
+        .def("getE", &TightFocusingField::getE)
+        .def("getB", &TightFocusingField::getB)
         ;
 
 }

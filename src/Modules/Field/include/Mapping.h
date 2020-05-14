@@ -214,9 +214,9 @@ namespace pfc {
 
     public:
 
-        TightFocusingMapping(FP R0, FP L, FP D, FP cutAngle = 0.5*constants::pi) :
+        TightFocusingMapping(FP R0, FP L, FP D) :
             PeriodicalMapping(Coordinate::x, -R0 - D + 0.5*L, -R0 + 0.5*L),
-            xL(-R0 - 0.5*L), cutAngle(cutAngle), ifCut(true) {}
+            xL(-R0 - 0.5*L), ifCut(true) {}
 
         void setIfCut(bool ifCut = true) {
             this->ifCut = ifCut;
@@ -234,23 +234,23 @@ namespace pfc {
                 return coords;
 
             int nPeriods = 0;
-            int shiftSign = 0;
+            int shift = 0;
 
             if (cMax + ct < 0) {
-                nPeriods = int(((cMax + ct)*cos(cutAngle) - (cMin + ct)) / D) + 1;  // целая часть сверху
-                shiftSign = 1;
+                nPeriods = int(-(cMin + ct) / D) + 1;  // целая часть сверху
+                shift = D;
             }
             else if (cMin + ct > 0) {
-                nPeriods = int(((cMax + ct) - (cMin + ct)*cos(cutAngle)) / D) + 1;  // целая часть сверху
-                shiftSign = -1;
+                nPeriods = int((cMax + ct) / D) + 1;  // целая часть сверху
+                shift = -D;
             }
             else nPeriods = 1;
 
-            for (int i = 0; i < nPeriods; i++) {
-                FP shift = i * D * shiftSign;
+            FP3 coordsShift = coords;
 
-                FP3 coordsShift(coords.x + shift, coords.y, coords.z);
-                FP rShift = coordsShift.norm();
+            for (int i = 0; i < nPeriods; i++) {
+
+                coordsShift.x += shift;
 
                 if (ifInArea(coordsShift, time)) {
                     directCoords = coordsShift;
@@ -280,12 +280,9 @@ namespace pfc {
         bool ifInArea(const FP3& coords, FP time) {
             FP ct = constants::c*time;
             FP r = coords.norm();
-            FP angle = atan(abs(sqrt(coords.y*coords.y + coords.z*coords.z) / coords.x));
 
             if (cMax + ct < 0) {
                 if ((r >= -xL - ct) || (r < -cMax - ct) || (coords.x > 0))
-                    return false;
-                if (angle > cutAngle)
                     return false;
             }
             else if ((cMax + ct >= 0) && (xL + ct <= 0))
@@ -299,8 +296,6 @@ namespace pfc {
             {
                 if ((r <= xL + ct) || (r > cMax + ct) || (coords.x < 0))
                     return false;
-                if (angle > cutAngle)
-                    return false;
             }
 
             return true;
@@ -310,7 +305,7 @@ namespace pfc {
             return new TightFocusingMapping(*this);
         }
 
-        FP cutAngle, xL;
+        FP xL;
         bool ifCut = true;
 
     };

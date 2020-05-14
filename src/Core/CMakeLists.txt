@@ -10,6 +10,7 @@ set(CORE_INCLUDE_DIR include)
 set(CORE_HEADER_DIR ${CORE_INCLUDE_DIR})
 
 set(core_headers
+    ${CORE_HEADER_DIR}/Allocators.h
     ${CORE_HEADER_DIR}/Constants.h
     ${CORE_HEADER_DIR}/Enums.h
     ${CORE_HEADER_DIR}/Dimension.h
