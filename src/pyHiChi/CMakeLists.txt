@@ -8,6 +8,7 @@ include_directories(include
     ../Modules/Field/include
     ../Modules/Field/include/Mapping
     ../Modules/Field/include/FieldConfiguration
+	 ../Simulation/include
     ${FFT_INCLUDES})
 
 if (USE_OMP)

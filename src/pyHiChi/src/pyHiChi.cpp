@@ -27,6 +27,7 @@
 #include "Enums.h"
 #include "Mapping.h"
 #include "FieldConfiguration.h"
+#include "Simulation.h"
 
 
 #define SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType)     \
@@ -374,5 +375,12 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("getE", &TightFocusingField::E)
         .def("getB", &TightFocusingField::B)
         ;
+        
+    py::class_<Simulation>(object, "Simulation")
+        .def(py::init<pyYeeGrid*, unsigned int>())
+        .def("addModule", (void (Simulation::*)(FDTD*))&Simulation::addModule)
+        .def("run", &Simulation::run)
+        ;
+
 
 }

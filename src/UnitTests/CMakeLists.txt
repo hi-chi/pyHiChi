@@ -7,6 +7,7 @@ include_directories(
     ../Core/include
     ../Modules/Particle/include
     ../Modules/Field/include
+    ../Simulation/include
     ${FFT_INCLUDES})
 
 add_executable(tests
@@ -32,6 +33,7 @@ add_executable(tests
     src/testVectors.cpp
     src/testVectorsProxy.cpp
     src/TestingUtility.cpp
+    src/testSimulation.cpp
     src/Main.cpp)
 
 if (APPLE)
