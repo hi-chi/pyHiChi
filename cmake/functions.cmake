@@ -28,6 +28,7 @@ function(link_fft_libs)
             CMAKE_ARGS
                 "-DCMAKE_CFLAGS=${CMAKE_C_FLAGS}"
                 "-DBUILD_SHARED_LIBS=OFF"
+		"-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
                 "-DENABLE_AVX2=ON"
                 "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}/fftw" 
                 "-DENABLE_OPENMP=${USE_OMP}"
