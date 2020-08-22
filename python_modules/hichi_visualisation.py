@@ -205,21 +205,21 @@ class Visual:
             for i0 in range(shape[0]):
                 for i1 in range(shape[1]):
                     coord = hichi.vector3d(coords[0][i0], coords[1][i1], lastCoordinateValue)
-                    field[i1, i0] = func(self, coord) 
+                    field[shape[1]-i1-1, i0] = func(self, coord) 
             return field
             
         elif plane == Plane.XOZ:
             for i0 in range(shape[0]):
                 for i1 in range(shape[1]):
                     coord = hichi.vector3d(coords[0][i0], lastCoordinateValue, coords[1][i1])
-                    field[i1, i0] = func(self, coord) 
+                    field[shape[1]-i1-1, i0] = func(self, coord) 
             return field
             
         elif plane == Plane.YOZ:
             for i0 in range(shape[0]):
                 for i1 in range(shape[1]):
                     coord = hichi.vector3d(lastCoordinateValue, coords[0][i0], coords[1][i1])
-                    field[i1, i0] = func(self, coord) 
+                    field[shape[1]-i1-1, i0] = func(self, coord) 
             return field
             
         return None

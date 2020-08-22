@@ -1,3 +1,5 @@
+import sys
+sys.path.append("../bin/")
 import pyHiChi as pfc
 
 v = pfc.vector3d(1.2, 2.2, 3.4)

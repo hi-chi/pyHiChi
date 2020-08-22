@@ -121,6 +121,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def_readwrite("y", &FP3::y)
         .def_readwrite("z", &FP3::z)
         ;
+    object.def("cross", cross);
+    object.def("dot", dot);
 
 
     py::class_<ParticleProxy3d>(object, "particleProxy")
@@ -262,6 +264,8 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<pyPSTDGrid>(object, "PSTDGrid")
         SET_METHODS_FOR_PY_GRID(pyPSTDGrid)
+        .def("set", &pyPSTDGrid::setEMField)
+        .def("set", &pyPSTDGrid::pySetEMField)
         ;
 
     py::class_<PSTD>(object, "PSTD")
@@ -274,6 +278,8 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<pyPSATDGrid>(object, "PSATDGrid")
         SET_METHODS_FOR_PY_GRID(pyPSATDGrid)
+        .def("set", &pyPSATDGrid::setEMField)
+        .def("set", &pyPSATDGrid::pySetEMField)
         ;
 
     py::class_<PSATD>(object, "PSATD")
@@ -296,6 +302,8 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<pyPSATDTimeStraggeredGrid>(object, "PSATDTimeStraggeredGrid")
         SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGrid)
+        .def("set", &pyPSATDTimeStraggeredGrid::setEMField)
+        .def("set", &pyPSATDTimeStraggeredGrid::pySetEMField)
         ;
 
     py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
@@ -329,24 +337,34 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::init<pyYeeGrid*>())
         SET_METHODS_FOR_PY_GRID(pyYeeGridMapping)
         .def("setMapping", &pyYeeGridMapping::setMapping)
+        .def("popMapping", &pyYeeGridMapping::popMapping)
         ;
 
     py::class_<pyPSTDGridMapping>(object, "PSTDGridMapping")
         .def(py::init<pyPSTDGrid*>())
         SET_METHODS_FOR_PY_GRID(pyPSTDGridMapping)
         .def("setMapping", &pyPSTDGridMapping::setMapping)
+        .def("popMapping", &pyPSTDGridMapping::popMapping)
+        .def("set", &pyPSTDGridMapping::setEMField)
+        .def("set", &pyPSTDGridMapping::pySetEMField)
         ;
 
     py::class_<pyPSATDGridMapping>(object, "PSATDGridMapping")
         .def(py::init<pyPSATDGrid*>())
         SET_METHODS_FOR_PY_GRID(pyPSATDGridMapping)
         .def("setMapping", &pyPSATDGridMapping::setMapping)
+        .def("popMapping", &pyPSATDGridMapping::popMapping)
+        .def("set", &pyPSATDGridMapping::setEMField)
+        .def("set", &pyPSATDGridMapping::pySetEMField)
         ;
 
     py::class_<pyPSATDTimeStraggeredGridMapping>(object, "PSATDTimeStraggeredGridMapping")
         .def(py::init<pyPSATDTimeStraggeredGrid*>())
         SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGridMapping)
         .def("setMapping", &pyPSATDTimeStraggeredGridMapping::setMapping)
+        .def("popMapping", &pyPSATDTimeStraggeredGridMapping::popMapping)
+        .def("set", &pyPSATDTimeStraggeredGridMapping::setEMField)
+        .def("set", &pyPSATDTimeStraggeredGridMapping::pySetEMField)
         ;
 
     // mappings
