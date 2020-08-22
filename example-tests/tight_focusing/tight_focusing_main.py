@@ -1,7 +1,8 @@
 import sys
-sys.path.append("../python_modules")
+sys.path.append("../../python_modules")
+sys.path.append("../../bin")
 import pyHiChi as hichi
-import tight_focusing_fields as sphericalPulse
+from tight_focusing_fields import SphericalPulseC, SphericalPulsePython
 import math as ma
 
 
@@ -16,19 +17,19 @@ NxBand = int(56*factor)                            # size of grid in the band
 gridSize = hichi.vector3d(NxBand, Ny, Nz)          # real size of grid
 
 # creating of spherical pulse
-sphericalPulse.createSphericalPulsePython(F_number_ = 0.3,
-                                          R0_ = 16,
-                                          pulselength_ = 2.0,
-                                          phase_ = 0,
-                                          edgeSmoothingAngle_ = 0.1)
+sphericalPulse = SphericalPulsePython(f_number = 0.3,
+                                      R0 = 16,
+                                      pulselength = 2.0,
+                                      phase = 0,
+                                      edgeSmoothingAngle = 0.1)
 
-timeStep = sphericalPulse.getDtCGS(1.0)            # time step in CGS
+timeStep = 1.0/hichi.c                             # time step in CGS system of units
 maxIter = 32                                       # number of iterations to compute       
 
 minCoords = hichi.vector3d(-20, -20, -20)          # bounds of full area
 maxCoords = hichi.vector3d(20, 20, 20)
 
-D = 3.5*sphericalPulse.pulselength                 # width of band
+D = 3.5*sphericalPulse.pulselength                 # band width
 
 # to compute the task in the full area just set
 # D = maxCoords.x - minCoords.x

@@ -1,3 +1,5 @@
+import sys
+sys.path.append("../bin/")
 import pyHiChi as hichi
 import numpy as np
 import math as ma
@@ -41,11 +43,7 @@ print("Inverse mapping: point (%0.2f, %0.2f, %0.2f) -> (%0.2f, %0.2f, %0.2f)" % 
 
 gridSize = hichi.vector3d(64, 64, 64)
 
-gridStep = hichi.vector3d(
-            (maxInverseCoords.x - minInverseCoords.x) / gridSize.x,
-            (maxInverseCoords.y - minInverseCoords.y) / gridSize.y,
-            (maxInverseCoords.z - minInverseCoords.z) / gridSize.z
-           )
+gridStep = (maxInverseCoords - minInverseCoords) / gridSize
            
 timeStep = 0.1/hichi.c
 

@@ -1,21 +1,22 @@
 import sys
-sys.path.append("../python_modules")
+sys.path.append("../../python_modules")
+sys.path.append("../../bin")
 
 import pyHiChi as hichi
 import numpy as np
-import tight_focusing_fields as sphericalPulse
+from tight_focusing_fields import SphericalPulseC
 
 # the output directory
 DIR_RESULT = "./"
 
 # the creation of the spherical pulse
 # f_number=0.3 (opening angle = 1 rad)
-sphericalPulse.createSphericalPulseC(F_number_=0.3,
-                                     R0_=16,
-                                     pulselength_=2.0,
-                                     phase_=0,
-                                     edgeSmoothingAngle_=0.1
-                                    )
+sphericalPulse = SphericalPulseC(f_number=0.3,
+                                 R0=16,
+                                 pulselength=2.0,
+                                 phase=0,
+                                 edgeSmoothingAngle=0.1
+                                )
 
 # the computational area (coordinates of the opposite corners of the parallelepiped)
 minCoords = hichi.vector3d(-20, -20, -20)
@@ -32,7 +33,7 @@ fullGridSize = hichi.vector3d(NxFull, Ny, Nz)
 gridStep = (maxCoords - minCoords) / fullGridSize
 
 # the time step which is equal to R0 in the universal system of units
-timeStep = sphericalPulse.getDtCGS(sphericalPulse.R0)
+timeStep = sphericalPulse.R0/hichi.c
 
 # defining the minimal and the maximal width of the band (Dmin, Dmax)
 Rmax = sphericalPulse.R0 + 0.5*sphericalPulse.pulselength
@@ -70,7 +71,9 @@ def run(Nx):
     D = Nx * gridStep.x
 
     # the mapping
-    mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
+    mapping = hichi.TightFocusingMapping(sphericalPulse.R0,
+                                         sphericalPulse.pulselength,
+                                         D)
     
     # the bounds of the band
     xMin = mapping.getxMin()

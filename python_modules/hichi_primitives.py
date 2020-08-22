@@ -1,6 +1,7 @@
 import numpy as np
 import os
-from numba import cfunc, float64, jit, njit, jitclass
+from numba import cfunc, float64, jit, njit
+from  numba.experimental import jitclass
 
 @jitclass([('x', float64), ('y', float64), ('z', float64)])
 class vector3d(object):
