@@ -397,6 +397,7 @@ namespace pfc
         public pyGridAttributes<TypeGrid, TDerived> {};
 
 
+    // spatial straggered grids
     template <class TypeGrid, class TDerived>
     class pySpatialStraggeredGridAttributes<TypeGrid, TDerived, true> :
         public pyGridAttributes<TypeGrid, TDerived>
@@ -455,6 +456,8 @@ namespace pfc
         }
     };
 
+
+    // collocated grids
     template <class TypeGrid, class TDerived>
     class pySpatialStraggeredGridAttributes<TypeGrid, TDerived, false> :
         public pyGridAttributes<TypeGrid, TDerived>
@@ -505,6 +508,64 @@ namespace pfc
                             this->Bx(i, j, k + chunk * chunkSize) = B.x;
                             this->By(i, j, k + chunk * chunkSize) = B.y;
                             this->Bz(i, j, k + chunk * chunkSize) = B.z;
+                        }
+                    }
+        }
+
+        void pySetEMField(py::function fValueField)
+        {
+            TDerived* derived = static_cast<TDerived*>(this);
+            for (int i = 0; i < this->numCells.x; i++)
+                for (int j = 0; j < this->numCells.y; j++)
+                    for (int k = 0; k < this->numCells.z; k++)
+                    {
+                        FP3 coords = derived->convertCoords(this->ExPosition(i, j, k));
+                        ValueField field = fValueField("x"_a = coords.x, "y"_a = coords.y, "z"_a = coords.z).
+                            template cast<ValueField>();
+
+                        this->Ex(i, j, k) = field.E.x;
+                        this->Ey(i, j, k) = field.E.y;
+                        this->Ez(i, j, k) = field.E.z;
+
+                        this->Bx(i, j, k) = field.B.x;
+                        this->By(i, j, k) = field.B.y;
+                        this->Bz(i, j, k) = field.B.z;
+                    }
+        }
+
+        void setEMField(int64_t _fValueField)
+        {
+            TDerived* derived = static_cast<TDerived*>(this);
+            void(*fValueField)(FP, FP, FP, FP*) = (void(*)(FP, FP, FP, FP*))_fValueField;
+            const int chunkSize = 32;
+            const int nChunks = this->numCells.z / chunkSize;
+            const int chunkRem = this->numCells.z % chunkSize;
+
+#pragma omp parallel for collapse(2)
+            for (int i = 0; i < this->numCells.x; i++)
+                for (int j = 0; j < this->numCells.y; j++)
+                    for (int chunk = 0; chunk < nChunks + 1; chunk++) {
+                        FP3 coords[chunkSize];
+                        int kLast = chunk == nChunks ? chunkRem : chunkSize;
+                        FP3 startPosition = this->ExPosition(i, j, chunk * chunkSize);
+#pragma ivdep
+                        for (int k = 0; k < kLast; k++) {
+                            FP3 position(startPosition.x, startPosition.y, startPosition.z + k * this->steps.z);
+                            coords[k] = derived->convertCoords(position);
+                        }
+#pragma ivdep
+#pragma omp simd
+                        for (int k = 0; k < kLast; k++) {
+                            ValueField field(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+                            fValueField(coords[k].x, coords[k].y, coords[k].z, &(field.E.x));
+
+                            this->Ex(i, j, k + chunk * chunkSize) = field.E.x;
+                            this->Ey(i, j, k + chunk * chunkSize) = field.E.y;
+                            this->Ez(i, j, k + chunk * chunkSize) = field.E.z;
+
+                            this->Bx(i, j, k + chunk * chunkSize) = field.B.x;
+                            this->By(i, j, k + chunk * chunkSize) = field.B.y;
+                            this->Bz(i, j, k + chunk * chunkSize) = field.B.z;
                         }
                     }
         }
@@ -570,6 +631,10 @@ namespace pfc
 
         void setMapping(Mapping* mapping) {
             mappings.push_back(std::unique_ptr<Mapping>(mapping->createInstance()));
+        }
+
+        void popMapping() {
+            mappings.pop_back();
         }
 
         inline FP3 convertCoords(const FP3& coords) const {

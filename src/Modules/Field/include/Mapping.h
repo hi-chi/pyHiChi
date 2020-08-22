@@ -234,7 +234,7 @@ namespace pfc {
                 return coords;
 
             int nPeriods = 0;
-            int shift = 0;
+            FP shift = 0;
 
             if (cMax + ct < 0) {
                 nPeriods = int(-(cMin + ct) / D) + 1;  // целая часть сверху
@@ -266,7 +266,7 @@ namespace pfc {
 
             setOkStatus(status);
 
-            if (!ifInArea(coords, time) && ifCut) {
+            if (ifCut && !ifInArea(coords, time)) {
                 setFailStatus(status);
             }
 

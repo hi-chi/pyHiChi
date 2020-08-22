@@ -88,7 +88,6 @@ namespace pfc {
                 rightDims[d] += grid->getNumExternalRightCells()[d];
         }
 
-
         leftDists = Int3(0, 0, 0);
         rightDists = grid->globalGridDims - grid->numInternalCells;
         n = 4;

@@ -809,7 +809,12 @@ inline FP SP(const FP3& v1, const FP3& v2)
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
-__forceinline const FP3 cross(const FP3& v1, const FP3& v2)
+__forceinline FP dot(const FP3& v1, const FP3& v2)
+{
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+__forceinline FP3 cross(const FP3& v1, const FP3& v2)
 {
     return FP3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
         v1.x * v2.y - v1.y * v2.x);

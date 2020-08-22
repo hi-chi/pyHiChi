@@ -28,7 +28,7 @@ namespace pfc {
         FP3 getB()
         { return B; }
 
-    private:
+    public:
         FP3 E;
         FP3 B;
 
