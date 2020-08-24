@@ -1,3 +1,5 @@
+import sys
+sys.path.append("../bin/")
 import pyHiChi as pfc
 import numpy as np
 import math as ma
@@ -6,15 +8,8 @@ gridSize = pfc.vector3d(144, 30, 1)
 pmlSize = pfc.vector3d(8, 0, 0)
 minCoords = pfc.vector3d(0.0, 0.0, 0.0)
 maxCoords = pfc.vector3d(gridSize.x * pfc.c, gridSize.y * pfc.c, gridSize.z * pfc.c)
-
-def step(minCoords, maxCoords, gridSize):
-    steps = pfc.vector3d(1, 1, 1)
-    steps.x = (maxCoords.x - minCoords.x)/(gridSize.x)
-    steps.y = (maxCoords.y - minCoords.y)/(gridSize.y)
-    steps.z = (maxCoords.z - minCoords.z)/(gridSize.z)
-    return steps
     
-stepsGrid = step(minCoords, maxCoords, gridSize)
+stepsGrid = (maxCoords - minCoords)/gridSize
 timeStep = 0.1
 
 pmlLeftEnd = minCoords.x+pmlSize.x*stepsGrid.x
@@ -48,12 +43,14 @@ def valueBz(x, y, z):
     return Bz
 
 grid = pfc.PSTDGrid(gridSize, timeStep, minCoords, stepsGrid)
+# grid = pfc.PSATDGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.PSATDTimeStraggeredGrid(gridSize, timeStep, minCoords, stepsGrid)
 # grid = pfc.YeeGrid(gridSize, timeStep, minCoords, stepsGrid) 
 grid.setE(valueEx, valueEy, valueEz)
 grid.setB(valueBx, valueBy, valueBz)
 
 fieldSolver = pfc.PSTD(grid)
+# fieldSolver = pfc.PSATD(grid)
 # fieldSolver = pfc.PSATDTimeStraggered(grid)
 # fieldSolver = pfc.FDTD(grid)
 fieldSolver.setPML(int(pmlSize.x), int(pmlSize.y), int(pmlSize.z))

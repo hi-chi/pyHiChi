@@ -112,8 +112,8 @@ namespace pfc {
         SpectralFieldSolver(Grid<FP, gridType>* _grid) :
             FieldSolver<gridType>(_grid)
         {
-            complexGrid = new Grid<complexFP, gridType>(FourierTransform::getSizeOfComplex(_grid->numCells),
-                _grid->dt, FourierTransform::getSizeOfComplex(_grid->globalGridDims), _grid);
+            complexGrid = new Grid<complexFP, gridType>(fourier_transform::getSizeOfComplexArray(_grid->numCells),
+                _grid->dt, fourier_transform::getSizeOfComplexArray(_grid->globalGridDims), _grid->globalTime, _grid);
             fourierTransform.initialize<gridType>(_grid, complexGrid);
         }
 
@@ -121,10 +121,10 @@ namespace pfc {
             delete complexGrid;
         }
 
-        void doFourierTransformB(FourierTransformDirection direction);
-        void doFourierTransformE(FourierTransformDirection direction);
-        void doFourierTransformJ(FourierTransformDirection direction);
-        void doFourierTransform(FourierTransformDirection direction);
+        void doFourierTransformB(fourier_transform::Direction direction);
+        void doFourierTransformE(fourier_transform::Direction direction);
+        void doFourierTransformJ(fourier_transform::Direction direction);
+        void doFourierTransform(fourier_transform::Direction direction);
 
         FP3 getWaveVector(const Int3 & ind);
 
@@ -144,7 +144,7 @@ namespace pfc {
     };
 
     template<GridTypes gridType>
-    inline void SpectralFieldSolver<gridType>::doFourierTransformB(FourierTransformDirection direction)
+    inline void SpectralFieldSolver<gridType>::doFourierTransformB(fourier_transform::Direction direction)
     {
         fourierTransform.doFourierTransform(B, x, direction);
         fourierTransform.doFourierTransform(B, y, direction);
@@ -152,7 +152,7 @@ namespace pfc {
     }
 
     template<GridTypes gridType>
-    inline void SpectralFieldSolver<gridType>::doFourierTransformE(FourierTransformDirection direction)
+    inline void SpectralFieldSolver<gridType>::doFourierTransformE(fourier_transform::Direction direction)
     {
         fourierTransform.doFourierTransform(E, x, direction);
         fourierTransform.doFourierTransform(E, y, direction);
@@ -160,7 +160,7 @@ namespace pfc {
     }
 
     template<GridTypes gridType>
-    inline void SpectralFieldSolver<gridType>::doFourierTransformJ(FourierTransformDirection direction)
+    inline void SpectralFieldSolver<gridType>::doFourierTransformJ(fourier_transform::Direction direction)
     {
         fourierTransform.doFourierTransform(J, x, direction);
         fourierTransform.doFourierTransform(J, y, direction);
@@ -168,7 +168,7 @@ namespace pfc {
     }
 
     template<GridTypes gridType>
-    inline void SpectralFieldSolver<gridType>::doFourierTransform(FourierTransformDirection direction)
+    inline void SpectralFieldSolver<gridType>::doFourierTransform(fourier_transform::Direction direction)
     {
         doFourierTransformE(direction);
         doFourierTransformB(direction);

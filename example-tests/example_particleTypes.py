@@ -1,3 +1,5 @@
+import sys
+sys.path.append("../bin/")
 import pyHiChi as pfc
 
 #ParticleTypes

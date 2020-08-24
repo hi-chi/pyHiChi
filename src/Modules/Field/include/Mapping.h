@@ -10,24 +10,14 @@ namespace pfc {
 
     public:
 
-        Mapping() : time(0.0) {}
-
-        virtual FP3 getDirectCoords(const FP3& coords, bool* status = 0) {
+        virtual FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) {
             setFailStatus(status);
             return coords;
         }
 
-        virtual FP3 getInverseCoords(const FP3& coords, bool* status = 0) {
+        virtual FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) {
             setFailStatus(status);
             return coords;
-        }
-
-        void advanceTime(FP timeStep) {
-            time += timeStep;
-        }
-
-        void setTime(FP time) {
-            this->time = time;
         }
 
         virtual Mapping* createInstance() = 0;
@@ -41,8 +31,6 @@ namespace pfc {
             if (status) *status = true;
         }
 
-        FP time = 0.0;
-
     };
 
 
@@ -53,12 +41,12 @@ namespace pfc {
         // create identity mapping on a segment [a,b)
         IdentityMapping(FP3 a, FP3 b) : a(a), b(b) {}
 
-        FP3 getDirectCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             if (status) *status = (coords >= a && coords < b) ? true : false;
             return coords;
         }
 
-        FP3 getInverseCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             if (status) *status = (coords >= a && coords < b) ? true : false;
             return coords;
         }
@@ -72,32 +60,34 @@ namespace pfc {
     };
 
 
-    class PeriodicalXMapping : public Mapping {
+    class PeriodicalMapping : public Mapping {
 
     public:
 
-        // create periodical mapping: x = ...[xMin, xMax)[xMin, xMax)[xMin, xMax)...
-        PeriodicalXMapping(FP xMin, FP xMax) : xMin(xMin), xMax(xMax), D(xMax-xMin) {}
+        // create periodical mapping: axis = ...[cMin, cMax)[cMin, cMax)[cMin, cMax)...
+        PeriodicalMapping(Coordinate axis, FP cMin, FP cMax) :
+            axis(axis), cMin(cMin), cMax(cMax), D(cMax-cMin) {}
 
-        FP3 getDirectCoords(const FP3& coords, bool* status = 0) override {
-            if (status) *status = (coords.x >= xMin && coords.x < xMax) ? true : false;
+        FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
+            if (status) *status = (coords[axis] >= cMin && coords[axis] < cMax) ? true : false;
             return coords;
         }
 
-        FP3 getInverseCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             FP3 inverseCoords = coords;
             double tmp;
-            FP frac = std::modf((coords.x - xMin) / D, &tmp);
-            inverseCoords.x = xMin + (frac >= 0 ? frac : (1 + frac)) * D;
+            FP frac = std::modf((coords[axis] - cMin) / D, &tmp);
+            inverseCoords[axis] = cMin + (frac >= 0 ? frac : (1 + frac)) * D;
             return inverseCoords;
         }
 
         Mapping* createInstance() override {
-            return new PeriodicalXMapping(*this);
+            return new PeriodicalMapping(*this);
         }
 
-        FP xMin, xMax, D;
+        FP cMin, cMax, D;
+        Coordinate axis = Coordinate::x;
 
     };
 
@@ -117,7 +107,7 @@ namespace pfc {
             rotationMatrix[axis][axis] = 1.0;
         }
 
-        FP3 getDirectCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             FP3 directCoords;
             directCoords.x =
@@ -135,7 +125,7 @@ namespace pfc {
             return directCoords;
         }
 
-        FP3 getInverseCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             FP3 inverseCoords;
             inverseCoords.x =
@@ -171,12 +161,12 @@ namespace pfc {
 
         ShiftMapping(const FP3& shift) : shift(shift) {}
 
-        FP3 getDirectCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             return coords + shift;
         }
 
-        FP3 getInverseCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             return coords - shift;
         }
@@ -196,14 +186,14 @@ namespace pfc {
 
         ScaleMapping(Coordinate axis, FP coef) : axis(axis), coef(coef) {}
 
-        FP3 getDirectCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             FP3 directCoords = coords;
             directCoords[axis] *= coef;
             return directCoords;
         }
 
-        FP3 getInverseCoords(const FP3& coords, bool* status = 0) override {
+        FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             FP3 inverseCoords = coords;
             inverseCoords[axis] /= coef;
@@ -220,49 +210,49 @@ namespace pfc {
     };
 
 
-    class TightFocusingMapping : public PeriodicalXMapping {
+    class TightFocusingMapping : public PeriodicalMapping {
 
     public:
 
-        TightFocusingMapping(FP R0, FP L, FP D, FP cutAngle = 0.5*constants::pi) :
-            PeriodicalXMapping(-R0 - D + 0.5*L, -R0 + 0.5*L),
-            xL(-R0 - 0.5*L), cutAngle(cutAngle), ifCut(true) {}
+        TightFocusingMapping(FP R0, FP L, FP D) :
+            PeriodicalMapping(Coordinate::x, -R0 - D + 0.5*L, -R0 + 0.5*L),
+            xL(-R0 - 0.5*L), ifCut(true) {}
 
         void setIfCut(bool ifCut = true) {
             this->ifCut = ifCut;
         }
 
-        FP3 getDirectCoords(const FP3& coords, bool* status = 0) {
+        FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             FP ct = constants::c*time;
             FP r = coords.norm();
 
             FP3 directCoords = coords;
-            if (ifCut) setFailStatus(status);
+            if (ifCut) Mapping::setFailStatus(status);
             else setOkStatus(status);
 
-            if (coords.x < xMin + ct || coords.x >= xMax + ct)
+            if (coords.x < cMin + ct || coords.x >= cMax + ct)
                 return coords;
 
             int nPeriods = 0;
-            int shiftSign = 0;
+            FP shift = 0;
 
-            if (xMax + ct < 0) {
-                nPeriods = int(((xMax + ct)*cos(cutAngle) - (xMin + ct)) / D) + 1;  // целая часть сверху
-                shiftSign = 1;
+            if (cMax + ct < 0) {
+                nPeriods = int(-(cMin + ct) / D) + 1;  // целая часть сверху
+                shift = D;
             }
-            else if (xMin + ct > 0) {
-                nPeriods = int(((xMax + ct) - (xMin + ct)*cos(cutAngle)) / D) + 1;  // целая часть сверху
-                shiftSign = -1;
+            else if (cMin + ct > 0) {
+                nPeriods = int((cMax + ct) / D) + 1;  // целая часть сверху
+                shift = -D;
             }
             else nPeriods = 1;
 
+            FP3 coordsShift = coords;
+
             for (int i = 0; i < nPeriods; i++) {
-                FP shift = i * D * shiftSign;
 
-                FP3 coordsShift(coords.x + shift, coords.y, coords.z);
-                FP rShift = coordsShift.norm();
+                coordsShift.x += shift;
 
-                if (ifInArea(coordsShift)) {
+                if (ifInArea(coordsShift, time)) {
                     directCoords = coordsShift;
                     setOkStatus(status);
                     break;
@@ -272,44 +262,39 @@ namespace pfc {
             return directCoords;
         }
 
-        FP3 getInverseCoords(const FP3& coords, bool* status = 0) {
+        FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
 
             setOkStatus(status);
 
-            if (!ifInArea(coords) && ifCut) {
+            if (ifCut && !ifInArea(coords, time)) {
                 setFailStatus(status);
             }
 
-            return PeriodicalXMapping::getInverseCoords(coords);
+            return PeriodicalMapping::getInverseCoords(coords);
 
         }
 
-        FP getxMin() const { return xMin; }
-        FP getxMax() const { return xMax; }
+        FP getxMin() const { return cMin; }
+        FP getxMax() const { return cMax; }
 
-        bool ifInArea(const FP3& coords) {
+        bool ifInArea(const FP3& coords, FP time) {
             FP ct = constants::c*time;
             FP r = coords.norm();
-            FP angle = atan(abs(sqrt(coords.y*coords.y + coords.z*coords.z) / coords.x));
 
-            if (xMax + ct < 0) {
-                if ((r >= -xL - ct) || (r < -xMax - ct) || (coords.x > 0))
-                    return false;
-                if (angle > cutAngle)
+            if (cMax + ct < 0) {
+                if ((r >= -xL - ct) || (r < -cMax - ct) || (coords.x > 0))
                     return false;
             }
-            else if ((xMax + ct >= 0) && (xL + ct <= 0))
+            else if ((cMax + ct >= 0) && (xL + ct <= 0))
             {
-                if (coords.x < 0 && r > xMax - xL)
+                if (coords.x < 0 && r > cMax - xL)
                     return false;
-                if (coords.x >= 0 && r > xMax + ct)
+                if (coords.x >= 0 && r > cMax + ct)
                     return false;
             }
             else if (xL + ct > 0)
             {
-                if ((r <= xL + ct) || (r > xMax + ct) || (coords.x < 0))
-                    return false;
-                if (angle > cutAngle)
+                if ((r <= xL + ct) || (r > cMax + ct) || (coords.x < 0))
                     return false;
             }
 
@@ -320,7 +305,7 @@ namespace pfc {
             return new TightFocusingMapping(*this);
         }
 
-        FP cutAngle, xL;
+        FP xL;
         bool ifCut = true;
 
     };

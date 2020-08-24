@@ -10,91 +10,88 @@
 
 namespace pfc
 {
+    namespace fourier_transform {
 
-    enum FourierTransformDirection {
-        RtoC, CtoR
-    };
+        inline Int3 getSizeOfComplexArray(Int3 sizeOfFP)
+        {
+            return Int3(sizeOfFP.x, sizeOfFP.y, sizeOfFP.z / 2 + 1);
+        }
+
+        enum Direction {
+            RtoC, CtoR
+        };
+    }
 
 
-    class FourierTransformGrid {
-
+    class FourierTransformField {
 #ifdef __USE_FFT__
         Int3 size;
-        fftw_plan plans[2][3][3];  // RtoC/CtoR, field, coordinate
-        ScalarField<FP>* realFields[3][3];
-        ScalarField<complexFP>* complexFields[3][3];
+        fftw_plan plans[2];  // RtoC/CtoR
+        ScalarField<FP>* realField;
+        ScalarField<complexFP>* complexField;
 #endif
 
     public:
 
 #ifdef __USE_FFT__
-        FourierTransformGrid()
+        FourierTransformField()
         {
-            for (int f = 0; f < 3; f++)
-                for (int d = 0; d < 3; d++) {
-                    plans[FourierTransformDirection::RtoC][f][d] = 0;
-                    plans[FourierTransformDirection::CtoR][f][d] = 0;
-                }
+            plans[fourier_transform::Direction::RtoC] = 0;
+            plans[fourier_transform::Direction::CtoR] = 0;
         }
 
-        template<GridTypes gridType>
-        void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP)
+        void initialize(ScalarField<FP>* _realField, ScalarField<complexFP>* _complexField, Int3 _size)
         {
-            size = gridFP->numCells;
-
-            realFields[E][x] = &(gridFP->Ex), realFields[E][y] = &(gridFP->Ey), realFields[E][z] = &(gridFP->Ez);
-            realFields[B][x] = &(gridFP->Bx), realFields[B][y] = &(gridFP->By), realFields[B][z] = &(gridFP->Bz);
-            realFields[J][x] = &(gridFP->Jx), realFields[J][y] = &(gridFP->Jy), realFields[J][z] = &(gridFP->Jz);
-
-            complexFields[E][x] = &(gridCFP->Ex), complexFields[E][y] = &(gridCFP->Ey), complexFields[E][z] = &(gridCFP->Ez);
-            complexFields[B][x] = &(gridCFP->Bx), complexFields[B][y] = &(gridCFP->By), complexFields[B][z] = &(gridCFP->Bz);
-            complexFields[J][x] = &(gridCFP->Jx), complexFields[J][y] = &(gridCFP->Jy), complexFields[J][z] = &(gridCFP->Jz);
-
+            size = _size;
+            realField = _realField;
+            complexField = _complexField;
             createPlans();
         }
 
-        ~FourierTransformGrid() {
+        ~FourierTransformField() {
             destroyPlans();
         }
 
-        void doDirectFourierTransform(Field field, Coordinate coord)
+        void doDirectFourierTransform()
         {
-            fftw_execute(plans[FourierTransformDirection::RtoC][field][coord]);
+            fftw_execute(plans[fourier_transform::Direction::RtoC]);
         }
 
-        void doInverseFourierTransform(Field field, Coordinate coord)
+        void doInverseFourierTransform()
         {
-            fftw_execute(plans[FourierTransformDirection::CtoR][field][coord]);
-            ScalarField<FP>& res = *realFields[field][coord];
+            fftw_execute(plans[fourier_transform::Direction::CtoR]);
+            ScalarField<FP>& res = *realField;
 #pragma omp parallel for
             for (int i = 0; i < size.x; i++)
                 for (int j = 0; j < size.y; j++)
-//#pragma omp simd
+                    //#pragma omp simd
                     for (int k = 0; k < size.z; k++)
                         res(i, j, k) /= (FP)size.x*size.y*size.z;
         }
 
 #else
-        FourierTransformGrid() {}
-        template<GridTypes gridType>
-        FourierTransformGrid(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {}
-        
-        template<GridTypes gridType>
-        void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {}
+        FourierTransformField() {}
 
-        void doDirectFourierTransform(Field field, Coordinate coord) {}
-        void doInverseFourierTransform(Field field, Coordinate coord) {}
+        void initialize(ScalarField<FP>* _realField, ScalarField<complexFP>* _complexField, Int3 _size) {}
+
+        void doDirectFourierTransform() {}
+        void doInverseFourierTransform() {}
+
+        ~FourierTransformField() {}
 #endif
 
-        void doFourierTransform(Field field, Coordinate coord,
-            FourierTransformDirection direction)
+        FourierTransformField(ScalarField<FP>* _realField, ScalarField<complexFP>* _complexField, Int3 _size) {
+            initialize(_realField, _complexField, _size);
+        }
+
+        void doFourierTransform(fourier_transform::Direction direction)
         {
             switch (direction) {
-            case RtoC:
-                doDirectFourierTransform(field, coord);
+            case fourier_transform::Direction::RtoC:
+                doDirectFourierTransform();
                 break;
-            case CtoR:
-                doInverseFourierTransform(field, coord);
+            case fourier_transform::Direction::CtoR:
+                doInverseFourierTransform();
                 break;
             default:
                 break;
@@ -108,99 +105,69 @@ namespace pfc
         {
             int Nx = size.x, Ny = size.y, Nz = size.z;
 
-            for (int f = 0; f < 3; f++)
-                for (int d = 0; d < 3; d++) {
-                    ScalarField<FP>& arrD = *(realFields[f][d]);
-                    ScalarField<complexFP>& arrC = *(complexFields[f][d]);
+            ScalarField<FP>& arrD = *(realField);
+            ScalarField<complexFP>& arrC = *(complexField);
 
 #ifdef __USE_OMP__
-                    fftw_plan_with_nthreads(omp_get_max_threads());
+            fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
-                    plans[FourierTransformDirection::RtoC][f][d] = fftw_plan_dft_r2c_3d(Nx, Ny, Nz,
-                        &(arrD(0, 0, 0)), (fftw_complex*)&(arrC(0, 0, 0)), FFTW_ESTIMATE);
+            plans[fourier_transform::Direction::RtoC] = fftw_plan_dft_r2c_3d(Nx, Ny, Nz,
+                &(arrD(0, 0, 0)), (fftw_complex*)&(arrC(0, 0, 0)), FFTW_ESTIMATE);
 #ifdef __USE_OMP__
-                    fftw_plan_with_nthreads(omp_get_max_threads());
+            fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
-                    plans[FourierTransformDirection::CtoR][f][d] = fftw_plan_dft_c2r_3d(Nx, Ny, Nz,
-                        (fftw_complex*)&(arrC(0, 0, 0)), &(arrD(0, 0, 0)), FFTW_ESTIMATE);
-                }
+            plans[fourier_transform::Direction::CtoR] = fftw_plan_dft_c2r_3d(Nx, Ny, Nz,
+                (fftw_complex*)&(arrC(0, 0, 0)), &(arrD(0, 0, 0)), FFTW_ESTIMATE);
         }
 
         void destroyPlans()
         {
-            for (int f = 0; f < 3; f++)
-                for (int d = 0; d < 3; d++) {
-                    if (plans[FourierTransformDirection::RtoC][f][d] != 0)
-                        fftw_destroy_plan(plans[FourierTransformDirection::RtoC][f][d]);
-                    if (plans[FourierTransformDirection::CtoR][f][d] != 0)
-                        fftw_destroy_plan(plans[FourierTransformDirection::CtoR][f][d]);
-                }
+            if (plans[fourier_transform::Direction::RtoC] != 0)
+                fftw_destroy_plan(plans[fourier_transform::Direction::RtoC]);
+            if (plans[fourier_transform::Direction::CtoR] != 0)
+                fftw_destroy_plan(plans[fourier_transform::Direction::CtoR]);
         }
 #endif
-
     };
 
 
-    class FourierTransform {
+    class FourierTransformGrid {
+
+        FourierTransformField transform[3][3];  // field, coordinate
 
     public:
 
-#ifdef __USE_FFT__
+        FourierTransformGrid() {}
         
-        static void doDirectFourierTransform(ScalarField<FP>& data, ScalarField<complexFP>& result)
-        {
-            fftw_plan plan = 0;
-#ifdef __USE_OMP__
-            fftw_plan_with_nthreads(omp_get_max_threads());
-#endif
-            plan = fftw_plan_dft_r2c_3d(data.getSize().x, data.getSize().y, data.getSize().z,
-                (FP*)&(data(0, 0, 0)), (fftw_complex*)&(result(0, 0, 0)), FFTW_ESTIMATE);
-            fftw_execute(plan);
-            fftw_destroy_plan(plan);
+        template<GridTypes gridType>
+        void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {
+            transform[Field::E][Coordinate::x].initialize(&gridFP->Ex, &gridCFP->Ex, gridFP->numCells);
+            transform[Field::E][Coordinate::y].initialize(&gridFP->Ey, &gridCFP->Ey, gridFP->numCells);
+            transform[Field::E][Coordinate::z].initialize(&gridFP->Ez, &gridCFP->Ez, gridFP->numCells);
+
+            transform[Field::B][Coordinate::x].initialize(&gridFP->Bx, &gridCFP->Bx, gridFP->numCells);
+            transform[Field::B][Coordinate::y].initialize(&gridFP->By, &gridCFP->By, gridFP->numCells);
+            transform[Field::B][Coordinate::z].initialize(&gridFP->Bz, &gridCFP->Bz, gridFP->numCells);
+
+            transform[Field::J][Coordinate::x].initialize(&gridFP->Jx, &gridCFP->Jx, gridFP->numCells);
+            transform[Field::J][Coordinate::y].initialize(&gridFP->Jy, &gridCFP->Jy, gridFP->numCells);
+            transform[Field::J][Coordinate::z].initialize(&gridFP->Jz, &gridCFP->Jz, gridFP->numCells);
         }
 
-        static void doInverseFourierTransform(ScalarField<complexFP>& data, ScalarField<FP>& result)
-        {
-            fftw_plan plan = 0;
-#ifdef __USE_OMP__
-            fftw_plan_with_nthreads(omp_get_max_threads());
-#endif
-            plan = fftw_plan_dft_c2r_3d(result.getSize().x, result.getSize().y, result.getSize().z,
-                (fftw_complex*)&(data(0, 0, 0)), (FP*)&(result(0, 0, 0)), FFTW_ESTIMATE);
-            fftw_execute(plan);
-            fftw_destroy_plan(plan);
-
-#pragma omp parallel for
-            for (int i = 0; i < result.getSize().x; i++)
-                for (int j = 0; j < result.getSize().y; j++)
-                    //#pragma omp simd
-                    for (int k = 0; k < result.getSize().z; k++)
-                        result(i, j, k) /= (FP)result.getSize().x*result.getSize().y*result.getSize().z;
-        }
-#else
-        static void doDirectFourierTransform(ScalarField<FP>& data, ScalarField<complexFP>& result) {}
-        static void doInverseFourierTransform(ScalarField<complexFP>& data, ScalarField<FP>& result) {}
-#endif
-
-        static void doFourierTransform(ScalarField<FP>& field1, ScalarField<complexFP>& field2,
-            FourierTransformDirection direction)
-        {
-            switch (direction) {
-            case RtoC:
-                doDirectFourierTransform(field1, field2);
-                break;
-            case CtoR:
-                doInverseFourierTransform(field2, field1);
-                break;
-            default:
-                break;
-            }
+        void doDirectFourierTransform(Field field, Coordinate coord) {
+            transform[field][coord].doDirectFourierTransform();
         }
 
-        static Int3 getSizeOfComplex(const Int3& sizeOfFP)
+        void doInverseFourierTransform(Field field, Coordinate coord) {
+            transform[field][coord].doInverseFourierTransform();
+        }
+
+        void doFourierTransform(Field field, Coordinate coord,
+            fourier_transform::Direction direction)
         {
-            return Int3(sizeOfFP.x, sizeOfFP.y, sizeOfFP.z / 2 + 1);
+            transform[field][coord].doFourierTransform(direction);
         }
 
     };
+
 }

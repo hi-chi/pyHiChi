@@ -1,3 +1,5 @@
+import sys
+sys.path.append("../bin/")
 import pyHiChi as pfc
 import numpy as np
 import math as ma
@@ -25,15 +27,8 @@ def valueBy(x, y, z):
 def valueBz(x, y, z):
     Bz = 0
     return Bz
-
-def step(minCoords, maxCoords, gridSize):
-    steps = pfc.vector3d(1, 1, 1)
-    steps.x = (maxCoords.x - minCoords.x)/(gridSize.x)
-    steps.y = (maxCoords.y - minCoords.y)/(gridSize.y)
-    steps.z = (maxCoords.z - minCoords.z)/(gridSize.z)
-    return steps
     
-stepsGrid = step(minCoords, maxCoords, gridSize)
+stepsGrid = (maxCoords - minCoords)/gridSize
 timeStep = 1e-12
 
 grid = pfc.PSTDGrid(gridSize, timeStep, minCoords, stepsGrid)

@@ -404,37 +404,39 @@ struct Vector3
     Vector3(Vector2<T> v) :
         x(v.x), y(v.y), z(0) {}
 
-    inline T operator[](int idx) const
+    __forceinline T operator[](int idx) const
     {
         return *((T*)this + idx);
     }
 
-    inline T& operator[](int idx)
+    __forceinline T& operator[](int idx)
     {
         return *((T*)this + idx);
     }
 
-    inline T volume() const
+    __forceinline T volume() const
     {
         return x * y * z;
     }
 
-    inline T norm() const
+    __forceinline T norm() const
     {
         return sqrt(x * x + y * y + z * z);
     }
 
-    inline T norm2() const
+    __forceinline T norm2() const
     {
         return x * x + y * y + z * z;
     }
 
-    inline void normalize()
+    __forceinline void normalize()
     {
         T no = norm();
-        x /= no;
-        y /= no;
-        z /= no;
+        if (no != 0) {
+            x /= no;
+            y /= no;
+            z /= no;
+        }
     }
 
     inline std::string toString()
@@ -446,13 +448,13 @@ struct Vector3
 };
 
 template<typename T>
-inline const Vector3<T> operator + (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline const Vector3<T> operator + (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return Vector3<T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
 }
 
 template<typename T>
-inline Vector3<T>& operator += (Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline Vector3<T>& operator += (Vector3<T>& v1, const Vector3<T>& v2)
 {
     v1.x += v2.x;
     v1.y += v2.y;
@@ -461,13 +463,19 @@ inline Vector3<T>& operator += (Vector3<T>& v1, const Vector3<T>& v2)
 }
 
 template<typename T>
-inline const Vector3<T> operator - (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline const Vector3<T> operator - (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return Vector3<T>(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
 }
 
 template<typename T>
-inline Vector3<T>& operator -= (Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline const Vector3<T> operator - (const Vector3<T>& v1)
+{
+    return Vector3<T>(-v1.x, -v1.y, -v1.z);
+}
+
+template<typename T>
+__forceinline Vector3<T>& operator -= (Vector3<T>& v1, const Vector3<T>& v2)
 {
     v1.x -= v2.x;
     v1.y -= v2.y;
@@ -476,13 +484,13 @@ inline Vector3<T>& operator -= (Vector3<T>& v1, const Vector3<T>& v2)
 }
 
 template<typename T>
-inline const Vector3<T> operator * (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline const Vector3<T> operator * (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return Vector3<T>(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
 }
 
 template<typename T>
-inline Vector3<T>& operator *= (Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline Vector3<T>& operator *= (Vector3<T>& v1, const Vector3<T>& v2)
 {
     v1.x *= v2.x;
     v1.y *= v2.y;
@@ -491,19 +499,19 @@ inline Vector3<T>& operator *= (Vector3<T>& v1, const Vector3<T>& v2)
 }
 
 template<typename T>
-inline const Vector3<T> operator * (const Vector3<T>& v, T a)
+__forceinline const Vector3<T> operator * (const Vector3<T>& v, T a)
 {
     return Vector3<T>(v.x * a, v.y * a, v.z * a);
 }
 
 template<typename T>
-inline const Vector3<T> operator * (T a, const Vector3<T>& v2)
+__forceinline const Vector3<T> operator * (T a, const Vector3<T>& v2)
 {
     return Vector3<T>(a * v2.x, a * v2.y, a * v2.z);
 }
 
 template<typename T>
-inline Vector3<T>& operator *= (Vector3<T>& v, T a)
+__forceinline Vector3<T>& operator *= (Vector3<T>& v, T a)
 {
     v.x *= a;
     v.y *= a;
@@ -512,13 +520,13 @@ inline Vector3<T>& operator *= (Vector3<T>& v, T a)
 }
 
 template<typename T>
-inline const Vector3<T> operator / (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline const Vector3<T> operator / (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return Vector3<T>(v1.x / v2.x, v1.y / v2.y, v1.z / v2.z);
 }
 
 template<typename T>
-inline Vector3<T>& operator /= (Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline Vector3<T>& operator /= (Vector3<T>& v1, const Vector3<T>& v2)
 {
     v1.x /= v2.x;
     v1.y /= v2.y;
@@ -527,13 +535,13 @@ inline Vector3<T>& operator /= (Vector3<T>& v1, const Vector3<T>& v2)
 }
 
 template<typename T>
-inline const Vector3<T> operator / (const Vector3<T>& v, T a)
+__forceinline const Vector3<T> operator / (const Vector3<T>& v, T a)
 {
     return Vector3<T>(v.x / a, v.y / a, v.z / a);
 }
 
 template<typename T>
-inline Vector3<T>& operator /= (Vector3<T>& v, T a)
+__forceinline Vector3<T>& operator /= (Vector3<T>& v, T a)
 {
     v.x /= a;
     v.y /= a;
@@ -542,37 +550,37 @@ inline Vector3<T>& operator /= (Vector3<T>& v, T a)
 }
 
 template<typename T>
-inline bool operator == (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline bool operator == (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return (v1.x == v2.x) && (v1.y == v2.y) && (v1.z == v2.z);
 }
 
 template<typename T>
-inline bool operator != (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline bool operator != (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return (v1.x != v2.x) || (v1.y != v2.y) || (v1.z != v2.z);
 }
 
 template<typename T>
-inline bool operator < (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline bool operator < (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return (v1.x < v2.x) && (v1.y < v2.y) && (v1.z < v2.z);
 }
 
 template<typename T>
-inline bool operator <= (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline bool operator <= (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return (v1.x <= v2.x) && (v1.y <= v2.y) && (v1.z <= v2.z);
 }
 
 template<typename T>
-inline bool operator > (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline bool operator > (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return (v1.x > v2.x) && (v1.y > v2.y) && (v1.z > v2.z);
 }
 
 template<typename T>
-inline bool operator >= (const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline bool operator >= (const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return (v1.x >= v2.x) && (v1.y >= v2.y) && (v1.z >= v2.z);
 }
@@ -584,13 +592,13 @@ inline std::ostream& operator<<(std::ostream& out, const Vector3<T>& v)
 }
 
 template<typename T>
-inline T dot(const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline T dot(const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
 template<typename T>
-inline const Vector3<T> cross(const Vector3<T>& v1, const Vector3<T>& v2)
+__forceinline const Vector3<T> cross(const Vector3<T>& v1, const Vector3<T>& v2)
 {
     return Vector3<T>(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
         v1.x * v2.y - v1.y * v2.x);
@@ -801,7 +809,12 @@ inline FP SP(const FP3& v1, const FP3& v2)
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
-inline const FP3 cross(const FP3& v1, const FP3& v2)
+__forceinline FP dot(const FP3& v1, const FP3& v2)
+{
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+__forceinline FP3 cross(const FP3& v1, const FP3& v2)
 {
     return FP3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z,
         v1.x * v2.y - v1.y * v2.x);
