@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "Grid.h"
+#include "FieldValue.h"
 #include "Mapping.h"
 
 #include "pybind11/pybind11.h"

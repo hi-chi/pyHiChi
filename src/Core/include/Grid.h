@@ -1,5 +1,7 @@
 #pragma once
 
+#include "macros.h"
+
 #include "GridTypes.h"
 #include "ScalarField.h"
 #include "Vectors.h"
@@ -33,39 +35,39 @@ namespace pfc {
         // copy constructor, can make shallow copies
         Grid(const Grid& grid, bool ifShallowCopy = false);
 
-        __forceinline const FP3 BxPosition(int x, int y, int z) const
+        forceinline const FP3 BxPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftBx;
         }
-        __forceinline const FP3 ByPosition(int x, int y, int z) const
+        forceinline const FP3 ByPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftBy;
         }
-        __forceinline const FP3 BzPosition(int x, int y, int z) const
+        forceinline const FP3 BzPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftBz;
         }
-        __forceinline const FP3 ExPosition(int x, int y, int z) const
+        forceinline const FP3 ExPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJx;
         }
-        __forceinline const FP3 EyPosition(int x, int y, int z) const
+        forceinline const FP3 EyPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJy;
         }
-        __forceinline const FP3 EzPosition(int x, int y, int z) const
+        forceinline const FP3 EzPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJz;
         }
-        __forceinline const FP3 JxPosition(int x, int y, int z) const
+        forceinline const FP3 JxPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJx;
         }
-        __forceinline const FP3 JyPosition(int x, int y, int z) const
+        forceinline const FP3 JyPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJy;
         }
-        __forceinline const FP3 JzPosition(int x, int y, int z) const
+        forceinline const FP3 JzPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJz;
         }
@@ -336,13 +338,13 @@ namespace pfc {
 
         /* Get base coords of element (i, j, k) so that its real coords are
         base coords + corresponding shift. */
-        __forceinline const FP3 baseCoords(int i, int j, int k) const
+        forceinline const FP3 baseCoords(int i, int j, int k) const
         {
             return origin + FP3(i, j, k) * steps;
         }
 
         // if coords is inside of the area that grid defines
-        __forceinline bool isInside(const FP3 & coords, const FP3 & shift) const
+        forceinline bool isInside(const FP3 & coords, const FP3 & shift) const
         {
             FP3 minCoords = origin + shift * steps;
             FP3 maxCoords = minCoords + (numCells - Int3(1, 1, 1)) * steps;

@@ -1,4 +1,7 @@
 #pragma once
+
+#include "macros.h"
+
 #include "Vectors.h"
 
 namespace pfc {
@@ -16,12 +19,12 @@ namespace pfc {
     class FieldConfiguration<FieldConfigurationType::NullFieldConfigurationType> {
     public:
 
-        __forceinline FP3 getE(FP x, FP y, FP z) const { return FP3(); }
-        __forceinline FP3 getB(FP x, FP y, FP z) const { return FP3(); }
+        forceinline FP3 getE(FP x, FP y, FP z) const { return FP3(); }
+        forceinline FP3 getB(FP x, FP y, FP z) const { return FP3(); }
 
         // if E and B are computed in a similar way this function will work quicklier
         // than getE and getB separately
-        __forceinline void getEB(FP x, FP y, FP z, FP3* E, FP3* B) const {
+        forceinline void getEB(FP x, FP y, FP z, FP3* E, FP3* B) const {
             *E = FP3();
             *B = FP3();
         }
@@ -55,22 +58,22 @@ namespace pfc {
         {}
 
 
-        __forceinline FP sign(FP x) const {
+        forceinline FP sign(FP x) const {
             return (x >= 0 ? 1.0 : -1.0);
         }
 
-        __forceinline FP block(FP x, FP xmin, FP xmax) const {
+        forceinline FP block(FP x, FP xmin, FP xmax) const {
             return (sign(x - xmin) + sign(xmax - x))*0.5;
         }
 
-        __forceinline FP longitudinalFieldVariation(FP x_ct) const {
+        forceinline FP longitudinalFieldVariation(FP x_ct) const {
             FP cSin = sin(2.0 * constants::pi * x_ct / wavelength + phase);
             FP cCos = cos(constants::pi * x_ct / pulselength);
             FP cBlock = block(x_ct, -0.5*pulselength, 0.5*pulselength);
             return cSin * cCos * cCos * cBlock;
         }
 
-        __forceinline FP transverseShape(FP angle) const {
+        forceinline FP transverseShape(FP angle) const {
             FP a = openingAngle - edgeSmoothingAngle * 0.5, b = openingAngle + edgeSmoothingAngle * 0.5;
             FP cMainBlock = block(angle, -1.0, a);
             if (edgeSmoothingAngle == 0.0)
@@ -80,7 +83,7 @@ namespace pfc {
             return cMainBlock + cCos * cCos * cEdgeSmAngleBlock;
         }
         
-        __forceinline FP mask(FP x, FP y, FP z) const {
+        forceinline FP mask(FP x, FP y, FP z) const {
             FP R = sqrt(x * x + y * y + z * z);
             if (R > exclusionRadius) {
                 FP angle = asin(sqrt(y * y + z * z) / R);
@@ -90,20 +93,20 @@ namespace pfc {
         }
 
 
-        __forceinline FP3 getE(FP x, FP y, FP z) const {
+        forceinline FP3 getE(FP x, FP y, FP z) const {
             FP3 r(x, y, z);
             FP3 s1 = cross(this->polarisation, r);
             FP3 s0 = cross(r, s1);
             return s0.norm() != 0.0 ? (mask(x, y, z) / s0.norm()) * s0 : FP3(0.0, 0.0, 0.0);
         };
 
-        __forceinline FP3 getB(FP x, FP y, FP z) const {
+        forceinline FP3 getB(FP x, FP y, FP z) const {
             FP3 r(x, y, z);
             FP3 s1 = cross(this->polarisation, r);
             return s1.norm() != 0.0 ? (mask(x, y, z) / s1.norm()) * s1 : FP3(0.0, 0.0, 0.0);
         };
 
-        __forceinline void getEB(FP x, FP y, FP z, FP3* E, FP3* B) const {
+        forceinline void getEB(FP x, FP y, FP z, FP3* E, FP3* B) const {
             FP3 r(x, y, z);
             FP3 s1 = cross(this->polarisation, r);
             FP3 s0 = cross(r, s1);

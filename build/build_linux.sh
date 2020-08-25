@@ -14,8 +14,7 @@ CPU_VENDOR=$(grep -m 1 'vendor_id' /proc/cpuinfo | sed 's/^.*: //')
 NUM_CORES=$(grep processor /proc/cpuinfo | wc -l)
 CPU_FLAGS=$(grep flags /proc/cpuinfo | uniq)
 
-command_exists ()
-{
+command_exists () {
     type $1 > /dev/null 2>&1;
 }
 

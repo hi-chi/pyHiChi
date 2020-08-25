@@ -121,8 +121,11 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def_readwrite("y", &FP3::y)
         .def_readwrite("z", &FP3::z)
         ;
-    object.def("cross", cross);
-    object.def("dot", dot);
+
+    object.def("cross", (const Vector3<FP> (*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) cross);
+    object.def("cross", (FP3(*)(const FP3&, const FP3&)) cross);
+    object.def("dot", (FP(*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) dot);
+    object.def("dot", (FP(*)(const FP3&, const FP3&)) dot);
 
 
     py::class_<ParticleProxy3d>(object, "particleProxy")
