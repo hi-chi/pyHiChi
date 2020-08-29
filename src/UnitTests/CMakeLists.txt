@@ -8,6 +8,7 @@ include_directories(
     ../Modules/Particle/include
     ../Modules/Field/include
     ../Simulation/include
+    ../pyHiChi/include
     ${FFT_INCLUDES})
 
 add_executable(tests
@@ -38,12 +39,14 @@ add_executable(tests
 
 if (APPLE)
     target_link_libraries(tests
+        ${ADIOS2_LIBRARIES}
         -Wl,-all_load
         gtest
         ${FFT_LIBS}
         -Wl,-noall_load)
 elseif (UNIX)
     target_link_libraries(tests
+        ${ADIOS2_LIBRARIES}
         -Wl,-whole-archive
         gtest
         -Wl,--start-group ${FFT_LIBS} -Wl,--end-group
@@ -51,7 +54,8 @@ elseif (UNIX)
 else()
     target_link_libraries(tests
         gtest
-        ${FFT_LIBS})
+        ${FFT_LIBS}
+        ${ADIOS2_LIBRARIES})
 endif()
 
 set_target_properties(gtest PROPERTIES FOLDER UnitTests)
