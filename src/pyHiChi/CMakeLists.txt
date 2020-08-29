@@ -22,12 +22,15 @@ endif()
 
 set(pyHiChi_source
     include/pyGrid.h
+    include/DataManager.h
     src/pyHiChi.cpp)
 
 pybind11_add_module(pyHiChi ${pyHiChi_source})
 
+include_directories(${ADIOS2_INCLUDE_DIRS})
+
 if (UNIX)
-    target_link_libraries(pyHiChi PUBLIC -Wl,--start-group ${FFT_LIBS} -Wl,--end-group)
+    target_link_libraries(pyHiChi PUBLIC ${ADIOS2_LIBRARIES} -Wl,--start-group ${FFT_LIBS} -Wl,--end-group)
 else()
-    target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
+    target_link_libraries(pyHiChi PUBLIC ${ADIOS2_LIBRARIES} ${FFT_LIBS})
 endif()

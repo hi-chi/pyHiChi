@@ -7,6 +7,7 @@
 #include "pybind11/stl.h"
 
 #include "pyGrid.h"
+#include "DataManager.h"
 
 #include "Constants.h"
 #include "Dimension.h"
