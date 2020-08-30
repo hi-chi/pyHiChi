@@ -379,7 +379,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         
     py::class_<Simulation>(object, "Simulation")
         .def(py::init<pyYeeGrid&, unsigned int>())
-        .def("addModule", (void (Simulation::*)(FDTD*))&Simulation::addModule)
+        .def("addModule", (void (Simulation::*)(FDTD&))&Simulation::addModule)
         .def("run", &Simulation::run)
         ;
 

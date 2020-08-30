@@ -21,12 +21,13 @@ public:
     DataManager(std::string path, Mode mode = Mode::write, int it = 0): path(path), mode(mode), iteration(it)
     {
         adios2::ADIOS adios;
-        bpIO = adios.DeclareIO(path);
-		mode = Mode::read;
+        adios2::IO bpIO = adios.DeclareIO("path");
+        //bpIO.SetEngine("BP4");
+        mode = Mode::read;
     }
     void BeginIteration() //create new file
     {
-		PutVariable(path, path);
+        PutVariable(path, path);
     }
     void EndIteration() //close file
     {
