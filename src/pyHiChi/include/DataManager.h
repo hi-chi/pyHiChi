@@ -17,7 +17,7 @@ class DataManager
     Mode mode;
     adios2::IO bpIO;
 public:
-    DataManager() {}
+    //DataManager() {}
     DataManager(std::string path, Mode mode = Mode::write, int it = 0): path(path), mode(mode), iteration(it)
     {
         adios2::ADIOS adios;

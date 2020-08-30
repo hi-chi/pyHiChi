@@ -14,42 +14,38 @@ namespace pfc {
 
     class YeeGrid_Base : public Grid_Base
     {
-        YeeGrid *grid;
+        YeeGrid &grid;
     public:
         YeeGrid_Base(const Int3 & _numInternalCells, FP _dt, const FP3 & minCoords, const FP3 & _steps, const Int3 & globalGridDims) :
-                     grid(new YeeGrid(_numInternalCells, _dt, minCoords, _steps, globalGridDims)){ name = "YeeGrid"; }
-        YeeGrid_Base(YeeGrid *grid): grid(grid) { name = "YeeGrid"; }
+                     grid(YeeGrid(_numInternalCells, _dt, minCoords, _steps, globalGridDims)){ name = "YeeGrid"; }
+        YeeGrid_Base(YeeGrid &grid): grid(grid) { name = "YeeGrid"; }
         YeeGrid& getGrid()
-        {
-            return *grid;
-        }
-        void* getPGrid() override
         {
             return grid;
         }
-        ~YeeGrid_Base()
+        void* getPGrid() override
         {
-            delete grid;
+            return &grid;
         }
     };
 
     class SimpleGrid_Base : public Grid_Base
     {
-        SimpleGrid* grid;
+        SimpleGrid& grid;
     public:
         SimpleGrid_Base(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps, const Int3 & globalGridDims) :
-            grid(new SimpleGrid(_numInternalCells, _dt, minCoords, _steps, globalGridDims))
+            grid(SimpleGrid(_numInternalCells, _dt, minCoords, _steps, globalGridDims))
         {
             name = "SimpleGrid";
         }
         SimpleGrid& getGrid()
         {
-            return *grid;
+            return grid;
         }
         void* getPGrid() override
         {
-            return grid;
+            return &grid;
         }
     };
 
@@ -64,7 +60,6 @@ namespace pfc {
     {
         FDTD *fdtd;
         public:
-            FDTD_Module(Grid_Base* grid) : fdtd(new FDTD((YeeGrid*)(grid->getPGrid()))) { name = "FDTD_Module"; };
             FDTD_Module(YeeGrid_Base* grid) : fdtd(new FDTD(&grid->getGrid())) { name = "FDTD_Module"; };
             FDTD_Module(FDTD* fdtd) : fdtd(fdtd) { name = "FDTD_Module"; };
             void run() override
@@ -81,8 +76,7 @@ namespace pfc {
         const unsigned int numSteps;
         unsigned int currentStep = 0;
     public:
-        Simulation(Grid_Base *g, unsigned int numSteps): grid(g), numSteps(numSteps) {}
-        Simulation(YeeGrid *g, unsigned int numSteps) : grid(new YeeGrid_Base(g)), numSteps(numSteps) {}
+        Simulation(YeeGrid &g, unsigned int numSteps) : grid(new YeeGrid_Base(g)), numSteps(numSteps) {}
     
         void addModule(Module *module)
         {
