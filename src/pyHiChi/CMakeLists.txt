@@ -20,7 +20,7 @@ if (USE_OMP)
 endif()
 
 set(pyHiChi_source
-    include/pyGrid.h
+    include/pyField.h
     src/pyHiChi.cpp)
 
 pybind11_add_module(pyHiChi ${pyHiChi_source})

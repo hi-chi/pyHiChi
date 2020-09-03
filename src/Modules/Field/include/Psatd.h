@@ -14,7 +14,7 @@ namespace pfc {
     {
 
     public:
-        PSATDTimeStraggeredT(PSATDTimeStraggeredGrid * grid);
+        PSATDTimeStraggeredT(PSATDTimeStraggeredGrid * grid, FP dt);
 
         void updateFields();
 
@@ -22,6 +22,7 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setFieldGenerator(FieldGenerator<GridTypes::PSATDTimeStraggeredGridType> * _generator) {}
 
         void setTimeStep(FP dt);
 
@@ -40,8 +41,8 @@ namespace pfc {
     };
 
     template <bool ifPoisson>
-    inline PSATDTimeStraggeredT<ifPoisson>::PSATDTimeStraggeredT(PSATDTimeStraggeredGrid* _grid) :
-        SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>(_grid),
+    inline PSATDTimeStraggeredT<ifPoisson>::PSATDTimeStraggeredT(PSATDTimeStraggeredGrid* _grid, FP dt) :
+        SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>(_grid, dt, 0.0, 0.5*dt, 0.5*dt),
         tmpJx(complexGrid->sizeStorage),
         tmpJy(complexGrid->sizeStorage),
         tmpJz(complexGrid->sizeStorage)
@@ -60,10 +61,10 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::setTimeStep(FP dt)
     {
-        if (grid->setTimeStep(dt)) {
-            complexGrid->setTimeStep(dt);
-            if (pml.get()) pml.reset(new PmlPsatdTimeStraggered(this, pml->sizePML));
-        }
+        this->dt = dt;
+        this->timeShiftB = 0.5*dt;
+        this->timeShiftJ = 0.5*dt;
+        if (pml.get()) pml.reset(new PmlPsatdTimeStraggered(this, pml->sizePML));
     }
 
     template <bool ifPoisson>
@@ -105,8 +106,7 @@ namespace pfc {
 
         if (pml.get()) getPml()->doSecondStep();
 
-        grid->globalTime += grid->dt;
-        complexGrid->globalTime += grid->dt;
+        globalTime += dt;
     }
 
     template <bool ifPoisson>
@@ -114,7 +114,7 @@ namespace pfc {
         doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = grid->dt / 2;
+        double dt = dt / 2;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -147,7 +147,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = grid->dt*0.5;
+        double dt = 0.5 * this->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -183,7 +183,6 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
-        double dt = grid->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -223,7 +222,6 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
-        double dt = grid->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -263,13 +261,14 @@ namespace pfc {
     class PSATDT : public SpectralFieldSolver<PSATDGridType>
     {
     public:
-        PSATDT(PSATDGrid* grid);
+        PSATDT(PSATDGrid* grid, FP dt);
 
         void updateFields();
 
         virtual void updateEB();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setFieldGenerator(FieldGenerator<GridTypes::PSATDGridType> * _generator) {}
 
         void setTimeStep(FP dt);
 
@@ -284,8 +283,8 @@ namespace pfc {
     };
 
     template <bool ifPoisson>
-    inline PSATDT<ifPoisson>::PSATDT(PSATDGrid* _grid) :
-        SpectralFieldSolver<GridTypes::PSATDGridType>(_grid)
+    inline PSATDT<ifPoisson>::PSATDT(PSATDGrid* _grid, FP dt) :
+        SpectralFieldSolver<GridTypes::PSATDGridType>(_grid, dt, 0.0, 0.0, 0.5*dt)
     {
         updateDims();
         updateInternalDims();
@@ -301,10 +300,9 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::setTimeStep(FP dt)
     {
-        if (grid->setTimeStep(dt)) {
-            complexGrid->setTimeStep(dt);
-            if (pml.get()) pml.reset(new PmlPsatd(this, pml->sizePML));
-        }
+        this->dt = dt;
+        this->timeShiftJ = 0.5*dt;
+        if (pml.get()) pml.reset(new PmlPsatd(this, pml->sizePML));
     }
 
     template <bool ifPoisson>
@@ -330,8 +328,7 @@ namespace pfc {
 
         if (pml.get()) getPml()->doSecondStep();
 
-        grid->globalTime += grid->dt;
-        complexGrid->globalTime += grid->dt;
+        globalTime += dt;
 
         //std::string strRtoC = "Time RtoC: " + std::to_string(timeRtoC.count()) + "\n";
         //std::string strSolver = "Time PSATDT: " + std::to_string(timeSolver.count()) + "\n";
@@ -344,7 +341,6 @@ namespace pfc {
         doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = grid->dt / 2;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -377,7 +373,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = grid->dt / 2;
+        double dt = 0.5 * this->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -430,7 +426,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = grid->dt / 2;
+        double dt = 0.5 * this->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)

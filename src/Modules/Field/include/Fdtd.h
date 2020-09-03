@@ -13,7 +13,7 @@ namespace pfc {
     {
 
     public:
-        FDTD(YeeGrid* grid);
+        FDTD(YeeGrid* grid, FP dt);
 
         void updateFields();
 
@@ -39,8 +39,8 @@ namespace pfc {
 
     };
 
-    inline FDTD::FDTD(YeeGrid* grid) :
-        RealFieldSolver(grid)
+    inline FDTD::FDTD(YeeGrid* grid, FP dt) :
+        RealFieldSolver(grid, dt, 0.0, 0.5*dt, 0.0)
     {
         updateDims();
         pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));//pml.reset(new PmlFdtd(this));;
@@ -57,7 +57,12 @@ namespace pfc {
 
     inline void FDTD::setTimeStep(FP dt)
     {
-        if (grid->setTimeStep(dt)) {
+        double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
+            1.0 / (grid->steps.y*grid->steps.y) +
+            1.0 / (grid->steps.z*grid->steps.z));
+        if (dt <= 1.0 / (constants::c * tmp)) {  // Courant condition for FDTD
+            this->dt = dt;
+            this->timeShiftB = 0.5*dt;
             if (pml->sizePML == Int3(0, 0, 0))
                 pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));
             else pml.reset(new PmlFdtd(this, pml->sizePML));
@@ -117,7 +122,7 @@ namespace pfc {
         pml->updateE();
         generator->generateE();
         updateHalfB();
-        grid->globalTime += grid->dt;
+        globalTime += dt;
     }
 
     // Update grid values of magnetic field in FDTD.
@@ -142,7 +147,7 @@ namespace pfc {
                 grid->numCells[d] - pml->rightDims[d]);
         }
 
-        const FP cdt = constants::c * grid->dt * (FP)0.5;
+        const FP cdt = constants::c * dt * (FP)0.5;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
@@ -187,7 +192,7 @@ namespace pfc {
                 grid->numCells[d] - pml->rightDims[d]);
         }
 
-        const FP cdt = constants::c * grid->dt * (FP)0.5;
+        const FP cdt = constants::c * dt * (FP)0.5;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
@@ -226,7 +231,7 @@ namespace pfc {
                 grid->numCells[d] - pml->rightDims[d]);
         }
 
-        const FP cdt = constants::c * grid->dt * (FP)0.5;
+        const FP cdt = constants::c * dt * (FP)0.5;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
@@ -268,8 +273,8 @@ namespace pfc {
                 grid->numCells[d] - pml->rightDims[d]);
         }
 
-        const FP coeffCurrent = -(FP)4 * constants::pi * grid->dt;
-        const FP cdt = constants::c * grid->dt;
+        const FP coeffCurrent = -(FP)4 * constants::pi * dt;
+        const FP cdt = constants::c * dt;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
@@ -349,8 +354,8 @@ namespace pfc {
                 grid->numCells[d] - pml->rightDims[d]);
         }
 
-        const FP coeffCurrent = -(FP)4 * constants::pi * grid->dt;
-        const FP cdt = constants::c * grid->dt;
+        const FP coeffCurrent = -(FP)4 * constants::pi * dt;
+        const FP cdt = constants::c * dt;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
@@ -409,8 +414,8 @@ namespace pfc {
                 grid->numCells[d] - pml->rightDims[d]);
         }
 
-        const FP coeffCurrent = -(FP)4 * constants::pi * grid->dt;
-        const FP cdt = constants::c * grid->dt;
+        const FP coeffCurrent = -(FP)4 * constants::pi * dt;
+        const FP cdt = constants::c * dt;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 

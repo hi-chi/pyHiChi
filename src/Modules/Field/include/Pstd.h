@@ -10,7 +10,7 @@ namespace pfc {
     {
 
     public:
-        PSTD(PSTDGrid * grid);
+        PSTD(PSTDGrid * grid, double dt);
 
         void updateFields();
 
@@ -18,6 +18,7 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setFieldGenerator(FieldGenerator<GridTypes::PSTDGridType> * _generator) {}
 
         void setTimeStep(FP dt);
 
@@ -29,8 +30,8 @@ namespace pfc {
 
     };
 
-    inline PSTD::PSTD(PSTDGrid* grid) :
-        SpectralFieldSolver<GridTypes::PSTDGridType>(grid)
+    inline PSTD::PSTD(PSTDGrid* grid, double dt) :
+        SpectralFieldSolver<GridTypes::PSTDGridType>(grid, dt, 0.0, 0.5*dt, 0.5*dt)
     {
         updateDims();
         updateInternalDims();
@@ -44,8 +45,13 @@ namespace pfc {
 
     inline void PSTD::setTimeStep(FP dt)
     {
-        if (grid->setTimeStep(dt)) {
-            complexGrid->setTimeStep(dt);
+        double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
+            1.0 / (grid->steps.y*grid->steps.y) +
+            1.0 / (grid->steps.z*grid->steps.z));
+        if (dt <= 2.0 / (constants::pi * constants::c * tmp)) {  // Courant condition for PSTD
+            this->dt = dt;
+            this->timeShiftB = 0.5*dt;
+            this->timeShiftJ = 0.5*dt;
             if (pml.get()) pml.reset(new PmlPstd(this, pml->sizePML));
         }
     }
@@ -67,15 +73,14 @@ namespace pfc {
 
         if (pml.get()) getPml()->doSecondStep();
 
-        grid->globalTime += grid->dt;
-        complexGrid->globalTime += grid->dt;
+        globalTime += dt;
     }
 
     inline void PSTD::updateHalfB()
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = grid->dt / 2;
+        double dt = 0.5 * this->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -98,7 +103,6 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
-        double dt = grid->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)

@@ -2,6 +2,9 @@
 #include <memory>
 #include "Grid.h"
 #include "Mapping.h"
+#include "Fdtd.h"
+#include "Psatd.h"
+#include "Pstd.h"
 
 #include "pybind11/pybind11.h"
 
@@ -10,41 +13,59 @@ using namespace pybind11::literals;
 
 namespace pfc
 {
-    
-    enum pyGridTypes {
-        pyGridType,
-        pyGridMappingType
+
+    enum pyFieldTypes {
+        pyFieldType,
+        pyFieldMappingType
     };
 
-    template<class TypeGrid, class TDerived>
-    class pyGridAttributes : public TypeGrid
+    template<class TypeGrid, class TFieldSolver, class TDerived>
+    class pyFieldAttributes : public TypeGrid, public TFieldSolver
     {
     public:
 
-        pyGridAttributes(const Int3 & _numInternalCells, FP _dt,
+        pyFieldAttributes(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps) :
-            TypeGrid(Int3(_numInternalCells), _dt, minCoords, _steps, _numInternalCells)
+            TypeGrid(Int3(_numInternalCells), minCoords, _steps, _numInternalCells),
+            TFieldSolver(static_cast<TypeGrid*>(this), _dt)
         {
             static_assert(std::is_member_function_pointer<decltype(&TDerived::convertCoords)>::value,
-                "Wrong instance of pyGrid");
+                "Wrong instance of pyField");
             fEt[0] = 0; fEt[1] = 0; fEt[2] = 0;
             fBt[0] = 0; fBt[1] = 0; fBt[2] = 0;
             isAnalytical = false;
         }
 
-        // create shallow copy
-        pyGridAttributes(TypeGrid* grid) :
-            TypeGrid(*grid, true)
-        {
-            static_assert(std::is_member_function_pointer<decltype(&TDerived::convertCoords)>::value,
-                "Wrong instance of pyGrid");
-            fEt[0] = 0; fEt[1] = 0; fEt[2] = 0;
-            fBt[0] = 0; fBt[1] = 0; fBt[2] = 0;
-            isAnalytical = false;
+        //// create shallow copy
+        //pyFieldAttributes(GridType* grid, TFieldSolver* fieldSolver) :
+        //    TypeGrid(static_cast<TypeGrid>(field), true),  // 'true' means that a shallow copy will be made
+        //    TFieldSolver(static_cast<TypeGrid>(this), field->dt)
+        //{
+        //    static_assert(std::is_member_function_pointer<decltype(&TDerived::convertCoords)>::value,
+        //        "Wrong instance of pyField");
+        //    fEt[0] = 0; fEt[1] = 0; fEt[2] = 0;
+        //    fBt[0] = 0; fBt[1] = 0; fBt[2] = 0;
+        //    isAnalytical = false;
+        //}
+
+        void refresh() {
+            TFieldSolver::globalTime = 0.0;
         }
 
-        void setTime(FP time) { TypeGrid::globalTime = time; }
-        FP getTime() { return TypeGrid::globalTime; }
+        // ------------- field solver entity --------------
+
+        void setTime(FP time) { TFieldSolver::globalTime = time; }
+        FP getTime() { return TFieldSolver::globalTime; }
+
+        //using TFieldSolver::getB;
+        //using TFieldSolver::getE;
+
+        void advance(FP dt) {
+            TFieldSolver::setTimeStep(dt);
+            TFieldSolver::updateFields();
+        }
+
+        // ------------- grid entity (getters and setters) ----------------------
 
         void setAnalytical(int64_t _fEx, int64_t _fEy, int64_t _fEz, int64_t _fBx, int64_t _fBy, int64_t _fBz)
         {
@@ -61,9 +82,9 @@ namespace pfc
                 FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEt[0];
                 FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEt[1];
                 FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEt[2];
-                result[0] = fx(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftE);
-                result[1] = fy(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftE);
-                result[2] = fz(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftE);
+                result[0] = fx(coords.x, coords.y, coords.z, TFieldSolver::globalTime + TFieldSolver::timeShiftE);
+                result[1] = fy(coords.x, coords.y, coords.z, TFieldSolver::globalTime + TFieldSolver::timeShiftE);
+                result[2] = fz(coords.x, coords.y, coords.z, TFieldSolver::globalTime + TFieldSolver::timeShiftE);
             }
             else {
                 result = TypeGrid::getE(coords);
@@ -79,9 +100,9 @@ namespace pfc
                 FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBt[0];
                 FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBt[1];
                 FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBt[2];
-                result[0] = fx(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftB);
-                result[1] = fy(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftB);
-                result[2] = fz(coords.x, coords.y, coords.z, TypeGrid::globalTime + this->timeShiftB);
+                result[0] = fx(coords.x, coords.y, coords.z, TFieldSolver::globalTime + TFieldSolver::timeShiftB);
+                result[1] = fy(coords.x, coords.y, coords.z, TFieldSolver::globalTime + TFieldSolver::timeShiftB);
+                result[2] = fz(coords.x, coords.y, coords.z, TFieldSolver::globalTime + TFieldSolver::timeShiftB);
             }
             else {
                 result = TypeGrid::getB(coords);
@@ -392,30 +413,29 @@ namespace pfc
     };
 
 
-    template <class TypeGrid, class TDerived, bool ifSpatialStraggered>
-    class pySpatialStraggeredGridAttributes :
-        public pyGridAttributes<TypeGrid, TDerived> {};
+    template <class TypeGrid, class TFieldSolver, class TDerived, bool ifSpatialStraggered>
+    class pySpatialStraggeredFieldAttributes :
+        public pyFieldAttributes<TypeGrid, TFieldSolver, TDerived> {};
 
 
     // spatial straggered grids
-    template <class TypeGrid, class TDerived>
-    class pySpatialStraggeredGridAttributes<TypeGrid, TDerived, true> :
-        public pyGridAttributes<TypeGrid, TDerived>
+    template <class TypeGrid, class TFieldSolver, class TDerived>
+    class pySpatialStraggeredFieldAttributes<TypeGrid, TFieldSolver, TDerived, true> :
+        public pyFieldAttributes<TypeGrid, TFieldSolver, TDerived>
     {
-        using BaseClass = pyGridAttributes<TypeGrid, TDerived>;
+        using BaseClass = pyFieldAttributes<TypeGrid, TFieldSolver, TDerived>;
 
     public:
 
         using BaseClass::getB;
         using BaseClass::getE;
 
-        pySpatialStraggeredGridAttributes(const Int3 & _numInternalCells,
+        pySpatialStraggeredFieldAttributes(const Int3 & _numInternalCells,
             FP _dt, const FP3 & minCoords, const FP3 & _steps) :
-            BaseClass(_numInternalCells, _dt,
-                minCoords, _steps) {}
+            BaseClass(_numInternalCells, _dt, minCoords, _steps) {}
 
-        pySpatialStraggeredGridAttributes(TypeGrid* grid) :
-            BaseClass(grid) {}
+        /*pySpatialStraggeredFieldAttributes(pyFieldAttributes<TypeGrid, TFieldSolver, TDerived>* field) :
+            BaseClass(field) {}*/
 
         template <class FieldConfigurationType>
         void setFieldConfiguration(const FieldConfigurationType* fieldConf) {
@@ -458,23 +478,23 @@ namespace pfc
 
 
     // collocated grids
-    template <class TypeGrid, class TDerived>
-    class pySpatialStraggeredGridAttributes<TypeGrid, TDerived, false> :
-        public pyGridAttributes<TypeGrid, TDerived>
+    template <class TypeGrid, class TFieldSolver, class TDerived>
+    class pySpatialStraggeredFieldAttributes<TypeGrid, TFieldSolver, TDerived, false> :
+        public pyFieldAttributes<TypeGrid, TFieldSolver, TDerived>
     {
-        using BaseClass = pyGridAttributes<TypeGrid, TDerived>;
-        
+        using BaseClass = pyFieldAttributes<TypeGrid, TFieldSolver, TDerived>;
+
     public:
 
         using BaseClass::getB;
         using BaseClass::getE;
 
-        pySpatialStraggeredGridAttributes(const Int3 & _numInternalCells,
+        pySpatialStraggeredFieldAttributes(const Int3 & _numInternalCells,
             FP _dt, const FP3 & minCoords, const FP3 & _steps) :
             BaseClass(_numInternalCells, _dt, minCoords, _steps) {}
 
-        pySpatialStraggeredGridAttributes(TypeGrid* grid) :
-            BaseClass(grid) {}
+        /*pySpatialStraggeredFieldAttributes(pyFieldAttributes<TypeGrid, TFieldSolver, TDerived>* field) :
+            BaseClass(field) {}*/
 
         template <class FieldConfigurationType>
         void setFieldConfiguration(const FieldConfigurationType* fieldConf) {
@@ -572,16 +592,16 @@ namespace pfc
     };
 
 
-    template<class TypeGrid>
-    class pyGrid : public pySpatialStraggeredGridAttributes<TypeGrid, pyGrid<TypeGrid>,
-        TypeGrid::ifFieldsSpatialStraggered>
+    template<class TypeGrid, class TFieldSolver>
+    class pyField : public pySpatialStraggeredFieldAttributes<TypeGrid, TFieldSolver,
+        pyField<TypeGrid, TFieldSolver>, TypeGrid::ifFieldsSpatialStraggered>
     {
-        using BaseClass = pySpatialStraggeredGridAttributes<TypeGrid, pyGrid<TypeGrid>,
-            TypeGrid::ifFieldsSpatialStraggered>;
+        using BaseClass = pySpatialStraggeredFieldAttributes<TypeGrid, TFieldSolver,
+            pyField<TypeGrid, TFieldSolver>, TypeGrid::ifFieldsSpatialStraggered>;
 
     public:
 
-        pyGrid(const Int3 & _numInternalCells, FP _dt,
+        pyField(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps) :
             BaseClass(_numInternalCells, _dt, minCoords, _steps) {}
 
@@ -590,88 +610,93 @@ namespace pfc
         }
     };
 
-    typedef pyGrid<YeeGrid> pyYeeGrid;
-    typedef pyGrid<PSTDGrid> pyPSTDGrid;
-    typedef pyGrid<PSATDGrid> pyPSATDGrid;
-    typedef pyGrid<PSATDTimeStraggeredGrid> pyPSATDTimeStraggeredGrid;
+    typedef pyField<YeeGrid, FDTD> pyYeeField;
+    typedef pyField<PSTDGrid, PSTD> pyPSTDField;
+    typedef pyField<PSATDGrid, PSATD> pyPSATDField;
+    typedef pyField<PSATDGrid, PSATDPoisson> pyPSATDPoissonField;
+    typedef pyField<PSATDTimeStraggeredGrid, PSATDTimeStraggered> pyPSATDTimeStraggeredField;
+    typedef pyField<PSATDTimeStraggeredGrid, PSATDTimeStraggeredPoisson> pyPSATDTimeStraggeredPoissonField;
 
 
-    template<class TypeGrid>
-    class pyGridMapping : public pySpatialStraggeredGridAttributes<TypeGrid, pyGridMapping<TypeGrid>,
-        TypeGrid::ifFieldsSpatialStraggered>
-    {
-        using BaseClass = pySpatialStraggeredGridAttributes<TypeGrid, pyGridMapping<TypeGrid>,
-            TypeGrid::ifFieldsSpatialStraggered>;
+    //template<class TypeGrid, class TFieldSolver>
+    //class pyFieldMapping : public pySpatialStraggeredFieldAttributes<TypeGrid, TFieldSolver,
+    //    pyFieldMapping<TypeGrid, TFieldSolver>, TypeGrid::ifFieldsSpatialStraggered>
+    //{
+    //    using BaseClass = pySpatialStraggeredFieldAttributes<TypeGrid, TFieldSolver,
+    //        pyFieldMapping<TypeGrid, TFieldSolver>, TypeGrid::ifFieldsSpatialStraggered>;
 
-    public:
+    //public:
 
-        pyGridMapping(const Int3 & _numInternalCells, FP _dt,
-            const FP3 & minCoords, const FP3 & _steps) :
-            BaseClass(_numInternalCells, _dt, minCoords, _steps) {}
+    //    pyFieldMapping(const Int3 & _numInternalCells, FP _dt,
+    //        const FP3 & minCoords, const FP3 & _steps) :
+    //        BaseClass(_numInternalCells, _dt, minCoords, _steps) {}
 
-        // create shallow copy of grid
-        pyGridMapping(pyGrid<TypeGrid>* grid) :
-            BaseClass(static_cast<TypeGrid*>(grid)) {}
+    //    //// create shallow copy of grid
+    //    //pyFieldMapping(pyField<TypeGrid, TFieldSolver>* field) :
+    //    //    BaseClass(static_cast<TypeGrid*>(field), field->dt) {}
 
-        FP3 getE(const FP3& coords) const {
-            bool status = false;
-            FP3 inverseCoords = getInverseCoords(coords, &status);
-            if (!status)
-                return FP3(0, 0, 0);
-            return BaseClass::getE(inverseCoords);
-        }
+    //    FP3 getE(const FP3& coords) const {
+    //        bool status = false;
+    //        FP3 inverseCoords = getInverseCoords(coords, &status);
+    //        if (!status)
+    //            return FP3(0, 0, 0);
+    //        return BaseClass::getE(inverseCoords);
+    //    }
 
-        FP3 getB(const FP3& coords) const {
-            bool status = false;
-            FP3 inverseCoords = getInverseCoords(coords, &status);
-            if (!status)
-                return FP3(0, 0, 0);
-            return BaseClass::getB(inverseCoords);
-        }
+    //    FP3 getB(const FP3& coords) const {
+    //        bool status = false;
+    //        FP3 inverseCoords = getInverseCoords(coords, &status);
+    //        if (!status)
+    //            return FP3(0, 0, 0);
+    //        return BaseClass::getB(inverseCoords);
+    //    }
 
-        void setMapping(Mapping* mapping) {
-            mappings.push_back(std::unique_ptr<Mapping>(mapping->createInstance()));
-        }
+    //    void setMapping(Mapping* mapping) {
+    //        mappings.push_back(std::unique_ptr<Mapping>(mapping->createInstance()));
+    //    }
 
-        void popMapping() {
-            mappings.pop_back();
-        }
+    //    void popMapping() {
+    //        mappings.pop_back();
+    //    }
 
-        inline FP3 convertCoords(const FP3& coords) const {
-            bool status = true;
-            return getDirectCoords(coords, &status);
-        }
+    //    inline FP3 convertCoords(const FP3& coords) const {
+    //        bool status = true;
+    //        return getDirectCoords(coords, &status);
+    //    }
 
-    private:
+    //private:
 
-        std::vector<std::unique_ptr<Mapping>> mappings;
+    //    std::vector<std::unique_ptr<Mapping>> mappings;
 
-        inline FP3 getDirectCoords(const FP3& coords, bool* status) const {
-            FP3 coords_ = coords;
-            bool status_ = true;
-            *status = true;
-            for (size_t i = 0; i < mappings.size(); i++) {
-                coords_ = mappings[i]->getDirectCoords(coords_, TypeGrid::globalTime, &status_);
-                *status = (*status) && status_;
-            }
-            return coords_;
-        }
+    //    inline FP3 getDirectCoords(const FP3& coords, bool* status) const {
+    //        FP3 coords_ = coords;
+    //        bool status_ = true;
+    //        *status = true;
+    //        for (size_t i = 0; i < mappings.size(); i++) {
+    //            coords_ = mappings[i]->getDirectCoords(coords_, TFieldSolver::globalTime, &status_);
+    //            *status = (*status) && status_;
+    //        }
+    //        return coords_;
+    //    }
 
-        inline FP3 getInverseCoords(const FP3& coords, bool* status) const {
-            FP3 coords_ = coords;
-            bool status_ = true;
-            *status = true;
-            for (size_t i = mappings.size(); i >= 1; i--) {
-                coords_ = mappings[i - 1]->getInverseCoords(coords_, TypeGrid::globalTime, &status_);
-                *status = (*status) && status_;
-            }
-            return coords_;
-        }
+    //    inline FP3 getInverseCoords(const FP3& coords, bool* status) const {
+    //        FP3 coords_ = coords;
+    //        bool status_ = true;
+    //        *status = true;
+    //        for (size_t i = mappings.size(); i >= 1; i--) {
+    //            coords_ = mappings[i - 1]->getInverseCoords(coords_, TFieldSolver::globalTime, &status_);
+    //            *status = (*status) && status_;
+    //        }
+    //        return coords_;
+    //    }
 
-    };
+    //};
 
-    typedef pyGridMapping<YeeGrid> pyYeeGridMapping;
-    typedef pyGridMapping<PSTDGrid> pyPSTDGridMapping;
-    typedef pyGridMapping<PSATDGrid> pyPSATDGridMapping;
-    typedef pyGridMapping<PSATDTimeStraggeredGrid> pyPSATDTimeStraggeredGridMapping;
+    //typedef pyFieldMapping<YeeGrid, FDTD> pyYeeFieldMapping;
+    //typedef pyFieldMapping<PSTDGrid, PSTD> pyPSTDFieldMapping;
+    //typedef pyFieldMapping<PSATDGrid, PSATD> pyPSATDFieldMapping;
+    //typedef pyFieldMapping<PSATDGrid, PSATDPoisson> pyPSATDPoissonFieldMapping;
+    //typedef pyFieldMapping<PSATDTimeStraggeredGrid, PSATDTimeStraggered> pyPSATDTimeStraggeredFieldMapping;
+    //typedef pyFieldMapping<PSATDTimeStraggeredGrid, PSATDTimeStraggeredPoisson> pyPSATDTimeStraggeredPoissonFieldMapping;
+
 }

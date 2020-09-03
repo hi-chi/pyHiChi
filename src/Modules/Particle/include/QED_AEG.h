@@ -44,7 +44,7 @@ public:
 
     }
 
-    void processParticlesNIter(Ensemble3d* particles, pyYeeGrid* grid, FP timeStep, FP startTime, int N)
+    void processParticlesNIter(Ensemble3d* particles, pyYeeField* grid, FP timeStep, FP startTime, int N)
     {
         for (int i = 0; i < N; i++)
         {
@@ -53,7 +53,7 @@ public:
         }
     }
 
-    void processParticles(Ensemble3d* particles, pyYeeGrid* grid, FP timeStep)
+    void processParticles(Ensemble3d* particles, pyYeeField* grid, FP timeStep)
     {
         int max_threads;
 #ifdef __USE_OMP__

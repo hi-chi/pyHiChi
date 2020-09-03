@@ -242,7 +242,7 @@ namespace pfc {
     void PmlReal<gridTypes>::computeCoeffs()
     {
         Grid<FP, gridTypes> * grid = this->fieldSolver->grid;
-        FP cdt = constants::c * grid->dt;
+        FP cdt = constants::c * fieldSolver->dt;
         const FP threshold = (FP)1e-8;
         coeffEa.resize(numNodes);
         coeffEb.resize(numNodes);
@@ -282,7 +282,7 @@ namespace pfc {
             for (int d = 0; d < 3; d++)
                 if (coeffEa[idx][d] < coeffJ[idx])
                     coeffJ[idx] = coeffEa[idx][d];
-            coeffJ[idx] *= -(FP)4 * constants::pi * grid->dt / (FP)2;
+            coeffJ[idx] *= -(FP)4 * constants::pi * fieldSolver->dt / (FP)2;
             // divide over 2 because of half fields
         }
 
@@ -413,9 +413,9 @@ namespace pfc {
             FP3 coords = grid->ExPosition(i, j, k);
             FP3 sigma = this->computeSigma(coords);
 
-            coeff[idx].x = exp(-sigma.x * grid->dt);
-            coeff[idx].y = exp(-sigma.y * grid->dt);
-            coeff[idx].z = exp(-sigma.z * grid->dt);
+            coeff[idx].x = exp(-sigma.x * fieldSolver->dt);
+            coeff[idx].y = exp(-sigma.y * fieldSolver->dt);
+            coeff[idx].z = exp(-sigma.z * fieldSolver->dt);
         }
     }
     
