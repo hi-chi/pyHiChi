@@ -411,12 +411,13 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
         .def(py::init<FP, FP, FP>())
+        .def(py::init<FP, FP, FP, Coordinate>())
         .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         .def("getInverseCoords", &TightFocusingMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getxMin", &TightFocusingMapping::getxMin)
-        .def("getxMax", &TightFocusingMapping::getxMax)
+        .def("getMinCoord", &TightFocusingMapping::getMinCoord)
+        .def("getMaxCoord", &TightFocusingMapping::getMaxCoord)
         .def("setIfCut", &TightFocusingMapping::setIfCut)
         ;
 

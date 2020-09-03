@@ -214,9 +214,9 @@ namespace pfc {
 
     public:
 
-        TightFocusingMapping(FP R0, FP L, FP D) :
-            PeriodicalMapping(Coordinate::x, -R0 - D + 0.5*L, -R0 + 0.5*L),
-            xL(-R0 - 0.5*L), ifCut(true) {}
+        TightFocusingMapping(FP R0, FP L, FP D, Coordinate axis = Coordinate::x) :
+            PeriodicalMapping(axis, -R0 - D + 0.5*L, -R0 + 0.5*L),
+            Rmax(R0 + 0.5*L), ifCut(true) {}
 
         void setIfCut(bool ifCut = true) {
             this->ifCut = ifCut;
@@ -230,7 +230,7 @@ namespace pfc {
             if (ifCut) Mapping::setFailStatus(status);
             else setOkStatus(status);
 
-            if (coords.x < cMin + ct || coords.x >= cMax + ct)
+            if (coords[axis] < cMin + ct || coords[axis] >= cMax + ct)
                 return coords;
 
             int nPeriods = 0;
@@ -250,7 +250,7 @@ namespace pfc {
 
             for (int i = 0; i < nPeriods; i++) {
 
-                coordsShift.x += shift;
+                coordsShift[axis] += shift;
 
                 if (ifInArea(coordsShift, time)) {
                     directCoords = coordsShift;
@@ -274,27 +274,27 @@ namespace pfc {
 
         }
 
-        FP getxMin() const { return cMin; }
-        FP getxMax() const { return cMax; }
+        FP getMinCoord() const { return cMin; }
+        FP getMaxCoord() const { return cMax; }
 
         bool ifInArea(const FP3& coords, FP time) {
             FP ct = constants::c*time;
             FP r = coords.norm();
 
             if (cMax + ct < 0) {
-                if ((r >= -xL - ct) || (r < -cMax - ct) || (coords.x > 0))
+                if ((r >= Rmax - ct) || (r < -cMax - ct) || (coords[axis] > 0))
                     return false;
             }
-            else if ((cMax + ct >= 0) && (xL + ct <= 0))
+            else if ((cMax + ct >= 0) && (-Rmax + ct <= 0))
             {
-                if (coords.x < 0 && r > cMax - xL)
+                if (coords[axis] < 0 && r > cMax + Rmax)
                     return false;
-                if (coords.x >= 0 && r > cMax + ct)
+                if (coords[axis] >= 0 && r > cMax + ct)
                     return false;
             }
-            else if (xL + ct > 0)
+            else if (-Rmax + ct > 0)
             {
-                if ((r <= xL + ct) || (r > cMax + ct) || (coords.x < 0))
+                if ((r <= -Rmax + ct) || (r > cMax + ct) || (coords[axis] < 0))
                     return false;
             }
 
@@ -305,7 +305,7 @@ namespace pfc {
             return new TightFocusingMapping(*this);
         }
 
-        FP xL;
+        FP Rmax;
         bool ifCut = true;
 
     };
