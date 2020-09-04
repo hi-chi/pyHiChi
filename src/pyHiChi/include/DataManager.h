@@ -12,43 +12,47 @@ namespace pfc {
 class DataManager
 {
     std::string path; //откуда брать данные и куда их писать
+    adios2::Mode mode = adios2::Mode::Undefined;
+    adios2::IO ioFactory = adios.DeclareIO("hiChiIO");; //
+    adios2::ADIOS adios;
+
+    adios2::Engine engine;
     int iteration = 0;
-    enum Mode { read, write, append };
-    Mode mode;
-    adios2::IO bpIO;
 public:
-    //DataManager() {}
-    DataManager(std::string path, Mode mode = Mode::write, int it = 0): path(path), mode(mode), iteration(it)
+    DataManager(){}
+    DataManager(std::string path, int it = 0): path(path), iteration(it) {}
+    void setEngine(adios2::Mode new_mode)
     {
-        adios2::ADIOS adios;
-        adios2::IO bpIO = adios.DeclareIO("path");
-        //bpIO.SetEngine("BP4");
-        mode = Mode::read;
+        if (engine && mode != new_mode)
+            engine.Close();
+        engine = ioFactory.Open(path, mode);
+        ioFactory.SetEngine("BP4");
     }
-    void BeginIteration() //create new file
+    void beginIteration() //create new file
     {
-        PutVariable(path, path);
+        //PutVariable(path, path);
     }
-    void EndIteration() //close file
-    {
-
-    }
-    void BeginStep() //logical step 
+    void endIteration() //close file
     {
 
     }
-    void EndStep() //flush buffer
+    void beginStep() //logical step 
+    {
+
+    }
+    void endStep() //flush buffer
     {
 
     }
 
     template<typename T>
-    void PutVariable(std::string name, const T var)
+    void PutVariable(const std::string name, const T& val)
     {
-
+        adios2::Variable<T> var = ioFactory.DefineVariable<T>(name);
+        engine.Put(var, val);
     }
     template<typename T>
-    void PutArray(std::string name, const T* arr, size_t size)
+    void PutArray(const std::string name, const T* arr, size_t size)
     {
 
     }
@@ -58,12 +62,12 @@ public:
     //}
 
     template<typename T>
-    void GetVariable(std::string name, T& var)
+    void GetVariable(const std::string name, T& var)
     {
 
     }
     template<typename T>
-    void GetArray(std::string name, T* arr, size_t size)
+    void GetArray(const std::string name, T* arr, size_t size)
     {
 
     }
