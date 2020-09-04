@@ -12,14 +12,16 @@ namespace pfc {
         Interpolation_SecondOrder, Interpolation_FourthOrder, Interpolation_PCS
     };
 
-    template<typename Data, GridTypes gridType>
+    template<typename Data, GridTypes gridType_>
     class Grid :
         // next labels define some properties of grid
-        public LabelFieldsSpatialStraggered<gridType>,
-        public LabelFieldsTimeStraggered<gridType>
+        public LabelFieldsSpatialStraggered<gridType_>,
+        public LabelFieldsTimeStraggered<gridType_>
     {
 
     public:
+
+        static const GridTypes gridType = gridType_;
 
         Grid(const Int3 & _numInternalCells,
             const FP3 & minCoords, const FP3 & _steps,
@@ -27,7 +29,7 @@ namespace pfc {
         Grid(const Int3 & _numAllCells,
             const Int3 & globalGridDims);  // for complex grids only
         Grid(const Int3 & _numAllCells, const Int3 & globalGridDims, 
-            Grid<FP, gridType>* grid);  // 'grid' and 'this' will have common memory
+            Grid<FP, gridType_>* grid);  // 'grid' and 'this' will have common memory
 
         // copy constructor, can make shallow copies
         Grid(const Grid& grid, bool ifShallowCopy = false);
@@ -368,8 +370,8 @@ namespace pfc {
     typedef Grid<FP, GridTypes::PSATDTimeStraggeredGridType> PSATDTimeStraggeredGrid;
 
     // create deep or shallow copy
-    template<typename Data, GridTypes gridType>
-    inline Grid<Data, gridType>::Grid(const Grid<Data, gridType>& grid, bool ifShallowCopy) :
+    template<typename Data, GridTypes gridType_>
+    inline Grid<Data, gridType_>::Grid(const Grid<Data, gridType_>& grid, bool ifShallowCopy) :
         globalGridDims(grid.globalGridDims),
         steps(grid.steps),
         numInternalCells(grid.numInternalCells),

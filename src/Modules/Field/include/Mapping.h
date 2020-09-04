@@ -11,22 +11,19 @@ namespace pfc {
     public:
 
         virtual FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) {
-            setFailStatus(status);
+            setOkStatus(status);
             return coords;
-        }
-
+        };
+        
         virtual FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) {
-            setFailStatus(status);
+            setOkStatus(status);
             return coords;
-        }
-
-        virtual Mapping* createInstance() = 0;
-
-    protected:
+        };
 
         void setFailStatus(bool* status) {
             if (status) *status = false;
         }
+
         void setOkStatus(bool* status) {
             if (status) *status = true;
         }
@@ -49,10 +46,6 @@ namespace pfc {
         FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             if (status) *status = (coords >= a && coords < b) ? true : false;
             return coords;
-        }
-
-        Mapping* createInstance() override {
-            return new IdentityMapping(*this);
         }
 
         FP3 a, b;
@@ -80,10 +73,6 @@ namespace pfc {
             FP frac = std::modf((coords[axis] - cMin) / D, &tmp);
             inverseCoords[axis] = cMin + (frac >= 0 ? frac : (1 + frac)) * D;
             return inverseCoords;
-        }
-
-        Mapping* createInstance() override {
-            return new PeriodicalMapping(*this);
         }
 
         FP cMin, cMax, D;
@@ -143,10 +132,6 @@ namespace pfc {
             return inverseCoords;
         }
 
-        Mapping* createInstance() override {
-            return new RotationMapping(*this);
-        }
-
         Coordinate axis;
         FP angle;  // in radians
         // mapping from inverse to direct coords
@@ -155,7 +140,7 @@ namespace pfc {
     };
 
 
-    class ShiftMapping : public Mapping{
+    class ShiftMapping : public Mapping {
 
     public:
 
@@ -169,10 +154,6 @@ namespace pfc {
         FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             return coords - shift;
-        }
-
-        Mapping* createInstance() override {
-            return new ShiftMapping(*this);
         }
 
         FP3 shift;
@@ -200,23 +181,20 @@ namespace pfc {
             return inverseCoords;
         }
 
-        Mapping* createInstance() override {
-            return new ScaleMapping(*this);
-        }
-
         FP coef;
         Coordinate axis;
 
     };
 
 
-    class TightFocusingMapping : public PeriodicalMapping {
+    class TightFocusingMapping : public Mapping {
 
     public:
 
         TightFocusingMapping(FP R0, FP L, FP D, Coordinate axis = Coordinate::x) :
-            PeriodicalMapping(axis, -R0 - D + 0.5*L, -R0 + 0.5*L),
-            Rmax(R0 + 0.5*L), ifCut(true) {}
+            Rmax(R0 + 0.5*L), ifCut(true),
+            periodicalMapping(axis, -R0 - D + 0.5*L, -R0 + 0.5*L)
+        {}
 
         void setIfCut(bool ifCut = true) {
             this->ifCut = ifCut;
@@ -227,22 +205,23 @@ namespace pfc {
             FP r = coords.norm();
 
             FP3 directCoords = coords;
-            if (ifCut) Mapping::setFailStatus(status);
+            if (ifCut) this->setFailStatus(status);
             else setOkStatus(status);
 
-            if (coords[axis] < cMin + ct || coords[axis] >= cMax + ct)
+            if (coords[periodicalMapping.axis] < periodicalMapping.cMin + ct ||
+                coords[periodicalMapping.axis] >= periodicalMapping.cMax + ct)
                 return coords;
 
             int nPeriods = 0;
             FP shift = 0;
 
-            if (cMax + ct < 0) {
-                nPeriods = int(-(cMin + ct) / D) + 1;  // целая часть сверху
-                shift = D;
+            if (periodicalMapping.cMax + ct < 0) {
+                nPeriods = int(-(periodicalMapping.cMin + ct) / periodicalMapping.D) + 1;  // целая часть сверху
+                shift = periodicalMapping.D;
             }
-            else if (cMin + ct > 0) {
-                nPeriods = int((cMax + ct) / D) + 1;  // целая часть сверху
-                shift = -D;
+            else if (periodicalMapping.cMin + ct > 0) {
+                nPeriods = int((periodicalMapping.cMax + ct) / periodicalMapping.D) + 1;  // целая часть сверху
+                shift = -periodicalMapping.D;
             }
             else nPeriods = 1;
 
@@ -250,7 +229,7 @@ namespace pfc {
 
             for (int i = 0; i < nPeriods; i++) {
 
-                coordsShift[axis] += shift;
+                coordsShift[periodicalMapping.axis] += shift;
 
                 if (ifInArea(coordsShift, time)) {
                     directCoords = coordsShift;
@@ -270,43 +249,42 @@ namespace pfc {
                 setFailStatus(status);
             }
 
-            return PeriodicalMapping::getInverseCoords(coords);
+            return periodicalMapping.getInverseCoords(coords);
 
         }
 
-        FP getMinCoord() const { return cMin; }
-        FP getMaxCoord() const { return cMax; }
+        FP getMinCoord() const { return periodicalMapping.cMin; }
+        FP getMaxCoord() const { return periodicalMapping.cMax; }
 
         bool ifInArea(const FP3& coords, FP time) {
             FP ct = constants::c*time;
             FP r = coords.norm();
 
-            if (cMax + ct < 0) {
-                if ((r >= Rmax - ct) || (r < -cMax - ct) || (coords[axis] > 0))
+            if (periodicalMapping.cMax + ct < 0) {
+                if ((r >= Rmax - ct) || (r < -periodicalMapping.cMax - ct) ||
+                    (coords[periodicalMapping.axis] > 0))
                     return false;
             }
-            else if ((cMax + ct >= 0) && (-Rmax + ct <= 0))
+            else if ((periodicalMapping.cMax + ct >= 0) && (-Rmax + ct <= 0))
             {
-                if (coords[axis] < 0 && r > cMax + Rmax)
+                if (coords[periodicalMapping.axis] < 0 && r > periodicalMapping.cMax + Rmax)
                     return false;
-                if (coords[axis] >= 0 && r > cMax + ct)
+                if (coords[periodicalMapping.axis] >= 0 && r > periodicalMapping.cMax + ct)
                     return false;
             }
             else if (-Rmax + ct > 0)
             {
-                if ((r <= -Rmax + ct) || (r > cMax + ct) || (coords[axis] < 0))
+                if ((r <= -Rmax + ct) || (r > periodicalMapping.cMax + ct) ||
+                    (coords[periodicalMapping.axis] < 0))
                     return false;
             }
 
             return true;
         }
 
-        Mapping* createInstance() override {
-            return new TightFocusingMapping(*this);
-        }
-
         FP Rmax;
         bool ifCut = true;
+        PeriodicalMapping periodicalMapping;
 
     };
 
