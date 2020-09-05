@@ -688,6 +688,12 @@ namespace pfc
             pyFieldRef(pyFieldRef), mapping(mapping)
         {}
 
+        void setAnalytical(int64_t fEx, int64_t fEy, int64_t fEz, int64_t fBx, int64_t fBy, int64_t fBz)
+        {
+            BaseSetterInterface::setAnalytical(fEx, fEy, fEz, fBx, fBy, fBz);
+            BaseGetterInterface::setAnalytical(fEx, fEy, fEz, fBx, fBy, fBz);
+        }
+
         static std::shared_ptr<pyField<TGrid, TFieldSolver>> applyMapping(
             const std::shared_ptr<pyField<TGrid, TFieldSolver>>& pyFieldRef,
             const std::shared_ptr<Mapping>& mapping) {
@@ -707,60 +713,67 @@ namespace pfc
             return static_cast<TFieldSolver*>(getFieldEntity());
         }
 
-        void setAnalytical(int64_t fEx, int64_t fEy, int64_t fEz, int64_t fBx, int64_t fBy, int64_t fBz)
-        {
-            BaseSetterInterface::setAnalytical(fEx, fEy, fEz, fBx, fBy, fBz);
-            BaseGetterInterface::setAnalytical(fEx, fEy, fEz, fBx, fBy, fBz);
-        }
-
         inline FP3 convertCoords(const FP3& coords, FP timeShift = 0.0) const {
-            if (mapping) {
-                bool status = true;
-                return mapping->getDirectCoords(coords, getFieldEntity()->globalTime + timeShift, &status);
-            }
-            return coords;
+            bool status = true;
+            return getDirectCoords(coords, getFieldEntity()->globalTime + timeShift, &status);
         }
 
         inline FP3 getE(const FP3& coords) const {
-            if (mapping) {
-                bool status = false;
-                FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftE;
-                FP3 inverseCoords = mapping->getInverseCoords(coords, time, &status);
-                if (!status) return FP3(0, 0, 0);
-                return BaseGetterInterface::getEByDirectCoords(inverseCoords);
-            }
-            return BaseGetterInterface::getEByDirectCoords(coords);
+            bool status = true;
+            FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftE;
+            FP3 inverseCoords = getInverseCoords(coords, time, &status);
+            if (!status) return FP3(0, 0, 0);
+            return BaseGetterInterface::getEByDirectCoords(inverseCoords);
         }
 
         inline FP3 getB(const FP3& coords) const {
-            if (mapping) {
-                bool status = false;
-                FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftB;
-                FP3 inverseCoords = mapping->getInverseCoords(coords, time, &status);
-                if (!status) return FP3(0, 0, 0);
-                return BaseGetterInterface::getBByDirectCoords(inverseCoords);
-            }
-            return BaseGetterInterface::getBByDirectCoords(coords);
+            bool status = true;
+            FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftB;
+            FP3 inverseCoords = getInverseCoords(coords, time, &status);
+            if (!status) return FP3(0, 0, 0);
+            return BaseGetterInterface::getBByDirectCoords(inverseCoords);
         }
 
         inline FP3 getJ(const FP3& coords) const {
-            if (mapping) {
-                bool status = false;
-                FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftJ;
-                FP3 inverseCoords = mapping->getInverseCoords(coords, time, &status);
-                if (!status) return FP3(0, 0, 0);
-                return BaseGetterInterface::getJByDirectCoords(inverseCoords);
-            }
-            return BaseGetterInterface::getJByDirectCoords(coords);
+            bool status = true;
+            FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftJ;
+            FP3 inverseCoords = getInverseCoords(coords, time, &status);
+            if (!status) return FP3(0, 0, 0);
+            return BaseGetterInterface::getJByDirectCoords(inverseCoords);
         }
 
         void refresh() {
             getFieldEntity()->refresh();
         }
 
+    protected:
+
+        inline FP3 getDirectCoords(const FP3& coords, FP time, bool* status) const {
+            FP3 coords_ = coords;
+            *status = true;
+            if (pyFieldRef) coords_ = pyFieldRef->getDirectCoords(coords_, time, status);
+            bool status2 = true;
+            if (mapping) coords_ = mapping->getDirectCoords(coords_, time, &status2);
+            *status = *status && status2;
+            return coords_;
+        }
+
+        inline FP3 getInverseCoords(const FP3& coords, FP time, bool* status) const {
+            FP3 coords_ = coords;
+            *status = true;
+            if (pyFieldRef) coords_ = pyFieldRef->getInverseCoords(coords_, time, status);
+            bool status2 = true;
+            if (mapping) coords_ = mapping->getInverseCoords(coords_, time, &status2);
+            *status = *status && status2;
+            return coords_;
+        }
+
     private:
 
+        // the simple grid state
         std::unique_ptr<pyFieldEntity<TGrid, TFieldSolver>> fieldEntity;  // if !=0 then pyField is a memory owner
+
+        // the mapping grid state
         std::shared_ptr<pyField<TGrid, TFieldSolver>> pyFieldRef;  // if !=0 then pyField is a wrapper
         std::shared_ptr<Mapping> mapping;
 

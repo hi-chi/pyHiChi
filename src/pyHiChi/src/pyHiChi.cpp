@@ -59,8 +59,7 @@
     .def("analytical", &pyFieldType::setAnalytical)                       \
     .def("setTime", &pyFieldType::setTime)                                \
     .def("getTime", &pyFieldType::getTime)                                \
-    .def("refresh", &pyFieldType::refresh)                                \
-    .def_static("applyMapping", &pyFieldType::applyMapping)
+    .def("refresh", &pyFieldType::refresh)
 
 
 #define SET_METHODS_OF_FIELD_SOLVER(pyFieldType)                          \
@@ -269,10 +268,9 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     // ------------------- mappings -------------------
 
-    py::class_<Mapping>(object, "Mapping")
-        ;
+    py::class_<Mapping, std::shared_ptr<Mapping>> pyMapping(object, "Mapping");
 
-    py::class_<IdentityMapping, Mapping>(object, "IdentityMapping")
+    py::class_<IdentityMapping, std::shared_ptr<IdentityMapping>>(object, "IdentityMapping", pyMapping)
         .def(py::init<const FP3&, const FP3&>())
         .def("getDirectCoords", &IdentityMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
@@ -280,7 +278,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<PeriodicalMapping, Mapping>(object, "PeriodicalMapping")
+    py::class_<PeriodicalMapping, std::shared_ptr<PeriodicalMapping>>(object, "PeriodicalMapping", pyMapping)
         .def(py::init<Coordinate, FP, FP>())
         .def("getDirectCoords", &PeriodicalMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
@@ -288,7 +286,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<RotationMapping, Mapping>(object, "RotationMapping")
+    py::class_<RotationMapping, std::shared_ptr<RotationMapping>>(object, "RotationMapping", pyMapping)
         .def(py::init<Coordinate, FP>())
         .def("getDirectCoords", &RotationMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
@@ -296,7 +294,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<ScaleMapping, Mapping>(object, "ScaleMapping")
+    py::class_<ScaleMapping, std::shared_ptr<ScaleMapping>>(object, "ScaleMapping", pyMapping)
         .def(py::init<Coordinate, FP>())
         .def("getDirectCoords", &ScaleMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
@@ -304,7 +302,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<ShiftMapping, Mapping>(object, "ShiftMapping")
+    py::class_<ShiftMapping, std::shared_ptr<ShiftMapping>>(object, "ShiftMapping", pyMapping)
         .def(py::init<FP3>())
         .def("getDirectCoords", &ShiftMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
@@ -312,7 +310,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
+    py::class_<TightFocusingMapping, std::shared_ptr<TightFocusingMapping>>(object, "TightFocusingMapping", pyMapping)
         .def(py::init<FP, FP, FP>())
         .def(py::init<FP, FP, FP, Coordinate>())
         .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
@@ -326,51 +324,81 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     // ------------------- py fields -------------------
 
-    py::class_<pyYeeField>(object, "YeeField")
+    py::class_<pyYeeField, std::shared_ptr<pyYeeField>>(object, "YeeField")
         .def(py::init<FP3, FP3, FP3, FP>())
+        .def("applyMapping", [](std::shared_ptr<pyYeeField> self, std::shared_ptr<Mapping> mapping) {
+        return pyYeeField::applyMapping(self, mapping);
+    })
         SET_METHODS_OF_PY_GRID(pyYeeField)
         SET_METHODS_OF_FIELD_SOLVER(pyYeeField)
         ;
 
-    py::class_<pyPSTDField>(object, "PSTDField")
+    py::class_<pyPSTDField, std::shared_ptr<pyPSTDField>>(object, "PSTDField")
         .def(py::init<FP3, FP3, FP3, FP>())
+        .def("applyMapping", [](std::shared_ptr<pyPSTDField> self,
+            std::shared_ptr<Mapping> mapping) {
+        return pyPSTDField::applyMapping(self, mapping);
+    })
         SET_METHODS_OF_PY_GRID(pyPSTDField)
         SET_METHODS_OF_FIELD_SOLVER(pyPSTDField)
         .def("set", &pyPSTDField::setEMField)
         .def("set", &pyPSTDField::pySetEMField)
         ;
 
-    py::class_<pyPSATDField>(object, "PSATDField")
+
+    py::class_<pyPSATDField, std::shared_ptr<pyPSATDField>>(object, "PSATDField")
         .def(py::init<FP3, FP3, FP3, FP>())
+        .def("applyMapping", [](std::shared_ptr<pyPSATDField> self,
+            std::shared_ptr<Mapping> mapping) {
+        return pyPSATDField::applyMapping(self, mapping);
+    })
         SET_METHODS_OF_PY_GRID(pyPSATDField)
         SET_METHODS_OF_FIELD_SOLVER(pyPSATDField)
         .def("set", &pyPSATDField::setEMField)
         .def("set", &pyPSATDField::pySetEMField)
         ;
 
-    py::class_<pyPSATDPoissonField>(object, "PSATDPoissonField")
+
+    py::class_<pyPSATDPoissonField, std::shared_ptr<pyPSATDPoissonField>>(object, "PSATDPoissonField")
         .def(py::init<FP3, FP3, FP3, FP>())
+        .def("applyMapping", [](std::shared_ptr<pyPSATDPoissonField> self,
+            std::shared_ptr<Mapping> mapping) {
+        return pyPSATDPoissonField::applyMapping(self, mapping);
+    })
         SET_METHODS_OF_PY_GRID(pyPSATDPoissonField)
         SET_METHODS_OF_FIELD_SOLVER(pyPSATDPoissonField)
         .def("set", &pyPSATDPoissonField::setEMField)
         .def("set", &pyPSATDPoissonField::pySetEMField)
         ;
 
-    py::class_<pyPSATDTimeStraggeredField>(object, "PSATDTimeStraggeredField")
+
+    py::class_<pyPSATDTimeStraggeredField, std::shared_ptr<pyPSATDTimeStraggeredField>>(
+        object, "PSATDTimeStraggeredField")
         .def(py::init<FP3, FP3, FP3, FP>())
+        .def("applyMapping", [](std::shared_ptr<pyPSATDTimeStraggeredField> self,
+            std::shared_ptr<Mapping> mapping) {
+        return pyPSATDTimeStraggeredField::applyMapping(self, mapping);
+    })
         SET_METHODS_OF_PY_GRID(pyPSATDTimeStraggeredField)
         SET_METHODS_OF_FIELD_SOLVER(pyPSATDTimeStraggeredField)
         .def("set", &pyPSATDTimeStraggeredField::setEMField)
         .def("set", &pyPSATDTimeStraggeredField::pySetEMField)
         ;
 
-    py::class_<pyPSATDTimeStraggeredPoissonField>(object, "PSATDTimeStraggeredPoissonField")
+
+    py::class_<pyPSATDTimeStraggeredPoissonField, std::shared_ptr<pyPSATDTimeStraggeredPoissonField>>(
+        object, "PSATDTimeStraggeredPoissonField")
         .def(py::init<FP3, FP3, FP3, FP>())
+        .def("applyMapping", [](std::shared_ptr<pyPSATDTimeStraggeredPoissonField> self,
+            std::shared_ptr<Mapping> mapping) {
+        return pyPSATDTimeStraggeredPoissonField::applyMapping(self, mapping);
+    })
         SET_METHODS_OF_PY_GRID(pyPSATDTimeStraggeredPoissonField)
         SET_METHODS_OF_FIELD_SOLVER(pyPSATDTimeStraggeredPoissonField)
         .def("set", &pyPSATDTimeStraggeredPoissonField::setEMField)
         .def("set", &pyPSATDTimeStraggeredPoissonField::pySetEMField)
         ;
+
 
     // ------------------- field generators -------------------
 

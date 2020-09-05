@@ -1,8 +1,7 @@
 import sys
-sys.path.append("../bin/")
+sys.path.append("../bin")
 import pyHiChi as hichi
 import numpy as np
-import math as ma
 
 
 def fieldValue(x, y, z):
@@ -11,15 +10,30 @@ def fieldValue(x, y, z):
 def nullValue(x, y, z):
     return 0.0
     
-minDirectCoords = hichi.vector3d(-5, -5, -5)
-maxDirectCoords = hichi.vector3d(5, 5, 5)
+minCoords = hichi.vector3d(-5, -5, -5)
+maxCoords = hichi.vector3d(5, 5, 5)
 
-# create some transforms
-angle = ma.pi/3
+gridSize = hichi.vector3d(64, 64, 64)
+gridStep = (maxCoords - minCoords) / gridSize  
+timeStep = 0.1/hichi.c
+
+field = hichi.PSATDPoissonField(gridSize, minCoords, gridStep, timeStep)
+field.setE(nullValue, fieldValue, nullValue)
+field.setB(nullValue, nullValue, fieldValue)
+
+
+# create the first transformed field
+# rotation
+def getRotatedField(field):
+    mapping = hichi.RotationMapping(hichi.Axis.z, -np.pi/6)  # local object
+    return field.applyMapping(mapping)  # mapping is inaccessible but not destroyed
+
+field1 = getRotatedField(field)  
+
+
+# create some other mappings  
+angle = np.pi/3
 rotationZMapping = hichi.RotationMapping(hichi.Axis.z, angle)
-
-angle2 = ma.pi/6
-rotationZMapping2 = hichi.RotationMapping(hichi.Axis.z, angle2)
 
 shift = hichi.vector3d(-2.0, -2.0, 0.0)
 shiftMapping = hichi.ShiftMapping(shift)
@@ -28,10 +42,7 @@ scaleCoef = 1.5
 scaleMapping = hichi.ScaleMapping(hichi.Axis.x, scaleCoef)
 
 
-minInverseCoords = hichi.vector3d(-5, -5, -5)
-maxInverseCoords = hichi.vector3d(5, 5, 5)
-
-# transform of a point
+# transform a point (rotation -> shift)
 point = hichi.vector3d(-1.0, -1.0, 0.0)
 point2 = shiftMapping.getInverseCoords(rotationZMapping.getInverseCoords(point))
 print("Direct mapping: point (%0.2f, %0.2f, %0.2f) -> (%0.2f, %0.2f, %0.2f)" % \
@@ -41,126 +52,88 @@ print("Inverse mapping: point (%0.2f, %0.2f, %0.2f) -> (%0.2f, %0.2f, %0.2f)" % 
        (point2.x, point2.y, point2.z, point3.x, point3.y, point3.z))
 
 
-gridSize = hichi.vector3d(64, 64, 64)
+# create the second transformed field
+# scale -> rotation -> shift
+field2Tmp1 = field.applyMapping(scaleMapping)
+field2Tmp2 = field2Tmp1.applyMapping(rotationZMapping)
+field2 = field2Tmp2.applyMapping(shiftMapping)
 
-gridStep = (maxInverseCoords - minInverseCoords) / gridSize
-           
-timeStep = 0.1/hichi.c
 
-# create computational grid
-grid = hichi.PSATDGrid(gridSize, timeStep, minInverseCoords, gridStep)
-
-# create shallow copy of computational grid
-# gridMapping does direct transform when setters are called
-# and inverse transform when getters are called
-gridMapping1 = hichi.PSATDGridMapping(grid)
-# set mapping to grid
-gridMapping1.setMapping(rotationZMapping2)
-
-# we can set more than one mapping
-gridMapping2 = hichi.PSATDGridMapping(grid)
-# set mapping to grid in correct order
-gridMapping2.setMapping(scaleMapping)
-gridMapping2.setMapping(rotationZMapping)
-gridMapping2.setMapping(shiftMapping)
-
-# create other grid with mappings which order is not correct
-gridMapping3 = hichi.PSATDGridMapping(grid)
-gridMapping3.setMapping(shiftMapping)
-gridMapping3.setMapping(rotationZMapping)
-gridMapping3.setMapping(scaleMapping)
-
-# set fields to main grid
-grid.setE(nullValue, fieldValue, nullValue)
-grid.setB(nullValue, nullValue, fieldValue)
-
-# create field solver
-# periodic boundary conditions are default
-fieldSolver = hichi.PSATD(grid)
-fieldSolver.convertFieldsPoissonEquation()
-# equivalent with
-# fieldSolver = hichi.PSATDWithPoisson(gridMapping)
+# create the third transformed field
+# shift -> rotation -> scale
+field3 = field.applyMapping(shiftMapping)\
+              .applyMapping(rotationZMapping)\
+              .applyMapping(scaleMapping)
+# intermediate fields are inaccesible but not destroyed
 
 def updateData():
-    fieldSolver.updateFields()
-
-
+    field.updateFields()
+    # == field1.updateFields()
+    # == field2.updateFields()
+    # == field3.updateFields()
+    
 # --------- show -------------
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 N = 128
-x = np.linspace(minInverseCoords.x, maxInverseCoords.x, N)
-y = np.linspace(minInverseCoords.y, maxInverseCoords.y, N)
+x = np.linspace(minCoords.x, maxCoords.x, N)
+y = np.linspace(minCoords.y, maxCoords.y, N)
 
-
-# get setted fields
-def getFields(grid):
+def getFields(field):
     global x, y, N
-    Ey = np.zeros(shape=(N,N))
+    res = np.zeros(shape=(N,N))
     for ix in range(N):
         for iy in range(N):
             coordXY = hichi.vector3d(x[ix], y[iy], 0.0)
-            E = grid.getE(coordXY)
-            Ey[N - iy - 1, ix] = E.y
-    return Ey
-    
-
-Ey = getFields(grid)
-transformedEy1 = getFields(gridMapping1)
-transformedEy2 = getFields(gridMapping2)
-transformedEy3 = getFields(gridMapping3)
+            res[N - iy - 1, ix] = field.getE(coordXY).norm()
+    return res
 
 fig, axes = plt.subplots(ncols=2, nrows=2)
 
-
 # show setted field
-im1 = axes[0, 0].imshow(Ey, cmap='RdBu', interpolation='none',
-    extent=(minDirectCoords.x, maxDirectCoords.x, minDirectCoords.y, maxDirectCoords.y), animated = True)
+im1 = axes[0, 0].imshow(getFields(field), cmap='RdBu', interpolation='none',
+    extent=(minCoords.x, maxCoords.x, minCoords.y, maxCoords.y), animated = True)
 fig.colorbar(im1, ax=axes[0, 0])
 axes[0, 0].set_xlabel("x")
 axes[0, 0].set_ylabel("y")
-axes[0, 0].grid()
-axes[0, 0].set_title("Setted Ey")
+axes[0, 0].set_title("Original field")
 
 
 # show transformed field (rotation)
-im2 = axes[0, 1].imshow(transformedEy1, cmap='RdBu', interpolation='none',
-    extent=(minInverseCoords.x, maxInverseCoords.x, minInverseCoords.y, maxInverseCoords.y), animated = True)
+im2 = axes[0, 1].imshow(getFields(field1), cmap='RdBu', interpolation='none',
+    extent=(minCoords.x, maxCoords.x, minCoords.y, maxCoords.y), animated = True)
 fig.colorbar(im2, ax=axes[0, 1])
 axes[0, 1].set_xlabel("x")
 axes[0, 1].set_ylabel("y")
-axes[0, 1].grid()
-axes[0, 1].set_title("Transformed Ey \n rotation(pi/6)")
+axes[0, 1].set_title("Transformed field \n rotation")
 
 
-# show transformed field (rotation + shift)
-im3 = axes[1, 0].imshow(transformedEy2, cmap='RdBu', interpolation='none',
-    extent=(minInverseCoords.x, maxInverseCoords.x, minInverseCoords.y, maxInverseCoords.y), animated = True)
+# show transformed field (scale -> rotation -> shift)
+im3 = axes[1, 0].imshow(getFields(field2), cmap='RdBu', interpolation='none',
+    extent=(minCoords.x, maxCoords.x, minCoords.y, maxCoords.y), animated = True)
 fig.colorbar(im3, ax=axes[1, 0])
 axes[1, 0].set_xlabel("x")
 axes[1, 0].set_ylabel("y")
-axes[1, 0].grid()
-axes[1, 0].set_title("Transformed Ey \n  scale(x, 1.5) + rotation(pi/3) \n + shift(-2, -2)")
+axes[1, 0].set_title("Transformed field \n scale -> rotation -> shift")
 
 
 # show transformed field (shift + rotation)
-im4 = axes[1, 1].imshow(transformedEy3, cmap='RdBu', interpolation='none',
-    extent=(minInverseCoords.x, maxInverseCoords.x, minInverseCoords.y, maxInverseCoords.y), animated = True)
+im4 = axes[1, 1].imshow(getFields(field3), cmap='RdBu', interpolation='none',
+    extent=(minCoords.x, maxCoords.x, minCoords.y, maxCoords.y), animated = True)
 fig.colorbar(im4, ax=axes[1, 1])
 axes[1, 1].set_xlabel("x")
-axes[1, 1].grid()
 axes[1, 1].set_ylabel("y")
-axes[1, 1].set_title("Transformed Ey \n shift(-2, -2) + rotation(pi/3) \n + scale(x, 1.5)")
+axes[1, 1].set_title("Transformed field \n shift ->rotation -> scale")
 
 
 def updatefig(*args):
     updateData()
-    im1.set_array(getFields(grid))
-    im2.set_array(getFields(gridMapping1))
-    im3.set_array(getFields(gridMapping2))
-    im4.set_array(getFields(gridMapping3))
+    im1.set_array(getFields(field))
+    im2.set_array(getFields(field1))
+    im3.set_array(getFields(field2))
+    im4.set_array(getFields(field3))
     return im1, im2, im3, im4,
     
 ani = animation.FuncAnimation(fig, updatefig, interval=10, blit=True)
@@ -168,4 +141,3 @@ ani = animation.FuncAnimation(fig, updatefig, interval=10, blit=True)
 fig.tight_layout()
 
 plt.show()
-
