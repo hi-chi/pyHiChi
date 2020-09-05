@@ -65,6 +65,7 @@
 #define SET_METHODS_OF_FIELD_SOLVER(pyFieldType)                          \
     .def("setPML", &pyFieldType::setPML)                                  \
     .def("setBC", &pyFieldType::setFieldGenerator)                        \
+    .def("convertFieldsPoissonEquation", &pyFieldType::convertFieldsPoissonEquation)  \
     .def("updateFields", &pyFieldType::updateFields)                      \
     .def("advance", &pyFieldType::advance)                                \
     .def("changeTimeStep", &pyFieldType::changeTimeStep)

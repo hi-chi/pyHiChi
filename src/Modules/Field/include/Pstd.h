@@ -18,7 +18,6 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setFieldGenerator(FieldGenerator<GridTypes::PSTDGridType> * _generator) {}
 
         void setTimeStep(FP dt);
 

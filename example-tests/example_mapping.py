@@ -17,9 +17,10 @@ gridSize = hichi.vector3d(64, 64, 64)
 gridStep = (maxCoords - minCoords) / gridSize  
 timeStep = 0.1/hichi.c
 
-field = hichi.PSATDPoissonField(gridSize, minCoords, gridStep, timeStep)
+field = hichi.PSATDField(gridSize, minCoords, gridStep, timeStep)
 field.setE(nullValue, fieldValue, nullValue)
 field.setB(nullValue, nullValue, fieldValue)
+field.convertFieldsPoissonEquation()
 
 
 # create the first transformed field

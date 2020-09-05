@@ -22,7 +22,6 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setFieldGenerator(FieldGenerator<GridTypes::PSATDTimeStraggeredGridType> * _generator) {}
 
         void setTimeStep(FP dt);
 
@@ -114,7 +113,7 @@ namespace pfc {
         doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = dt / 2;
+        double dt = this->dt * 0.5;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -268,7 +267,6 @@ namespace pfc {
         virtual void updateEB();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setFieldGenerator(FieldGenerator<GridTypes::PSATDGridType> * _generator) {}
 
         void setTimeStep(FP dt);
 

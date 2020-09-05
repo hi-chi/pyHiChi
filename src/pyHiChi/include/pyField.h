@@ -626,8 +626,58 @@ namespace pfc
     };
 
 
+    template <class TGrid, class TFieldSolver, class TDerived, bool>
+    class pyPoissonFieldSolverInterface {};
+
+    template <class TGrid, class TFieldSolver, class TDerived>
+    class pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TDerived, true> {
+    public:
+        void convertFieldsPoissonEquation() {
+            static_cast<TDerived*>(this)->getFieldEntity()->convertFieldsPoissonEquation();
+        }
+    };
+
+    template <class TGrid, class TFieldSolver, class TDerived>
+    class pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TDerived, false> {
+    public:
+        void convertFieldsPoissonEquation() {
+            std::cout
+                << "WARNING: the used field does not include the 'convertFieldsPoissonEquation' method"
+                << std::endl;
+        }
+    };
+
+
+    template <class TGrid, class TFieldSolver, class TDerived, bool>
+    class pyFieldGeneratorSolverInterface {};
+
+    template <class TGrid, class TFieldSolver, class TDerived>
+    class pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TDerived, true> {
+    public:
+        void setFieldGenerator(FieldGenerator<TGrid::gridType>* generator) {
+            static_cast<TDerived*>(this)->getFieldEntity()->setFieldGenerator(generator);
+        }
+    };
+
+    template <class TGrid, class TFieldSolver, class TDerived>
+    class pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TDerived, false> {
+    public:
+        void setFieldGenerator(FieldGenerator<TGrid::gridType>* generator) {
+            std::cout
+                << "WARNING: the used field does not include the 'setFieldGenerator' method"
+                << std::endl;
+        }
+    };
+
+
     template<class TGrid, class TFieldSolver, class TDerived>
-    class pyFieldSolverInterface
+    class pyFieldSolverInterface :
+        public pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TDerived,
+        std::is_same<TFieldSolver, PSATD>::value || std::is_same<TFieldSolver, PSATDPoisson>::value ||
+        std::is_same<TFieldSolver, PSATDTimeStraggered>::value ||
+        std::is_same<TFieldSolver, PSATDTimeStraggeredPoisson>::value>,
+        public pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TDerived,
+        std::is_same<TFieldSolver, FDTD>::value>
     {
     public:
 
@@ -641,10 +691,6 @@ namespace pfc
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz) {
             static_cast<TDerived*>(this)->getFieldEntity()->setPML(sizePMLx, sizePMLy, sizePMLz);
-        }
-
-        void setFieldGenerator(FieldGenerator<TGrid::gridType>* generator) {
-            static_cast<TDerived*>(this)->getFieldEntity()->setFieldGenerator(generator);
         }
 
         void changeTimeStep(double dt) {
