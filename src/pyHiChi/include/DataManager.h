@@ -52,9 +52,11 @@ public:
         engine.Put(var, val);
     }
     template<typename T>
-    void PutArray(const std::string name, const T* arr, size_t size)
+    void PutArray(const std::string name, const T* vals, size_t size)
     {
-
+        adios2::Variable<double> arr = bpIO.DefineVariable<double>(name, {},
+                                            {}, { size }, adios2::ConstantDims);
+        engine.Put(arr, vals);
     }
     //void PutGrid(int *arr, size_t size, std::string name)
     //{
