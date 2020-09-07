@@ -62,15 +62,15 @@
     .def("setPML", &pyFieldType::setPML)                                  \
     .def("setBC", &pyFieldType::setFieldGenerator)                        \
     .def("convertFieldsPoissonEquation", &pyFieldType::convertFieldsPoissonEquation)  \
-    .def("updateFields", &pyFieldType::updateFields)                      \
-    .def("advance", &pyFieldType::advance)                                \
     .def("changeTimeStep", &pyFieldType::changeTimeStep)
 
 
 #define SET_PY_FIELD_BASE_METHODS(pyFieldType)                            \
     .def("applyMapping", [](std::shared_ptr<pyFieldType> self,            \
         std::shared_ptr<Mapping> mapping) {                               \
-        return self->applyMapping(self, mapping);                         \
+        return self->applyMapping(                                        \
+            std::static_pointer_cast<pyFieldBase>(self), mapping          \
+            );                                                            \
     })                                                                    \
     .def("__add__", [](std::shared_ptr<pyFieldType> self,                 \
         std::shared_ptr<pyFieldBase> other) {                             \
@@ -344,11 +344,14 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     // ------------------- py fields -------------------
 
+    // abstract class
     py::class_<pyFieldBase, std::shared_ptr<pyFieldBase>> pyClassFieldBase(object, "pyFieldBase");
     pyClassFieldBase.def("getFields", &pyFieldBase::getFields)
         .def("getJ", &pyFieldBase::getJ)
         .def("getE", &pyFieldBase::getE)
         .def("getB", &pyFieldBase::getB)
+        .def("updateFields", &pyFieldBase::updateFields)
+        .def("advance", &pyFieldBase::advance)
         ;
 
     py::class_<pySumField, std::shared_ptr<pySumField>>(

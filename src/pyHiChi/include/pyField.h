@@ -524,7 +524,7 @@ namespace pfc
                     }
         }
 
-        FP3 getEByDirectCoords(const FP3& coords) const
+        FP3 getE(const FP3& coords) const
         {
 
             pyFieldEntity<TGrid, TFieldSolver>* fieldEntity =
@@ -546,7 +546,7 @@ namespace pfc
             return result;
         }
 
-        FP3 getBByDirectCoords(const FP3& coords) const
+        FP3 getB(const FP3& coords) const
         {
             pyFieldEntity<TGrid, TFieldSolver>* fieldEntity =
                 static_cast<const TDerived*>(this)->getFieldEntity();
@@ -567,11 +567,11 @@ namespace pfc
             return result;
         }
 
-        FP3 getJByDirectCoords(const FP3& coords) const {
+        FP3 getJ(const FP3& coords) const {
             return static_cast<const TDerived*>(this)->getFieldEntity()->getJ(coords);
         }
 
-        void getFieldsByDirectCoords(const FP3& coords, FP3& e, FP3& b) const {
+        void getFields(const FP3& coords, FP3& e, FP3& b) const {
             static_cast<const TDerived*>(this)->getFieldEntity()->getFields(coords, e, b);
         }
 
@@ -706,6 +706,9 @@ namespace pfc
             b = getB(coords);
         }
 
+        virtual void updateFields() = 0;
+        virtual void advance(FP dt) = 0;
+
         virtual std::shared_ptr<pyFieldBase> applyMapping(
             const std::shared_ptr<pyFieldBase>& self,
             const std::shared_ptr<Mapping>& mapping) const = 0;
@@ -716,6 +719,8 @@ namespace pfc
     class pyField : public pyFieldInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>,
         public pyFieldBase
     {
+        using BaseInterface = pyFieldInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>;
+
     public:
 
         pyField(const Int3 & numInternalCells,
@@ -754,7 +759,7 @@ namespace pfc
             FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftE;
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return FP3(0, 0, 0);
-            return BaseGridInterface::getEByDirectCoords(inverseCoords);
+            return BaseInterface::getE(inverseCoords);
         }
 
         inline FP3 getB(const FP3& coords) const override {
@@ -762,7 +767,7 @@ namespace pfc
             FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftB;
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return FP3(0, 0, 0);
-            return BaseGridInterface::getBByDirectCoords(inverseCoords);
+            return BaseInterface::getB(inverseCoords);
         }
 
         FP3 getJ(const FP3& coords) const override {
@@ -770,7 +775,15 @@ namespace pfc
             FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftJ;
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return FP3(0, 0, 0);
-            return BaseGridInterface::getJByDirectCoords(inverseCoords);
+            return BaseInterface::getJ(inverseCoords);
+        }
+
+        void updateFields() override {
+            return BaseInterface::updateFields();
+        }
+
+        void advance(FP dt) override {
+            return BaseInterface::advance(dt);
         }
 
     protected:
@@ -827,8 +840,8 @@ namespace pfc
 
         pySumField(const std::shared_ptr<pySumField>& other,
             const std::shared_ptr<Mapping>& mapping) :
-            pyWrappedField1(pyWrappedField1->applyMapping(other->pyWrappedField1, mapping)),
-            pyWrappedField2(pyWrappedField2->applyMapping(other->pyWrappedField2, mapping))
+            pyWrappedField1(other->pyWrappedField1->applyMapping(other->pyWrappedField1, mapping)),
+            pyWrappedField2(other->pyWrappedField2->applyMapping(other->pyWrappedField2, mapping))
         {}
 
         std::shared_ptr<pyFieldBase> applyMapping(
@@ -853,6 +866,16 @@ namespace pfc
             return pyWrappedField1->getJ(coords) + pyWrappedField2->getJ(coords);
         }
 
+        void updateFields() override {
+            pyWrappedField1->updateFields();
+            pyWrappedField2->updateFields();
+        }
+
+        void advance(FP dt) override {
+            pyWrappedField1->advance(dt);
+            pyWrappedField2->advance(dt);
+        }
+
     private:
 
         std::shared_ptr<pyFieldBase> pyWrappedField1;
@@ -870,7 +893,7 @@ namespace pfc
 
         pyMulField(const std::shared_ptr<pyMulField>& other,
             const std::shared_ptr<Mapping>& mapping) :
-            pyWrappedField(pyWrappedField->applyMapping(other->pyWrappedField, mapping))
+            pyWrappedField(other->pyWrappedField->applyMapping(other->pyWrappedField, mapping))
         {}
 
         std::shared_ptr<pyFieldBase> applyMapping(
@@ -893,6 +916,14 @@ namespace pfc
 
         FP3 getJ(const FP3& coords) const override {
             return pyWrappedField->getJ(coords) * factor;
+        }
+
+        void updateFields() override {
+            pyWrappedField->updateFields();
+        }
+
+        void advance(FP dt) override {
+            pyWrappedField->advance(dt);
         }
 
     private:
