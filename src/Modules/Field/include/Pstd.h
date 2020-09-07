@@ -21,6 +21,17 @@ namespace pfc {
 
         void setTimeStep(FP dt);
 
+        FP getCourantCondition() const {
+            double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
+                1.0 / (grid->steps.y*grid->steps.y) +
+                1.0 / (grid->steps.z*grid->steps.z));
+            return 2.0 / (constants::pi * constants::c * tmp);
+        }
+
+        bool ifCourantConditionSatisfied(FP dt) const {
+            return dt < getCourantCondition();
+        }
+
     private:
 
         PmlSpectral<GridTypes::PSTDGridType>* getPml() {
@@ -32,6 +43,12 @@ namespace pfc {
     inline PSTD::PSTD(PSTDGrid* grid, double dt) :
         SpectralFieldSolver<GridTypes::PSTDGridType>(grid, dt, 0.0, 0.5*dt, 0.5*dt)
     {
+        if (!ifCourantConditionSatisfied(dt)) {
+            std::cout
+                << "WARNING: PSTD Courant condition is not satisfied. Another time step was setted up"
+                << std::endl;
+            this->dt = getCourantCondition() * 0.5;
+        }
         updateDims();
         updateInternalDims();
     }
@@ -44,14 +61,16 @@ namespace pfc {
 
     inline void PSTD::setTimeStep(FP dt)
     {
-        double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
-            1.0 / (grid->steps.y*grid->steps.y) +
-            1.0 / (grid->steps.z*grid->steps.z));
-        if (dt <= 2.0 / (constants::pi * constants::c * tmp)) {  // Courant condition for PSTD
+        if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
             this->timeShiftB = 0.5*dt;
             this->timeShiftJ = 0.5*dt;
             if (pml.get()) pml.reset(new PmlPstd(this, pml->sizePML));
+        }
+        else {
+            std::cout
+                << "WARNING: PSTD Courant condition is not satisfied. Time step was not changed"
+                << std::endl;
         }
     }
 

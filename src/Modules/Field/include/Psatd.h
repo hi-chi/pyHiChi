@@ -29,6 +29,10 @@ namespace pfc {
 
         ScalarField<complexFP> tmpJx, tmpJy, tmpJz;
 
+        bool ifCourantConditionSatisfied(FP dt) {
+            return true;
+        }
+
     protected:
 
         PmlSpectral<GridTypes::PSATDTimeStraggeredGridType>* getPml() {
@@ -271,6 +275,10 @@ namespace pfc {
         void setTimeStep(FP dt);
 
         void convertFieldsPoissonEquation();
+
+        bool ifCourantConditionSatisfied(FP dt) {
+            return true;
+        }
 
     private:
 
