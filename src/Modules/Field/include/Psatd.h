@@ -252,7 +252,6 @@ namespace pfc {
                     FP S = sin(normK*constants::c*dt*0.5);
                     complexFP coeff1 = 2 * complexFP::i()*S, coeff2 = 2 * S / (normK*constants::c),
                         coeff3 = coeff2 - dt;
-
                     complexGrid->Ex(i, j, k) += -El.x + coeff1 * crossKB.x - coeff2 * (J.x - Jl.x);
                     complexGrid->Ey(i, j, k) += -El.y + coeff1 * crossKB.y - coeff2 * (J.y - Jl.y);
                     complexGrid->Ez(i, j, k) += -El.z + coeff1 * crossKB.z - coeff2 * (J.z - Jl.z);
@@ -347,6 +346,7 @@ namespace pfc {
         doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
+        double dt = this->dt *0.5;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)

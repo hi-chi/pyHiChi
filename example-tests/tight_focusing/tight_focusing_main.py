@@ -38,10 +38,6 @@ D = 3.5*spherical_pulse.pulselength                 # band width
 # creating of mapping
 mapping = hichi.TightFocusingMapping(spherical_pulse.R0, spherical_pulse.pulselength, D)
 
-# creating of mapping with cutting at angle
-# cutAngle = spherical_pulse.opening_angle + spherical_pulse.edge_smoothing_angle
-# mapping = hichi.TightFocusingMapping(spherical_pulse.R0, spherical_pulse.pulseLength, D, cutAngle)
-
 # not to cut secondary pulses
 # mapping.if_perform_inverse_mapping(False)
 
@@ -150,6 +146,7 @@ for i in range(max_iter):
     save_plane_to_file(writer, i)
     #save_axis_to_file(writer, i)
     update_fields()
+
 
 # it is possible to read crated file to numpy.array   
 import numpy as np

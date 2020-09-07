@@ -99,7 +99,7 @@ def run(nx):
     field.update_fields()
 
     return get_fields(field)
-    
+
 
 # the function to compute error of the scheme
 # returns the maximal difference between full and reduced calculations

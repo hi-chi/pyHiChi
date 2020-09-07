@@ -13,12 +13,16 @@ namespace pfc {
         virtual FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) {
             setOkStatus(status);
             return coords;
-        };
-        
+        }
+
         virtual FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) {
             setOkStatus(status);
             return coords;
-        };
+        }
+
+        virtual Mapping* createInstance() = 0;
+
+    protected:
 
         void setFailStatus(bool* status) {
             if (status) *status = false;
@@ -48,6 +52,10 @@ namespace pfc {
             return coords;
         }
 
+        Mapping* createInstance() override {
+            return new IdentityMapping(*this);
+        }
+
         FP3 a, b;
 
     };
@@ -73,6 +81,10 @@ namespace pfc {
             FP frac = std::modf((coords[axis] - cMin) / D, &tmp);
             inverseCoords[axis] = cMin + (frac >= 0 ? frac : (1 + frac)) * D;
             return inverseCoords;
+        }
+
+        Mapping* createInstance() override {
+            return new PeriodicalMapping(*this);
         }
 
         FP cMin, cMax, D;
@@ -132,6 +144,10 @@ namespace pfc {
             return inverseCoords;
         }
 
+        Mapping* createInstance() override {
+            return new RotationMapping(*this);
+        }
+
         Coordinate axis;
         FP angle;  // in radians
         // mapping from inverse to direct coords
@@ -154,6 +170,10 @@ namespace pfc {
         FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             return coords - shift;
+        }
+
+        Mapping* createInstance() override {
+            return new ShiftMapping(*this);
         }
 
         FP3 shift;
@@ -179,6 +199,10 @@ namespace pfc {
             FP3 inverseCoords = coords;
             inverseCoords[axis] /= coef;
             return inverseCoords;
+        }
+
+        Mapping* createInstance() override {
+            return new ScaleMapping(*this);
         }
 
         FP coef;
@@ -280,6 +304,10 @@ namespace pfc {
             }
 
             return true;
+        }
+
+        Mapping* createInstance() override {
+            return new TightFocusingMapping(*this);
         }
 
         FP Rmax;

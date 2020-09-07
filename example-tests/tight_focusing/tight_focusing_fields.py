@@ -113,3 +113,4 @@ class SphericalPulseC():
             field.set(tight_focusing_conf)
             
         self.set_field = set_field_
+

@@ -71,6 +71,7 @@ class Plane(Enum):
     XOZ = (Axis.X, Axis.Z)
     YOZ = (Axis.Y, Axis.Z)
     
+
 def get_coord_value(vector, axis):
     if axis == Axis.X:
         return vector.x

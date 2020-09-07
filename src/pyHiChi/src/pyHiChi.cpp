@@ -152,8 +152,11 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def_readwrite("y", &FP3::y)
         .def_readwrite("z", &FP3::z)
         ;
-    object.def("cross", cross);
-    object.def("dot", dot);
+
+    object.def("cross", (const Vector3<FP> (*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) cross);
+    object.def("cross", (FP3(*)(const FP3&, const FP3&)) cross);
+    object.def("dot", (FP(*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) dot);
+    object.def("dot", (FP(*)(const FP3&, const FP3&)) dot);
 
     py::class_<ValueField>(object, "Field")
         .def(py::init<FP3, FP3>())
@@ -303,7 +306,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("get_inverse_coords", &PeriodicalMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
-
+    
     py::class_<RotationMapping, std::shared_ptr<RotationMapping>>(object, "RotationMapping", pyMapping)
         .def(py::init<Coordinate, FP>())
         .def("get_direct_coords", &RotationMapping::getDirectCoords, py::arg("coords"),

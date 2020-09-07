@@ -163,4 +163,4 @@ class Reader:
                     field[i] = float(lines[i].split()[0])
         
         return field
-        
+

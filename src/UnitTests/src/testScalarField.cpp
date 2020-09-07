@@ -62,7 +62,7 @@ TYPED_TEST(ScalarFieldTest, IndexAccess) {
             }
 }
 
-TYPED_TEST(ScalarFieldTest, Zeroize) {
+/*TYPED_TEST(ScalarFieldTest, Zeroize) {
     typedef typename ScalarFieldTest<TypeParam>::ScalarFieldType ScalarField;
     Int3 size(5, 3, 8);
     ScalarField f(this->createScalarField(size));
@@ -72,4 +72,4 @@ TYPED_TEST(ScalarFieldTest, Zeroize) {
         for (int j = 0; j < size.y; j++)
             for (int k = 0; k < size.z; k++)
                 ASSERT_EQ(f(i, j, k), 0);
-}
+}*/

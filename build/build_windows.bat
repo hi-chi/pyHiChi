@@ -6,7 +6,7 @@ for %%x in (%*) do (
 )
 
 set USE_OPENMP="OFF"
-set GENERATOR="Visual Studio 15 2017 Win64"
+set GENERATOR="Visual Studio 15 2017"
 set USE_FFTW="OFF"
 set USE_MKL="OFF"
 set PYTHON="python"
@@ -48,7 +48,7 @@ if "%1" NEQ "" (
 
 md visual_studio
 cd visual_studio
-cmake -G %GENERATOR% -DUSE_TESTS=ON -DUSE_OMP=%USE_OPENMP% -DUSE_FFTW=%USE_FFTW% -DUSE_MKL=%USE_MKL% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
+cmake -G %GENERATOR% -A x64 -DUSE_TESTS=ON -DUSE_OMP=%USE_OPENMP% -DUSE_FFTW=%USE_FFTW% -DUSE_MKL=%USE_MKL% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
 cmake --build . --config Release
 
 xcopy /y src\pyHiChi\Release\* ..\..\bin\* > nul
