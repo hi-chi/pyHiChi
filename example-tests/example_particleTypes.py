@@ -1,8 +1,8 @@
 import sys
 sys.path.append("../bin/")
-import pyHiChi as pfc
+import pyHiChi as hichi
 
 #ParticleTypes
-print(pfc.Electron)
-print(pfc.Positron)
-print(pfc.Proton)
+print(hichi.ELECTRON)
+print(hichi.POSITRON)
+print(hichi.PROTON)

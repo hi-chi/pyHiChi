@@ -1,38 +1,38 @@
 import sys
 sys.path.append("../bin/")
-import pyHiChi as pfc
+import pyHiChi as hichi
 import random
 
-def newRandomArray(size) :
-    pArray = pfc.particleArray()  #type = Electron
+def new_random_array(size) :
+    p_array = hichi.ParticleArray()  #type = ELECTRON
     for i in range(size) :
-        pos = pfc.vector3d(1.2*i, 3.4*i, 5.6*i)
-        mo = pfc.vector3d(9.8*i, 7.6*i, 54.3*i)
-        newP = pfc.particle(pos, mo, 0.5, pfc.Electron)
-        pArray.add(newP) #or pArray.pushBack
-    return pArray
+        pos = hichi.Vector3d(1.2*i, 3.4*i, 5.6*i)
+        mo = hichi.Vector3d(9.8*i, 7.6*i, 54.3*i)
+        new_p = hichi.Particle(pos, mo, 0.5, hichi.ELECTRON)
+        p_array.add(new_p)
+    return p_array
     
 #simple thinning
-pArray =  newRandomArray(1000)
-print(pArray.size())
-pfc.simpleThinning(pArray, 300)
-print(pArray.size())
+p_array = new_random_array(1000)
+print(p_array.size())
+hichi.simple_thinning(p_array, 300)
+print(p_array.size())
 
 #leveling thinning
-pArray =  newRandomArray(1000)
-print(pArray.size())
-pfc.levelingThinning(pArray)
-print(pArray.size())
+p_array = new_random_array(1000)
+print(p_array.size())
+hichi.leveling_thinning(p_array)
+print(p_array.size())
 
 #number conservative thinning
-pArray =  newRandomArray(1000)
-print(pArray.size())
-pfc.numberConservativeThinning(pArray, 300)
-print(pArray.size())
+p_array = new_random_array(1000)
+print(p_array.size())
+hichi.number_conservative_thinning(p_array, 300)
+print(p_array.size())
 
 #energy conservative thinning
-pArray =  newRandomArray(1000)
-print(pArray.size())
-pfc.energyConservativeThinning(pArray, 300)
-print(pArray.size())
+p_array = new_random_array(1000)
+print(p_array.size())
+hichi.energy_conservative_thinning(p_array, 300)
+print(p_array.size())
 

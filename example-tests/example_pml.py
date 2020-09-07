@@ -1,95 +1,96 @@
 import sys
 sys.path.append("../bin/")
-import pyHiChi as pfc
+import pyHiChi as hichi
 import numpy as np
-import math as ma
 
-gridSize = pfc.vector3d(144, 30, 1)
-pmlSize = pfc.vector3d(8, 0, 0)
-minCoords = pfc.vector3d(0.0, 0.0, 0.0)
-maxCoords = pfc.vector3d(gridSize.x * pfc.c, gridSize.y * pfc.c, gridSize.z * pfc.c)
+field_size = hichi.Vector3d(144, 30, 1)
+pml_size = hichi.Vector3d(8, 0, 0)
+min_coords = hichi.Vector3d(0.0, 0.0, 0.0)
+max_coords = hichi.Vector3d(field_size.x * hichi.c, field_size.y * hichi.c, field_size.z * hichi.c)
     
-stepsGrid = (maxCoords - minCoords)/gridSize
-timeStep = 0.1
+field_step = (max_coords - min_coords) / field_size
+time_step = 0.1
 
-pmlLeftEnd = minCoords.x+pmlSize.x*stepsGrid.x
-pmlRightStart = maxCoords.x-pmlSize.x*stepsGrid.x
-internalWidth = pmlRightStart-pmlLeftEnd#maxCoords.x-minCoords.x
+pml_left_end = min_coords.x + pml_size.x*field_step.x
+pml_right_end = max_coords.x - pml_size.x*field_step.x
+internal_width = pml_right_end - pml_left_end
 
-def valueEx(x, y, z):
+def value_Ex(x, y, z):
     Ex = 0
     return Ex
-def valueEy(x, y, z):
-    if (x<pmlLeftEnd or x>=pmlRightStart):
+
+def value_Ey(x, y, z):
+    if (x < pml_left_end or x >= pml_right_end):
         Ey=0
     else: 
-        Ey = ma.sin(2*ma.pi/internalWidth*(x-pmlLeftEnd))
+        Ey = np.sin(2*np.pi/internal_width*(x - pml_left_end))
     return Ey
-def valueEz(x, y, z):
+
+def value_Ez(x, y, z):
     Ez = 0
     return Ez
 
-def valueBx(x, y, z):
+
+def value_Bx(x, y, z):
     Bx = 0
     return Bx
-def valueBy(x, y, z):
+
+def value_By(x, y, z):
     By = 0
     return By
-def valueBz(x, y, z):
-    if (x<pmlLeftEnd or x>=pmlRightStart):
+
+def value_Bz(x, y, z):
+    if (x < pml_left_end or x >= pml_right_end):
         Bz=0
     else: 
-        Bz = ma.sin(2*ma.pi/internalWidth*(x-pmlLeftEnd))
+        Bz = np.sin(2*np.pi/internal_width*(x - pml_left_end))
     return Bz
 
-grid = pfc.PSTDGrid(gridSize, timeStep, minCoords, stepsGrid)
-# grid = pfc.PSATDGrid(gridSize, timeStep, minCoords, stepsGrid)
-# grid = pfc.PSATDTimeStraggeredGrid(gridSize, timeStep, minCoords, stepsGrid)
-# grid = pfc.YeeGrid(gridSize, timeStep, minCoords, stepsGrid) 
-grid.setE(valueEx, valueEy, valueEz)
-grid.setB(valueBx, valueBy, valueBz)
+field = hichi.PSTDField(field_size, min_coords, field_step, time_step)
+# field = hichi.PSATDField(field_size, min_coords, field_step, time_step)
+# field = hichi.PSATDTimeStraggeredField(field_size, min_coords, field_step, time_step)
+# field = hichi.YeeField(field_size, min_coords, field_step, time_step) 
+field.set_E(value_Ex, value_Ey, value_Ez)
+field.set_B(value_Bx, value_By, value_Bz)
+field.set_PML(int(pml_size.x), int(pml_size.y), int(pml_size.z))
 
-fieldSolver = pfc.PSTD(grid)
-# fieldSolver = pfc.PSATD(grid)
-# fieldSolver = pfc.PSATDTimeStraggered(grid)
-# fieldSolver = pfc.FDTD(grid)
-fieldSolver.setPML(int(pmlSize.x), int(pmlSize.y), int(pmlSize.z))
 
-#show
+# ------------------- show -------------------
+
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-Nx = int(gridSize.x)
-Ny = int(gridSize.y)
-x = np.arange(minCoords.x, maxCoords.x, (maxCoords.x-minCoords.x)/Nx)
-y = np.arange(minCoords.y, maxCoords.y, (maxCoords.y-minCoords.y)/Ny)
+Nx = int(field_size.x)
+Ny = int(field_size.y)
+x = np.arange(min_coords.x, max_coords.x, (max_coords.x - min_coords.x)/Nx)
+y = np.arange(min_coords.y, max_coords.y, (max_coords.y - min_coords.y)/Ny)
 
-def getFields():
-    global grid, x, y, Nx, Ny
-    Ey = np.zeros(shape=(Ny,Nx))
-    Bz = np.zeros(shape=(Ny,Nx))
+def get_fields():
+    global field, x, y, Nx, Ny
+    Ey = np.zeros(shape=(Ny, Nx))
+    Bz = np.zeros(shape=(Ny, Nx))
     for ix in range(Nx):
         for iy in range(Ny):
-            coordXY = pfc.vector3d(x[ix], y[iy], 0.0)
-            E = grid.getE(coordXY)
+            coord_xy = hichi.Vector3d(x[ix], y[iy], 0.0)
+            E = field.get_E(coord_xy)
             Ey[iy, ix] = E.y
-            B = grid.getB(coordXY)
+            B = field.get_B(coord_xy)
             Bz[iy, ix] = B.z
     return Ey, Bz
 
-def updateData():
+def update_data():
     for i in range(3):
-        fieldSolver.updateFields()
+        field.update_fields()
         
-def computeEnergy():
-    (Ey, Bz) = getFields()
+def compute_energy():
+    (Ey, Bz) = get_fields()
     energy=0
     for ix in range(Nx):
         for iy in range(Ny):
-            energy+=Ey[iy, ix]**2+Bz[iy, ix]**2
+            energy += Ey[iy, ix]**2 + Bz[iy, ix]**2
     return energy
 
-(Ey, Bz) = getFields()
+(Ey, Bz) = get_fields()
 
 fig, axes = plt.subplots(ncols=2, nrows=1)
 
@@ -105,19 +106,19 @@ axes[1].set_title("Bz")
 axes[1].set_xlabel("x")
 axes[1].set_ylabel("y")
 
-iter=0
-def updatefig(*args):
+iter = 0
+def update_fig(*args):
     global iter
-    updateData()
-    (Ey, Bz) = getFields()
+    update_data()
+    (Ey, Bz) = get_fields()
     im11.set_array(Ey)
     im12.set_array(Bz)
-    if (iter%50 == 0):
-        print("Energy = "+str(computeEnergy()))
-    iter+=1
+    if (iter % 50 == 0):
+        print("Energy = " + str(compute_energy()))
+    iter += 1
     return im11, im12
     
-ani = animation.FuncAnimation(fig, updatefig, interval=10, blit=True)
+ani = animation.FuncAnimation(fig, update_fig, interval=10, blit=True)
 
 plt.tight_layout()
 

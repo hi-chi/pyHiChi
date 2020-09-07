@@ -3,162 +3,158 @@ sys.path.append("../../python_modules")
 sys.path.append("../../bin")
 import pyHiChi as hichi
 from tight_focusing_fields import SphericalPulseC, SphericalPulsePython
-import math as ma
 
 
 # ------------------- initializing -------------------------------------
 
 
-factor = 0.5
-NxFull = int(factor*320)                           # size of grid in full area
-Ny = int(factor*256)
-Nz = int(factor*256)
-NxBand = int(56*factor)                            # size of grid in the band
-gridSize = hichi.vector3d(NxBand, Ny, Nz)          # real size of grid
+FACTOR = 0.5
+NX_FULL = int(FACTOR*320)                           # size of field in full area
+NY = int(FACTOR*256)
+NZ = int(FACTOR*256)
+NX_BAND = int(56*FACTOR)                            # size of field in the band
+grid_size = hichi.Vector3d(NX_BAND, NY, NZ)          # real size of field
 
 # creating of spherical pulse
-sphericalPulse = SphericalPulsePython(f_number = 0.3,
-                                      R0 = 16,
-                                      pulselength = 2.0,
-                                      phase = 0,
-                                      edgeSmoothingAngle = 0.1)
+spherical_pulse = SphericalPulsePython(f_number = 0.3,
+                                       R0 = 16,
+                                       pulselength = 2.0,
+                                       phase = 0,
+                                       edge_smoothing_angle = 0.1
+                                      )
 
-timeStep = 1.0/hichi.c                             # time step in CGS system of units
-maxIter = 32                                       # number of iterations to compute       
+time_step = 1.0/hichi.c                             # time step in CGS system of units
+max_iter = 32                                       # number of iterations to compute       
 
-minCoords = hichi.vector3d(-20, -20, -20)          # bounds of full area
-maxCoords = hichi.vector3d(20, 20, 20)
+min_coords = hichi.Vector3d(-20, -20, -20)          # bounds of full area
+max_coords = hichi.Vector3d(20, 20, 20)
 
-D = 3.5*sphericalPulse.pulselength                 # band width
+D = 3.5*spherical_pulse.pulselength                 # band width
 
 # to compute the task in the full area just set
-# D = maxCoords.x - minCoords.x
+# D = max_coords.x - min_coords.x
                                                    
                                                    
 # creating of mapping
-mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulselength, D)
+mapping = hichi.TightFocusingMapping(spherical_pulse.R0, spherical_pulse.pulselength, D)
 
 # creating of mapping with cutting at angle
-# cutAngle = sphericalPulse.openingAngle + sphericalPulse.edgeSmoothingAngle
-# mapping = hichi.TightFocusingMapping(sphericalPulse.R0, sphericalPulse.pulseLength, D, cutAngle)
+# cutAngle = spherical_pulse.opening_angle + spherical_pulse.edge_smoothing_angle
+# mapping = hichi.TightFocusingMapping(spherical_pulse.R0, spherical_pulse.pulseLength, D, cutAngle)
 
 # not to cut secondary pulses
-# mapping.setIfCut(False)
+# mapping.if_perform_inverse_mapping(False)
 
-xMin = mapping.getxMin()  # bounds of the band
-xMax = mapping.getxMax()
+x_min = mapping.get_min_coord()  # bounds of the band
+x_max = mapping.get_max_coord()
 
-# computing of step of grid
-gridMinCoords = hichi.vector3d(xMin, minCoords.y, minCoords.z)
-gridMaxCoords = hichi.vector3d(xMax, maxCoords.y, maxCoords.z)
-gridStep = (gridMaxCoords - gridMinCoords) / gridSize
+# computing of step of field
+band_min_coords = hichi.Vector3d(x_min, min_coords.y, min_coords.z)
+band_max_coords = hichi.Vector3d(x_max, max_coords.y, max_coords.z)
+grid_step = (band_max_coords - band_min_coords) / grid_size
 
-# creating of grid for PSATDGridMapping
-grid = hichi.PSATDGridMapping(gridSize, timeStep, gridMinCoords, gridStep)
-grid.setMapping(mapping)
-
-# creating of field solver PSATD for existing grid
-# the Poisson equation will be satisfied
-fieldSolver = hichi.PSATDPoisson(grid)
+# creating of field for PSATDGrid
+field = hichi.PSATDPoissonField(grid_size, band_min_coords, grid_step, time_step)
+field = field.apply_mapping(mapping)
 
 
 def initialize():
     # setting of start conditions
-    sphericalPulse.setField(grid)
+    spherical_pulse.set_field(field)
 
 
-def updateFields():
+def update_fields():
     # doing one iteration of PSATD
-    fieldSolver.updateFields()
+    field.update_fields()
 
 
-# ----------- run and show animation (size of grid should be not large) ------
+# ----------- run and show animation (size of field should be not large) ------
 
 from hichi_visualisation import *
 from hichi_primitives import Axis, Plane, Field
 
-visual = Visual(grid, minCoords, maxCoords, dpi=500, fontsize=17)
+visual = Visual(field, min_coords, max_coords, dpi=500, fontsize=17)
 
-def animateInPlane(visual, nIter):
-    visual.animateInPlane(shape=(NxFull*2, Ny*2), funcUpdate=updateFields, nIter=nIter,
-                          plane=Plane.XOY, lastCoordinateValue=0.0,
+def animate_plane(visual, n_iter):
+    visual.animate_plane(shape=(NX_FULL*2, NY*2), func_update=update_fields, n_iter=n_iter,
+                          plane=Plane.XOY, last_coordinate_value=0.0,
                           field=Field.E, norm=True,
-                          valueLimits=(0.0, 0.5),
+                          value_limits=(0.0, 0.5),
                           interval=1
-                          )
+                         )
                             
-def animateInAxis(visual, nIter):
-    visual.animateInAxis(nPoints=NxFull*2, funcUpdate=updateFields, nIter=nIter,
-                         axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
+def animate_axis(visual, n_iter):
+    visual.animate_axis(n_points=NX_FULL*2, func_update=update_fields, n_iter=n_iter,
+                         axis=Axis.X, last_coordinate_value=(0.0, 0.0),
                          field=Field.E, norm=True,
-                         yLimits=(-1.0, 8.0),
+                         y_limits=(-1.0, 8.0),
                          interval=50
-                         )                            
+                        )                            
                             
 initialize()
-animateInPlane(visual, maxIter)  # it should be the last function in the current script
-#animateInAxis(visual, maxIter)  # it should be the last function in the current script
+animate_plane(visual, max_iter)  # it should be the last function in the current script
+#animate_axis(visual, max_iter)  # it should be the last function in the current script
 
 
 # ----------- run and save pictures for every iteration ----------------------
 '''
 from hichi_visualisation import *
-from hichi_primitives import Axis, Plane, Field, createDir
+from hichi_primitives import Axis, Plane, Field, create_dir
 
-createDir("./pictures")
-visual = Visual(grid, minCoords, maxCoords, "./pictures", dpi=500, fontsize=17)
+create_dir("./pictures")
+visual = Visual(field, min_coords, max_coords, "./pictures", dpi=500, fontsize=17)
 
-def savePicInPlane(visual, iter):
-    visual.savePictureInPlane(shape=(NxFull*4, Ny*4), plane=Plane.XOY, lastCoordinateValue=0.0,
-                              field=Field.E, norm=True,
-                              valueLimits=(0.0, 0.5),
-                              namePicture="field%04d.png" % iter
+def save_plane_to_image(visual, iter):
+    visual.save_plane_to_image(shape=(NX_FULL*4, NY*4), plane=Plane.XOY, last_coordinate_value=0.0,
+                               field=Field.E, norm=True,
+                               value_limits=(0.0, 0.5),
+                               name_picture="field%04d.png" % iter
                               )
                             
-def savePicInAxis(visual, iter):
-    visual.savePictureInAxis(nPoints=NxFull*4, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
-                             field=Field.E, norm=True,
-                             yLimits=(-1.0, 8.0),
-                             namePicture="field%04d.png" % iter
+def save_axis_to_image(visual, iter):
+    visual.save_axis_to_image(n_points=NX_FULL*4, axis=Axis.X, last_coordinate_value=(0.0, 0.0),
+                              field=Field.E, norm=True,
+                              y_limits=(-1.0, 8.0),
+                              name_picture="field%04d.png" % iter
                              )                            
                             
 initialize()
-for i in range(maxIter):
-    savePicInPlane(visual, i)
-    #savePicInAxis(visual, i)
-    updateFields()
+for i in range(max_iter):
+    save_plane_to_image(visual, i)
+    #save_axis_to_image(visual, i)
+    update_fields()
 '''
 
 # ----------- run and save results in .csv files --------------------------
 '''
 from hichi_writing import Writer, Reader
-from hichi_primitives import Axis, Plane, Field, createDir
+from hichi_primitives import Axis, Plane, Field, create_dir
 
-createDir("./csv")
-writer = Writer(grid, minCoords, maxCoords, "./csv")
+create_dir("./csv")
+writer = Writer(field, min_coords, max_coords, "./csv")
 
-def saveFileInPlane(writer, iter):
-    writer.saveFileInPlane(shape=(NxFull*4, Ny*4), plane=Plane.XOY, lastCoordinateValue=0.0,
-                           field=Field.E, norm=True,
-                           nameFile="field%04d.csv" % iter
-                           )
+def save_plane_to_file(writer, iter):
+    writer.save_plane_to_file(shape=(NX_FULL*4, NY*4), plane=Plane.XOY, last_coordinate_value=0.0,
+                              field=Field.E, norm=True,
+                              name_file="field%04d.csv" % iter
+                             )
                             
-def saveFileInAxis(writer, iter):
-    writer.saveFileInAxis(nPoints=NxFull*4, axis=Axis.X, lastCoordinateValue=(0.0, 0.0),
-                          field=Field.E, norm=True,
-                          nameFile="field%04d.csv" % iter
-                          )                            
+def save_axis_to_file(writer, iter):
+    writer.save_axis_to_file(n_points=NX_FULL*4, axis=Axis.X, last_coordinate_value=(0.0, 0.0),
+                             field=Field.E, norm=True,
+                             name_file="field%04d.csv" % iter
+                            )                            
                             
 initialize()
-for i in range(maxIter):
-    saveFileInPlane(writer, i)
-    #saveFileInAxis(writer, i)
-    updateFields()
+for i in range(max_iter):
+    save_plane_to_file(writer, i)
+    #save_axis_to_file(writer, i)
+    update_fields()
 
 # it is possible to read crated file to numpy.array   
 import numpy as np
 reader = Reader("./csv")
-field = reader.readFile2d("field0000.csv")
-#field = reader.readFile1d("field0000.csv")
+field = reader.read_file_2d("field0000.csv")
+#field = reader.read_file_1d("field0000.csv")
 print(field)
 '''
