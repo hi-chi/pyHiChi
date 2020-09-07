@@ -17,7 +17,7 @@ namespace pfc {
     {
 
     public:
-
+        friend class DataManager;
         Grid(const Int3 & _numInternalCells, FP _dt,
             const FP3 & minCoords, const FP3 & _steps,
             const Int3 & globalGridDims);

@@ -32,5 +32,14 @@ TYPED_TEST(SimulationTest, Can_create_Simulation_with_Grid_and_FDTD)
 
 TYPED_TEST(SimulationTest, Can_create_DataManager)
 {
-    ASSERT_NO_THROW(DataManager manager("test"));
+    ASSERT_NO_THROW(DataManager manager1());
+    ASSERT_NO_THROW(DataManager manager2("Test"));
+    ASSERT_NO_THROW(DataManager manager("test", IOType::Write));
+}
+
+TYPED_TEST(SimulationTest, Can_Put)
+{
+    DataManager manager("test", IOType::Write);
+    double pi = 3.14;
+    manager.putVariable("val1", pi);
 }
