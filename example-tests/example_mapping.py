@@ -73,7 +73,9 @@ def updateData():
     # == field2.updateFields()
     # == field3.updateFields()
     
+    
 # --------- show -------------
+
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation

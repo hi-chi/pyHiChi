@@ -30,11 +30,11 @@ namespace pfc
     };
 
     template <class TGrid, class TFieldSolver, class TDerived, bool ifStraggered>
-    class pyStraggeredFieldSetterIntarface {};
+    class pyStraggeredFieldIntarface {};
 
     // spatial straggered grids
     template <class TGrid, class TFieldSolver, class TDerived>
-    class pyStraggeredFieldSetterIntarface<TGrid, TFieldSolver, TDerived, true>
+    class pyStraggeredFieldIntarface<TGrid, TFieldSolver, TDerived, true>
     {
     public:
 
@@ -89,7 +89,7 @@ namespace pfc
 
     // collocated grids
     template <class TGrid, class TFieldSolver, class TDerived>
-    class pyStraggeredFieldSetterIntarface<TGrid, TFieldSolver, TDerived, false>
+    class pyStraggeredFieldIntarface<TGrid, TFieldSolver, TDerived, false>
     {
     public:
 
@@ -196,16 +196,23 @@ namespace pfc
 
 
     template<class TGrid, class TFieldSolver, class TDerived>
-    class pyFieldSetterInterface : public pyStraggeredFieldSetterIntarface<TGrid, TFieldSolver,
+    class pyFieldGridInterface : public pyStraggeredFieldIntarface<TGrid, TFieldSolver,
         TDerived, TGrid::ifFieldsSpatialStraggered && TGrid::ifFieldsTimeStraggered>
     {
     public:
 
-        pyFieldSetterInterface()
+        pyFieldGridInterface()
         {
             fEt[0] = 0; fEt[1] = 0; fEt[2] = 0;
             fBt[0] = 0; fBt[1] = 0; fBt[2] = 0;
             isAnalytical = false;
+        }
+
+        void setAnalytical(int64_t _fEx, int64_t _fEy, int64_t _fEz, int64_t _fBx, int64_t _fBy, int64_t _fBz)
+        {
+            fEt[0] = _fEx; fEt[1] = _fEy; fEt[2] = _fEz;
+            fBt[0] = _fBx; fBt[1] = _fBy; fBt[2] = _fBz;
+            isAnalytical = true;
         }
 
         void analyticalUpdateFields(FP t)
@@ -517,53 +524,6 @@ namespace pfc
                     }
         }
 
-    protected:
-
-        void setAnalytical(int64_t _fEx, int64_t _fEy, int64_t _fEz, int64_t _fBx, int64_t _fBy, int64_t _fBz)
-        {
-            fEt[0] = _fEx; fEt[1] = _fEy; fEt[2] = _fEz;
-            fBt[0] = _fBx; fBt[1] = _fBy; fBt[2] = _fBz;
-            isAnalytical = true;
-        }
-
-    private:
-
-        int64_t fEt[3], fBt[3];
-        bool isAnalytical;
-
-    };
-
-
-    template<class TGrid, class TFieldSolver, class TDerived>
-    class pyFieldGetterInterface
-    {
-    public:
-
-        pyFieldGetterInterface()
-        {
-            fEt[0] = 0; fEt[1] = 0; fEt[2] = 0;
-            fBt[0] = 0; fBt[1] = 0; fBt[2] = 0;
-            isAnalytical = false;
-        }
-
-        FP3 getE(const FP3& coords) const {
-            return static_cast<TDerived*>(this)->getE(coords);
-        }
-
-        FP3 getB(const FP3& coords) const {
-            return static_cast<TDerived*>(this)->getB(coords);
-        }
-
-        FP3 getJ(const FP3& coords) const {
-            return static_cast<TDerived*>(this)->getJ(coords);
-        }
-
-        void getFields(const FP3& coords, FP3 & e, FP3 & b) const {
-            static_cast<const TDerived*>(this)->getFieldEntity()->getFields(coords, e, b);
-        }
-
-    protected:
-
         FP3 getEByDirectCoords(const FP3& coords) const
         {
 
@@ -611,11 +571,8 @@ namespace pfc
             return static_cast<const TDerived*>(this)->getFieldEntity()->getJ(coords);
         }
 
-        void setAnalytical(int64_t _fEx, int64_t _fEy, int64_t _fEz, int64_t _fBx, int64_t _fBy, int64_t _fBz)
-        {
-            fEt[0] = _fEx; fEt[1] = _fEy; fEt[2] = _fEz;
-            fBt[0] = _fBx; fBt[1] = _fBy; fBt[2] = _fBz;
-            isAnalytical = true;
+        void getFieldsByDirectCoords(const FP3& coords, FP3& e, FP3& b) const {
+            static_cast<const TDerived*>(this)->getFieldEntity()->getFields(coords, e, b);
         }
 
     private:
@@ -711,16 +668,54 @@ namespace pfc
     };
 
 
-    template<class TGrid, class TFieldSolver>
-    class pyField :
-        public pyFieldSetterInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>,
-        public pyFieldGetterInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>,
-        public pyFieldSolverInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>
+    template<class TGrid, class TFieldSolver, class TDerived>
+    class pyFieldInterface:
+        public pyFieldGridInterface<TGrid, TFieldSolver, TDerived>,
+        public pyFieldSolverInterface<TGrid, TFieldSolver, TDerived>
     {
-        using BaseSetterInterface = pyFieldSetterInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>;
-        using BaseGetterInterface = pyFieldGetterInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>;
-        using BaseSolverInterface = pyFieldSolverInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>;
+    public:
 
+        using BaseGridInterface =
+            pyFieldGridInterface<TGrid, TFieldSolver, TDerived>;
+        using BaseSolverInterface =
+            pyFieldSolverInterface<TGrid, TFieldSolver, TDerived>;
+
+        TGrid* getGrid() const {
+            return static_cast<TGrid*>(static_cast<const TDerived*>(this)->getFieldEntity());
+        }
+
+        TFieldSolver* getFieldSolver() const {
+            return static_cast<TFieldSolver*>(static_cast<const TDerived*>(this)->getFieldEntity());
+        }
+
+        void refresh() {
+            static_cast<TDerived*>(this)->getFieldEntity()->refresh();
+        }
+    };
+
+
+    class pyFieldBase {
+    public:
+
+        virtual FP3 getE(const FP3& coords) const = 0;
+        virtual FP3 getB(const FP3& coords) const = 0;
+        virtual FP3 getJ(const FP3& coords) const = 0;
+
+        void getFields(const FP3& coords, FP3& e, FP3& b) const {
+            e = getE(coords);
+            b = getB(coords);
+        }
+
+        virtual std::shared_ptr<pyFieldBase> applyMapping(
+            const std::shared_ptr<pyFieldBase>& self,
+            const std::shared_ptr<Mapping>& mapping) const = 0;
+    };
+
+
+    template<class TGrid, class TFieldSolver>
+    class pyField : public pyFieldInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>,
+        public pyFieldBase
+    {
     public:
 
         pyField(const Int3 & numInternalCells,
@@ -729,34 +724,14 @@ namespace pfc
                 minCoords, steps, dt))
         {}
 
-        pyField(const std::shared_ptr<pyField<TGrid, TFieldSolver>>& pyFieldRef,
+        pyField(const std::shared_ptr<pyField<TGrid, TFieldSolver>>& other,
             const std::shared_ptr<Mapping>& mapping) :
-            pyFieldRef(pyFieldRef), mapping(mapping)
+            pyWrappedField(other), mapping(mapping)
         {}
-
-        void setAnalytical(int64_t fEx, int64_t fEy, int64_t fEz, int64_t fBx, int64_t fBy, int64_t fBz)
-        {
-            BaseSetterInterface::setAnalytical(fEx, fEy, fEz, fBx, fBy, fBz);
-            BaseGetterInterface::setAnalytical(fEx, fEy, fEz, fBx, fBy, fBz);
-        }
-
-        static std::shared_ptr<pyField<TGrid, TFieldSolver>> applyMapping(
-            const std::shared_ptr<pyField<TGrid, TFieldSolver>>& pyFieldRef,
-            const std::shared_ptr<Mapping>& mapping) {
-            return std::make_shared<pyField<TGrid, TFieldSolver>>(pyFieldRef, mapping);
-        }
 
         inline pyFieldEntity<TGrid, TFieldSolver>* getFieldEntity() const {
             if (fieldEntity) return fieldEntity.get();
-            return pyFieldRef->getFieldEntity();
-        }
-
-        TGrid* getGrid() const {
-            return static_cast<TGrid*>(getFieldEntity());
-        }
-
-        TFieldSolver* getFieldSolver() const {
-            return static_cast<TFieldSolver*>(getFieldEntity());
+            return pyWrappedField->getFieldEntity();
         }
 
         inline FP3 convertCoords(const FP3& coords, FP timeShift = 0.0) const {
@@ -764,32 +739,38 @@ namespace pfc
             return getDirectCoords(coords, getFieldEntity()->globalTime + timeShift, &status);
         }
 
-        inline FP3 getE(const FP3& coords) const {
+        std::shared_ptr<pyFieldBase> applyMapping(
+            const std::shared_ptr<pyFieldBase>& self,
+            const std::shared_ptr<Mapping>& mapping) const override {
+            return std::static_pointer_cast<pyFieldBase>(
+                std::make_shared<pyField<TGrid, TFieldSolver>>(
+                    std::static_pointer_cast<pyField<TGrid, TFieldSolver>>(self), mapping
+                    )
+                );
+        }
+
+        inline FP3 getE(const FP3& coords) const override {
             bool status = true;
             FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftE;
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return FP3(0, 0, 0);
-            return BaseGetterInterface::getEByDirectCoords(inverseCoords);
+            return BaseGridInterface::getEByDirectCoords(inverseCoords);
         }
 
-        inline FP3 getB(const FP3& coords) const {
+        inline FP3 getB(const FP3& coords) const override {
             bool status = true;
             FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftB;
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return FP3(0, 0, 0);
-            return BaseGetterInterface::getBByDirectCoords(inverseCoords);
+            return BaseGridInterface::getBByDirectCoords(inverseCoords);
         }
 
-        inline FP3 getJ(const FP3& coords) const {
+        FP3 getJ(const FP3& coords) const override {
             bool status = true;
             FP time = getFieldEntity()->globalTime + getFieldEntity()->timeShiftJ;
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return FP3(0, 0, 0);
-            return BaseGetterInterface::getJByDirectCoords(inverseCoords);
-        }
-
-        void refresh() {
-            getFieldEntity()->refresh();
+            return BaseGridInterface::getJByDirectCoords(inverseCoords);
         }
 
     protected:
@@ -797,7 +778,7 @@ namespace pfc
         inline FP3 getDirectCoords(const FP3& coords, FP time, bool* status) const {
             FP3 coords_ = coords;
             *status = true;
-            if (pyFieldRef) coords_ = pyFieldRef->getDirectCoords(coords_, time, status);
+            if (pyWrappedField) coords_ = pyWrappedField->getDirectCoords(coords_, time, status);
             bool status2 = true;
             if (mapping) coords_ = mapping->getDirectCoords(coords_, time, &status2);
             *status = *status && status2;
@@ -807,7 +788,7 @@ namespace pfc
         inline FP3 getInverseCoords(const FP3& coords, FP time, bool* status) const {
             FP3 coords_ = coords;
             *status = true;
-            if (pyFieldRef) coords_ = pyFieldRef->getInverseCoords(coords_, time, status);
+            if (pyWrappedField) coords_ = pyWrappedField->getInverseCoords(coords_, time, status);
             bool status2 = true;
             if (mapping) coords_ = mapping->getInverseCoords(coords_, time, &status2);
             *status = *status && status2;
@@ -817,10 +798,12 @@ namespace pfc
     private:
 
         // the simple grid state
-        std::unique_ptr<pyFieldEntity<TGrid, TFieldSolver>> fieldEntity;  // if !=0 then pyField is a memory owner
+        // if fieldEntity!=0 then pyField is a memory owner
+        std::unique_ptr<pyFieldEntity<TGrid, TFieldSolver>> fieldEntity;
 
         // the mapping grid state
-        std::shared_ptr<pyField<TGrid, TFieldSolver>> pyFieldRef;  // if !=0 then pyField is a wrapper
+        // if pyWrappedField!=0 then pyField is a wrapper
+        std::shared_ptr<pyField<TGrid, TFieldSolver>> pyWrappedField;
         std::shared_ptr<Mapping> mapping;
 
     };
@@ -831,5 +814,91 @@ namespace pfc
     typedef pyField<PSATDGrid, PSATDPoisson> pyPSATDPoissonField;
     typedef pyField<PSATDTimeStraggeredGrid, PSATDTimeStraggered> pyPSATDTimeStraggeredField;
     typedef pyField<PSATDTimeStraggeredGrid, PSATDTimeStraggeredPoisson> pyPSATDTimeStraggeredPoissonField;
+
+
+    class pySumField : public pyFieldBase
+    {
+    public:
+
+        pySumField(const std::shared_ptr<pyFieldBase>& pyWrappedField1,
+            const std::shared_ptr<pyFieldBase>& pyWrappedField2) :
+            pyWrappedField1(pyWrappedField1), pyWrappedField2(pyWrappedField2)
+        {}
+
+        pySumField(const std::shared_ptr<pySumField>& other,
+            const std::shared_ptr<Mapping>& mapping) :
+            pyWrappedField1(pyWrappedField1->applyMapping(other->pyWrappedField1, mapping)),
+            pyWrappedField2(pyWrappedField2->applyMapping(other->pyWrappedField2, mapping))
+        {}
+
+        std::shared_ptr<pyFieldBase> applyMapping(
+            const std::shared_ptr<pyFieldBase>& self,
+            const std::shared_ptr<Mapping>& mapping) const override {
+            return std::static_pointer_cast<pyFieldBase>(
+                std::make_shared<pySumField>(
+                    std::static_pointer_cast<pySumField>(self), mapping
+                    )
+                );
+        }
+
+        FP3 getE(const FP3& coords) const override {
+            return pyWrappedField1->getE(coords) + pyWrappedField2->getE(coords);
+        }
+
+        FP3 getB(const FP3& coords) const override {
+            return pyWrappedField1->getB(coords) + pyWrappedField2->getB(coords);
+        }
+
+        FP3 getJ(const FP3& coords) const override {
+            return pyWrappedField1->getJ(coords) + pyWrappedField2->getJ(coords);
+        }
+
+    private:
+
+        std::shared_ptr<pyFieldBase> pyWrappedField1;
+        std::shared_ptr<pyFieldBase> pyWrappedField2;
+    };
+
+
+    class pyMulField : public pyFieldBase {
+    public:
+
+        pyMulField(const std::shared_ptr<pyFieldBase>& pyWrappedField, FP factor) :
+            pyWrappedField(pyWrappedField),
+            factor(factor)
+        {}
+
+        pyMulField(const std::shared_ptr<pyMulField>& other,
+            const std::shared_ptr<Mapping>& mapping) :
+            pyWrappedField(pyWrappedField->applyMapping(other->pyWrappedField, mapping))
+        {}
+
+        std::shared_ptr<pyFieldBase> applyMapping(
+            const std::shared_ptr<pyFieldBase>& self,
+            const std::shared_ptr<Mapping>& mapping) const override {
+            return std::static_pointer_cast<pyFieldBase>(
+                std::make_shared<pyMulField>(
+                    std::static_pointer_cast<pyMulField>(self), mapping
+                    )
+                );
+        }
+
+        FP3 getE(const FP3& coords) const override {
+            return pyWrappedField->getE(coords) * factor;
+        }
+
+        FP3 getB(const FP3& coords) const override {
+            return pyWrappedField->getB(coords) * factor;
+        }
+
+        FP3 getJ(const FP3& coords) const override {
+            return pyWrappedField->getJ(coords) * factor;
+        }
+
+    private:
+
+        FP factor = 1.0;
+        std::shared_ptr<pyFieldBase> pyWrappedField;
+    };
 
 }
