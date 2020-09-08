@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "Grid.h"
+#include "FieldValue.h"
 #include "Mapping.h"
 #include "Fdtd.h"
 #include "Psatd.h"
@@ -725,7 +726,7 @@ namespace pfc
 
         pyField(const Int3 & numInternalCells,
             const FP3 & minCoords, const FP3 & steps, FP dt) :
-            fieldEntity(std::make_unique<pyFieldEntity<TGrid, TFieldSolver>>(numInternalCells,
+            fieldEntity(new pyFieldEntity<TGrid, TFieldSolver>(numInternalCells,
                 minCoords, steps, dt))
         {}
 
