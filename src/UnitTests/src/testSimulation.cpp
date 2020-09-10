@@ -33,13 +33,20 @@ TYPED_TEST(SimulationTest, Can_create_Simulation_with_Grid_and_FDTD)
 TYPED_TEST(SimulationTest, Can_create_DataManager)
 {
     ASSERT_NO_THROW(DataManager manager1());
-    ASSERT_NO_THROW(DataManager manager2("Test"));
-    ASSERT_NO_THROW(DataManager manager("test", IOType::Write));
+    ASSERT_NO_THROW(DataManager manager2("test2"));
+    ASSERT_NO_THROW(DataManager manager3("test3", IOType::Write));
 }
 
-TYPED_TEST(SimulationTest, Can_Put)
+TYPED_TEST(SimulationTest, Can_Put_double)
 {
     DataManager manager("test", IOType::Write);
     double pi = 3.14;
     manager.putVariable("val1", pi);
+}
+
+TYPED_TEST(SimulationTest, Can_Put_Int3)
+{
+    adios2::fstream oStream("test", adios2::fstream::out);
+    Int3 tmp(1, 2, 3);
+    oStream << tmp;
 }

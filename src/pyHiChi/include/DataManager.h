@@ -80,10 +80,25 @@ public:
         engine.Get(var, arr);
     }
     
-    template<typename Data, GridTypes gridType>
-    void customPut(const Grid<Data, gridType> &grid)
+    template<typename T>
+    void customPut(const std::string name, const Vector3<T>& val)
     {
-        Put(grid.dt);
+        putVariable(name + "x", val.x);
+        putVariable(name + "y", val.y);
+        putVariable(name + "z", val.z);
+    }
+    template<typename Data, GridTypes gridType>
+    void customPut(const std::string name, const Grid<Data, gridType> &grid)
+    {
+        putVariable(name, grid.dt);
+        customPut(name, grid.numInternalCells);
     }
 };
+adios2::fstream& operator<< (adios2::fstream& out, Int3& v)
+{
+    out.write("x", v.x);
+    out.write("y", v.y);
+    out.write("z", v.z);
+    return out;
+}
 } // namespace pfc
