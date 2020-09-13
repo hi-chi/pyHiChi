@@ -87,7 +87,7 @@ def run(nx):
     
     # the creation of the computational field with the approciate mapping
     field = hichi.PSATDField(grid_size, band_min_coords, grid_step, time_step)
-    field.apply_mapping(mapping)
+    field = field.apply_mapping(mapping)
     
     # the field initialisation
     spherical_pulse.set_field(field)

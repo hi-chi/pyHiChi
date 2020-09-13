@@ -19,7 +19,6 @@ grid_size = hichi.Vector3d(NX_BAND, NY, NZ)          # real size of field
 spherical_pulse = SphericalPulsePython(f_number = 0.3,
                                        R0 = 16,
                                        pulselength = 2.0,
-                                       phase = 0,
                                        edge_smoothing_angle = 0.1
                                       )
 

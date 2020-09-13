@@ -12,15 +12,17 @@ import numpy as np
 
 class SphericalPulsePython():
     
-    def __init__(self, f_number=0.3, R0=16,
-                 pulselength=2.0, phase=0.0,
+    def __init__(self,
+                 f_number=0.3,
+                 R0=16,
+                 pulselength=2.0,
                  edge_smoothing_angle=0.1,
                  wavelength=1.0,
-                 total_power=1.0):
+                 total_power=hichi.c
+                ):
         
         self.wavelength = wavelength
         self.pulselength = pulselength*wavelength
-        self.phase = phase
         self.R0 = R0*wavelength
         self.total_power = total_power
         self.f_number = f_number
@@ -31,7 +33,7 @@ class SphericalPulsePython():
         
         @njit
         def longitudinal_field_variation(x):
-            return np.sin(2*hichi.pi*x/wavelength + phase) * \
+            return np.sin(2*hichi.pi*x/wavelength) * \
                 np.cos(hichi.pi*x/pulselength)**2 * \
                 hp.block(x, -0.5*pulselength, 0.5*pulselength)
         
@@ -86,15 +88,17 @@ class SphericalPulsePython():
 
 class SphericalPulseC():
     
-    def __init__(self, f_number=0.3, R0=16,
-                 pulselength=2.0, phase=0.0,
+    def __init__(self,
+                 f_number=0.3,
+                 R0=16,
+                 pulselength=2.0,
                  edge_smoothing_angle=0.1,
                  wavelength=1.0,
-                 total_power=hichi.c):
+                 total_power=hichi.c
+                ):
         
         self.wavelength = wavelength
         self.pulselength = pulselength*wavelength
-        self.phase = phase
         self.R0 = R0*wavelength
         self.total_power = total_power
         self.f_number = f_number
@@ -105,7 +109,6 @@ class SphericalPulseC():
                                                        R0,
                                                        wavelength,
                                                        pulselength,
-                                                       phase,
                                                        total_power,
                                                        edge_smoothing_angle
                                                       ) 

@@ -441,9 +441,9 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<TightFocusingField>(object, "TightFocusingField")
-        .def(py::init<FP, FP, FP, FP, FP, FP, FP>())
-        .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3>())
-        .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3, FP>())
+        .def(py::init<FP, FP, FP, FP, FP, FP>())
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP3>())
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP3, FP>())
         .def("get_E", &TightFocusingField::getE)
         .def("get_B", &TightFocusingField::getB)
         ;
