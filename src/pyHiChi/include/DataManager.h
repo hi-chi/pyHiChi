@@ -60,6 +60,11 @@ public:
         engine.Put(var, val);
     }
     template<typename T>
+    void putVariable(const adios2::Variable<T>& var, const T& val)
+    {
+        engine.Put(var, val);
+    }
+    template<typename T>
     void putArray(const std::string name, const T* arr, size_t size)
     {
         adios2::Variable<T> var = bpIO.DefineVariable<T>(name, {},
@@ -90,8 +95,8 @@ public:
     template<typename Data, GridTypes gridType>
     void customPut(const std::string name, const Grid<Data, gridType> &grid)
     {
-        putVariable(name, grid.dt);
-        customPut(name, grid.numInternalCells);
+        putVariable(name + "dt", grid.dt);
+        customPut(name + "numInternalCells", grid.numInternalCells);
     }
 };
 adios2::fstream& operator<< (adios2::fstream& out, Int3& v)
