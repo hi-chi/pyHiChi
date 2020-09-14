@@ -12,11 +12,10 @@ DIR_RESULT = "./"
 # the creation of the spherical pulse
 # f_number=0.3 (opening angle = 1 rad)
 spherical_pulse = SphericalPulseC(f_number=0.3,
-                                 R0=16,
-                                 pulselength=2.0,
-                                 phase=0,
-                                 edge_smoothing_angle=0.1
-                                )
+                                  R0=16,
+                                  pulselength=2.0,
+                                  edge_smoothing_angle=0.1
+                                 )
 
 # the computational area (coordinates of the opposite corners of the parallelepiped)
 min_coords = hichi.Vector3d(-20, -20, -20)

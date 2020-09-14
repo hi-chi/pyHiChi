@@ -46,7 +46,7 @@ class SphericalPulsePython():
                  hp.block(angle, angle1, angle2) if (not edge_smoothing_angle == 0.0) \
                  else 0.0)
         
-        amp = np.sqrt(total_power*4.0/(1.0 - np.cos(opening_angle)))
+        amp = np.sqrt(total_power*4.0/(hichi.c*(1.0 - np.cos(opening_angle))))
         
         @njit
         def get_polarisation():
