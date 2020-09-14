@@ -9,7 +9,7 @@ public:
     virtual void SetUp() {
         BaseGridFixture<PSTDGrid>::SetUp();
         initializeGrid();
-        pstd = new PSTD(grid);
+        pstd = new PSTD(grid, this->timeStep);
     }
 
     ~GridPSTDTest() {
@@ -53,7 +53,7 @@ TEST_F(GridPSTDTest, ADD_TEST_FFT_PREFIX(PSTD)) {
     for (int step = 0; step < numSteps; ++step)
         pstd->updateFields();
 
-    FP finalT = grid->dt * numSteps;
+    FP finalT = pstd->dt * numSteps;
     for (int i = 0; i < grid->numCells.x; ++i)
         for (int j = 0; j < grid->numCells.y; ++j)
             for (int k = 0; k < grid->numCells.z; ++k)

@@ -135,8 +135,8 @@ public:
         minCoord = Int3(a, a, a);
         d = FP3(dx, dy, dz);
 
-        grid.reset(new Grid<FP, GridTypes::PSTDGridType>(size, dt, minCoord, d, size));
-        pstd.reset(new PSTD(grid.get()));
+        grid.reset(new Grid<FP, GridTypes::PSTDGridType>(size, minCoord, d, size));
+        pstd.reset(new PSTD(grid.get(), dt));
 
         sizeComplex = fourier_transform::getSizeOfComplexArray(grid->numCells);
         complexGrid = pstd->complexGrid;
