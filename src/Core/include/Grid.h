@@ -14,23 +14,24 @@ namespace pfc {
         Interpolation_SecondOrder, Interpolation_FourthOrder, Interpolation_PCS
     };
 
-    template<typename Data, GridTypes gridType>
+    template<typename Data, GridTypes gridType_>
     class Grid :
         // next labels define some properties of grid
-        public LabelFieldsSpatialStraggered<gridType>,
-        public LabelFieldsTimeStraggered<gridType>
+        public LabelFieldsSpatialStraggered<gridType_>,
+        public LabelFieldsTimeStraggered<gridType_>
     {
 
     public:
 
-        Grid(const Int3 & _numInternalCells, FP _dt,
+        static const GridTypes gridType = gridType_;
+
+        Grid(const Int3 & _numInternalCells,
             const FP3 & minCoords, const FP3 & _steps,
-            const Int3 & globalGridDims, FP _globalTime = 0.0);
-        Grid(const Int3 & _numAllCells, FP _dt,
-            const Int3 & globalGridDims, FP _globalTime);  // for complex grid
-        Grid(const Int3 & _numAllCells, FP _dt,
-            const Int3 & globalGridDims, FP _globalTime, 
-            Grid<FP, gridType>* grid);  // grid and this will have common memory
+            const Int3 & globalGridDims);
+        Grid(const Int3 & _numAllCells,
+            const Int3 & globalGridDims);  // for complex grids only
+        Grid(const Int3 & _numAllCells, const Int3 & globalGridDims, 
+            Grid<FP, gridType_>* grid);  // 'grid' and 'this' will have common memory
 
         // copy constructor, can make shallow copies
         Grid(const Grid& grid, bool ifShallowCopy = false);
@@ -265,8 +266,6 @@ namespace pfc {
             return getFieldPCS(coords, Jz, shiftEJz);
         }
 
-        bool setTimeStep(FP dt);  // returns if dt was changed
-
         /*void dumpE(FP3 * e, const Int3 * minCellIdx, const Int3 * maxCellIdx);
         void dumpB(FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx);
         void dumpCurrents(FP3 * currents, const Int3 * minCellIdx, const Int3 * maxCellIdx);
@@ -297,16 +296,11 @@ namespace pfc {
 
         const Int3 globalGridDims;  // important to initialize it first
         const FP3 steps;
-        FP dt;
-        FP globalTime = 0.0;  // refreshed from field solver
         const Int3 numInternalCells;
         const Int3 numCells;
         const Int3 sizeStorage;  // sometimes can be larger than numCells
         const FP3 origin;
         const int dimensionality;
-
-        // Time diffence between b and e
-        const FP timeShiftE, timeShiftB, timeShiftJ;
 
         ScalarField<Data> Ex, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz;
         
@@ -377,18 +371,15 @@ namespace pfc {
     typedef Grid<FP, GridTypes::PSATDTimeStraggeredGridType> PSATDTimeStraggeredGrid;
 
     // create deep or shallow copy
-    template<typename Data, GridTypes gridType>
-    inline Grid<Data, gridType>::Grid(const Grid<Data, gridType>& grid, bool ifShallowCopy) :
+    template<typename Data, GridTypes gridType_>
+    inline Grid<Data, gridType_>::Grid(const Grid<Data, gridType_>& grid, bool ifShallowCopy) :
         globalGridDims(grid.globalGridDims),
         steps(grid.steps),
-        dt(grid.dt),
-        globalTime(grid.globalTime),
         numInternalCells(grid.numInternalCells),
         numCells(grid.numCells),
         sizeStorage(grid.sizeStorage),
         shiftEJx(grid.shiftEJx), shiftEJy(grid.shiftEJy), shiftEJz(grid.shiftEJz),
         shiftBx(grid.shiftBx), shiftBy(grid.shiftBy), shiftBz(grid.shiftBz),
-        timeShiftE(grid.timeShiftE), timeShiftB(grid.timeShiftB), timeShiftJ(grid.timeShiftJ),
         origin(grid.origin),
         dimensionality(grid.dimensionality),
         Ex(grid.Ex, ifShallowCopy),
@@ -405,12 +396,10 @@ namespace pfc {
     }
 
     template <>
-    inline Grid<FP, GridTypes::YeeGridType>::Grid(const Int3 & _numCells, FP _dt, const FP3 & minCoords, const FP3 & _steps,
-        const Int3 & _globalGridDims, FP _globalTime) :
+    inline Grid<FP, GridTypes::YeeGridType>::Grid(const Int3 & _numCells, const FP3 & minCoords,
+        const FP3 & _steps, const Int3 & _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numCells),
         numCells(numInternalCells + getNumExternalLeftCells() + getNumExternalRightCells()),
         sizeStorage(numCells),
@@ -423,33 +412,20 @@ namespace pfc {
         shiftBx(FP3(0.5, 0, 0) * steps),
         shiftBy(FP3(0, 0.5, 0) * steps),
         shiftBz(FP3(0, 0, 0.5) * steps),
-        timeShiftE(0.0), timeShiftB(dt / 2), timeShiftJ(0.0),
         origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
             minCoords.y - steps.y * getNumExternalLeftCells().y,
             minCoords.z - steps.z * getNumExternalLeftCells().z),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
+        setInterpolationType(Interpolation_CIC);
     }
 
     template<>
-    inline bool Grid<FP, GridTypes::YeeGridType>::setTimeStep(FP _dt)
-    {
-        double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
-        if (_dt <= 1.0 / (constants::c * tmp)) {  // Courant condition for FDTD
-            this->dt = _dt;
-            return true;
-        }
-        return false;
-    }
-
-    template<>
-    inline Grid<FP, GridTypes::StraightGridType>::Grid(const Int3 & _numInternalCells, FP _dt, const FP3 & minCoords, const FP3 & _steps,
-        const Int3 & _globalGridDims, FP _globalTime) :
+    inline Grid<FP, GridTypes::StraightGridType>::Grid(const Int3 & _numInternalCells, 
+        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells + getNumExternalLeftCells() + getNumExternalRightCells()),
         sizeStorage(numCells),
@@ -462,7 +438,6 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(0.0), timeShiftJ(0.0),
         origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
             minCoords.y - steps.y * getNumExternalLeftCells().y,
             minCoords.z - steps.z * getNumExternalLeftCells().z),
@@ -471,28 +446,15 @@ namespace pfc {
         setInterpolationType(Interpolation_CIC);
     }
 
-    template<>
-    inline bool Grid<FP, GridTypes::StraightGridType>::setTimeStep(FP _dt)
-    {
-        double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
-        if (_dt <= 1.0 / (constants::c * tmp)) {  // Courant condition for FDTD
-            this->dt = _dt;
-            return true;
-        }
-        return false;
-    }
-
 
     // SPECTRAL GRIDS
 
     // PSTD
 
     template<>
-    inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, FP _globalTime) :
+    inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells,
+        const Int3 & _globalGridDims) :
         globalGridDims(_globalGridDims),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
@@ -505,18 +467,15 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
     }
 
     template<>
-    inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, FP _globalTime, Grid<FP, GridTypes::PSTDGridType>* grid) :
+    inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells,
+        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSTDGridType>* grid) :
         globalGridDims(_globalGridDims),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
@@ -535,30 +494,16 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
     }
 
     template<>
-    inline bool Grid<complexFP, GridTypes::PSTDGridType>::setTimeStep(FP _dt)
-    {
-        double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
-        if (_dt <= 2.0 / (constants::pi * constants::c * tmp)) {  // Courant condition for PSTD
-            this->dt = _dt;
-            return true;
-        }
-        return false;
-    }
-
-    template<>
-    inline Grid<FP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims, FP _globalTime) :
+    inline Grid<FP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells,
+        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
@@ -571,32 +516,18 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
-    }
-
-    template<>
-    inline bool Grid<FP, GridTypes::PSTDGridType>::setTimeStep(FP _dt)
-    {
-        double tmp = sqrt(1.0 / (steps.x*steps.x) + 1.0 / (steps.y*steps.y) + 1.0 / (steps.z*steps.z));
-        if (_dt <= 2.0 / (constants::pi * constants::c * tmp)) {  // Courant condition for PSTD
-            this->dt = _dt;
-            return true;
-        }
-        return false;
     }
 
     // PSATD
 
     template<>
-    inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, FP _globalTime) :
+    inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells,
+        const Int3 & _globalGridDims) :
         globalGridDims(_globalGridDims),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
@@ -609,18 +540,15 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
     }
 
     template<>
-    inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, FP _globalTime, Grid<FP, GridTypes::PSATDGridType>* grid) :
+    inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells,
+        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSATDGridType>* grid) :
         globalGridDims(_globalGridDims),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
@@ -639,26 +567,16 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
     }
 
     template<>
-    inline bool Grid<complexFP, GridTypes::PSATDGridType>::setTimeStep(FP _dt)
-    {
-        this->dt = _dt;
-        return true;
-    }
-
-    template<>
-    inline Grid<FP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims, FP _globalTime) :
+    inline Grid<FP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells,
+        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
@@ -671,28 +589,18 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
-    }
-
-    template<>
-    inline bool Grid<FP, GridTypes::PSATDGridType>::setTimeStep(FP _dt)
-    {
-        this->dt = _dt;
-        return true;
     }
 
     // PSATDTimeStraggered
 
     template<>
-    inline Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, FP _globalTime) :
+    inline Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells,
+        const Int3 & _globalGridDims) :
         globalGridDims(_globalGridDims),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
@@ -705,19 +613,17 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);       
     }
 
+    // PSATDTimeStraggered
 
     template<>
-    inline Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const Int3 & _globalGridDims, FP _globalTime, Grid<FP, GridTypes::PSATDTimeStraggeredGridType>* grid) :
+    inline Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells,
+        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSATDTimeStraggeredGridType>* grid) :
         globalGridDims(_globalGridDims),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(numCells),
@@ -736,26 +642,16 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
     }
 
     template<>
-    inline bool Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::setTimeStep(FP _dt)
-    {
-        this->dt = _dt;
-        return true;
-    }
-
-    template<>
-    inline Grid<FP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells, FP _dt,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims, FP _globalTime) :
+    inline Grid<FP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells,
+        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
-        dt(_dt),
-        globalTime(_globalTime),
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
@@ -768,18 +664,10 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0) * steps),
         shiftBy(FP3(0, 0, 0) * steps),
         shiftBz(FP3(0, 0, 0) * steps),
-        timeShiftE(0.0), timeShiftB(dt * 0.5), timeShiftJ(dt * 0.5),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
-    }
-
-    template<>
-    inline bool Grid<FP, GridTypes::PSATDTimeStraggeredGridType>::setTimeStep(FP _dt)
-    {
-        this->dt = _dt;
-        return true;
     }
 
 

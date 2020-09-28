@@ -290,11 +290,13 @@ public:
     gridType * grid;
     FP3 minCoords;
     FP3 maxCoords;
+    FP timeStep;
 protected:
     virtual void SetUp() {
         BaseFixture::SetUp();
         maxAbsoluteError = (FP)1e-2;
         maxRelativeError = (FP)1e-1;
+        timeStep = 1e-15;
 
         Int3 gridSize(11, 5, 6);
         minCoords = FP3(-1.0, 0.0, 0.0);
@@ -302,8 +304,7 @@ protected:
         FP3 steps((maxCoords.x - minCoords.x) / gridSize.x,
             (maxCoords.y - minCoords.y) / gridSize.y,
             (maxCoords.z - minCoords.z) / gridSize.z);
-        FP timeStep = 1e-15;
-        grid = new gridType(gridSize, timeStep, minCoords, steps, gridSize);
+        grid = new gridType(gridSize, minCoords, steps, gridSize);
     }
 
     FP3 internalPoint() {

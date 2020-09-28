@@ -24,7 +24,7 @@ public:
     virtual void SetUp() {
         BaseGridFixture<YeeGrid>::SetUp();
 
-        fdtd = new FDTD(grid);
+        fdtd = new FDTD(grid, this->timeStep);
     }
 
     FDTD * fdtd;
@@ -131,7 +131,7 @@ TYPED_TEST(GridFDTDTest, FDTD_periodical)
         this->fdtd->updateFields();
     }
 
-    FP finalT = this->grid->dt * numSteps;
+    FP finalT = this->fdtd->dt * numSteps;
     for (int i = 1; i < this->grid->numCells.x - 1; ++i)
         for (int j = 1; j < this->grid->numCells.y - 1; ++j)
             for (int k = 1; k < this->grid->numCells.z - 1; ++k)

@@ -37,11 +37,10 @@ namespace pfc {
 
     public:
 
-        FP F_number;
+        FP f_number;
         FP R0;
         FP wavelength;
         FP pulselength;
-        FP phase;
         FP totalPower;
         FP openingAngle;
         FP edgeSmoothingAngle;
@@ -49,12 +48,12 @@ namespace pfc {
         FP exclusionRadius;
         FP ampl;
 
-        FieldConfiguration(FP F_number, FP R0, FP wavelength, FP pulselength, FP phase, FP totalPower,
+        FieldConfiguration(FP f_number, FP R0, FP wavelength, FP pulselength, FP totalPower,
             FP edgeSmoothingAngle, FP3 polarisation = FP3(0.0, 1.0, 0.0), FP exclusionRadius = 1e-5) :
-            F_number(F_number), R0(R0), wavelength(wavelength), pulselength(pulselength), phase(phase),
+            f_number(f_number), R0(R0), wavelength(wavelength), pulselength(pulselength),
             totalPower(totalPower), edgeSmoothingAngle(edgeSmoothingAngle), polarisation(polarisation),
-            exclusionRadius(exclusionRadius), openingAngle(atan(1.0 / (2.0*F_number))),
-            ampl(sqrt(totalPower * 4.0 / (constants::c*(1.0 - cos(openingAngle)))))
+            exclusionRadius(exclusionRadius), openingAngle(atan(1.0 / (2.0*f_number))),
+            ampl(sqrt(totalPower * 4.0 / (1.0 - cos(openingAngle)) / constants::c))
         {}
 
 
@@ -67,7 +66,7 @@ namespace pfc {
         }
 
         forceinline FP longitudinalFieldVariation(FP x_ct) const {
-            FP cSin = sin(2.0 * constants::pi * x_ct / wavelength + phase);
+            FP cSin = sin(2.0 * constants::pi * x_ct / wavelength);
             FP cCos = cos(constants::pi * x_ct / pulselength);
             FP cBlock = block(x_ct, -0.5*pulselength, 0.5*pulselength);
             return cSin * cCos * cCos * cBlock;

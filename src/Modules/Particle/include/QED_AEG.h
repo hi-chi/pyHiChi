@@ -44,7 +44,7 @@ public:
 
     }
 
-    void processParticlesNIter(Ensemble3d* particles, pyYeeGrid* grid, FP timeStep, FP startTime, int N)
+    void processParticlesNIter(Ensemble3d* particles, pyYeeField* grid, FP timeStep, FP startTime, int N)
     {
         for (int i = 0; i < N; i++)
         {
@@ -53,7 +53,7 @@ public:
         }
     }
 
-    void processParticles(Ensemble3d* particles, pyYeeGrid* grid, FP timeStep)
+    void processParticles(Ensemble3d* particles, pyYeeField* pyGrid, FP timeStep)
     {
         int max_threads;
 #ifdef __USE_OMP__
@@ -71,11 +71,11 @@ public:
         }
 
         if ((*particles)[Photon].size() && coeffPair_probability != 0)
-            HandlePhotons((*particles)[Photon], grid, timeStep);
+            HandlePhotons((*particles)[Photon], pyGrid->getGrid(), timeStep);
         if ((*particles)[Electron].size() && coeffPhoton_probability != 0)
-            HandleParticles((*particles)[Electron], grid, timeStep);
+            HandleParticles((*particles)[Electron], pyGrid->getGrid(), timeStep);
         if ((*particles)[Positron].size() && coeffPhoton_probability != 0)
-            HandleParticles((*particles)[Positron], grid, timeStep);
+            HandleParticles((*particles)[Positron], pyGrid->getGrid(), timeStep);
 
         for (int th = 0; th < max_threads; th++)
         {

@@ -21,7 +21,7 @@ public:
         pmlLeftEnd.x = this->minCoords.x + pmlSize.x * this->grid->steps.x;
         pmlRightStart.x = this->maxCoords.x - pmlSize.x * this->grid->steps.x;
         initializeGrid();
-        fieldSolver = new FieldSolverType(this->grid);
+        fieldSolver = new FieldSolverType(this->grid, this->timeStep);
         fieldSolver->setPML(pmlSize.x, pmlSize.y, pmlSize.z);
     }
 
@@ -29,7 +29,7 @@ public:
         FP3 steps((this->maxCoords.x - this->minCoords.x) / gridSize.x,
             (this->maxCoords.y - this->minCoords.y) / gridSize.y,
             (this->maxCoords.z - this->minCoords.z) / gridSize.z);
-        this->grid = new GridType(gridSize, timeStep, this->minCoords, steps, gridSize);
+        this->grid = new GridType(gridSize, this->minCoords, steps, gridSize);
     }
 
     void initializeGrid() {
@@ -90,7 +90,7 @@ typedef PMLTest<PSATD, PSATDGrid> PMLTestPSATD;
 typedef PMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid> PMLTestPSATDTimeStraggered;
 
 TEST_F(PMLTestPSTD, ADD_TEST_FFT_PREFIX(PmlPstd)) {
-    const int numSteps = (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / grid->dt);
+    const int numSteps = (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / fieldSolver->dt);
 
     FP startEnergy = computeEnergy();
 
@@ -103,7 +103,7 @@ TEST_F(PMLTestPSTD, ADD_TEST_FFT_PREFIX(PmlPstd)) {
 }
 
 TEST_F(PMLTestPSATD, ADD_TEST_FFT_PREFIX(PmlPsatd)) {
-    const int numSteps = (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / grid->dt);
+    const int numSteps = (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / fieldSolver->dt);
 
     FP startEnergy = computeEnergy();
 
@@ -116,7 +116,7 @@ TEST_F(PMLTestPSATD, ADD_TEST_FFT_PREFIX(PmlPsatd)) {
 }
 
 TEST_F(PMLTestPSATDTimeStraggered, ADD_TEST_FFT_PREFIX(PmlPsatdTimeStraggered)) {
-    const int numSteps = (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / grid->dt);
+    const int numSteps = (int)((pmlRightStart.x - pmlLeftEnd.x) / constants::c / fieldSolver->dt);
 
     FP startEnergy = computeEnergy();
 

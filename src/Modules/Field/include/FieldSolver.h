@@ -19,11 +19,16 @@ namespace pfc {
 
     public:
 
-        FieldSolver(Grid<FP, gridType>* _grid)
+        FieldSolver(Grid<FP, gridType>* _grid, FP dt,
+            FP timeShiftE, FP timeShiftB, FP timeShiftJ):
+            dt(dt),
+            timeShiftE(timeShiftE),
+            timeShiftB(timeShiftB),
+            timeShiftJ(timeShiftJ)
         {
             this->grid = _grid;
-            time = (FP)0.0;
-            generator.reset(nullptr);
+            this->globalTime = (FP)0.0;
+            this->generator.reset(nullptr);
         }
 
         /*void setPML(int sizePMLx, int sizePMLy, int sizePMLz)
@@ -46,9 +51,11 @@ namespace pfc {
         void updateDims();
         void updateInternalDims();
 
-        FP time;
+        FP globalTime;
+        FP dt;
+        // difference between E and B
+        FP timeShiftE, timeShiftB, timeShiftJ;
     };
-
     
 
     template<GridTypes gridType>
@@ -94,8 +101,9 @@ namespace pfc {
     class RealFieldSolver : public FieldSolver<gridType>
     {
     public:
-        RealFieldSolver(Grid<FP, gridType>* _grid):
-            FieldSolver<gridType>(_grid)
+        RealFieldSolver(Grid<FP, gridType>* _grid, FP dt,
+            FP timeShiftE, FP timeShiftB, FP timeShiftJ):
+            FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
         {}
 
     private:
@@ -109,11 +117,12 @@ namespace pfc {
     class SpectralFieldSolver : public FieldSolver<gridType>
     {
     public:
-        SpectralFieldSolver(Grid<FP, gridType>* _grid) :
-            FieldSolver<gridType>(_grid)
+        SpectralFieldSolver(Grid<FP, gridType>* _grid, FP dt,
+            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
+            FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
         {
             complexGrid = new Grid<complexFP, gridType>(fourier_transform::getSizeOfComplexArray(_grid->numCells),
-                _grid->dt, fourier_transform::getSizeOfComplexArray(_grid->globalGridDims), _grid->globalTime, _grid);
+                fourier_transform::getSizeOfComplexArray(_grid->globalGridDims), _grid);
             fourierTransform.initialize<gridType>(_grid, complexGrid);
         }
 

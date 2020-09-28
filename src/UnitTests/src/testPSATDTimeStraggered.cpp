@@ -9,7 +9,7 @@ public:
     virtual void SetUp() {
         BaseGridFixture<PSATDTimeStraggeredGrid>::SetUp();
         initializeGrid();
-        psatd = new PSATDTimeStraggered(grid);
+        psatd = new PSATDTimeStraggered(grid, this->timeStep);
     }
 
     void initializeGrid() {
@@ -48,7 +48,7 @@ TEST_F(GridPSATDTimeStraggeredTest, ADD_TEST_FFT_PREFIX(PSATDTimeStraggered)) {
     for (int step = 0; step < numSteps; ++step)
         psatd->updateFields();
 
-    FP finalT = grid->dt * numSteps;
+    FP finalT = psatd->dt * numSteps;
     for (int i = 0; i < grid->numCells.x; ++i)
         for (int j = 0; j < grid->numCells.y; ++j)
             for (int k = 0; k < grid->numCells.z; ++k)

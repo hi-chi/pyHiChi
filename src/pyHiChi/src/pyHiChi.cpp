@@ -7,7 +7,7 @@
 #include "pybind11/stl.h"
 #include <pybind11/operators.h>
 
-#include "pyGrid.h"
+#include "pyField.h"
 
 #include "Constants.h"
 #include "Dimension.h"
@@ -30,36 +30,64 @@
 #include "FieldConfiguration.h"
 
 
-#define SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType)     \
-    .def("set", &pyGridType::setFieldConfiguration<NullField>)           \
-    .def("set", &pyGridType::setFieldConfiguration<TightFocusingField>)    
+#define SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)                \
+    .def("set", &pyFieldType::setFieldConfiguration<NullField>)           \
+    .def("set", &pyFieldType::setFieldConfiguration<TightFocusingField>)    
 
 
-#define SET_METHODS_FOR_PY_GRID(pyGridType)                              \
-    .def(py::init<FP3, FP, FP3, FP3>())                                  \
-    .def("getFields", &pyGridType::getFields)                            \
-    .def("getJ", &pyGridType::getJ)                                      \
-    .def("getE", &pyGridType::getE)                                      \
-    .def("getB", &pyGridType::getB)                                      \
-    .def("setJ", &pyGridType::setJ)                                      \
-    .def("setE", &pyGridType::setE)                                      \
-    .def("setB", &pyGridType::setB)                                      \
-    .def("setJ", &pyGridType::pySetJ)                                    \
-    .def("setE", &pyGridType::pySetE)                                    \
-    .def("setB", &pyGridType::pySetB)                                    \
-    .def("setJ", &pyGridType::setJxyz)                                   \
-    .def("setE", &pyGridType::setExyz)                                   \
-    .def("setB", &pyGridType::setBxyz)                                   \
-    .def("setJ", &pyGridType::pySetJxyz)                                 \
-    .def("setE", &pyGridType::pySetExyz)                                 \
-    .def("setB", &pyGridType::pySetBxyz)                                 \
-    .def("setJt", &pyGridType::setJxyzt)                                 \
-    .def("setEt", &pyGridType::setExyzt)                                 \
-    .def("setBt", &pyGridType::setBxyzt)                                 \
-    SET_METHODS_FOR_PY_GRID_FOR_FIELD_CONFIGURATIONS(pyGridType)         \
-    .def("analytical", &pyGridType::setAnalytical)                       \
-    .def("setTime", &pyGridType::setTime)                                \
-    .def("getTime", &pyGridType::getTime)
+#define SET_GRID_METHODS(pyFieldType)                                     \
+    .def("set_J", &pyFieldType::setJ)                                      \
+    .def("set_E", &pyFieldType::setE)                                      \
+    .def("set_B", &pyFieldType::setB)                                      \
+    .def("set_J", &pyFieldType::pySetJ)                                    \
+    .def("set_E", &pyFieldType::pySetE)                                    \
+    .def("set_B", &pyFieldType::pySetB)                                    \
+    .def("set_J", &pyFieldType::setJxyz)                                   \
+    .def("set_E", &pyFieldType::setExyz)                                   \
+    .def("set_B", &pyFieldType::setBxyz)                                   \
+    .def("set_J", &pyFieldType::pySetJxyz)                                 \
+    .def("set_E", &pyFieldType::pySetExyz)                                 \
+    .def("set_B", &pyFieldType::pySetBxyz)                                 \
+    .def("set_J", &pyFieldType::setJxyzt)                                 \
+    .def("set_E", &pyFieldType::setExyzt)                                 \
+    .def("set_B", &pyFieldType::setBxyzt)                                 \
+    SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)                    \
+    .def("analytical", &pyFieldType::setAnalytical)                       \
+    .def("set_time", &pyFieldType::setTime)                                \
+    .def("get_time", &pyFieldType::getTime)                                \
+    .def("refresh", &pyFieldType::refresh)
+
+
+#define SET_FIELD_SOLVER_METHODS(pyFieldType)                             \
+    .def("set_PML", &pyFieldType::setPML)                                  \
+    .def("set_BC", &pyFieldType::setFieldGenerator)                        \
+    .def("convert_fields_poisson_equation", &pyFieldType::convertFieldsPoissonEquation)  \
+    .def("change_time_step", &pyFieldType::changeTimeStep)
+
+
+#define SET_PY_FIELD_BASE_METHODS(pyFieldType)                            \
+    .def("apply_mapping", [](std::shared_ptr<pyFieldType> self,            \
+        std::shared_ptr<Mapping> mapping) {                               \
+        return self->applyMapping(                                        \
+            std::static_pointer_cast<pyFieldBase>(self), mapping          \
+            );                                                            \
+    })                                                                    \
+    .def("__add__", [](std::shared_ptr<pyFieldType> self,                 \
+        std::shared_ptr<pyFieldBase> other) {                             \
+        return std::make_shared<pySumField>(                              \
+            std::static_pointer_cast<pyFieldBase>(self), other            \
+            );                                                            \
+    }, py::is_operator())                                                 \
+    .def("__mul__", [](std::shared_ptr<pyFieldType> self, FP factor) {    \
+        return std::make_shared<pyMulField>(                              \
+            std::static_pointer_cast<pyFieldBase>(self), factor           \
+            );                                                            \
+    }, py::is_operator())                                                 \
+    .def("__rmul__", [](std::shared_ptr<pyFieldType> self, FP factor) {   \
+        return std::make_shared<pyMulField>(                              \
+            std::static_pointer_cast<pyFieldBase>(self), factor           \
+            );                                                            \
+    }, py::is_operator())
 
 
 namespace py = pybind11;
@@ -75,31 +103,34 @@ short ParticleInfo::numTypes = sizeParticleTypes;
 
 PYBIND11_MODULE(pyHiChi, object) {
 
+    // ------------------- constants -------------------
+
     object.attr("pi") = constants::pi;
     object.attr("c") = constants::c;
-    object.attr("lightVelocity") = constants::lightVelocity;
-    object.attr("electronCharge") = constants::electronCharge;
-    object.attr("electronMass") = constants::electronMass;
-    object.attr("protonMass") = constants::protonMass;
-    object.attr("planck") = constants::planck;
+    object.attr("LIGHT_VELOCITY") = constants::lightVelocity;
+    object.attr("ELECTRON_CHARGE") = constants::electronCharge;
+    object.attr("ELECTRON_MASS") = constants::electronMass;
+    object.attr("PROTON_MASS") = constants::protonMass;
+    object.attr("PLANCK") = constants::planck;
     object.attr("eV") = constants::eV;
     object.attr("meV") = constants::meV;
 
+    // ------------------- auxulary structures -------------------
+
     py::enum_<Coordinate>(object, "Axis")
-        .value("x", Coordinate::x)
-        .value("y", Coordinate::y)
-        .value("z", Coordinate::z)
+        .value("X", Coordinate::x)
+        .value("Y", Coordinate::y)
+        .value("Z", Coordinate::z)
         .export_values()
         ;
 
-    py::class_<FP3>(object, "vector3d")
+    py::class_<FP3>(object, "Vector3d")
         .def(py::init<>())
         .def(py::init<FP, FP, FP>())
         .def("volume", &FP3::volume)
         .def("norm", &FP3::norm)
         .def("norm2", &FP3::norm2)
         .def("normalize", &FP3::normalize)
-        .def("toString", &FP3::toString)
         .def("__str__", &FP3::toString)
 
         .def(py::self + py::self)
@@ -127,103 +158,104 @@ PYBIND11_MODULE(pyHiChi, object) {
     object.def("dot", (FP(*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) dot);
     object.def("dot", (FP(*)(const FP3&, const FP3&)) dot);
 
-
-    py::class_<ParticleProxy3d>(object, "particleProxy")
-        .def(py::init<Particle3d&>())
-        .def(py::init<ParticleProxy3d&>())
-        .def("getPosition", &ParticleProxy3d::getPosition)
-        .def("setPosition", &ParticleProxy3d::setPosition)
-        .def("getMomentum", &ParticleProxy3d::getMomentum)
-        .def("setMomentum", &ParticleProxy3d::setMomentum)
-        .def("getVelocity", &ParticleProxy3d::getVelocity)
-        .def("setVelocity", &ParticleProxy3d::setVelocity)
-        .def("getWeight", &ParticleProxy3d::getWeight)
-        .def("setWeight", &ParticleProxy3d::setWeight)
-        .def("getGamma", &ParticleProxy3d::getGamma)
-        .def("getMass", &ParticleProxy3d::getMass)
-        .def("getCharge", &ParticleProxy3d::getCharge)
-        .def("getType", &ParticleProxy3d::getType)
-        ;
-
-    py::class_<ValueField>(object, "field")
+    py::class_<ValueField>(object, "Field")
         .def(py::init<FP3, FP3>())
         .def(py::init<FP, FP, FP, FP, FP, FP>())
-        .def("getE", &ValueField::getE)
-        .def("setE", &ValueField::setE)
-        .def("getB", &ValueField::getB)
-        .def("setB", &ValueField::setB)
+        .def("get_E", &ValueField::getE)
+        .def("set_E", &ValueField::setE)
+        .def("get_B", &ValueField::getB)
+        .def("set_B", &ValueField::setB)
         ;
-    
-    py::enum_<ParticleTypes>(object, "particleTypes")
-        .value("Electron", Electron)
-        .value("Positron", Positron)
-        .value("Proton", Proton)
-        .value("Photon", Photon)
+
+    // ------------------- particles -------------------
+
+    py::class_<ParticleProxy3d>(object, "ParticleProxy")
+        .def(py::init<Particle3d&>())
+        .def(py::init<ParticleProxy3d&>())
+        .def("get_position", &ParticleProxy3d::getPosition)
+        .def("set_position", &ParticleProxy3d::setPosition)
+        .def("get_momentum", &ParticleProxy3d::getMomentum)
+        .def("set_momentum", &ParticleProxy3d::setMomentum)
+        .def("get_velocity", &ParticleProxy3d::getVelocity)
+        .def("set_velocity", &ParticleProxy3d::setVelocity)
+        .def("get_weight", &ParticleProxy3d::getWeight)
+        .def("set_weight", &ParticleProxy3d::setWeight)
+        .def("get_gamma", &ParticleProxy3d::getGamma)
+        .def("get_mass", &ParticleProxy3d::getMass)
+        .def("get_charge", &ParticleProxy3d::getCharge)
+        .def("get_type", &ParticleProxy3d::getType)
+        ;
+
+    py::enum_<ParticleTypes>(object, "ParticleTypes")
+        .value("ELECTRON", Electron)
+        .value("POSITRON", Positron)
+        .value("PROTON", Proton)
         .export_values();
 
-    py::class_<Particle3d>(object, "particle")
+    py::class_<Particle3d>(object, "Particle")
         .def(py::init<>())
         .def(py::init<FP3, FP3>())
         .def(py::init<FP3, FP3, FP, ParticleTypes>())
-        .def("getPosition", &Particle3d::getPosition)
-        .def("setPosition", &Particle3d::setPosition)
-        .def("getMomentum", &Particle3d::getMomentum)
-        .def("setMomentum", &Particle3d::setMomentum)
-        .def("getVelocity", &Particle3d::getVelocity)
-        .def("setVelocity", &Particle3d::setVelocity)
-        .def("getWeight", &Particle3d::getWeight)
-        .def("setWeight", &Particle3d::setWeight)
-        .def("getGamma", &Particle3d::getGamma)
-        .def("getMass", &Particle3d::getMass)
-        .def("getCharge", &Particle3d::getCharge)
-        .def("getType", &Particle3d::getType)
+        .def("get_position", &Particle3d::getPosition)
+        .def("set_position", &Particle3d::setPosition)
+        .def("get_momentum", &Particle3d::getMomentum)
+        .def("set_momentum", &Particle3d::setMomentum)
+        .def("get_velocity", &Particle3d::getVelocity)
+        .def("set_velocity", &Particle3d::setVelocity)
+        .def("get_weight", &Particle3d::getWeight)
+        .def("set_weight", &Particle3d::setWeight)
+        .def("get_gamma", &Particle3d::getGamma)
+        .def("get_mass", &Particle3d::getMass)
+        .def("get_charge", &Particle3d::getCharge)
+        .def("get_type", &Particle3d::getType)
         ;
-    
-    py::class_<ParticleArray3d>(object, "particleArray")
+
+    py::class_<ParticleArray3d>(object, "ParticleArray")
         .def(py::init<>())
         .def(py::init<ParticleTypes>())
         .def("add", &ParticleArray3d::pushBack)
-        .def("getType", &ParticleArray3d::getType)
+        .def("get_type", &ParticleArray3d::getType)
         .def("size", &ParticleArray3d::size)
         .def("delete", (void (ParticleArray3d::*)(int)) &ParticleArray3d::deleteParticle)
         .def("delete", (void (ParticleArray3d::*)(ParticleArray3d::iterator&)) &ParticleArray3d::deleteParticle)
         .def("__getitem__", [](ParticleArray3d& arr, size_t i) {
-            if (i >= arr.size()) throw py::index_error();
-            return arr[i];
-        })
+        if (i >= arr.size()) throw py::index_error();
+        return arr[i];
+    })
         .def("__setitem__", [](ParticleArray3d &arr, size_t i, Particle3d v) {
-            if (i >= arr.size()) throw py::index_error();
-            arr[i] = v;
-        })
+        if (i >= arr.size()) throw py::index_error();
+        arr[i] = v;
+    })
         .def("__iter__", [](ParticleArray3d &pArray) { return py::make_iterator(pArray.begin(), pArray.end()); },
             py::keep_alive<0, 1>())
         ;
 
-    py::class_<Ensemble3d>(object, "ensemble")
+    py::class_<Ensemble3d>(object, "Ensemble")
         .def(py::init<>())
         .def(py::init<Ensemble3d>())
         .def("add", &Ensemble3d::addParticle)
         .def("size", &Ensemble3d::size)
         .def("__getitem__", [](Ensemble3d& arr, size_t i) {
-            if (i >= sizeParticleTypes) throw py::index_error();
-            return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[i]);
-        })
+        if (i >= sizeParticleTypes) throw py::index_error();
+        return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[i]);
+    })
         .def("__setitem__", [](Ensemble3d &arr, size_t i, ParticleArray3d v) {
-            if (i >= sizeParticleTypes) throw py::index_error();
-            arr[i] = v;
-        })
+        if (i >= sizeParticleTypes) throw py::index_error();
+        arr[i] = v;
+    })
         .def("__getitem__", [](Ensemble3d& arr, string& name) {
-            if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
-                throw py::index_error();
-            return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[name]);
-        })
+        if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
+            throw py::index_error();
+        return std::reference_wrapper<Ensemble3d::ParticleArray>(arr[name]);
+    })
         .def("__setitem__", [](Ensemble3d &arr, string& name, ParticleArray3d v) {
-            if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
-                throw py::index_error();
-            arr[name] = v;
-        })
+        if (std::find(particleNames.begin(), particleNames.end(), name) == particleNames.end())
+            throw py::index_error();
+        arr[name] = v;
+    })
         ;
 
+    // ------------------- pushers -------------------
 
     py::class_<BorisPusher>(object, "BorisPusher")
         .def(py::init<>())
@@ -232,6 +264,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("__call__", (void (BorisPusher::*)(ParticleArray3d*, std::vector<ValueField>, FP)) &BorisPusher::operator())
         ;
 
+    // ------------------- other particle modules -------------------
+
     py::class_<RadiationReaction>(object, "RadiationReaction")
         .def(py::init<>())
         .def("__call__", (void (RadiationReaction::*)(ParticleProxy3d*, ValueField, FP)) &RadiationReaction::operator())
@@ -239,205 +273,179 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("__call__", (void (RadiationReaction::*)(ParticleArray3d*, std::vector<ValueField>, FP)) &RadiationReaction::operator())
         ;
 
-    object.def("simpleThinning", &Thinning<ParticleArray3d>::simple);
-    object.def("levelingThinning", &Thinning<ParticleArray3d>::leveling);
-    object.def("numberConservativeThinning", &Thinning<ParticleArray3d>::numberConservative);
-    object.def("energyConservativeThinning", &Thinning<ParticleArray3d>::energyConservative);
-    object.def("kMeansMergining", &Merging<ParticleArray3d>::merge_with_kmeans);
-
-    py::class_<pyYeeGrid>(object, "YeeGrid")
-        SET_METHODS_FOR_PY_GRID(pyYeeGrid)
-        ;
-
-    py::class_<FDTD>(object, "FDTD")
-        .def(py::init<pyYeeGrid*>())
-        .def(py::init<pyYeeGridMapping*>())
-        .def("setPML", &FDTD::setPML)
-        .def("setBC", &FDTD::setFieldGenerator)
-        .def("updateHalfB", &FDTD::updateHalfB)
-        .def("updateE", &FDTD::updateE)
-        .def("updateFields", &FDTD::updateFields)
-        .def("setTimeStep", &FDTD::setTimeStep)
-        ;
-
-    py::class_<PeriodicalFieldGeneratorYee>(object, "PeriodicalBC")
-        .def(py::init<RealFieldSolver<YeeGridType>*>())
-        .def(py::init<FDTD*>())
-        ;
-
-    py::class_<pyPSTDGrid>(object, "PSTDGrid")
-        SET_METHODS_FOR_PY_GRID(pyPSTDGrid)
-        .def("set", &pyPSTDGrid::setEMField)
-        .def("set", &pyPSTDGrid::pySetEMField)
-        ;
-
-    py::class_<PSTD>(object, "PSTD")
-        .def(py::init<pyPSTDGrid*>())
-        .def(py::init<pyPSTDGridMapping*>())
-        .def("setPML", &PSTD::setPML)
-        .def("updateFields", &PSTD::updateFields)
-        .def("setTimeStep", &PSTD::setTimeStep)
-        ;
-
-    py::class_<pyPSATDGrid>(object, "PSATDGrid")
-        SET_METHODS_FOR_PY_GRID(pyPSATDGrid)
-        .def("set", &pyPSATDGrid::setEMField)
-        .def("set", &pyPSATDGrid::pySetEMField)
-        ;
-
-    py::class_<PSATD>(object, "PSATD")
-        .def(py::init<pyPSATDGrid*>())
-        .def(py::init<pyPSATDGridMapping*>())
-        .def("setPML", &PSATD::setPML)
-        .def("updateFields", &PSATD::updateFields)
-        .def("setTimeStep", &PSATD::setTimeStep)
-        .def("convertFieldsPoissonEquation", &PSATD::convertFieldsPoissonEquation)
-        ;
-    
-    py::class_<PSATDPoisson>(object, "PSATDPoisson")
-        .def(py::init<pyPSATDGrid*>())
-        .def(py::init<pyPSATDGridMapping*>())
-        .def("setPML", &PSATDPoisson::setPML)
-        .def("updateFields", &PSATDPoisson::updateFields)
-        .def("setTimeStep", &PSATDPoisson::setTimeStep)
-        .def("convertFieldsPoissonEquation", &PSATDPoisson::convertFieldsPoissonEquation)
-        ;
-
-    py::class_<pyPSATDTimeStraggeredGrid>(object, "PSATDTimeStraggeredGrid")
-        SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGrid)
-        .def("set", &pyPSATDTimeStraggeredGrid::setEMField)
-        .def("set", &pyPSATDTimeStraggeredGrid::pySetEMField)
-        ;
-
-    py::class_<PSATDTimeStraggered>(object, "PSATDTimeStraggered")
-        .def(py::init<pyPSATDTimeStraggeredGrid*>())
-        .def(py::init<pyPSATDTimeStraggeredGridMapping*>())
-        .def("setPML", &PSATDTimeStraggered::setPML)
-        .def("updateFields", &PSATDTimeStraggered::updateFields)
-        .def("setTimeStep", &PSATDTimeStraggered::setTimeStep)
-        .def("convertFieldsPoissonEquation", &PSATDTimeStraggered::convertFieldsPoissonEquation)
-        ;
-    
-    py::class_<PSATDTimeStraggeredPoisson>(object, "PSATDTimeStraggeredPoisson")
-        .def(py::init<pyPSATDTimeStraggeredGrid*>())
-        .def(py::init<pyPSATDTimeStraggeredGridMapping*>())
-        .def("setPML", &PSATDTimeStraggeredPoisson::setPML)
-        .def("updateFields", &PSATDTimeStraggeredPoisson::updateFields)
-        .def("setTimeStep", &PSATDTimeStraggeredPoisson::setTimeStep)
-        .def("convertFieldsPoissonEquation", &PSATDTimeStraggeredPoisson::convertFieldsPoissonEquation)
-        ;
-
     py::class_<ScalarQED_AEG_only_electron>(object, "QED")
         .def(py::init<>())
-        .def("processParticles", &ScalarQED_AEG_only_electron::processParticles)
-        .def("processParticlesNIter", &ScalarQED_AEG_only_electron::processParticlesNIter)
+        .def("process_particles", &ScalarQED_AEG_only_electron::processParticles)
+        .def("process_particles", &ScalarQED_AEG_only_electron::processParticlesNIter)
         ;
 
-    py::class_<Mapping>(object, "Mapping")
-        ;
+    // ------------------- thinnings -------------------
 
-    py::class_<pyYeeGridMapping>(object, "YeeGridMapping")
-        .def(py::init<pyYeeGrid*>())
-        SET_METHODS_FOR_PY_GRID(pyYeeGridMapping)
-        .def("setMapping", &pyYeeGridMapping::setMapping)
-        .def("popMapping", &pyYeeGridMapping::popMapping)
-        ;
+    object.def("simple_thinning", &Thinning<ParticleArray3d>::simple);
+    object.def("leveling_thinning", &Thinning<ParticleArray3d>::leveling);
+    object.def("number_conservative_thinning", &Thinning<ParticleArray3d>::numberConservative);
+    object.def("energy_conservative_thinning", &Thinning<ParticleArray3d>::energyConservative);
+    object.def("k_means_mergining", &Merging<ParticleArray3d>::merge_with_kmeans);
 
-    py::class_<pyPSTDGridMapping>(object, "PSTDGridMapping")
-        .def(py::init<pyPSTDGrid*>())
-        SET_METHODS_FOR_PY_GRID(pyPSTDGridMapping)
-        .def("setMapping", &pyPSTDGridMapping::setMapping)
-        .def("popMapping", &pyPSTDGridMapping::popMapping)
-        .def("set", &pyPSTDGridMapping::setEMField)
-        .def("set", &pyPSTDGridMapping::pySetEMField)
-        ;
+    // ------------------- mappings -------------------
 
-    py::class_<pyPSATDGridMapping>(object, "PSATDGridMapping")
-        .def(py::init<pyPSATDGrid*>())
-        SET_METHODS_FOR_PY_GRID(pyPSATDGridMapping)
-        .def("setMapping", &pyPSATDGridMapping::setMapping)
-        .def("popMapping", &pyPSATDGridMapping::popMapping)
-        .def("set", &pyPSATDGridMapping::setEMField)
-        .def("set", &pyPSATDGridMapping::pySetEMField)
-        ;
+    py::class_<Mapping, std::shared_ptr<Mapping>> pyMapping(object, "Mapping");
 
-    py::class_<pyPSATDTimeStraggeredGridMapping>(object, "PSATDTimeStraggeredGridMapping")
-        .def(py::init<pyPSATDTimeStraggeredGrid*>())
-        SET_METHODS_FOR_PY_GRID(pyPSATDTimeStraggeredGridMapping)
-        .def("setMapping", &pyPSATDTimeStraggeredGridMapping::setMapping)
-        .def("popMapping", &pyPSATDTimeStraggeredGridMapping::popMapping)
-        .def("set", &pyPSATDTimeStraggeredGridMapping::setEMField)
-        .def("set", &pyPSATDTimeStraggeredGridMapping::pySetEMField)
-        ;
-
-    // mappings
-
-    py::class_<IdentityMapping, Mapping>(object, "IdentityMapping")
+    py::class_<IdentityMapping, std::shared_ptr<IdentityMapping>>(object, "IdentityMapping", pyMapping)
         .def(py::init<const FP3&, const FP3&>())
-        .def("getDirectCoords", &IdentityMapping::getDirectCoords, py::arg("coords"),
+        .def("get_direct_coords", &IdentityMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getInverseCoords", &IdentityMapping::getInverseCoords, py::arg("coords"),
+        .def("get_inverse_coords", &IdentityMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<PeriodicalMapping, Mapping>(object, "PeriodicalMapping")
+    py::class_<PeriodicalMapping, std::shared_ptr<PeriodicalMapping>>(object, "PeriodicalMapping", pyMapping)
         .def(py::init<Coordinate, FP, FP>())
-        .def("getDirectCoords", &PeriodicalMapping::getDirectCoords, py::arg("coords"),
+        .def("get_direct_coords", &PeriodicalMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getInverseCoords", &PeriodicalMapping::getInverseCoords, py::arg("coords"),
+        .def("get_inverse_coords", &PeriodicalMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
-
-    py::class_<RotationMapping, Mapping>(object, "RotationMapping")
+    
+    py::class_<RotationMapping, std::shared_ptr<RotationMapping>>(object, "RotationMapping", pyMapping)
         .def(py::init<Coordinate, FP>())
-        .def("getDirectCoords", &RotationMapping::getDirectCoords, py::arg("coords"),
+        .def("get_direct_coords", &RotationMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getInverseCoords", &RotationMapping::getInverseCoords, py::arg("coords"),
+        .def("get_inverse_coords", &RotationMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<ScaleMapping, Mapping>(object, "ScaleMapping")
+    py::class_<ScaleMapping, std::shared_ptr<ScaleMapping>>(object, "ScaleMapping", pyMapping)
         .def(py::init<Coordinate, FP>())
-        .def("getDirectCoords", &ScaleMapping::getDirectCoords, py::arg("coords"),
+        .def("get_direct_coords", &ScaleMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getInverseCoords", &ScaleMapping::getInverseCoords, py::arg("coords"),
+        .def("get_inverse_coords", &ScaleMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<ShiftMapping, Mapping>(object, "ShiftMapping")
+    py::class_<ShiftMapping, std::shared_ptr<ShiftMapping>>(object, "ShiftMapping", pyMapping)
         .def(py::init<FP3>())
-        .def("getDirectCoords", &ShiftMapping::getDirectCoords, py::arg("coords"),
+        .def("get_direct_coords", &ShiftMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getInverseCoords", &ShiftMapping::getInverseCoords, py::arg("coords"),
+        .def("get_inverse_coords", &ShiftMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         ;
 
-    py::class_<TightFocusingMapping, Mapping>(object, "TightFocusingMapping")
+    py::class_<TightFocusingMapping, std::shared_ptr<TightFocusingMapping>>(object, "TightFocusingMapping", pyMapping)
         .def(py::init<FP, FP, FP>())
-        .def("getDirectCoords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
+        .def(py::init<FP, FP, FP, Coordinate>())
+        .def("get_direct_coords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getInverseCoords", &TightFocusingMapping::getInverseCoords, py::arg("coords"),
+        .def("get_inverse_coords", &TightFocusingMapping::getInverseCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
-        .def("getxMin", &TightFocusingMapping::getxMin)
-        .def("getxMax", &TightFocusingMapping::getxMax)
-        .def("setIfCut", &TightFocusingMapping::setIfCut)
+        .def("get_min_coord", &TightFocusingMapping::getMinCoord)
+        .def("get_max_coord", &TightFocusingMapping::getMaxCoord)
+        .def("if_perform_inverse_mapping", &TightFocusingMapping::setIfCut)
         ;
 
+    // ------------------- py fields -------------------
 
-    // field configurations
+    // abstract class
+    py::class_<pyFieldBase, std::shared_ptr<pyFieldBase>> pyClassFieldBase(object, "FieldBase");
+    pyClassFieldBase.def("get_fields", &pyFieldBase::getFields)
+        .def("get_J", &pyFieldBase::getJ)
+        .def("get_E", &pyFieldBase::getE)
+        .def("get_B", &pyFieldBase::getB)
+        .def("update_fields", &pyFieldBase::updateFields)
+        .def("advance", &pyFieldBase::advance)
+        ;
+
+    py::class_<pySumField, std::shared_ptr<pySumField>>(
+        object, "SumField", pyClassFieldBase)
+        SET_PY_FIELD_BASE_METHODS(pySumField)
+        ;
+
+    py::class_<pyMulField, std::shared_ptr<pyMulField>>(
+        object, "MulField", pyClassFieldBase)
+        SET_PY_FIELD_BASE_METHODS(pyMulField)
+        ;
+
+    py::class_<pyYeeField, std::shared_ptr<pyYeeField>>(
+        object, "YeeField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>())
+        SET_GRID_METHODS(pyYeeField)
+        SET_FIELD_SOLVER_METHODS(pyYeeField)
+        SET_PY_FIELD_BASE_METHODS(pyYeeField)
+        ;
+
+    py::class_<pyPSTDField, std::shared_ptr<pyPSTDField>>(
+        object, "PSTDField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>())
+        SET_GRID_METHODS(pyPSTDField)
+        SET_FIELD_SOLVER_METHODS(pyPSTDField)
+        SET_PY_FIELD_BASE_METHODS(pyPSTDField)
+        .def("set", &pyPSTDField::setEMField)
+        .def("set", &pyPSTDField::pySetEMField)
+        ;
+
+    py::class_<pyPSATDField, std::shared_ptr<pyPSATDField>>(
+        object, "PSATDField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>())
+        SET_GRID_METHODS(pyPSATDField)
+        SET_FIELD_SOLVER_METHODS(pyPSATDField)
+        SET_PY_FIELD_BASE_METHODS(pyPSATDField)
+        .def("set", &pyPSATDField::setEMField)
+        .def("set", &pyPSATDField::pySetEMField)
+        ;
+
+    py::class_<pyPSATDPoissonField, std::shared_ptr<pyPSATDPoissonField>>(
+        object, "PSATDPoissonField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>())
+        SET_GRID_METHODS(pyPSATDPoissonField)
+        SET_FIELD_SOLVER_METHODS(pyPSATDPoissonField)
+        SET_PY_FIELD_BASE_METHODS(pyPSATDPoissonField)
+        .def("set", &pyPSATDPoissonField::setEMField)
+        .def("set", &pyPSATDPoissonField::pySetEMField)
+        ;
+
+    py::class_<pyPSATDTimeStraggeredField, std::shared_ptr<pyPSATDTimeStraggeredField>>(
+        object, "PSATDTimeStraggeredField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>())
+        SET_GRID_METHODS(pyPSATDTimeStraggeredField)
+        SET_FIELD_SOLVER_METHODS(pyPSATDTimeStraggeredField)
+        SET_PY_FIELD_BASE_METHODS(pyPSATDTimeStraggeredField)
+        .def("set", &pyPSATDTimeStraggeredField::setEMField)
+        .def("set", &pyPSATDTimeStraggeredField::pySetEMField)
+        ;
+
+    py::class_<pyPSATDTimeStraggeredPoissonField, std::shared_ptr<pyPSATDTimeStraggeredPoissonField>>(
+        object, "PSATDTimeStraggeredPoissonField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>())
+        SET_GRID_METHODS(pyPSATDTimeStraggeredPoissonField)
+        SET_FIELD_SOLVER_METHODS(pyPSATDTimeStraggeredPoissonField)
+        SET_PY_FIELD_BASE_METHODS(pyPSATDTimeStraggeredPoissonField)
+        .def("set", &pyPSATDTimeStraggeredPoissonField::setEMField)
+        .def("set", &pyPSATDTimeStraggeredPoissonField::pySetEMField)
+        ;
+
+    // ------------------- field generators -------------------
+
+    py::class_<PeriodicalFieldGeneratorYee, std::shared_ptr<PeriodicalFieldGeneratorYee>>(object, "PeriodicalBC")
+        //.def(py::init<RealFieldSolver<GridTypes::YeeGridType>*>())
+        .def(py::init([](std::shared_ptr<pyYeeField> field) {
+        return std::make_shared<PeriodicalFieldGeneratorYee>(field->getFieldSolver());
+    }))
+        ;
+
+    // ------------------- field configurations -------------------
 
     py::class_<NullField>(object, "NullField")
         .def(py::init<>())
-        .def("getE", &NullField::getE)
-        .def("getB", &NullField::getB)
+        .def("get_E", &NullField::getE)
+        .def("get_B", &NullField::getB)
         ;
 
     py::class_<TightFocusingField>(object, "TightFocusingField")
-        .def(py::init<FP, FP, FP, FP, FP, FP, FP>())
-        .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3>())
-        .def(py::init<FP, FP, FP, FP, FP, FP, FP, FP3, FP>())
-        .def("getE", &TightFocusingField::getE)
-        .def("getB", &TightFocusingField::getB)
+        .def(py::init<FP, FP, FP, FP, FP, FP>())
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP3>())
+        .def(py::init<FP, FP, FP, FP, FP, FP, FP3, FP>())
+        .def("get_E", &TightFocusingField::getE)
+        .def("get_B", &TightFocusingField::getB)
         ;
 
 }

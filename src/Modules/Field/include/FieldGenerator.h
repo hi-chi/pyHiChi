@@ -81,8 +81,8 @@ namespace pfc
     void FieldGenerator<gridTypes>::generateB()
     {
         Grid<FP, gridTypes>* grid = fieldSolver->grid;
-        const FP time = fieldSolver->time + grid->timeShiftB;
-        const FP cdt = constants::c * grid->dt;
+        const FP time = fieldSolver->globalTime + fieldSolver->timeShiftB;
+        const FP cdt = constants::c * fieldSolver->dt;
         const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / grid->steps;
         for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
         {
@@ -138,8 +138,8 @@ namespace pfc
     void FieldGenerator<gridTypes>::generateE()
     {
         Grid<FP, gridTypes> * grid = fieldSolver->grid;
-        const FP time = fieldSolver->time + grid->timeShiftB;
-        const FP cdt = constants::c * grid->dt;
+        const FP time = fieldSolver->globalTime + fieldSolver->timeShiftB;
+        const FP cdt = constants::c * fieldSolver->dt;
         const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / grid->steps;
         for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
         {

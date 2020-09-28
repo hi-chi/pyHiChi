@@ -1,21 +1,21 @@
 import sys
 sys.path.append("../bin/")
-import pyHiChi as pfc
+import pyHiChi as hichi
 
 
 #ParticleArray - legacy, use Ensemble
-pArray = pfc.particleArray()  #type = Electron
+p_array = hichi.ParticleArray()  #type = Electron
 for i in range(11) :
-    pos = pfc.vector3d(1.2*i, 3.4*i, 5.6*i)
-    mo = pfc.vector3d(9.8*i, 7.6*i, 54.3*i)
-    newP = pfc.particle(pos, mo, 0.5, pfc.Electron)
-    pArray.add(newP)
-print(pArray.size())
-print(pArray.getType())
-print(pArray[5].getPosition())
-pArray.delete(5)
-print(pArray[5].getPosition())
+    pos = hichi.Vector3d(1.2*i, 3.4*i, 5.6*i)
+    mo = hichi.Vector3d(9.8*i, 7.6*i, 54.3*i)
+    new_p = hichi.Particle(pos, mo, 0.5, hichi.ELECTRON)
+    p_array.add(new_p)
+print(p_array.size())
+print(p_array.get_type())
+print(p_array[5].get_position())
+p_array.delete(5)
+print(p_array[5].get_position())
 
-for el in pArray :
-    print(el.getPosition())
-print(pArray.size())
+for el in p_array :
+    print(el.get_position())
+print(p_array.size())
