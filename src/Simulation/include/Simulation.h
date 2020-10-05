@@ -65,6 +65,8 @@ namespace pfc {
     private:
         Grid_Base &grid;
         std::vector<Module*> modules;
+        // необходимо, чтобы объекты хранились только в shared_ptr
+        // это нужно для pybind11
         const unsigned int numSteps;
         unsigned int currentStep = 0;
     public:

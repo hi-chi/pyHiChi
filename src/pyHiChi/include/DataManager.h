@@ -9,32 +9,45 @@ namespace pfc {
 #define put_arr(x) PutArray((#x), (x));
 #define get_arr(x) GetArray((#x), (x));
 #define get_arr(x) GetArray((#x), (x));
-enum IOType { Undefined, Write, Read };
-class DataManager
+enum class IOType { Undefined, Write, Read };
+struct DataManager
 {
     std::string path; //откуда брать данные и куда их писать
-    IOType mode;
+    IOType mode = IOType::Undefined;
 
     adios2::ADIOS adios;
-    adios2::IO ioFactory = adios.DeclareIO("hiChiIO");
+    // engine factory
+    adios2::IO io;
     adios2::Engine engine;
     int iteration = 0;
 public:
-    DataManager(){}
-    DataManager(std::string path, int it = 0): path(path), iteration(it) {}
-    DataManager(std::string path, IOType mode, int it = 0): path(path), mode(mode), iteration(it)
+    DataManager(std::string path, IOType new_mode, int it = 0): path(path), iteration(it)
     {
-        setEngine(mode);
+        io = adios.DeclareIO("hiChiIO");
+        setEngine(new_mode);
+    }
+    ~DataManager()
+    {
+        if (engine)
+            engine.Close();
     }
     void setEngine(IOType new_mode)
     {
-        if (engine && mode != new_mode)
-            engine.Close();
-        if (mode == IOType::Read || mode == IOType::Write)
+        if (mode != new_mode)
         {
-            engine = ioFactory.Open(path, (adios2::Mode)mode);
-            ioFactory.SetEngine("BP4");
+            mode = new_mode;
+            if (engine) engine.Close();
+            engine = io.Open(path, (adios2::Mode)mode);
+            io.SetEngine("BP4");
         }
+    }
+    void close()
+    {
+        //io.RemoveAllAttributes();
+        //io.RemoveAllVariables();
+        //io.ClearParameters();
+        if (engine) 
+            engine.Close();
     }
     void beginIteration() //create new file
     {
@@ -56,7 +69,7 @@ public:
     template<typename T>
     void putVariable(const std::string name, const T& val)
     {
-        adios2::Variable<T> var = ioFactory.DefineVariable<T>(name);
+        adios2::Variable<T> var = io.DefineVariable<T>(name);
         engine.Put(var, val);
     }
     template<typename T>
@@ -67,30 +80,35 @@ public:
     template<typename T>
     void putArray(const std::string name, const T* arr, size_t size)
     {
-        adios2::Variable<T> var = bpIO.DefineVariable<T>(name, {},
+        adios2::Variable<T> var = io.DefineVariable<T>(name, {},
                                   {}, { size }, adios2::ConstantDims);
         engine.Put(var, arr);
     }
     template<typename T>
     void getVariable(const std::string name, T& val)
     {
-        adios2::Variable<T> var = bpIO.DefineVariable<T>(name);
-        engine.Get(var, val);
+        engine.Get(name, val);
     }
     template<typename T>
     void getArray(const std::string name, T* arr, size_t size)
     {
-        adios2::Variable<T> var = bpIO.DefineVariable<T>(name, {},
+        adios2::Variable<T> var = io.DefineVariable<T>(name, {},
                                   {}, { size }, adios2::ConstantDims);
         engine.Get(var, arr);
     }
-    
     template<typename T>
     void customPut(const std::string name, const Vector3<T>& val)
     {
         putVariable(name + "x", val.x);
         putVariable(name + "y", val.y);
         putVariable(name + "z", val.z);
+    }
+    template<typename T>
+    void customGet(const std::string name, Vector3<T>& val)
+    {
+        getVariable(name + "x", val.x);
+        getVariable(name + "y", val.y);
+        getVariable(name + "z", val.z);
     }
     template<typename Data, GridTypes gridType>
     void customPut(const std::string name, const Grid<Data, gridType> &grid)
@@ -99,11 +117,4 @@ public:
         customPut(name + "numInternalCells", grid.numInternalCells);
     }
 };
-adios2::fstream& operator<< (adios2::fstream& out, Int3& v)
-{
-    out.write("x", v.x);
-    out.write("y", v.y);
-    out.write("z", v.z);
-    return out;
-}
 } // namespace pfc

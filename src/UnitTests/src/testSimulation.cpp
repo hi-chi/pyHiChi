@@ -4,14 +4,11 @@
 #include "DataManager.h"
 using namespace pfc;
 
-
 template <typename Real>
 class SimulationTest : public ::testing::Test {
 };
-
 typedef ::testing::Types<float, double> types;
 TYPED_TEST_CASE(SimulationTest, types);
-
 TYPED_TEST(SimulationTest, Can_create_Simulation_with_Grid_and_FDTD)
 {
     Int3 gridSize(11, 5, 6);
@@ -30,23 +27,54 @@ TYPED_TEST(SimulationTest, Can_create_Simulation_with_Grid_and_FDTD)
     ASSERT_NO_THROW(simulation.run());
 }
 
-TYPED_TEST(SimulationTest, Can_create_DataManager)
+
+
+template <typename Real>
+class DataManagerTests : public ::testing::Test {};
+typedef ::testing::Types<float, double> types;
+TYPED_TEST_CASE(DataManagerTests, types);
+
+TYPED_TEST(DataManagerTests, Test_Adios2)
 {
-    ASSERT_NO_THROW(DataManager manager1());
-    ASSERT_NO_THROW(DataManager manager2("test2"));
-    ASSERT_NO_THROW(DataManager manager3("test3", IOType::Write));
+    adios2::ADIOS adios;
+    adios2::IO bpIO = adios.DeclareIO("BPFile_N2N");
+    adios2::Engine engine = bpIO.Open("adios", adios2::Mode::Write);
+    double w1 = 3.14;
+    std::string s = "data";
+    adios2::Variable<double> var1 = bpIO.DefineVariable<double>(s);
+    ASSERT_NO_THROW(engine.Put(var1, w1));
+    engine.Close();
+    bpIO.RemoveAllVariables();
+
+    adios2::Variable<double> var2 = bpIO.DefineVariable<double>(s);
+    double r1;
+    engine = bpIO.Open("adios", adios2::Mode::Read);
+    ASSERT_NO_THROW(engine.Get(var2, r1));
+    EXPECT_DOUBLE_EQ(w1, r1);
+    engine.Close();
 }
 
-TYPED_TEST(SimulationTest, Can_Put_double)
+TYPED_TEST(DataManagerTests, Can_Put_Get_double)
 {
-    DataManager manager("test", IOType::Write);
-    double pi = 3.14;
-    manager.putVariable("val1", pi);
-}
+    string var_name = "pi", path = "test_path";
+    const double pi = 3.14;
+    DataManager manager(path, IOType::Write);
+    ASSERT_NO_THROW(manager.putVariable(var_name, pi));
 
-TYPED_TEST(SimulationTest, Can_Put_Int3)
+    manager.setEngine(IOType::Read);
+    double res;
+    manager.getVariable(var_name, res);
+    EXPECT_DOUBLE_EQ(res, pi);
+}
+TYPED_TEST(DataManagerTests, Can_Put_Get_Int3)
 {
-    adios2::fstream oStream("test", adios2::fstream::out);
-    Int3 tmp(1, 2, 3);
-    oStream << tmp;
+    string var_name = "int3Data", path = "test_path";
+    DataManager manager(path, IOType::Write);
+    const Int3 tmp(1, -2, 3);
+    ASSERT_NO_THROW(manager.customPut(var_name, tmp));
+
+    manager.setEngine(IOType::Read);
+    Int3 res;
+    manager.customGet(var_name, res);
+    EXPECT_EQ(res, tmp);
 }
