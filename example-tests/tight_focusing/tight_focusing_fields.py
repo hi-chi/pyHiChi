@@ -36,6 +36,7 @@ class SphericalPulsePython():
             return np.sin(2*hichi.pi*x/wavelength) * \
                 np.cos(hichi.pi*x/pulselength)**2 * \
                 hp.block(x, -0.5*pulselength, 0.5*pulselength)
+        self.longitudinal_field_variation = longitudinal_field_variation
         
         @njit
         def transverse_shape(angle):
@@ -45,6 +46,7 @@ class SphericalPulsePython():
                 (np.cos(0.5*hichi.pi*(angle - angle1)/edge_smoothing_angle)**2 * \
                  hp.block(angle, angle1, angle2) if (not edge_smoothing_angle == 0.0) \
                  else 0.0)
+        self.transverse_shape = transverse_shape
         
         amp = np.sqrt(total_power*4.0/(hichi.c*(1.0 - np.cos(opening_angle))))
         
@@ -60,6 +62,7 @@ class SphericalPulsePython():
                 return (amp/R)*longitudinal_field_variation(R - R0)*transverse_shape(angle)*(x < 0)
             else:
                 return 0
+        self.mask = mask
           
         @cfunc("void(float64,float64,float64,types.CPointer(float64))", nopython=True)
         def EM_field(x, y, z, field_arr_):
