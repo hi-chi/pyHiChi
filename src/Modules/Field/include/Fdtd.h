@@ -48,6 +48,10 @@ namespace pfc {
         FP3 anisotropyCoeff;
         void setAnisotropy(const FP frequency, int axis);
 
+        PmlFdtd* getPml() {
+            return (PmlFdtd*)pml.get();
+        }
+
     };
 
     inline FDTD::FDTD(YeeGrid* grid, FP dt) :
@@ -60,7 +64,7 @@ namespace pfc {
             this->dt = getCourantCondition() * 0.5;
         }
         updateDims();
-        pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));//pml.reset(new PmlFdtd(this));;
+        pml.reset(new PmlFdtd(this, Int3(0, 0, 0)));//pml.reset(new PmlFdtd(this));;
         generator.reset(new ReflectFieldGeneratorYee(this));
         updateInternalDims();
         anisotropyCoeff = FP3(1, 1, 1);
@@ -135,10 +139,10 @@ namespace pfc {
     inline void FDTD::updateFields()
     {
         updateHalfB();
-        pml->updateB();
+        getPml()->updateB();
         generator->generateB();
         updateE();
-        pml->updateE();
+        getPml()->updateE();
         generator->generateE();
         updateHalfB();
         globalTime += dt;

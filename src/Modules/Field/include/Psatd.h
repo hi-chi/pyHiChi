@@ -3,7 +3,7 @@
 #include "FieldSolver.h"
 #include "Grid.h"
 #include "Vectors.h"
-#include "PmlPsatd.h"
+#include "PmlSpectral.h"
 //#include <chrono>
 #include <omp.h>
 
@@ -57,7 +57,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPsatdTimeStraggered(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlSpectral<GridTypes::PSATDTimeStraggeredGridType>(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
     }
 
@@ -67,7 +67,7 @@ namespace pfc {
         this->dt = dt;
         this->timeShiftB = 0.5*dt;
         this->timeShiftJ = 0.5*dt;
-        if (pml.get()) pml.reset(new PmlPsatdTimeStraggered(this, pml->sizePML));
+        if (pml.get()) pml.reset(new PmlSpectral<GridTypes::PSATDTimeStraggeredGridType>(this, pml->sizePML));
     }
 
     template <bool ifPoisson>
@@ -95,19 +95,16 @@ namespace pfc {
     {
         doFourierTransform(fourier_transform::Direction::RtoC);
 
-        if (pml.get()) getPml()->updateBSplit();
         updateHalfB();
-
-        if (pml.get()) getPml()->updateESplit();
         updateE();
-
-        if (pml.get()) getPml()->updateBSplit();
         updateHalfB();
+
+        if (pml.get()) getPml()->updateSplit();
 
         saveJ();
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml.get()) getPml()->doSecondStep();
+        if (pml.get()) getPml()->sumSplit();
 
         globalTime += dt;
     }
@@ -281,8 +278,8 @@ namespace pfc {
 
     private:
 
-        PmlSpectralTimeStraggered<GridTypes::PSATDGridType>* getPml() {
-            return (PmlSpectralTimeStraggered<GridTypes::PSATDGridType>*)pml.get();
+        PmlSpectral<GridTypes::PSATDGridType>* getPml() {
+            return (PmlSpectral<GridTypes::PSATDGridType>*)pml.get();
         }
 
     };
@@ -298,7 +295,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPsatd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlSpectral<GridTypes::PSATDGridType>(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
     }
 
@@ -307,38 +304,44 @@ namespace pfc {
     {
         this->dt = dt;
         this->timeShiftJ = 0.5*dt;
-        if (pml.get()) pml.reset(new PmlPsatd(this, pml->sizePML));
+        if (pml.get()) pml.reset(new PmlSpectral<GridTypes::PSATDGridType>(this, pml->sizePML));
     }
 
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::updateFields() {
-        // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+        // std::chrono::steady_clock::time_point tRtoC1 = std::chrono::steady_clock::now();
         doFourierTransform(fourier_transform::Direction::RtoC);
-        //std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-        //std::chrono::milliseconds timeRtoC = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        //std::chrono::steady_clock::time_point tRtoC2 = std::chrono::steady_clock::now();
+        //std::chrono::milliseconds timeRtoC = std::chrono::duration_cast<std::chrono::milliseconds>(tRtoC2 - tRtoC1);
 
-        //std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
-        if (pml.get()) getPml()->updateBSplit();
+        //std::chrono::steady_clock::time_point tFS1  = std::chrono::steady_clock::now();
         updateEB();
-        if (pml.get()) getPml()->updateESplit();
-        updateEB();
-        if (pml.get()) getPml()->updateBSplit();
-        //std::chrono::steady_clock::time_point t4 = std::chrono::steady_clock::now();
-        //std::chrono::milliseconds timeSolver = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3);
+        //std::chrono::steady_clock::time_point tFS2 = std::chrono::steady_clock::now();
+        //std::chrono::milliseconds timeSolver = std::chrono::duration_cast<std::chrono::milliseconds>(tFS2 - tFS1);
 
-        //std::chrono::steady_clock::time_point t5 = std::chrono::steady_clock::now();
+        //std::chrono::steady_clock::time_point tPML1 = std::chrono::steady_clock::now();
+        if (pml.get()) getPml()->updateSplit();
+        //std::chrono::steady_clock::time_point tPML2 = std::chrono::steady_clock::now();
+        //std::chrono::milliseconds timePML = std::chrono::duration_cast<std::chrono::milliseconds>(tPML2 - tPML1);
+
+        //std::chrono::steady_clock::time_point tCtoR1 = std::chrono::steady_clock::now();
         doFourierTransform(fourier_transform::Direction::CtoR);
-        //std::chrono::steady_clock::time_point t6 = std::chrono::steady_clock::now();
-        //std::chrono::milliseconds timeCtoR = std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5);
+        //std::chrono::steady_clock::time_point tCtoR2 = std::chrono::steady_clock::now();
+        //std::chrono::milliseconds timeCtoR = std::chrono::duration_cast<std::chrono::milliseconds>(tCtoR2 - tCtoR1);
 
-        if (pml.get()) getPml()->doSecondStep();
+        //std::chrono::steady_clock::time_point tSum1 = std::chrono::steady_clock::now();
+        if (pml.get()) getPml()->sumSplit();
+        //std::chrono::steady_clock::time_point tSum2 = std::chrono::steady_clock::now();
+        //std::chrono::milliseconds timeSum = std::chrono::duration_cast<std::chrono::milliseconds>(tSum2 - tSum1);
 
         globalTime += dt;
 
         //std::string strRtoC = "Time RtoC: " + std::to_string(timeRtoC.count()) + "\n";
-        //std::string strSolver = "Time PSATDT: " + std::to_string(timeSolver.count()) + "\n";
+        //std::string strPSATD = "Time PSATD: " + std::to_string(timeSolver.count()) + "\n";
+        //std::string strPML = "Time PML: " + std::to_string(timePml.count()) + "\n";
         //std::string strCtoR = "Time CtoR: " + std::to_string(timeCtoR.count()) + "\n";
-        //std::cout << strRtoC << strSolver << strCtoR << std::endl;
+        //std::string strSum = "Time Sum: " + std::to_string(timeSum.count()) + "\n";
+        //std::cout << strRtoC << strPSATD << strPML << strCtoR << strSum << std::endl;
     }
 
     template <bool ifPoisson>
@@ -379,7 +382,6 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -432,7 +434,6 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
 #pragma omp parallel for collapse(2)
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)

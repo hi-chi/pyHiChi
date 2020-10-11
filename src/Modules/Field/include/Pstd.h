@@ -3,7 +3,7 @@
 #include "FieldSolver.h"
 #include "Grid.h"
 #include "Vectors.h"
-#include "PmlPstd.h"
+#include "PmlSpectral.h"
 
 namespace pfc {
     class PSTD : public SpectralFieldSolver<PSTDGridType>
@@ -55,7 +55,7 @@ namespace pfc {
 
     inline void PSTD::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPstd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlSpectral<GridTypes::PSTDGridType>(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
     }
 
@@ -65,7 +65,7 @@ namespace pfc {
             this->dt = dt;
             this->timeShiftB = 0.5*dt;
             this->timeShiftJ = 0.5*dt;
-            if (pml.get()) pml.reset(new PmlPstd(this, pml->sizePML));
+            if (pml.get()) pml.reset(new PmlSpectral<GridTypes::PSTDGridType>(this, pml->sizePML));
         }
         else {
             std::cout
@@ -78,18 +78,15 @@ namespace pfc {
     {
         doFourierTransform(fourier_transform::Direction::RtoC);
 
-        if (pml.get()) getPml()->updateBSplit();
         updateHalfB();
-
-        if (pml.get()) getPml()->updateESplit();
         updateE();
-
-        if (pml.get()) getPml()->updateBSplit();
         updateHalfB();
+
+        if (pml.get()) getPml()->updateSplit();
 
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml.get()) getPml()->doSecondStep();
+        if (pml.get()) getPml()->sumSplit();
 
         globalTime += dt;
     }

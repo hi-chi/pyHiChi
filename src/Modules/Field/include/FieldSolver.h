@@ -38,8 +38,8 @@ namespace pfc {
 
         Grid<FP, gridType> * grid;
 
-        std::auto_ptr<Pml<gridType>> pml;
-        std::auto_ptr<FieldGenerator<gridType>> generator;
+        std::unique_ptr<Pml<gridType>> pml;
+        std::unique_ptr<FieldGenerator<gridType>> generator;
 
         // Index space being updated in form [begin, end).
         Int3 updateBAreaBegin, updateBAreaEnd;
@@ -135,6 +135,8 @@ namespace pfc {
         void doFourierTransformJ(fourier_transform::Direction direction);
         void doFourierTransform(fourier_transform::Direction direction);
 
+        static FP getWaveVectorComponent(int ind, int numCells, FP gridStep);
+        static FP3 getWaveVector(const Int3 & ind, const Int3 & numCells, const FP3 & gridStep);
         FP3 getWaveVector(const Int3 & ind);
 
         void updateDims();
@@ -185,15 +187,25 @@ namespace pfc {
     }
 
     template<GridTypes gridType>
-    inline FP3 SpectralFieldSolver<gridType>::getWaveVector(const Int3 & ind)
+    forceinline FP SpectralFieldSolver<gridType>::getWaveVectorComponent(int ind, int numCells, FP gridStep)
     {
-        FP kx = (2 * constants::pi*((ind.x <= this->grid->numCells.x / 2) ? ind.x : ind.x - this->grid->numCells.x)) /
-            (this->grid->steps.x * this->grid->numCells.x);
-        FP ky = (2 * constants::pi*((ind.y <= this->grid->numCells.y / 2) ? ind.y : ind.y - this->grid->numCells.y)) /
-            (this->grid->steps.y * this->grid->numCells.y);
-        FP kz = (2 * constants::pi*((ind.z <= this->grid->numCells.z / 2) ? ind.z : ind.z - this->grid->numCells.z)) /
-            (this->grid->steps.z * this->grid->numCells.z);
-        return FP3(kx, ky, kz);
+        return (2 * constants::pi*((ind <= numCells / 2) ? ind : ind - numCells)) / (gridStep * numCells);
+    }
+
+    template<GridTypes gridType>
+    forceinline FP3 SpectralFieldSolver<gridType>::getWaveVector(const Int3 & ind,
+        const Int3 & numCells, const FP3 & steps)
+    {
+        return FP3(SpectralFieldSolver<gridType>::getWaveVectorComponent(ind.x, numCells.x, steps.x),
+            SpectralFieldSolver<gridType>::getWaveVectorComponent(ind.y, numCells.y, steps.y),
+            SpectralFieldSolver<gridType>::getWaveVectorComponent(ind.z, numCells.z, steps.z)
+        );
+    }
+
+    template<GridTypes gridType>
+    forceinline FP3 SpectralFieldSolver<gridType>::getWaveVector(const Int3 & ind)
+    {
+        return SpectralFieldSolver<gridType>::getWaveVector(ind, this->grid->numCells, this->grid->steps);
     }
 
     template<GridTypes gridType>
