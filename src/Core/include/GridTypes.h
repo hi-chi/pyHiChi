@@ -38,4 +38,10 @@ namespace pfc {
             gridTypes == GridTypes::PSATDTimeStraggeredGridType;
     };
 
+    template <GridTypes gridTypes>
+    struct LabelSpectralFields {
+        static const bool ifFieldsSpectral = gridTypes != GridTypes::YeeGridType &&
+            gridTypes != GridTypes::StraightGridType;
+    };
+
 } // namespace pfc

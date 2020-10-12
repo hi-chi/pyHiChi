@@ -38,8 +38,8 @@ namespace pfc {
 
         Grid<FP, gridType> * grid;
 
-        std::unique_ptr<Pml<gridType>> pml;
-        std::unique_ptr<FieldGenerator<gridType>> generator;
+        std::auto_ptr<Pml<gridType>> pml;
+        std::auto_ptr<FieldGenerator<gridType>> generator;
 
         // Index space being updated in form [begin, end).
         Int3 updateBAreaBegin, updateBAreaEnd;

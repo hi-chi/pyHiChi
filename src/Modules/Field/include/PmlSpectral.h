@@ -29,11 +29,13 @@ namespace pfc {
 
     protected:
         SpectralFieldSolver<gridTypes>* getFieldSolver() {
-            return (SpectralFieldSolver<gridTypes>*)this->fieldSolver;
+            return static_cast<SpectralFieldSolver<gridTypes>*>(this->fieldSolver);
         }
 
         void computeSplitField(ScalarField<complexFP>& field,
             std::vector<FP>& splitField, std::vector<FP>& coeffs, Coordinate splitCoord);
+
+        FP getZeroComponentCoeff(Coordinate propDir);
     };
 
     template<GridTypes gridTypes>
@@ -79,9 +81,9 @@ namespace pfc {
     inline void PmlSpectral<gridTypes>::computeCoeffs()
     {
         Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-        coeffx.resize(numCells);
-        coeffy.resize(numCells);
-        coeffz.resize(numCells);
+        coeffx.resize(this->numCells);
+        coeffy.resize(this->numCells);
+        coeffz.resize(this->numCells);
         for (int idx = 0; idx < numCells; ++idx)
         {
             int i = cellIndex[idx].x;
@@ -110,9 +112,14 @@ namespace pfc {
         for (int i = 0; i < complexGridSize.x; i++)
             for (int j = 0; j < complexGridSize.y; j++)
                 for (int k = 0; k < complexGridSize.z; k++) {
-                    FP3 K = SpectralFieldSolver<gridTypes>::getWaveVector(Int3(i, j, k), gridSize, gridStep);
-                    FP coeff = K[splitCoord] * K[splitCoord] / K.norm2();
-                    this->tmpFieldComplex(i, j, k) = coeff * field(i, j, k);
+                    if (i == 0 && j == 0 && k == 0) {
+                        this->tmpFieldComplex(0, 0, 0) = this->getZeroComponentCoeff(splitCoord) * field(0, 0, 0);
+                    }
+                    else {
+                        FP3 K = SpectralFieldSolver<gridTypes>::getWaveVector(Int3(i, j, k), gridSize, gridStep);
+                        FP coeff = K[splitCoord] * K[splitCoord] / K.norm2();
+                        this->tmpFieldComplex(i, j, k) = coeff * field(i, j, k);
+                    }
                 }
 
         this->fourierTransform.doInverseFourierTransform();
@@ -164,19 +171,77 @@ namespace pfc {
     template<GridTypes gridTypes>
     inline void PmlSpectral<gridTypes>::sumSplit()
     {
+        Grid<FP, gridTypes> * grid = this->getFieldSolver()->grid;
         for (int idx = 0; idx < this->numCells; ++idx)
         {
             int i = cellIndex[idx].x;
             int j = cellIndex[idx].y;
             int k = cellIndex[idx].z;
 
-            this->getFieldSolver()->grid->Bx(i, j, k) = this->bxy[idx] + this->bxz[idx];
-            this->getFieldSolver()->grid->By(i, j, k) = this->byz[idx] + this->byx[idx];
-            this->getFieldSolver()->grid->Bz(i, j, k) = this->bzx[idx] + this->bzy[idx];
+            grid->Bx(i, j, k) = this->bxy[idx] + this->bxz[idx];
+            grid->By(i, j, k) = this->byz[idx] + this->byx[idx];
+            grid->Bz(i, j, k) = this->bzx[idx] + this->bzy[idx];
 
-            this->getFieldSolver()->grid->Ex(i, j, k) = this->exy[idx] + this->exz[idx];
-            this->getFieldSolver()->grid->Ey(i, j, k) = this->eyz[idx] + this->eyx[idx];
-            this->getFieldSolver()->grid->Ez(i, j, k) = this->ezx[idx] + this->ezy[idx];
+            grid->Ex(i, j, k) = this->exy[idx] + this->exz[idx];
+            grid->Ey(i, j, k) = this->eyz[idx] + this->eyx[idx];
+            grid->Ez(i, j, k) = this->ezx[idx] + this->ezy[idx];
         }
+    }
+
+    template<GridTypes gridTypes>
+    inline FP PmlSpectral<gridTypes>::getZeroComponentCoeff(Coordinate propDir)
+    {
+        if (propDir == Coordinate::x) return 1.0;
+        //Grid<complexFP, gridTypes>* grid = this->getFieldSolver()->complexGrid;
+        //const FP eps = 1e-30;  // only for double
+        //// zero component is always real
+        //FP Ex = grid->Ex(0, 0, 0).real, Ey = grid->Ey(0, 0, 0).real, Ez = grid->Ez(0, 0, 0).real;
+        //FP Bx = grid->Bx(0, 0, 0).real, By = grid->By(0, 0, 0).real, Bz = grid->Bz(0, 0, 0).real;
+        //{
+        //    FP ExBy_BxEy = Ex * By - Bx * Ey;
+        //    if (ExBy_BxEy > eps || ExBy_BxEy < -eps) {
+        //        FP kx = (Bx * Bz + Ex * Ez) / ExBy_BxEy;
+        //        FP ky = (By * Bz + Ey * Ez) / ExBy_BxEy;
+        //        switch (propDir) {
+        //        case Coordinate::x:
+        //            return kx * kx;
+        //        case Coordinate::y:
+        //            return ky * ky;
+        //        default:  // Coordinate::z
+        //            return 1.0 - kx * kx - ky * ky;
+        //        }
+        //    }
+        //}
+        //{
+        //    FP EzBx_BzEx = Ez * Bx - Bz * Ex;
+        //    if (EzBx_BzEx > eps || EzBx_BzEx < -eps) {
+        //        FP kx = (Bx * By + Ex * Ey) / EzBx_BzEx;
+        //        FP kz = (By * Bz + Ey * Ez) / EzBx_BzEx;
+        //        switch (propDir) {
+        //        case Coordinate::x:
+        //            return kx * kx;
+        //        case Coordinate::z:
+        //            return kz * kz;
+        //        default:  // Coordinate::y
+        //            return 1.0 - kx * kx - kz * kz;
+        //        }
+        //    }
+        //}
+        //{
+        //    FP EyBz_ByEz = Ey * Bz - By * Ez;
+        //    if (EyBz_ByEz > eps || EyBz_ByEz < -eps) {
+        //        FP ky = (Bx * By + Ex * Ey) / EyBz_ByEz;
+        //        FP kz = (Bx * Bz + Ex * Ez) / EyBz_ByEz;
+        //        switch (propDir) {
+        //        case Coordinate::y:
+        //            return ky * ky;
+        //        case Coordinate::z:
+        //            return kz * kz;
+        //        default:  // Coordinate::x
+        //            return 1.0 - ky * ky - kz * kz;
+        //        }
+        //    }
+        //}
+        return 0.0;
     }
 }

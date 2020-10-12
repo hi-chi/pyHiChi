@@ -17,8 +17,6 @@ set(fieldModules_headers
     ${FIELDMODULES_HEADER_DIR}/FieldSolver.h
     ${FIELDMODULES_HEADER_DIR}/Pml.h
     ${FIELDMODULES_HEADER_DIR}/PmlFdtd.h
-    ${FIELDMODULES_HEADER_DIR}/PmlPstd.h
-    ${FIELDMODULES_HEADER_DIR}/PmlPsatd.h
     ${FIELDMODULES_HEADER_DIR}/PmlSpectral.h
     ${FIELDMODULES_HEADER_DIR}/Pstd.h
     ${FIELDMODULES_HEADER_DIR}/Psatd.h)

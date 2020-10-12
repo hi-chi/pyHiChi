@@ -6,7 +6,7 @@
 template <class FieldSolverType, class GridType>
 class PMLTest : public BaseGridFixture<GridType> {
 public:
-    FieldSolverType * fieldSolver;
+    std::unique_ptr<FieldSolverType> fieldSolver;
     Int3 gridSize;
     Int3 pmlSize;
     FP3 pmlLeftEnd, pmlRightStart;
@@ -21,7 +21,7 @@ public:
         pmlLeftEnd.x = this->minCoords.x + pmlSize.x * this->grid->steps.x;
         pmlRightStart.x = this->maxCoords.x - pmlSize.x * this->grid->steps.x;
         initializeGrid();
-        fieldSolver = new FieldSolverType(this->grid, this->timeStep);
+        fieldSolver.reset(new FieldSolverType(this->grid, this->timeStep));
         fieldSolver->setPML(pmlSize.x, pmlSize.y, pmlSize.z);
     }
 

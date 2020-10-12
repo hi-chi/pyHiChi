@@ -144,7 +144,7 @@ namespace pfc {
     {
         FP3 c = coeffs * dimensionCoeffFP;
         FP3 invC = FP3(1, 1, 1) - c;
-        Int3 base = (baseIdx * dimensionCoeffInt) % size;  // % size for spectral grids
+        Int3 base = (baseIdx * dimensionCoeffInt) % size;
         Int3 next = (base + dimensionCoeffInt) % size;
         return invC.x * (invC.y * (invC.z * (*this)(base.x, base.y, base.z) + c.z * (*this)(base.x, base.y, next.z)) +
                             c.y * (invC.z * (*this)(base.x, next.y, base.z) + c.z * (*this)(base.x, next.y, next.z))) +

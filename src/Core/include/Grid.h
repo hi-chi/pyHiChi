@@ -18,7 +18,8 @@ namespace pfc {
     class Grid :
         // next labels define some properties of grid
         public LabelFieldsSpatialStraggered<gridType_>,
-        public LabelFieldsTimeStraggered<gridType_>
+        public LabelFieldsTimeStraggered<gridType_>,
+        public LabelSpectralFields<gridType_>
     {
 
     public:
@@ -279,11 +280,14 @@ namespace pfc {
 
         const Int3 getNumExternalLeftCells() const
         {
-            Int3 result(2, 2, 2);
-            for (int d = 0; d < 3; d++)
-                if (globalGridDims[d] == 1)
-                    result[d] = 0;
-            return result;
+            if (!this->ifFieldsSpectral) {
+                Int3 result(2, 2, 2);
+                for (int d = 0; d < 3; d++)
+                    if (globalGridDims[d] == 1)
+                        result[d] = 0;
+                return result;
+            }
+            return Int3(0, 0, 0);
         }
 
         const Int3 getNumExternalRightCells() const
