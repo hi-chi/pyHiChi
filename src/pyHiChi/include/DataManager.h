@@ -49,32 +49,15 @@ public:
         if (engine) 
             engine.Close();
     }
-    void beginIteration() //create new file
-    {
-        //PutVariable(path, path);
-    }
-    void endIteration() //close file
-    {
-
-    }
-    void beginStep() //logical step 
-    {
-
-    }
     void endStep() //flush buffer
     {
-
+        engine.EndStep();
     }
 
     template<typename T>
     void putVariable(const std::string name, const T& val)
     {
         adios2::Variable<T> var = io.DefineVariable<T>(name);
-        engine.Put(var, val);
-    }
-    template<typename T>
-    void putVariable(const adios2::Variable<T>& var, const T& val)
-    {
         engine.Put(var, val);
     }
     template<typename T>
@@ -92,10 +75,12 @@ public:
     template<typename T>
     void getArray(const std::string name, T* arr, size_t size)
     {
-        adios2::Variable<T> var = io.DefineVariable<T>(name, {},
-                                  {}, { size }, adios2::ConstantDims);
-        engine.Get(var, arr);
+        //auto varAr = io.InquireVariable<T>(name);
+        //size_t sizeAr = varAr.SelectionSize();
+        //engine.Get(varAr, arr);
+        engine.Get(name, arr);
     }
+
     template<typename T>
     void customPut(const std::string name, const Vector3<T>& val)
     {
@@ -110,6 +95,25 @@ public:
         getVariable(name + "y", val.y);
         getVariable(name + "z", val.z);
     }
+
+    template<typename Data>
+    void customPut(const std::string name, ScalarField<Data> &field)
+    {
+        const int size = field.getSize().volume();
+        customPut(name + "3dsize", field.getSize());
+        putArray(name + "ar", field.getData(), size);
+    }
+    template<typename Data>
+    void customGet(const std::string name, ScalarField<Data>& field)
+    {
+        //adios2::Variable<Data> var = io.InquireVariable<Data>(name);
+        Int3 size;
+        customGet(name + "3dsize", size);
+        field = ScalarField<Data>(size);
+        Data* firstEl = field.getData();
+        getArray(name + "ar", field.getData(), size.volume());
+    }
+
     template<typename Data, GridTypes gridType>
     void customPut(const std::string name, const Grid<Data, gridType> &grid)
     {

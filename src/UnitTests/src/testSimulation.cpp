@@ -27,13 +27,10 @@ TYPED_TEST(SimulationTest, Can_create_Simulation_with_Grid_and_FDTD)
     ASSERT_NO_THROW(simulation.run());
 }
 
-
-
 template <typename Real>
 class DataManagerTests : public ::testing::Test {};
 typedef ::testing::Types<float, double> types;
 TYPED_TEST_CASE(DataManagerTests, types);
-
 TYPED_TEST(DataManagerTests, Test_Adios2)
 {
     adios2::ADIOS adios;
@@ -53,7 +50,6 @@ TYPED_TEST(DataManagerTests, Test_Adios2)
     EXPECT_DOUBLE_EQ(w1, r1);
     engine.Close();
 }
-
 TYPED_TEST(DataManagerTests, Can_Put_Get_double)
 {
     string var_name = "pi", path = "test_path";
@@ -77,4 +73,22 @@ TYPED_TEST(DataManagerTests, Can_Put_Get_Int3)
     Int3 res;
     manager.customGet(var_name, res);
     EXPECT_EQ(res, tmp);
+}
+TYPED_TEST(DataManagerTests, Can_Put_Get_ScalarField)
+{
+    string var_name = "field", path = "test_field";
+    DataManager manager(path, IOType::Write);
+    Int3 size(1, 2, 3);
+    ScalarField<double> tmp(size);
+    tmp(0, 0, 0) = 1.0;
+    tmp(0, 1, 1) = 2.0;
+    ASSERT_NO_THROW(manager.customPut(var_name, tmp));
+
+    manager.setEngine(IOType::Read);
+    ScalarField<double> res;
+    manager.customGet(var_name, res);
+    manager.endStep();
+    EXPECT_EQ(res.getSize(), tmp.getSize());
+    EXPECT_EQ(res(0, 0, 0), tmp(0, 0, 0));
+    EXPECT_EQ(res(0, 1, 1), tmp(0, 1, 1));
 }
