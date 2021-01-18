@@ -13,7 +13,7 @@ namespace pfc {
         Photon = 3
     };
     const int sizeParticleTypes = 4;
-    const vector<std::string> particleNames = { "Electron", "Positron", "Proton", "Photon" };
+    const std::vector<std::string> particleNames = { "Electron", "Positron", "Proton", "Photon" };
 
 
     //void createTypes();

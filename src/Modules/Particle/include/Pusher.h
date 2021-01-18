@@ -14,10 +14,10 @@ namespace pfc
     {
     public:
         template<class T_Particle>
-        inline void operator()(T_Particle* particle, ValueField field, FP timeStep) {};
+        inline void operator()(T_Particle* particle, ValueField& field, FP timeStep) {};
 
         template<class T_ParticleArray>
-        inline void operator()(T_ParticleArray* particleArray, std::vector<ValueField> fields, FP timeStep) { };
+        inline void operator()(T_ParticleArray* particleArray, std::vector<ValueField>& fields, FP timeStep) { };
     };
 
     class BorisPusher : public ParticlePusher
@@ -25,7 +25,7 @@ namespace pfc
     public:
 
         template<class T_Particle>
-        inline void operator()(T_Particle* particle, ValueField field, FP timeStep)
+        inline void operator()(T_Particle* particle, ValueField& field, FP timeStep)
         {
             FP3 e = field.getE();
             FP3 b = field.getB();
@@ -40,7 +40,7 @@ namespace pfc
         }
 
         template<class T_ParticleArray>
-        inline void operator()(T_ParticleArray* particleArray, std::vector<ValueField> fields, FP timeStep)
+        inline void operator()(T_ParticleArray* particleArray, std::vector<ValueField>& fields, FP timeStep)
         {
             typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
 
@@ -56,10 +56,9 @@ namespace pfc
     class RadiationReaction : public ParticlePusher
     {
     public:
-        using ParticlePusher::operator();
 
         template<class T_Particle>
-        inline void operator()(T_Particle* particle, ValueField field, FP timeStep)
+        inline void operator()(T_Particle* particle, ValueField& field, FP timeStep)
         {
             if (particle->getType() == Electron || particle->getType() == Positron)
             {
@@ -80,7 +79,7 @@ namespace pfc
         }
 
         template<class T_ParticleArray>
-        inline void operator()(T_ParticleArray* particleArray, std::vector<ValueField> fields, FP timeStep)
+        inline void operator()(T_ParticleArray* particleArray, std::vector<ValueField>& fields, FP timeStep)
         {
             typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
 

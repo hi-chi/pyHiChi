@@ -259,18 +259,18 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<BorisPusher>(object, "BorisPusher")
         .def(py::init<>())
-        .def("__call__", (void (BorisPusher::*)(ParticleProxy3d*, ValueField, FP)) &BorisPusher::operator())
-        .def("__call__", (void (BorisPusher::*)(Particle3d*, ValueField, FP)) &BorisPusher::operator())
-        .def("__call__", (void (BorisPusher::*)(ParticleArray3d*, std::vector<ValueField>, FP)) &BorisPusher::operator())
+        .def("__call__", (void (BorisPusher::*)(ParticleProxy3d*, ValueField&, FP)) &BorisPusher::operator())
+        .def("__call__", (void (BorisPusher::*)(Particle3d*, ValueField&, FP)) &BorisPusher::operator())
+        .def("__call__", (void (BorisPusher::*)(ParticleArray3d*, std::vector<ValueField>&, FP)) &BorisPusher::operator())
         ;
 
     // ------------------- other particle modules -------------------
 
     py::class_<RadiationReaction>(object, "RadiationReaction")
         .def(py::init<>())
-        .def("__call__", (void (RadiationReaction::*)(ParticleProxy3d*, ValueField, FP)) &RadiationReaction::operator())
-        .def("__call__", (void (RadiationReaction::*)(Particle3d*, ValueField, FP)) &RadiationReaction::operator())
-        .def("__call__", (void (RadiationReaction::*)(ParticleArray3d*, std::vector<ValueField>, FP)) &RadiationReaction::operator())
+        .def("__call__", (void (RadiationReaction::*)(ParticleProxy3d*, ValueField&, FP)) &RadiationReaction::operator())
+        .def("__call__", (void (RadiationReaction::*)(Particle3d*, ValueField&, FP)) &RadiationReaction::operator())
+        .def("__call__", (void (RadiationReaction::*)(ParticleArray3d*, std::vector<ValueField>&, FP)) &RadiationReaction::operator())
         ;
 
     py::class_<ScalarQED_AEG_only_electron>(object, "QED")

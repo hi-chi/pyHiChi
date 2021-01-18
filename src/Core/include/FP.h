@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 namespace pfc {
 
 // Switch to use single or double precision as type FP, double by default.
