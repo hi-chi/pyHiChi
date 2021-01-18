@@ -1,3 +1,6 @@
 [submodule "3rdparty/pybind11"]
 	path = 3rdparty/pybind11
 	url = git://github.com/pybind/pybind11.git
+[submodule "3rdparty/google/benchmark"]
+	path = 3rdparty/google/benchmark
+	url = https://github.com/google/benchmark

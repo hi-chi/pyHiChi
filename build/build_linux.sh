@@ -33,6 +33,8 @@ python_path="python"
 USE_FFTW="OFF"
 USE_MKL="OFF"
 USE_OMP="OFF"
+USE_TESTS="OFF"
+USE_PTESTS="OFF"
 
 script=$0
 
@@ -58,6 +60,14 @@ case $key in
     USE_MKL="ON"
     shift # past argument
     ;;
+    -tests)
+    USE_TESTS="ON"
+    shift # past argument
+    ;;
+    -ptests)
+    USE_PTESTS="ON"
+    shift # past argument
+    ;;
     *)    # unknown option
     shift # past argument
     ;;
@@ -73,7 +83,13 @@ fi
 if [ $USE_MKL = "ON" ]; then
     CPU_OPTIONS="$CPU_OPTIONS -DUSE_MKL=ON"
 fi
-CPU_OPTIONS="$CPU_OPTIONS -DPYTHON_EXECUTABLE:FILEPATH=$python_path"
+if [ $USE_TESTS = "ON" ]; then
+    CPU_OPTIONS="$CPU_OPTIONS -DUSE_TESTS=ON"
+fi
+if [ $USE_PTESTS = "ON" ]; then
+    CPU_OPTIONS="$CPU_OPTIONS -DUSE_PTESTS=ON -DBENCHMARK_ENABLE_TESTING=OFF"
+fi
+CPU_OPTIONS="$CPU_OPTIONS -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE:FILEPATH=$python_path"
 
 
 BUILD_DIR="unix_makefiles"
