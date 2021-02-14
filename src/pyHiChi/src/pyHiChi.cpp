@@ -345,6 +345,12 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     // ------------------- py fields -------------------
 
+    //sample analytical fields
+    py::class_<pyGaussianBeamField>(object, "GaussianBeamField")
+        .def(py::init<FP, FP>())
+        .def("get_fields", &pyGaussianBeamField::getFields)
+        ;
+    
     // abstract class
     py::class_<pyFieldBase, std::shared_ptr<pyFieldBase>> pyClassFieldBase(object, "FieldBase");
     pyClassFieldBase.def("get_fields", &pyFieldBase::getFields)

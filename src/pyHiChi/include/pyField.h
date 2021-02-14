@@ -932,5 +932,33 @@ namespace pfc
         FP factor = 1.0;
         std::shared_ptr<pyFieldBase> pyWrappedField;
     };
+	
+	
+	
+    class pyGaussianBeamField {
+    public:
+
+        pyGaussianBeamField(FP _w1, FP _w2) : w1(_w1), w2(_w2)
+        {}
+
+        ValueField getFields(const FP3& pos, const FP t) {
+            FP ex, ey, ez, bx, by, bz;
+            
+            //sample function
+            ex = sin(w1 * t + pos.x);
+            ey = sin(w1 * t + pos.y);
+            ez = sin(w1 * t + pos.z); 
+            
+            bx = cos(w2 * t + pos.x);
+            by = cos(w2 * t + pos.y);
+            bz = cos(w2 * t + pos.z);
+            
+            return ValueField(ex, ey, ez, bx, by, bz);
+        }
+    private:
+    //sample parameters
+        FP w1, w2;
+    };
+	
 
 }
