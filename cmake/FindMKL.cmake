@@ -5,6 +5,8 @@
 #  MKL_LIBRARIES - MKL libraries
 #
 #  The environment variable MKLROOT is used
+#  For windows and Intel Compiler the environment variable LIBOMP5PATH is used
+#    to mark the path to libomp5 library of Intel Compiler
 #
 #  Example usage:
 #
@@ -27,7 +29,7 @@ set(MKL_LIBRARIES_PATHS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
 if (USE_OMP)
 
     function(find_libomp5_win32)
-        find_library(IOMP5_LIB libiomp5md${CMAKE_STATIC_LIBRARY_SUFFIX} $ENV{INTEL}/compiler/lib/intel64)
+        find_library(IOMP5_LIB libiomp5md${CMAKE_STATIC_LIBRARY_SUFFIX} $ENV{LIBOMP5PATH})
         if (IOMP5_LIB)
             set(IOMP5 ${IOMP5_LIB} PARENT_SCOPE)
             message(STATUS "Found libiomp5")
@@ -86,6 +88,8 @@ if (USE_OMP)
         
         MARK_AS_ADVANCED(MKL_INCLUDE_DIRS MKL_LIBRARIES)
         
+        message(STATUS "MKL with OpenMP support is found successfully")
+        
     else()
         message(WARNING "Cannot find some necessary mkl components")
         message(STATUS "MKL_INCLUDE_DIRS=${MKL_INCLUDE_DIRS}")
@@ -130,6 +134,8 @@ else()  # USE_OMP
         FIND_PACKAGE_HANDLE_STANDARD_ARGS(MKL DEFAULT_MSG MKL_LIBRARIES MKL_INCLUDE_DIRS)
         
         MARK_AS_ADVANCED(MKL_INCLUDE_DIRS MKL_LIBRARIES)
+        
+        message(STATUS "MKL without OpenMP support is found successfully")
         
     else()
         message(WARNING "Cannot find some necessary mkl components")
