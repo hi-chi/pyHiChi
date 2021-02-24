@@ -2,7 +2,7 @@ import sys
 sys.path.append("../bin")
 import pyHiChi as hichi
 import numpy as np
-from numba import njit
+from numba import cfunc
 
 
 min_coords = hichi.Vector3d(-10, -10, 0.0)
@@ -10,14 +10,18 @@ max_coords = hichi.Vector3d(10, 10, 0.0)
 
 time_step = 0.05/hichi.c
 
-@njit    
+@cfunc("float64(float64,float64,float64)")  
 def null_value(x, y, z):
+    return 0.0
+    
+@cfunc("float64(float64,float64,float64,float64)")  
+def null_value_t(x, y, z, t):
     return 0.0
 
 
 # ------- create the first pulse (PSATD solver) ---------------
 
-@njit
+@cfunc("float64(float64,float64,float64)")
 def field_value_1(x, y, z):
     return np.exp(-x**2-y**2)*np.sin(3*x)  # omega=3
     
@@ -33,13 +37,14 @@ field_1.convert_fields_poisson_equation()
 
 # ------- create the second pulse (analytical) --------------
 
-@njit
-def field_value_2(x, y, z):
-    return np.exp(-x**2-y**2)*np.sin(6*x)  # omega=6
+@cfunc("float64(float64,float64,float64,float64)")
+def field_value_2(x, y, z, t):
+    x_arg = x - hichi.c*t
+    return np.exp(-x_arg**2-y**2)*np.sin(6*x_arg)  # omega=6
     
 field_2 = hichi.AnalyticalField(time_step)
-field_2.set_E(null_value.address, field_value_2.address, null_value.address)
-field_2.set_B(null_value.address, null_value.address, field_value_2.address)
+field_2.set_E(null_value_t.address, field_value_2.address, null_value_t.address)
+field_2.set_B(null_value_t.address, null_value_t.address, field_value_2.address)
 
 # ------ transform fields ---------------------
 

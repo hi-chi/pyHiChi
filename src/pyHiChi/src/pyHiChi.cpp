@@ -48,14 +48,21 @@
     .def("set_J", &pyFieldType::pySetJxyz)                                 \
     .def("set_E", &pyFieldType::pySetExyz)                                 \
     .def("set_B", &pyFieldType::pySetBxyz)                                 \
-    .def("set_J", &pyFieldType::setJxyzt)                                 \
-    .def("set_E", &pyFieldType::setExyzt)                                 \
-    .def("set_B", &pyFieldType::setBxyzt)                                 \
+    .def("set_J", &pyFieldType::setJxyzt)                                  \
+    .def("set_E", &pyFieldType::setExyzt)                                  \
+    .def("set_B", &pyFieldType::setBxyzt)                                  \
     SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)
 
 
-#define SET_PY_FIELD_BASE_METHODS(pyFieldType)                            \
-    .def("apply_mapping", [](std::shared_ptr<pyFieldType> self,            \
+#define SET_COMMON_FIELD_METHODS(pyFieldType)                             \
+    .def("change_time_step", &pyFieldType::changeTimeStep)                \
+    .def("refresh", &pyFieldType::refresh)                                \
+    .def("set_time", &pyFieldType::setTime)                               \
+    .def("get_time", &pyFieldType::getTime)
+
+
+#define SET_SUM_AND_MAP_FIELD_METHODS(pyFieldType)                        \
+    .def("apply_mapping", [](std::shared_ptr<pyFieldType> self,           \
         std::shared_ptr<Mapping> mapping) {                               \
         return self->applyMapping(                                        \
             std::static_pointer_cast<pyFieldBase>(self), mapping          \
@@ -346,17 +353,18 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<pySumField, std::shared_ptr<pySumField>>(
         object, "SumField", pyClassFieldBase)
-        SET_PY_FIELD_BASE_METHODS(pySumField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pySumField)
         ;
 
     py::class_<pyMulField, std::shared_ptr<pyMulField>>(
         object, "MulField", pyClassFieldBase)
-        SET_PY_FIELD_BASE_METHODS(pyMulField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMulField)
         ;
 
     py::class_<pyAnalyticalField, std::shared_ptr<pyAnalyticalField>>(
         object, "AnalyticalField", pyClassFieldBase)
-        SET_PY_FIELD_BASE_METHODS(pyAnalyticalField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyAnalyticalField)
+        SET_COMMON_FIELD_METHODS(pyAnalyticalField)
         .def(py::init<FP>())
         .def("set_E", &pyAnalyticalField::setExyz)
         .def("set_B", &pyAnalyticalField::setBxyz)
@@ -364,97 +372,75 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("get_E", &pyAnalyticalField::getEt)
         .def("get_B", &pyAnalyticalField::getBt)
         .def("get_J", &pyAnalyticalField::getJt)
-        .def("change_time_step", &pyAnalyticalField::changeTimeStep)
-        .def("refresh", &pyAnalyticalField::refresh)
-        .def("set_time", &pyAnalyticalField::setTime)
-        .def("get_time", &pyAnalyticalField::getTime)
         ;
 
     py::class_<pyYeeField, std::shared_ptr<pyYeeField>>(
         object, "YeeField", pyClassFieldBase)
         .def(py::init<FP3, FP3, FP3, FP>())
         SET_COMPUTATIONAL_GRID_METHODS(pyYeeField)
-        SET_PY_FIELD_BASE_METHODS(pyYeeField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyYeeField)
+        SET_COMMON_FIELD_METHODS(pyYeeField)
         .def("set_PML", &pyYeeField::setPML)
         .def("set_BC", &pyYeeField::setFieldGenerator)
-        .def("change_time_step", &pyYeeField::changeTimeStep)
-        .def("refresh", &pyYeeField::refresh)
-        .def("set_time", &pyYeeField::setTime)
-        .def("get_time", &pyYeeField::getTime)
         ;
 
     py::class_<pyPSTDField, std::shared_ptr<pyPSTDField>>(
         object, "PSTDField", pyClassFieldBase)
         .def(py::init<FP3, FP3, FP3, FP>())
         SET_COMPUTATIONAL_GRID_METHODS(pyPSTDField)
-        SET_PY_FIELD_BASE_METHODS(pyPSTDField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyPSTDField)
+        SET_COMMON_FIELD_METHODS(pyPSTDField)
         .def("set_PML", &pyPSTDField::setPML)
-        .def("change_time_step", &pyPSTDField::changeTimeStep)
         .def("set", &pyPSTDField::setEMField)
         .def("set", &pyPSTDField::pySetEMField)
-        .def("refresh", &pyPSTDField::refresh)
-        .def("set_time", &pyPSTDField::setTime)
-        .def("get_time", &pyPSTDField::getTime)
         ;
 
     py::class_<pyPSATDField, std::shared_ptr<pyPSATDField>>(
         object, "PSATDField", pyClassFieldBase)
         .def(py::init<FP3, FP3, FP3, FP>())
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDField)
-        SET_PY_FIELD_BASE_METHODS(pyPSATDField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDField)
+        SET_COMMON_FIELD_METHODS(pyPSATDField)
         .def("set_PML", &pyPSATDField::setPML)
         .def("convert_fields_poisson_equation", &pyPSATDField::convertFieldsPoissonEquation)
-        .def("change_time_step", &pyPSATDField::changeTimeStep)
         .def("set", &pyPSATDField::setEMField)
         .def("set", &pyPSATDField::pySetEMField)
-        .def("refresh", &pyPSATDField::refresh)
-        .def("set_time", &pyPSATDField::setTime)
-        .def("get_time", &pyPSATDField::getTime)
         ;
 
     py::class_<pyPSATDPoissonField, std::shared_ptr<pyPSATDPoissonField>>(
         object, "PSATDPoissonField", pyClassFieldBase)
         .def(py::init<FP3, FP3, FP3, FP>())
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDPoissonField)
-        SET_PY_FIELD_BASE_METHODS(pyPSATDPoissonField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDPoissonField)
+        SET_COMMON_FIELD_METHODS(pyPSATDPoissonField)
         .def("set_PML", &pyPSATDPoissonField::setPML)
         .def("convert_fields_poisson_equation", &pyPSATDPoissonField::convertFieldsPoissonEquation)
-        .def("change_time_step", &pyPSATDPoissonField::changeTimeStep)
         .def("set", &pyPSATDPoissonField::setEMField)
         .def("set", &pyPSATDPoissonField::pySetEMField)
-        .def("refresh", &pyPSATDPoissonField::refresh)
-        .def("set_time", &pyPSATDPoissonField::setTime)
-        .def("get_time", &pyPSATDPoissonField::getTime)
         ;
 
     py::class_<pyPSATDTimeStraggeredField, std::shared_ptr<pyPSATDTimeStraggeredField>>(
         object, "PSATDTimeStraggeredField", pyClassFieldBase)
         .def(py::init<FP3, FP3, FP3, FP>())
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredField)
-        SET_PY_FIELD_BASE_METHODS(pyPSATDTimeStraggeredField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredField)
+        SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredField)
         .def("set_PML", &pyPSATDTimeStraggeredField::setPML)
         .def("convert_fields_poisson_equation", &pyPSATDTimeStraggeredField::convertFieldsPoissonEquation)
-        .def("change_time_step", &pyPSATDTimeStraggeredField::changeTimeStep)
         .def("set", &pyPSATDTimeStraggeredField::setEMField)
         .def("set", &pyPSATDTimeStraggeredField::pySetEMField)
-        .def("refresh", &pyPSATDTimeStraggeredField::refresh)
-        .def("set_time", &pyPSATDTimeStraggeredField::setTime)
-        .def("get_time", &pyPSATDTimeStraggeredField::getTime)
         ;
 
     py::class_<pyPSATDTimeStraggeredPoissonField, std::shared_ptr<pyPSATDTimeStraggeredPoissonField>>(
         object, "PSATDTimeStraggeredPoissonField", pyClassFieldBase)
         .def(py::init<FP3, FP3, FP3, FP>())
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredPoissonField)
-        SET_PY_FIELD_BASE_METHODS(pyPSATDTimeStraggeredPoissonField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
+        SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
         .def("set_PML", &pyPSATDTimeStraggeredPoissonField::setPML)
         .def("convert_fields_poisson_equation", &pyPSATDTimeStraggeredPoissonField::convertFieldsPoissonEquation)
-        .def("change_time_step", &pyPSATDTimeStraggeredPoissonField::changeTimeStep)
         .def("set", &pyPSATDTimeStraggeredPoissonField::setEMField)
         .def("set", &pyPSATDTimeStraggeredPoissonField::pySetEMField)
-        .def("refresh", &pyPSATDTimeStraggeredPoissonField::refresh)
-        .def("set_time", &pyPSATDTimeStraggeredPoissonField::setTime)
-        .def("get_time", &pyPSATDTimeStraggeredPoissonField::getTime)
         ;
 
     // ------------------- field generators -------------------
