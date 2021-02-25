@@ -161,6 +161,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("set_E", &ValueField::setE)
         .def("get_B", &ValueField::getB)
         .def("set_B", &ValueField::setB)
+        .def_readwrite("E", &ValueField::E)
+        .def_readwrite("B", &ValueField::B)
         ;
 
     // ------------------- particles -------------------
@@ -393,6 +395,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("set_PML", &pyPSTDField::setPML)
         .def("set", &pyPSTDField::setEMField)
         .def("set", &pyPSTDField::pySetEMField)
+        .def("apply_function", &pyPSTDField::applyFunction)
+        .def("apply_function", &pyPSTDField::pyApplyFunction)
         ;
 
     py::class_<pyPSATDField, std::shared_ptr<pyPSATDField>>(
@@ -405,6 +409,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("convert_fields_poisson_equation", &pyPSATDField::convertFieldsPoissonEquation)
         .def("set", &pyPSATDField::setEMField)
         .def("set", &pyPSATDField::pySetEMField)
+        .def("apply_function", &pyPSATDField::applyFunction)
+        .def("apply_function", &pyPSATDField::pyApplyFunction)
         ;
 
     py::class_<pyPSATDPoissonField, std::shared_ptr<pyPSATDPoissonField>>(
@@ -417,6 +423,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("convert_fields_poisson_equation", &pyPSATDPoissonField::convertFieldsPoissonEquation)
         .def("set", &pyPSATDPoissonField::setEMField)
         .def("set", &pyPSATDPoissonField::pySetEMField)
+        .def("apply_function", &pyPSATDPoissonField::applyFunction)
+        .def("apply_function", &pyPSATDPoissonField::pyApplyFunction)
         ;
 
     py::class_<pyPSATDTimeStraggeredField, std::shared_ptr<pyPSATDTimeStraggeredField>>(
@@ -429,6 +437,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("convert_fields_poisson_equation", &pyPSATDTimeStraggeredField::convertFieldsPoissonEquation)
         .def("set", &pyPSATDTimeStraggeredField::setEMField)
         .def("set", &pyPSATDTimeStraggeredField::pySetEMField)
+        .def("apply_function", &pyPSATDTimeStraggeredField::applyFunction)
+        .def("apply_function", &pyPSATDTimeStraggeredField::pyApplyFunction)
         ;
 
     py::class_<pyPSATDTimeStraggeredPoissonField, std::shared_ptr<pyPSATDTimeStraggeredPoissonField>>(
@@ -441,6 +451,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("convert_fields_poisson_equation", &pyPSATDTimeStraggeredPoissonField::convertFieldsPoissonEquation)
         .def("set", &pyPSATDTimeStraggeredPoissonField::setEMField)
         .def("set", &pyPSATDTimeStraggeredPoissonField::pySetEMField)
+        .def("apply_function", &pyPSATDTimeStraggeredPoissonField::applyFunction)
+        .def("apply_function", &pyPSATDTimeStraggeredPoissonField::pyApplyFunction)
         ;
 
     // ------------------- field generators -------------------

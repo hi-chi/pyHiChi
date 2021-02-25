@@ -16,7 +16,7 @@ using namespace pybind11::literals;
 
 namespace pfc
 {
-    // field with computational grid
+    // Field with a computational grid
     template <class TGrid, class TFieldSolver>
     class pyFieldEntity : public TGrid, public TFieldSolver {
     public:
@@ -35,7 +35,7 @@ namespace pfc
     class NoFieldSolver {};
     class NoGrid {};
 
-    // specialization for analytical field
+    // Specialization for analytical field
     template<>
     class pyFieldEntity<NoGrid, NoFieldSolver> : public AnalyticalField {
     public:
@@ -54,7 +54,7 @@ namespace pfc
     template <class TGrid, class TFieldSolver, class TDerived, bool ifStraggered>
     class pyStraggeredFieldInterface {};
 
-    // spatial straggered grid
+    // Interface for spatial straggered grids
     template <class TGrid, class TFieldSolver, class TDerived>
     class pyStraggeredFieldInterface<TGrid, TFieldSolver, TDerived, true>
     {
@@ -108,7 +108,7 @@ namespace pfc
 
     };
 
-    // collocated grids
+    // Interface for collocated grids
     template <class TGrid, class TFieldSolver, class TDerived>
     class pyStraggeredFieldInterface<TGrid, TFieldSolver, TDerived, false>
     {
@@ -213,13 +213,89 @@ namespace pfc
                         }
                     }
         }
+
+        void pyApplyFunction(py::function func)
+        {
+            TDerived* derived = static_cast<TDerived*>(this);
+            pyFieldEntity<TGrid, TFieldSolver>* fieldEntity = derived->getFieldEntity();
+            for (int i = 0; i < fieldEntity->numCells.x; i++)
+                for (int j = 0; j < fieldEntity->numCells.y; j++)
+                    for (int k = 0; k < fieldEntity->numCells.z; k++)
+                    {
+                        FP3 coords = derived->convertCoords(fieldEntity->ExPosition(i, j, k));
+                        ValueField field(fieldEntity->Ex(i, j, k),
+                            fieldEntity->Ey(i, j, k),
+                            fieldEntity->Ez(i, j, k),
+                            fieldEntity->Bx(i, j, k),
+                            fieldEntity->By(i, j, k),
+                            fieldEntity->Bz(i, j, k));
+
+                        func("x"_a = coords.x, "y"_a = coords.y, "z"_a = coords.z,
+                            "field"_a = std::reference_wrapper<ValueField>(field));
+
+                        fieldEntity->Ex(i, j, k) = field.E.x;
+                        fieldEntity->Ey(i, j, k) = field.E.y;
+                        fieldEntity->Ez(i, j, k) = field.E.z;
+
+                        fieldEntity->Bx(i, j, k) = field.B.x;
+                        fieldEntity->By(i, j, k) = field.B.y;
+                        fieldEntity->Bz(i, j, k) = field.B.z;
+                    }
+        }
+
+        void applyFunction(int64_t _func)
+        {
+            TDerived* derived = static_cast<TDerived*>(this);
+            pyFieldEntity<TGrid, TFieldSolver>* fieldEntity = derived->getFieldEntity();
+            void(*fValueField)(FP, FP, FP, FP*) = (void(*)(FP, FP, FP, FP*))_func;
+            const int chunkSize = 32;
+            const int nChunks = fieldEntity->numCells.z / chunkSize;
+            const int chunkRem = fieldEntity->numCells.z % chunkSize;
+            const int nx = fieldEntity->numCells.x, ny = fieldEntity->numCells.y;
+
+#pragma omp parallel for collapse(2)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                    for (int chunk = 0; chunk < nChunks + 1; chunk++) {
+                        FP3 coords[chunkSize];
+                        int kLast = chunk == nChunks ? chunkRem : chunkSize;
+                        FP3 startPosition = fieldEntity->ExPosition(i, j, chunk * chunkSize);
+#pragma ivdep
+                        for (int k = 0; k < kLast; k++) {
+                            FP3 position(startPosition.x, startPosition.y,
+                                startPosition.z + k * fieldEntity->steps.z);
+                            coords[k] = derived->convertCoords(position);
+                        }
+#pragma ivdep
+#pragma omp simd
+                        for (int k = 0; k < kLast; k++) {
+                            int zIndex = k + chunk * chunkSize;
+                            ValueField field(fieldEntity->Ex(i, j, zIndex),
+                                fieldEntity->Ey(i, j, zIndex),
+                                fieldEntity->Ez(i, j, zIndex),
+                                fieldEntity->Bx(i, j, zIndex),
+                                fieldEntity->By(i, j, zIndex),
+                                fieldEntity->Bz(i, j, zIndex));
+
+                            fValueField(coords[k].x, coords[k].y, coords[k].z, &(field.E.x));
+
+                            fieldEntity->Ex(i, j, zIndex) = field.E.x;
+                            fieldEntity->Ey(i, j, zIndex) = field.E.y;
+                            fieldEntity->Ez(i, j, zIndex) = field.E.z;
+                            
+                            fieldEntity->Bx(i, j, zIndex) = field.B.x;
+                            fieldEntity->By(i, j, zIndex) = field.B.y;
+                            fieldEntity->Bz(i, j, zIndex) = field.B.z;
+                        }
+                    }
+        }
     };
 
 
     template<class TGrid, class TFieldSolver, class TDerived, bool ifAnalyticalField>
     class pyGridFieldInterface {};
 
-    // field with computational grid
+    // Interface for fields with a computational grid
     template<class TGrid, class TFieldSolver, class TDerived>
     class pyGridFieldInterface<TGrid, TFieldSolver, TDerived, false> :
         public pyStraggeredFieldInterface<TGrid, TFieldSolver,
@@ -551,9 +627,12 @@ namespace pfc
             return static_cast<TGrid*>(static_cast<TDerived*>(this)->getFieldEntity());
         }
 
+        
+
     };
 
-    // analytical field
+
+    // Interface for analytical fields
     template<class TGrid, class TFieldSolver, class TDerived>
     class pyGridFieldInterface<TGrid, TFieldSolver, TDerived, true> {
     public:
@@ -602,9 +681,6 @@ namespace pfc
         FP3 getJt(FP x, FP y, FP z, FP t) const {
             return static_cast<const TDerived*>(this)->getFieldEntity()->getJ(x, y, z, t);
         }
-
-        FP3 getSignThatIAmAlive(FP x, FP y, FP z, FP t) const {}
-
     };
 
     
@@ -644,6 +720,7 @@ namespace pfc
     };
 
 
+    // Interface for field solvers
     template<class TGrid, class TFieldSolver, class TDerived>
     class pyFieldSolverInterface :
         public pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TDerived,
@@ -683,6 +760,7 @@ namespace pfc
     };
 
 
+    // Interface for all fields
     template<class TGrid, class TFieldSolver, class TDerived>
     class pyFieldInterface:
         public pyGridFieldInterface<TGrid, TFieldSolver, TDerived,
@@ -697,6 +775,7 @@ namespace pfc
     };
 
 
+    // Base class for all fields (necessary to sum fields)
     class pyFieldBase {
     public:
 
@@ -718,6 +797,7 @@ namespace pfc
     };
 
 
+    // Main field class
     template<class TGrid, class TFieldSolver>
     class pyField : public pyFieldInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>,
         public pyFieldBase
@@ -842,6 +922,7 @@ namespace pfc
         fieldEntity(new pyFieldEntity<NoGrid, NoFieldSolver>(dt)) {}
 
 
+    // Object returned when summing fields
     class pySumField : public pyFieldBase
     {
     public:
@@ -896,6 +977,7 @@ namespace pfc
     };
 
 
+    // Object returned when multiplying fields by factor
     class pyMulField : public pyFieldBase {
     public:
 
