@@ -346,9 +346,12 @@ PYBIND11_MODULE(pyHiChi, object) {
     // abstract class
     py::class_<pyFieldBase, std::shared_ptr<pyFieldBase>> pyClassFieldBase(object, "FieldBase");
     pyClassFieldBase.def("get_fields", &pyFieldBase::getFields)
-        .def("get_J", &pyFieldBase::getJ)
-        .def("get_E", &pyFieldBase::getE)
-        .def("get_B", &pyFieldBase::getB)
+        .def("get_J", static_cast<FP3(pyFieldBase::*)(FP, FP, FP) const>(&pyFieldBase::getJ))
+        .def("get_E", static_cast<FP3(pyFieldBase::*)(FP, FP, FP) const>(&pyFieldBase::getE))
+        .def("get_B", static_cast<FP3(pyFieldBase::*)(FP, FP, FP) const>(&pyFieldBase::getB))
+        .def("get_J", static_cast<FP3(pyFieldBase::*)(const FP3&) const>(&pyFieldBase::getJ))
+        .def("get_E", static_cast<FP3(pyFieldBase::*)(const FP3&) const>(&pyFieldBase::getE))
+        .def("get_B", static_cast<FP3(pyFieldBase::*)(const FP3&) const>(&pyFieldBase::getB))
         .def("update_fields", &pyFieldBase::updateFields)
         .def("advance", &pyFieldBase::advance)
         ;

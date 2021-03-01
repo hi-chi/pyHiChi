@@ -783,6 +783,10 @@ namespace pfc
         virtual FP3 getB(const FP3& coords) const = 0;
         virtual FP3 getJ(const FP3& coords) const = 0;
 
+        FP3 getE(FP x, FP y, FP z) const { return getE(FP3(x, y, z)); }
+        FP3 getB(FP x, FP y, FP z) const { return getB(FP3(x, y, z)); }
+        FP3 getJ(FP x, FP y, FP z) const { return getJ(FP3(x, y, z)); }
+
         void getFields(const FP3& coords, FP3& e, FP3& b) const {
             e = getE(coords);
             b = getB(coords);
