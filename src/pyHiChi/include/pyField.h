@@ -161,8 +161,9 @@ namespace pfc
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
                     {
                         FP3 coords = derived->convertCoords(fieldEntity->ExPosition(i, j, k));
-                        ValueField field = fValueField("x"_a = coords.x, "y"_a = coords.y, "z"_a = coords.z).
-                            template cast<ValueField>();
+                        ValueField field;
+                        fValueField("x"_a = coords.x, "y"_a = coords.y, "z"_a = coords.z,
+                            "field_value"_a = std::reference_wrapper<ValueField>(field));
 
                         fieldEntity->Ex(i, j, k) = field.E.x;
                         fieldEntity->Ey(i, j, k) = field.E.y;
@@ -231,7 +232,7 @@ namespace pfc
                             fieldEntity->Bz(i, j, k));
 
                         func("x"_a = coords.x, "y"_a = coords.y, "z"_a = coords.z,
-                            "field"_a = std::reference_wrapper<ValueField>(field));
+                            "field_value"_a = std::reference_wrapper<ValueField>(field));
 
                         fieldEntity->Ex(i, j, k) = field.E.x;
                         fieldEntity->Ey(i, j, k) = field.E.y;
