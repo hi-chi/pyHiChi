@@ -1,7 +1,8 @@
 import math as ma
 import pyHiChi as hichi
 import hichi_primitives as hp
-from numba import cfunc, float64, jit, njit, jitclass, types, carray 
+from numba import cfunc, float64, jit, njit, types, carray
+from numba.experimental import jitclass
 import numpy as np
 
 # Spherical wave can be created by two ways: with Python and with C++

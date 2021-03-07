@@ -40,9 +40,9 @@ field1 = create_field()
 
 field2 = create_field()
 
-def func_to_apply_py(x, y, z, field):
-    field.E.y *= np.cos(np.pi/20.0*x)**2
-    field.B.z *= np.cos(np.pi/20.0*x)**2
+def func_to_apply_py(x, y, z, field_value):
+    field_value.E.y *= np.cos(np.pi/20.0*x)**2
+    field_value.B.z *= np.cos(np.pi/20.0*x)**2
 
 field2.apply_function(func_to_apply_py)
 
@@ -52,11 +52,11 @@ field2.apply_function(func_to_apply_py)
 field3 = create_field()
 
 @cfunc("void(float64,float64,float64,CPointer(float64))")
-def func_to_apply_c(x, y, z, field_):
-    field = carray(field_, (6,))  # field is array of 6 elements
+def func_to_apply_c(x, y, z, field_value_):
+    field_value = carray(field_value_, (6,))  # field is array of 6 elements
                                   # (Ex, Ey, Ez, Bx, By, Bz)
-    field[1] *= np.cos(np.pi/20.0*x)**2  # Ey
-    field[5] *= np.cos(np.pi/20.0*x)**2  # Bz
+    field_value[1] *= np.cos(np.pi/20.0*x)**2  # Ey
+    field_value[5] *= np.cos(np.pi/20.0*x)**2  # Bz
 
 field3.apply_function(func_to_apply_c.address)
 
