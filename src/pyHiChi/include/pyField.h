@@ -623,9 +623,6 @@ OMP_SIMD()
         TGrid* getGrid() {
             return static_cast<TGrid*>(static_cast<TDerived*>(this)->getFieldEntity());
         }
-
-        
-
     };
 
 
@@ -699,8 +696,14 @@ OMP_SIMD()
     template <class TGrid, class TFieldSolver, class TDerived>
     class pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TDerived, true> {
     public:
-        void setFieldGenerator(FieldGenerator<TGrid::gridType>* generator) {
-            static_cast<TDerived*>(this)->getFieldEntity()->setFieldGenerator(generator);
+        void setPeriodicalFieldGenerator() {
+            PeriodicalFieldGenerator<TGrid::gridType> gen;
+            static_cast<TDerived*>(this)->getFieldEntity()->setFieldGenerator(&gen);
+        }
+
+        void setReflectFieldGenerator() {
+            ReflectFieldGenerator<TGrid::gridType> gen;
+            static_cast<TDerived*>(this)->getFieldEntity()->setFieldGenerator(&gen);
         }
     };
 

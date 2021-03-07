@@ -453,7 +453,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_COMMON_FIELD_METHODS(pyYeeField)
         .def("set_PML", &pyYeeField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
-        .def("set_BC", &pyYeeField::setFieldGenerator, py::arg("generator"))
+        .def("set_periodical_BC", &pyYeeField::setPeriodicalFieldGenerator)
         ;
 
     py::class_<pyPSTDField, std::shared_ptr<pyPSTDField>>(
@@ -523,14 +523,6 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("set", &pyPSATDTimeStraggeredPoissonField::pySetEMField, py::arg("func"))
         .def("apply_function", &pyPSATDTimeStraggeredPoissonField::applyFunction, py::arg("func"))
         .def("apply_function", &pyPSATDTimeStraggeredPoissonField::pyApplyFunction, py::arg("func"))
-        ;
-
-    // ------------------- field generators -------------------
-
-    py::class_<PeriodicalFieldGeneratorYee, std::shared_ptr<PeriodicalFieldGeneratorYee>>(object, "PeriodicalBC")
-        .def(py::init([](std::shared_ptr<pyYeeField> field) {
-        return std::make_shared<PeriodicalFieldGeneratorYee>(field->getFieldSolver());
-    }))
         ;
 
     // ------------------- field configurations -------------------

@@ -60,7 +60,7 @@ namespace pfc {
             this->dt = getCourantCondition() * 0.5;
         }
         updateDims();
-        pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));//pml.reset(new PmlFdtd(this));;
+        pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));
         generator.reset(new ReflectFieldGeneratorYee(this));
         updateInternalDims();
         anisotropyCoeff = FP3(1, 1, 1);
@@ -91,7 +91,7 @@ namespace pfc {
 
     inline void FDTD::setFieldGenerator(FieldGeneratorYee * _generator)
     {
-        generator.reset(_generator);
+        generator.reset(_generator->createInstance(this));
     }
 
     inline void FDTD::setAnisotropy(FP frequency, int axis)

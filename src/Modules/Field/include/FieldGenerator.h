@@ -15,7 +15,7 @@ namespace pfc
     {
     public:
 
-        FieldGenerator(RealFieldSolver<gridTypes>* fieldSolver);
+        FieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0);
 
         // copy constructor, other fieldSolver is possible
         FieldGenerator(const FieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0);
@@ -51,8 +51,6 @@ namespace pfc
             leftCoeff[d] = 1;
             rightCoeff[d] = 1;
         }
-
-        fieldSolver->generator.reset(this);
     }
 
     template<GridTypes gridTypes>
@@ -73,8 +71,6 @@ namespace pfc
                 bLeft[f][d] = gen.bLeft[f][d];
                 bRight[f][d] = gen.bRight[f][d];
             }
-
-        this->fieldSolver->generator.reset(this);
     }
 
     template<GridTypes gridTypes>
@@ -195,7 +191,7 @@ namespace pfc
     class PeriodicalFieldGenerator : public FieldGenerator<gridTypes>
     {
     public:
-        PeriodicalFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
+        PeriodicalFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0) :
             FieldGenerator<gridTypes>(fieldSolver) {
         }
 
@@ -298,7 +294,7 @@ namespace pfc
     class ReflectFieldGenerator : public FieldGenerator<gridTypes>
     {
     public:
-        ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
+        ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0) :
             FieldGenerator<gridTypes>(fieldSolver) {
         };
 

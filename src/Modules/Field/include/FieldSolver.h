@@ -31,15 +31,10 @@ namespace pfc {
             this->generator.reset(nullptr);
         }
 
-        /*void setPML(int sizePMLx, int sizePMLy, int sizePMLz)
-        {
-            pml.reset(new Pml(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
-        }*/
-
         Grid<FP, gridType> * grid;
 
-        std::auto_ptr<Pml<gridType>> pml;
-        std::auto_ptr<FieldGenerator<gridType>> generator;
+        std::unique_ptr<Pml<gridType>> pml;
+        std::unique_ptr<FieldGenerator<gridType>> generator;
 
         // Index space being updated in form [begin, end).
         Int3 updateBAreaBegin, updateBAreaEnd;

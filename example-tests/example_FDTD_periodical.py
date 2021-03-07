@@ -50,7 +50,7 @@ field.set_E(valueEx, valueEy, valueEz)
 field.set_B(valueBx, valueBy, valueBz)
 
 field.set_PML(0, 0, 0)
-periodical_BC = hichi.PeriodicalBC(field)
+field.set_periodical_BC()
 
 #show
 import matplotlib.pyplot as plt
