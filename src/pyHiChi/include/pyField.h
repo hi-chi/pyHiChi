@@ -69,7 +69,7 @@ namespace pfc
             const int chunkRem = fieldEntity->numCells.z % chunkSize;
             const int nx = fieldEntity->numCells.x, ny = fieldEntity->numCells.y;
 
-#pragma omp parallel for collapse(2)
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                     for (int chunk = 0; chunk < nChunks + 1; chunk++) {
@@ -92,8 +92,7 @@ namespace pfc
                             cBz[k] = derived->convertCoords(fieldEntity->BzPosition(i, j, chunk * chunkSize),
                                 fieldEntity->timeShiftB);
                         }
-#pragma ivdep
-#pragma omp simd
+OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
                             fieldEntity->Ex(i, j, k) = fieldConf->getE(cEx[k].x, cEx[k].y, cEx[k].z).x;
                             fieldEntity->Ey(i, j, k) = fieldConf->getE(cEy[k].x, cEy[k].y, cEy[k].z).y;
@@ -123,7 +122,7 @@ namespace pfc
             const int chunkRem = fieldEntity->numCells.z % chunkSize;
             const int nx = fieldEntity->numCells.x, ny = fieldEntity->numCells.y;
 
-#pragma omp parallel for collapse(2)
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                     for (int chunk = 0; chunk < nChunks + 1; chunk++) {
@@ -135,8 +134,7 @@ namespace pfc
                             FP3 position(startPosition.x, startPosition.y, startPosition.z + k * fieldEntity->steps.z);
                             coords[k] = derived->convertCoords(position);
                         }
-#pragma ivdep
-#pragma omp simd
+OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
                             FP3 E, B;
                             fieldConf->getEB(coords[k].x, coords[k].y, coords[k].z, &E, &B);
@@ -185,7 +183,7 @@ namespace pfc
             const int chunkRem = fieldEntity->numCells.z % chunkSize;
             const int nx = fieldEntity->numCells.x, ny = fieldEntity->numCells.y;
 
-#pragma omp parallel for collapse(2)
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                     for (int chunk = 0; chunk < nChunks + 1; chunk++) {
@@ -198,8 +196,7 @@ namespace pfc
                                 startPosition.z + k * fieldEntity->steps.z);
                             coords[k] = derived->convertCoords(position);
                         }
-#pragma ivdep
-#pragma omp simd
+OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
                             ValueField field(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                             fValueField(coords[k].x, coords[k].y, coords[k].z, &(field.E.x));
@@ -254,7 +251,7 @@ namespace pfc
             const int chunkRem = fieldEntity->numCells.z % chunkSize;
             const int nx = fieldEntity->numCells.x, ny = fieldEntity->numCells.y;
 
-#pragma omp parallel for collapse(2)
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                     for (int chunk = 0; chunk < nChunks + 1; chunk++) {
@@ -267,8 +264,7 @@ namespace pfc
                                 startPosition.z + k * fieldEntity->steps.z);
                             coords[k] = derived->convertCoords(position);
                         }
-#pragma ivdep
-#pragma omp simd
+OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
                             int zIndex = k + chunk * chunkSize;
                             ValueField field(fieldEntity->Ex(i, j, zIndex),
@@ -347,7 +343,7 @@ namespace pfc
             FP(*fEx)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fEx;
             FP(*fEy)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fEy;
             FP(*fEz)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fEz;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
@@ -369,7 +365,7 @@ namespace pfc
             FP(*fEx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fEx;
             FP(*fEy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fEy;
             FP(*fEz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fEz;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
@@ -389,7 +385,7 @@ namespace pfc
             TDerived* derived = static_cast<TDerived*>(this);
             pyFieldEntity<TGrid, TFieldSolver>* fieldEntity = derived->getFieldEntity();
             FP3(*fE)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fE;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
@@ -447,7 +443,7 @@ namespace pfc
             FP(*fBx)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fBx;
             FP(*fBy)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fBy;
             FP(*fBz)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fBz;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
@@ -469,7 +465,7 @@ namespace pfc
             FP(*fBx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fBx;
             FP(*fBy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fBy;
             FP(*fBz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fBz;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
@@ -489,7 +485,7 @@ namespace pfc
             TDerived* derived = static_cast<TDerived*>(this);
             pyFieldEntity<TGrid, TFieldSolver>* fieldEntity = derived->getFieldEntity();
             FP3(*fB)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fB;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
@@ -547,7 +543,7 @@ namespace pfc
             FP(*fJx)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fJx;
             FP(*fJy)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fJy;
             FP(*fJz)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fJz;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
@@ -569,7 +565,7 @@ namespace pfc
             FP(*fJx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fJx;
             FP(*fJy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fJy;
             FP(*fJz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fJz;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)
@@ -589,7 +585,7 @@ namespace pfc
             TDerived* derived = static_cast<TDerived*>(this);
             pyFieldEntity<TGrid, TFieldSolver>* fieldEntity = derived->getFieldEntity();
             FP3(*fJ)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fJ;
-#pragma omp parallel for
+            OMP_FOR_COLLAPSE()
             for (int i = 0; i < fieldEntity->numCells.x; i++)
                 for (int j = 0; j < fieldEntity->numCells.y; j++)
                     for (int k = 0; k < fieldEntity->numCells.z; k++)

@@ -77,7 +77,7 @@ namespace pfc {
         complexFP * const ptrTmpJ = tmpJ.getData();
         const int n = J.getSize().volume();
 
-#pragma omp parallel for
+        OMP_FOR()
         for (int i = 0; i < n; i++)
             ptrTmpJ[i] = ptrJ[i];
     }
@@ -118,7 +118,7 @@ namespace pfc {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
         double dt = this->dt * 0.5;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -151,7 +151,7 @@ namespace pfc {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
         double dt = 0.5 * this->dt;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -186,7 +186,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -225,7 +225,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -347,7 +347,7 @@ namespace pfc {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
         double dt = this->dt *0.5;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -380,7 +380,7 @@ namespace pfc {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
         double dt = 0.5 * this->dt;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -433,7 +433,7 @@ namespace pfc {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
         double dt = 0.5 * this->dt;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {

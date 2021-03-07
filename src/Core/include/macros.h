@@ -13,3 +13,14 @@
 #else
     #define forceinline inline
 #endif
+
+
+#if _OPENMP >= 201307
+    #define OMP_FOR()   __pragma("omp parallel for")
+    #define OMP_FOR_COLLAPSE()   __pragma("omp parallel for collapse(2)")
+    #define OMP_SIMD()  __pragma("omp simd")
+#else
+    #define OMP_FOR()   __pragma("omp parallel for")
+    #define OMP_FOR_COLLAPSE()   __pragma("omp parallel for")
+    #define OMP_SIMD()  __pragma("ivdep")
+#endif

@@ -61,7 +61,7 @@ namespace pfc {
         // b.y(i, j, k) = byx(i, j, k) + byz(i, j, k),
         // b.z(i, j, k) = bzx(i, j, k) + bzy(i, j, k).
         YeeGrid * grid = fieldSolver->grid;
-#pragma omp parallel for
+        OMP_FOR()
         for (int idx = 0; idx < numCells; ++idx)
         {
             int i = cellIndex[idx].x;
@@ -93,7 +93,7 @@ namespace pfc {
     inline void PmlFdtd::updateB2D()
     {
         YeeGrid * grid = fieldSolver->grid;
-#pragma omp parallel for
+        OMP_FOR()
         for (int idx = 0; idx < numCells; ++idx)
         {
             int i = cellIndex[idx].x;
@@ -123,7 +123,7 @@ namespace pfc {
     inline void PmlFdtd::updateB1D()
     {
         YeeGrid * grid = fieldSolver->grid;
-#pragma omp parallel for
+        OMP_FOR()
         for (int idx = 0; idx < numCells; ++idx)
         {
             int i = cellIndex[idx].x;
@@ -184,7 +184,7 @@ namespace pfc {
         // e.z(i, j, k) = ezx(i, j, k) + ezy(i, j, k).
         YeeGrid * grid = fieldSolver->grid;
         Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
-#pragma omp parallel for
+        OMP_FOR()
         for (int idx = 0; idx < numNodes; ++idx)
         {
             int i = nodeIndex[idx].x;
@@ -226,7 +226,7 @@ namespace pfc {
     {
         YeeGrid * grid = fieldSolver->grid;
         Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
-#pragma omp parallel for
+        OMP_FOR()
         for (int idx = 0; idx < numNodes; ++idx)
         {
             int i = nodeIndex[idx].x;
@@ -263,7 +263,7 @@ namespace pfc {
     {
         YeeGrid * grid = fieldSolver->grid;
         Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
-#pragma omp parallel for
+        OMP_FOR()
         for (int idx = 0; idx < numNodes; ++idx)
         {
             int i = nodeIndex[idx].x;
