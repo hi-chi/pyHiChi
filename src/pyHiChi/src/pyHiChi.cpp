@@ -461,7 +461,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<pyPSATDTimeStraggeredField, std::shared_ptr<pyPSATDTimeStraggeredField>>(
-        object, "PSATDTimeStraggeredField", pyClassFieldBase)
+        object, "PSATDSField", pyClassFieldBase)
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredField)
@@ -475,7 +475,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<pyPSATDTimeStraggeredPoissonField, std::shared_ptr<pyPSATDTimeStraggeredPoissonField>>(
-        object, "PSATDTimeStraggeredPoissonField", pyClassFieldBase)
+        object, "PSATDSPoissonField", pyClassFieldBase)
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredPoissonField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
@@ -493,8 +493,7 @@ PYBIND11_MODULE(pyHiChi, object) {
     py::class_<PeriodicalFieldGeneratorYee, std::shared_ptr<PeriodicalFieldGeneratorYee>>(object, "PeriodicalBC")
         .def(py::init([](std::shared_ptr<pyYeeField> field) {
         return std::make_shared<PeriodicalFieldGeneratorYee>(field->getFieldSolver());
-    }))
-        ;
+    }));
 
     // ------------------- field configurations -------------------
 
