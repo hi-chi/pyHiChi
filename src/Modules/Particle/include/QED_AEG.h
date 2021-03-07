@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "Ensemble.h"
 #include "Grid.h"
+#include "AnalyticalField.h"
 #include "Pusher.h"
 #include "synchrotron.h"
 
@@ -11,6 +12,7 @@
 using namespace constants;
 namespace pfc
 {
+    template <class TGrid>  // may be AnalyticalField or any Grid type
     class ScalarQED_AEG_only_electron : public ParticlePusher
     {
     public:
@@ -44,16 +46,7 @@ namespace pfc
 
         }
 
-        void processParticlesNIter(Ensemble3d* particles, pyYeeField* grid, FP timeStep, FP startTime, int N)
-        {
-            for (int i = 0; i < N; i++)
-            {
-                grid->setTime(startTime + i * timeStep);
-                processParticles(particles, grid, timeStep);
-            }
-        }
-
-        void processParticles(Ensemble3d* particles, pyYeeField* pyGrid, FP timeStep)
+        void processParticles(Ensemble3d* particles, TGrid* grid, FP timeStep)
         {
             int max_threads;
 #ifdef __USE_OMP__
@@ -71,11 +64,11 @@ namespace pfc
             }
 
             if ((*particles)[Photon].size() && coeffPair_probability != 0)
-                HandlePhotons((*particles)[Photon], pyGrid->getGrid(), timeStep);
+                HandlePhotons((*particles)[Photon], grid, timeStep);
             if ((*particles)[Electron].size() && coeffPhoton_probability != 0)
-                HandleParticles((*particles)[Electron], pyGrid->getGrid(), timeStep);
+                HandleParticles((*particles)[Electron], grid, timeStep);
             if ((*particles)[Positron].size() && coeffPhoton_probability != 0)
-                HandleParticles((*particles)[Positron], pyGrid->getGrid(), timeStep);
+                HandleParticles((*particles)[Positron], grid, timeStep);
 
             for (int th = 0; th < max_threads; th++)
             {
@@ -114,7 +107,7 @@ namespace pfc
             particle.setPosition(particle.getPosition() + timeStep * particle.getVelocity());
         }
 
-        void HandlePhotons(ParticleArray3d& particles, YeeGrid* grid, FP timeStep)
+        void HandlePhotons(ParticleArray3d& particles, TGrid* grid, FP timeStep)
         {
             FP dt = timeStep;
 #pragma omp parallel for schedule(dynamic, 1)
@@ -194,7 +187,7 @@ namespace pfc
             }
         }
 
-        void HandleParticles(ParticleArray3d& particles, YeeGrid* grid, FP timeStep)
+        void HandleParticles(ParticleArray3d& particles, TGrid* grid, FP timeStep)
         {
             FP dt = timeStep;
 #pragma omp parallel for schedule(dynamic, 1)
@@ -454,4 +447,9 @@ namespace pfc
         vector<vector<Particle3d>> AvalanchePhotons, AvalancheParticles;
         vector<vector<Particle3d>> afterAvalanchePhotons, afterAvalancheParticles;
     };
+
+    typedef ScalarQED_AEG_only_electron<YeeGrid> ScalarQED_AEG_only_electron_Yee;
+    typedef ScalarQED_AEG_only_electron<PSTDGrid> ScalarQED_AEG_only_electron_PSTD;
+    typedef ScalarQED_AEG_only_electron<PSATDGrid> ScalarQED_AEG_only_electron_PSATD;
+    typedef ScalarQED_AEG_only_electron<AnalyticalField> ScalarQED_AEG_only_electron_Analytical;
 }

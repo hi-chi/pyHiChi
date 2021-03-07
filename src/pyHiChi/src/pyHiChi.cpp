@@ -112,6 +112,19 @@ std::vector<ParticleType> ParticleInfo::typesVector = { {constants::electronMass
 const ParticleType* ParticleInfo::types = &ParticleInfo::typesVector[0];
 short ParticleInfo::numTypes = sizeParticleTypes;
 
+template <class QED, class Field, class Grid>
+void processParticles(QED* self, Ensemble3d* particles,
+    Field* field, FP timeStep, FP startTime, int N)
+{
+    for (int i = 0; i < N; i++)
+    {
+        field->setTime(startTime + i * timeStep);
+        self->processParticles(particles,
+            static_cast<Grid*>(field->getFieldEntity()), timeStep);
+    }
+}
+
+
 PYBIND11_MODULE(pyHiChi, object) {
 
     // ------------------- constants -------------------
@@ -288,10 +301,34 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("__call__", (void (RadiationReaction::*)(ParticleArray3d*, std::vector<ValueField>&, FP)) &RadiationReaction::operator())
         ;
 
-    py::class_<ScalarQED_AEG_only_electron>(object, "QED")
+    // -------------------------- QED ---------------------------
+
+    py::class_<ScalarQED_AEG_only_electron_Yee>(object, "QED_Yee")
         .def(py::init<>())
-        .def("process_particles", &ScalarQED_AEG_only_electron::processParticles)
-        .def("process_particles", &ScalarQED_AEG_only_electron::processParticlesNIter)
+        .def("process_particles", &ScalarQED_AEG_only_electron_Yee::processParticles)
+        .def("process_particles", &processParticles<ScalarQED_AEG_only_electron_Yee,
+            pyYeeField, YeeGrid>)
+        ;
+
+    py::class_<ScalarQED_AEG_only_electron_PSTD>(object, "QED_PSTD")
+        .def(py::init<>())
+        .def("process_particles", &ScalarQED_AEG_only_electron_PSTD::processParticles)
+        .def("process_particles", &processParticles<ScalarQED_AEG_only_electron_PSTD,
+            pyPSTDField, PSTDGrid>)
+        ;
+
+    py::class_<ScalarQED_AEG_only_electron_PSATD>(object, "QED_PSATD")
+        .def(py::init<>())
+        .def("process_particles", &ScalarQED_AEG_only_electron_PSATD::processParticles)
+        .def("process_particles", &processParticles<ScalarQED_AEG_only_electron_PSATD,
+            pyPSATDField, PSATDGrid>)
+        ;
+
+    py::class_<ScalarQED_AEG_only_electron_Analytical>(object, "QED_Analytical")
+        .def(py::init<>())
+        .def("process_particles", &ScalarQED_AEG_only_electron_Analytical::processParticles)
+        .def("process_particles", &processParticles<ScalarQED_AEG_only_electron_Analytical,
+            pyAnalyticalField, AnalyticalField>)
         ;
 
     // ------------------- thinnings -------------------
@@ -493,7 +530,8 @@ PYBIND11_MODULE(pyHiChi, object) {
     py::class_<PeriodicalFieldGeneratorYee, std::shared_ptr<PeriodicalFieldGeneratorYee>>(object, "PeriodicalBC")
         .def(py::init([](std::shared_ptr<pyYeeField> field) {
         return std::make_shared<PeriodicalFieldGeneratorYee>(field->getFieldSolver());
-    }));
+    }))
+        ;
 
     // ------------------- field configurations -------------------
 
