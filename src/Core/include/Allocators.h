@@ -25,7 +25,7 @@ namespace pfc {
             const size_t size_vt = sizeof(value_type);
             const size_t len = num * size_vt;
             const size_t num_threads = omp_get_max_threads();
-            if (num_threads < num) {
+            if (num_threads > num) {
                 char * p = reinterpret_cast<char*>(std::malloc(len));
                 std::memset(p, 0, len);
                 return reinterpret_cast<value_type*>(p);
