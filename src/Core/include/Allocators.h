@@ -30,7 +30,7 @@ namespace pfc {
                 std::memset(p, 0, len);
                 return reinterpret_cast<value_type*>(p);
             }
-            const size_t block_size = (num + num_threads - 1) / num_threads * size_vt;
+            const size_t block_size = (num / num_threads) * size_vt;
             const size_t block_size_rem = len - block_size * (num_threads - 1);
             char * p = reinterpret_cast<char*>(std::malloc(len));
 #pragma omp parallel for
