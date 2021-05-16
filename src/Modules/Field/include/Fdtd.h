@@ -60,7 +60,7 @@ namespace pfc {
             this->dt = getCourantCondition() * 0.5;
         }
         updateDims();
-        pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));//pml.reset(new PmlFdtd(this));;
+        pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));
         generator.reset(new ReflectFieldGeneratorYee(this));
         updateInternalDims();
         anisotropyCoeff = FP3(1, 1, 1);
@@ -91,7 +91,7 @@ namespace pfc {
 
     inline void FDTD::setFieldGenerator(FieldGeneratorYee * _generator)
     {
-        generator.reset(_generator);
+        generator.reset(_generator->createInstance(this));
     }
 
     inline void FDTD::setAnisotropy(FP frequency, int axis)
@@ -183,7 +183,7 @@ namespace pfc {
         //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -226,7 +226,7 @@ namespace pfc {
         //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
-#pragma omp parallel for
+        OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
 #pragma simd
             for (int j = begin.y; j < end.y; j++)
@@ -263,7 +263,7 @@ namespace pfc {
         //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
-#pragma omp parallel for
+        OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             grid->By(i, 0, 0) += coeffXY * (grid->Ez(i, 0, 0) - grid->Ez(i - 1, 0, 0));
             grid->Bz(i, 0, 0) += -coeffXZ * (grid->Ey(i, 0, 0) - grid->Ey(i - 1, 0, 0));
@@ -310,7 +310,7 @@ namespace pfc {
         //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
-#pragma omp parallel for collapse(2)
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
@@ -333,7 +333,7 @@ namespace pfc {
         if (updateEAreaEnd.x == grid->numCells.x - 1)
         {
             int i = updateEAreaEnd.x;
-#pragma omp parallel for
+            OMP_FOR()
             for (int j = begin.y; j < end.y; j++)
                 for (int k = begin.z; k < end.z; k++)
                     grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
@@ -343,7 +343,7 @@ namespace pfc {
         if (updateEAreaEnd.y == grid->numCells.y - 1)
         {
             int j = updateEAreaEnd.y;
-#pragma omp parallel for
+            OMP_FOR()
             for (int i = begin.x; i < end.x; i++)
                 for (int k = begin.z; k < end.z; k++)
                     grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
@@ -353,7 +353,7 @@ namespace pfc {
         if (updateEAreaEnd.z == grid->numCells.z - 1)
         {
             int k = updateEAreaEnd.z;
-#pragma omp parallel for
+            OMP_FOR()
             for (int i = begin.x; i < end.x; i++)
                 for (int j = begin.y; j < end.y; j++)
                     grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
@@ -389,7 +389,7 @@ namespace pfc {
         //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
-#pragma omp parallel for
+        OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
 #pragma simd
             for (int j = begin.y; j < end.y; j++) {
@@ -407,7 +407,7 @@ namespace pfc {
         if (updateEAreaEnd.x == grid->numCells.x - 1)
         {
             int i = updateEAreaEnd.x;
-#pragma omp parallel for
+            OMP_FOR()
             for (int j = begin.y; j < end.y; j++)
                 grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
                 coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
@@ -415,7 +415,7 @@ namespace pfc {
         if (updateEAreaEnd.y == grid->numCells.y - 1)
         {
             int j = updateEAreaEnd.y;
-#pragma omp parallel for
+            OMP_FOR()
             for (int i = begin.x; i < end.x; i++)
                 grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
                 coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
@@ -447,7 +447,7 @@ namespace pfc {
         //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
-#pragma omp parallel for
+        OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             grid->Ex(i, 0, 0) += coeffCurrent * grid->Jx(i, 0, 0);
             grid->Ey(i, 0, 0) += coeffCurrent * grid->Jy(i, 0, 0) -

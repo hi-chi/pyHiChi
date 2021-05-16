@@ -37,7 +37,7 @@ time_step = 1e-12
 
 field = hichi.PSTDField(grid_size, min_coords, grid_step, time_step)
 # field = hichi.PSATDField(grid_size, min_coords, grid_step, time_step)
-# field = hichi.PSATDTimeStraggeredField(grid_size, min_coords, grid_step, time_step)
+# field = hichi.PSATDSField(grid_size, min_coords, grid_step, time_step)
 # field = hichi.YeeField(grid_size, min_coords, grid_step, time_step)
 field.set_E(value_Ex, value_Ey, value_Ez)
 field.set_B(value_Bx, value_By, value_Bz)

@@ -48,7 +48,7 @@ def value_Bz(x, y, z):
 
 field = hichi.PSTDField(field_size, min_coords, field_step, time_step)
 # field = hichi.PSATDField(field_size, min_coords, field_step, time_step)
-# field = hichi.PSATDTimeStraggeredField(field_size, min_coords, field_step, time_step)
+# field = hichi.PSATDSField(field_size, min_coords, field_step, time_step)
 # field = hichi.YeeField(field_size, min_coords, field_step, time_step) 
 field.set_E(value_Ex, value_Ey, value_Ez)
 field.set_B(value_Bx, value_By, value_Bz)

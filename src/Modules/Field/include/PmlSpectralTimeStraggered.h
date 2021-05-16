@@ -48,7 +48,7 @@ namespace pfc {
 
     template<GridTypes gridTypes>
     inline void PmlSpectralTimeStraggered<gridTypes>::updateFieldSplit(std::vector<FP>& field, double sign) {
-#pragma omp parallel for
+        OMP_FOR()
         for (int idx = 0; idx < this->numCells; ++idx)
         {
             int i = this->cellIndex[idx].x;

@@ -15,7 +15,7 @@ namespace pfc
     {
     public:
 
-        FieldGenerator(RealFieldSolver<gridTypes>* fieldSolver);
+        FieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0);
 
         // copy constructor, other fieldSolver is possible
         FieldGenerator(const FieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0);
@@ -51,8 +51,6 @@ namespace pfc
             leftCoeff[d] = 1;
             rightCoeff[d] = 1;
         }
-
-        fieldSolver->generator.reset(this);
     }
 
     template<GridTypes gridTypes>
@@ -73,8 +71,6 @@ namespace pfc
                 bLeft[f][d] = gen.bLeft[f][d];
                 bRight[f][d] = gen.bRight[f][d];
             }
-
-        this->fieldSolver->generator.reset(this);
     }
 
     template<GridTypes gridTypes>
@@ -92,7 +88,7 @@ namespace pfc
             int begin2 = fieldSolver->internalBAreaBegin[dim2];
             int end1 = fieldSolver->internalBAreaEnd[dim1];
             int end2 = fieldSolver->internalBAreaEnd[dim2];
-//#pragma omp parallel for collapse(2)
+//OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -149,7 +145,7 @@ namespace pfc
             int begin2 = fieldSolver->internalEAreaBegin[dim2];
             int end1 = fieldSolver->internalEAreaEnd[dim1];
             int end2 = fieldSolver->internalEAreaEnd[dim2];
-//#pragma omp parallel for collapse(2)
+//OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -195,7 +191,7 @@ namespace pfc
     class PeriodicalFieldGenerator : public FieldGenerator<gridTypes>
     {
     public:
-        PeriodicalFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
+        PeriodicalFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0) :
             FieldGenerator<gridTypes>(fieldSolver) {
         }
 
@@ -226,7 +222,7 @@ namespace pfc
             int begin2 = this->fieldSolver->internalEAreaBegin[dim2];
             int end1 = this->fieldSolver->internalEAreaEnd[dim1];
             int end2 = this->fieldSolver->internalEAreaEnd[dim2];
-//#pragma omp parallel for collapse(2)
+//OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -267,7 +263,7 @@ namespace pfc
             int begin2 = 0;
             int end1 = grid->numCells[dim1];
             int end2 = grid->numCells[dim2];
-//#pragma omp parallel for collapse(2)
+//OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -298,7 +294,7 @@ namespace pfc
     class ReflectFieldGenerator : public FieldGenerator<gridTypes>
     {
     public:
-        ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver) :
+        ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0) :
             FieldGenerator<gridTypes>(fieldSolver) {
         };
 
@@ -329,7 +325,7 @@ namespace pfc
             int begin2 = this->fieldSolver->internalBAreaBegin[dim2];
             int end1 = this->fieldSolver->internalBAreaEnd[dim1];
             int end2 = this->fieldSolver->internalBAreaEnd[dim2];
-//#pragma omp parallel for collapse(2)
+//OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -365,7 +361,7 @@ namespace pfc
             int begin2 = this->fieldSolver->internalEAreaBegin[dim2];
             int end1 = this->fieldSolver->internalEAreaEnd[dim1];
             int end2 = this->fieldSolver->internalEAreaEnd[dim2];
-//#pragma omp parallel for collapse(2)
+//OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {

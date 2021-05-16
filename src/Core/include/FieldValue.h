@@ -14,7 +14,8 @@ namespace pfc {
             E(E_value), B(B_value)
         {}
 
-        ValueField(FP Ex, FP Ey, FP Ez, FP Bx, FP By, FP Bz) :
+        ValueField(FP Ex = 0.0, FP Ey = 0.0, FP Ez = 0.0,
+            FP Bx = 0.0, FP By = 0.0, FP Bz = 0.0) :
             E(Ex, Ey, Ez), B(Bx, By, Bz)
         {}
 

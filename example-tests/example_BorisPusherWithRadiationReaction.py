@@ -19,7 +19,7 @@ for i in range(11) :
     mo = hichi.Vector3d(i*10, 0, 0)
     new_p = hichi.Particle(pos, mo, 0.5, hichi.ELECTRON)
     p_array.add(new_p)
-    fields_array.append(hichi.Field(value_E_analytical(pos, t), value_B_analytical(pos, t)))
+    fields_array.append(hichi.FieldValue(value_E_analytical(pos, t), value_B_analytical(pos, t)))
     
 #Boris Pusher with RadiationReaction
 dt = 0.001
