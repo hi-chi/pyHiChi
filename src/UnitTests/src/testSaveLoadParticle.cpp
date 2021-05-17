@@ -1,6 +1,7 @@
 #include "TestingUtility.h"
 #include "Constants.h"
 #include "Particle.h"
+#include "ParticleArray.h"
 
 using namespace pfc;
 template <class ParticleType>
@@ -50,4 +51,32 @@ TYPED_TEST(SaveLoadParticle, testParticle)
     ASSERT_EQ(Constants<MassType>::protonMass(), particleRes.getMass());
     ASSERT_EQ(-Constants<ChargeType>::electronCharge(), particleRes.getCharge());
     ASSERT_EQ(weight, particleRes.getWeight());
+}
+
+
+
+typedef ::testing::Types<
+    ParticleArray<One, ParticleRepresentation_AoS>::Type,
+    ParticleArray<Two, ParticleRepresentation_AoS>::Type,
+    ParticleArray<Three, ParticleRepresentation_AoS>::Type
+> typesArray;
+TYPED_TEST_CASE(ParticleArrayTest, typesArray);
+
+TYPED_TEST(ParticleArrayTest, testParticleArraySaveLoad)
+{
+    typedef typename ParticleArrayTest<TypeParam>::ParticleArray ParticleArray;
+
+    ParticleArray particles, tmp, res;
+    stringstream stream;
+    for (int i = 0; i < 50; i++)
+    {
+        auto p = this->randomParticle();
+        particles.pushBack(p);
+        tmp.pushBack(p);
+    }
+    particles.save(stream);
+    particles = ParticleArray(); // reset ParticleArray
+    res.load(stream);
+    ASSERT_EQ(res.size(), tmp.size());
+    ASSERT_TRUE(this->eqParticleArrays(res, tmp));
 }

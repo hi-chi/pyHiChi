@@ -165,6 +165,21 @@ namespace pfc {
         inline iterator end() { return iterator(this, size()); }
         inline const iterator cbegin() { return begin(); }
         inline const iterator cend() { return end(); }
+        inline void save(std::ostream& os)
+        {
+            size_t tmp = size();
+            os.write((char*)&tmp, sizeof(tmp));
+            os.write((char*)&typeIndex, sizeof(typeIndex));
+            os.write((char*)particles.data(), sizeof(Particle<dimension>)*tmp);
+        }
+        inline void load(std::istream& is)
+        {;
+            size_t tmp = 0;
+            is.read((char*)&tmp, sizeof(tmp));
+            is.read((char*)&typeIndex, sizeof(typeIndex));
+            particles.resize(tmp);
+            is.read((char*)particles.data(), sizeof(Particle<dimension>) * size());
+        }
 
     private:
         ParticleTypes typeIndex;

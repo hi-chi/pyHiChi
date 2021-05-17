@@ -130,11 +130,11 @@ namespace pfc {
 
         void save(std::ostream& os)
         {
-            os.write((char*)this, sizeof(Particle));
+            os.write((char*)this, sizeof(Particle<dimension>));
         }
         void load(std::istream& is)
         {
-            is.read((char*)this, sizeof(Particle));
+            is.read((char*)this, sizeof(Particle<dimension>));
         }
     private:
 
