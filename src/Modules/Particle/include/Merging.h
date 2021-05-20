@@ -40,7 +40,7 @@ namespace pfc
                 std::uniform_int_distribution<unsigned> uniform_dist(0, clusters[j].size() - 1);
                 FP3 position, momentum;
                 vector<FP3> positions;
-                double weight = 0.0;
+                FP weight = 0.0;
                 for (int k = 0; k < clusters[j].size(); k++) {
                     positions.push_back(clusters[j][k].getPosition());
                     momentum += clusters[j][k].getMomentum() * clusters[j][k].getWeight();
@@ -119,10 +119,10 @@ namespace pfc
                 for (int np = 0; np < n; np++) ///loop for determining particles of clusters
                 {
                     int numcl = 0;///number of a cluster contains particle number np
-                    double d = dist(Particles[np], Center[0]);
+                    FP d = dist(Particles[np], Center[0]);
                     for (int nc = 1; nc < k; nc++) ///search for nearest centroid
                     {
-                        double buf = dist(Particles[np], Center[nc]);
+                        FP buf = dist(Particles[np], Center[nc]);
                         if (d > buf)
                         {
                             d = buf;
@@ -135,15 +135,15 @@ namespace pfc
                     sumDist[numcl] += d;
                 }
                 bool isSame = true;
-                double max = 0;
+                FP max = 0;
                 for (int nc = 0; nc < k; nc++)
                 {
                     if (nPart[nc] > 0)
                     {
-                        newCenter[nc] = newCenter[nc] / static_cast<double>(nPart[nc]);
+                        newCenter[nc] = newCenter[nc] / static_cast<FP>(nPart[nc]);
                         isSame &= (newCenter[nc] == Center[nc]);
                         Center[nc] = newCenter[nc];
-                        sumDist[nc] = sqrt(sumDist[nc] / static_cast<double>(nPart[nc]));
+                        sumDist[nc] = sqrt(sumDist[nc] / static_cast<FP>(nPart[nc]));
                         if (max < sumDist[nc])
                             max = sumDist[nc];
                     }

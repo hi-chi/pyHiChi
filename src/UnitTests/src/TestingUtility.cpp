@@ -10,11 +10,17 @@
 using namespace pfc;
 
 namespace pfc {
+    namespace sycl_pfc {
+        AllDevices node;
+    }
 
     namespace ParticleInfo {
-        std::vector<ParticleType> typesVector;
-        const ParticleType* types;
-        short numTypes;
+        sycl_pfc::sycl_vector<ParticleType> typesVector({ {Constants<FP>::electronMass(), Constants<FP>::electronCharge()},//electron
+                                    {Constants<FP>::electronMass(), -Constants<FP>::electronCharge()},//positron
+                                    {Constants<FP>::protonMass(), -Constants<FP>::electronCharge()},//proton
+                                    {Constants<FP>::electronMass(), 0.0 } }, sycl_pfc::node.default_device);
+        const ParticleType* types = typesVector.data();
+        short numTypes = sizeParticleTypes;
     } // namespace ParticleInfo
 
 } // namespace pica

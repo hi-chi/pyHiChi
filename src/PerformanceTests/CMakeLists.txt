@@ -7,6 +7,7 @@ include_directories(
     ${FFT_INCLUDES})
 
 add_executable(ptests
+    src/ptestPusherSYCL.cpp
     src/ptestPusher.cpp
     src/Main.cpp)
 

@@ -308,8 +308,8 @@ TEST(VectorsTest, FP3ProductInt3Assignment)
 TEST(VectorsTest, FP3ProductScalar)
 {
     FP3 v1(3, 5, -2);
-    FP3 res1 = v1 * 5.0;
-    FP3 res2 = 5.0 * v1;
+    FP3 res1 = v1 * (FP)5.0;
+    FP3 res2 = (FP)5.0 * v1;
     ASSERT_EQ_FP3(res1, FP3(15, 25, -10));
     ASSERT_EQ_FP3(res2, FP3(15, 25, -10));
 }
@@ -317,7 +317,7 @@ TEST(VectorsTest, FP3ProductScalar)
 TEST(VectorsTest, FP3ProductScalarAssignment)
 {
     FP3 v1(3, 5, -2);
-    v1 *= 5.0;
+    v1 *= (FP)5.0;
     ASSERT_EQ_FP3(v1, FP3(15, 25, -10));
 }
 
@@ -354,14 +354,14 @@ TEST(VectorsTest, FP3QuotientInt3Assignment)
 TEST(VectorsTest, FP3QuotientScalar)
 {
     FP3 v1(12, -24, 22);
-    FP3 res = v1 / 2.0;
+    FP3 res = v1 / (FP)2.0;
     ASSERT_EQ_FP3(res, FP3(6, -12, 11));
 }
 
 TEST(VectorsTest, FP3QuotientScalarAssignment)
 {
     FP3 v1(12, -24, 22);
-    v1 /= 2.0;
+    v1 /= (FP)2.0;
     ASSERT_EQ_FP3(v1, FP3(6, -12, 11));
 }
 

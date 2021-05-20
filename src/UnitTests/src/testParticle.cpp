@@ -49,12 +49,11 @@ TYPED_TEST(ParticleTest, Constructor)
     ChargeType charge = Constants<ChargeType>::electronCharge();
     WeightType weight = static_cast<WeightType>(1.4e2);
     GammaType expectedGamma = sqrt((FP)1 + momentum.norm2() / sqr(mass * Constants<GammaType >::c()));
-    this->maxRelativeError = 1e-12;
-
+    
     ParticleType particle(position, momentum, weight, ParticleTypes::Electron);
 
-    ASSERT_EQ_VECTOR(position, particle.getPosition(), this->dimension);
-    ASSERT_EQ_VECTOR(momentum, particle.getMomentum(), this->momentumDimension);
+    ASSERT_NEAR_VECTOR_D(position, particle.getPosition(), this->dimension);
+    ASSERT_NEAR_VECTOR_D(momentum, particle.getMomentum(), this->dimension);
     ASSERT_EQ(mass, particle.getMass());
     ASSERT_EQ(charge, particle.getCharge());
     ASSERT_EQ(weight, particle.getWeight());
@@ -76,8 +75,8 @@ TYPED_TEST(ParticleTest, ConstructorDefaultWeight)
     
     ParticleType particle(position, momentum);
 
-    ASSERT_EQ_VECTOR(position, particle.getPosition(), this->dimension);
-    ASSERT_EQ_VECTOR(momentum, particle.getMomentum(), this->momentumDimension);
+    ASSERT_NEAR_VECTOR_D(position, particle.getPosition(), this->dimension);
+    ASSERT_NEAR_VECTOR_D(momentum, particle.getMomentum(), this->dimension);
     ASSERT_EQ(mass, particle.getMass());
     ASSERT_EQ(charge, particle.getCharge());
     ASSERT_EQ(static_cast<WeightType>(1.0), particle.getWeight());
@@ -145,7 +144,6 @@ TYPED_TEST(ParticleTest, GetSetMomentum)
     MomentumType newMomentum(54.12e+4, -543.63e-2, 643.165e5);
     
     particle.setMomentum(newMomentum);
-    this->maxRelativeError = 1e-12;
     GammaType expectedGamma = sqrt((FP)1 + newMomentum.norm2() / sqr(particle.getMass() * Constants<GammaType >::c()));
     
     ASSERT_NEAR_VECTOR(newMomentum, particle.getMomentum());
@@ -160,8 +158,7 @@ TYPED_TEST(ParticleTest, GetSetVelocity)
     ParticleType particle = this->randomParticle();
     MomentumType newVelocity(5243.1654, -56.23e5, -65.237e-4);
     particle.setVelocity(newVelocity);
-    this->maxRelativeError = 1e-12;
-
+    
     MomentumType v = particle.getVelocity();
     
     ASSERT_NEAR_VECTOR(newVelocity, particle.getVelocity());
@@ -175,7 +172,6 @@ TYPED_TEST(ParticleTest, GetGamma)
     ParticleType particle = this->randomParticle();
     GammaType expectedGamma = sqrt(static_cast<GammaType>(1.0) + particle.getMomentum().norm2() /
         sqr(particle.getMass() * Constants<GammaType>::c()));
-    this->maxRelativeError = 1e-12;
     
     ASSERT_NEAR_FP(expectedGamma, particle.getGamma());
 }

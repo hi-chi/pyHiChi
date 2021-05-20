@@ -56,13 +56,12 @@ TYPED_TEST(ParticleTest, ConstructorProxy)
     ChargeType charge = Constants<ChargeType>::electronCharge();
     WeightType weight = static_cast<WeightType>(1.4e2);
     GammaType expectedGamma = sqrt((FP)1 + momentum.norm2() / sqr(mass * Constants<GammaType >::c()));
-    this->maxRelativeError = 1e-12;
 
     ParticleType particle(position, momentum, weight, ParticleTypes::Electron);
     ParticleProxy<dimension> particleProxy(particle);
 
-    ASSERT_EQ_VECTOR(position, particleProxy.getPosition(), this->dimension);
-    ASSERT_EQ_VECTOR(momentum, particleProxy.getMomentum(), this->momentumDimension);
+    ASSERT_NEAR_VECTOR_D(position, particleProxy.getPosition(), this->dimension);
+    ASSERT_NEAR_VECTOR_D(momentum, particleProxy.getMomentum(), this->dimension);
     ASSERT_EQ(mass, particleProxy.getMass());
     ASSERT_EQ(charge, particleProxy.getCharge());
     ASSERT_EQ(weight, particleProxy.getWeight());
@@ -91,8 +90,8 @@ TYPED_TEST(ParticleTest, PiecemealConstructorProxy)
 
     ParticleProxy<dimension> particleProxy(position, p, weight, type, gamma);
 
-    ASSERT_EQ_VECTOR(position, particleProxy.getPosition(), this->dimension);
-    ASSERT_EQ_VECTOR(momentum, particleProxy.getMomentum(), this->momentumDimension);
+    ASSERT_NEAR_VECTOR_D(position, particleProxy.getPosition(), this->dimension);
+    ASSERT_NEAR_VECTOR_D(momentum, particleProxy.getMomentum(), this->dimension);
     ASSERT_EQ(mass, particleProxy.getMass());
     ASSERT_EQ(charge, particleProxy.getCharge());
     ASSERT_EQ(weight, particleProxy.getWeight());
@@ -172,8 +171,7 @@ TYPED_TEST(ParticleTest, GetSetMomentumProxy)
     ParticleProxy<dimension> particleProxy(particle);
     MomentumType newMomentum(54.12e+4, -543.63e-2, 643.165e5);
     MomentumType newMomentum2(12.34e+5, -567.89e-3, 123.456e7);
-    this->maxRelativeError = 1e-12;
-
+    
     particle.setMomentum(newMomentum);
     GammaType expectedGamma = sqrt((FP)1 + newMomentum.norm2() / sqr(particle.getMass() * Constants<GammaType >::c()));
 
@@ -204,8 +202,7 @@ TYPED_TEST(ParticleTest, GetProxyPAndGetProxyGammaProxy)
     ParticleType particle = this->randomParticle();
     ParticleProxy<dimension> particleProxy(particle);
     MomentumType newP(54.12e+4, -543.63e-2, 643.165e5);
-    this->maxRelativeError = 1e-12;
-
+    
     MomentumTypeProxy particleP = particleProxy.getProxyP();
     GammaTypeProxy particleGamma = particleProxy.getProxyGamma();
     GammaType newGamma = sqrt((FP)1 + newP.norm2());
@@ -232,8 +229,7 @@ TYPED_TEST(ParticleTest, GetSetVelocityProxy)
     MomentumType newVelocity2(1234.5678, -90.12e4, -56.789e-1);
 
     particle.setVelocity(newVelocity);
-    this->maxRelativeError = 1e-12;
-
+    
     ASSERT_NEAR_VECTOR(newVelocity, particleProxy.getVelocity());
 
     particleProxy.setVelocity(newVelocity2);
@@ -253,7 +249,6 @@ TYPED_TEST(ParticleTest, GetGammaProxy)
     ParticleProxy<dimension> particleProxy(particle);
     GammaType expectedGamma = sqrt(static_cast<GammaType>(1.0) + particle.getMomentum().norm2() /
         sqr(particle.getMass() * Constants<GammaType>::c()));
-    this->maxRelativeError = 1e-12;
 
     ASSERT_NEAR_FP(expectedGamma, particleProxy.getGamma());
 }

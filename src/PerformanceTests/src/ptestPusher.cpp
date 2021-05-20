@@ -6,8 +6,8 @@
 #include <chrono>
 
 static void CustomArguments(benchmark::internal::Benchmark* b) {
-    b->Args({ 1000000, 1000 });
-    b->Iterations(1);
+    b->Args({ 1000000, 100 });
+    b->Iterations(3);
 }
 
 using particleArrayAoS = PusherTest<ParticleArrayAoS3d>;

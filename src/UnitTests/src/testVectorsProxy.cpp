@@ -327,9 +327,9 @@ TEST(VectorsProxyTest, FP3FullConstructor)
     FP x = 3.1, y = 5.5, z = -2.6;
     FP3Proxy vP(x, y, z);
     
-    ASSERT_EQ(vP.x, 3.1);
-    ASSERT_EQ(vP.y, 5.5);
-    ASSERT_EQ(vP.z, -2.6);
+    ASSERT_EQ(vP[0], x);
+    ASSERT_EQ(vP[1], y);
+    ASSERT_EQ(vP[2], z);
 }
 
 TEST(VectorsProxyTest, FP3Constructor)
@@ -496,8 +496,8 @@ TEST(VectorsProxyTest, FP3ProductScalar)
     FP3 v1(3, 5, -2);
     FP3Proxy v1P(v1);
     
-    FP3 res1 = v1P * 5.0;
-    FP3 res2 = 5.0 * v1P;
+    FP3 res1 = v1P * (FP)5.0;
+    FP3 res2 = (FP)5.0 * v1P;
     
     ASSERT_EQ_FP3(res1, FP3(15, 25, -10));
     ASSERT_EQ_FP3(res2, FP3(15, 25, -10));
@@ -508,7 +508,7 @@ TEST(VectorsProxyTest, FP3ProductScalarAssignment)
     FP3 v1(3, 5, -2);
     FP3Proxy v1P(v1);
     
-    v1P *= 5.0;
+    v1P *= (FP)5.0;
     
     ASSERT_EQ_FP3(v1, FP3(15, 25, -10));
     ASSERT_EQ_FP3(v1P, FP3(15, 25, -10));
@@ -541,7 +541,7 @@ TEST(VectorsProxyTest, FP3QuotientScalar)
     FP3 v1(12, -24, 22);
     FP3Proxy v1P(v1);
     
-    FP3 res = v1P / 2.0;
+    FP3 res = v1P / (FP)2.0;
     
     ASSERT_EQ_FP3(res, FP3(6, -12, 11));
 }
@@ -551,7 +551,7 @@ TEST(VectorsProxyTest, FP3QuotientScalarAssignment)
     FP3 v1(12, -24, 22);
     FP3Proxy v1P(v1);
     
-    v1P /= 2.0;
+    v1P /= (FP)2.0;
     
     ASSERT_EQ_FP3(v1, FP3(6, -12, 11));
     ASSERT_EQ_FP3(v1P, v1);

@@ -17,4 +17,12 @@ set(particleModules_headers
     ${PARTICLEMODULES_HEADER_DIR}/Merging.h
     ${PARTICLEMODULES_HEADER_DIR}/Thinning.h
 )
-add_custom_target(particleModules SOURCES ${particleModules_headers})
+
+set(particleModulesSYCL_headers
+    ${PARTICLEMODULES_HEADER_DIR}/sycl/PusherSYCL.h
+)
+
+add_custom_target(particleModules SOURCES ${particleModules_headers} ${particleModulesSYCL_headers})
+
+source_group("headers"   FILES ${particleModules_headers})
+source_group("sycl_headers"     FILES ${particleModulesSYCL_headers})

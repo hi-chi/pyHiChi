@@ -12,6 +12,9 @@
 #include <vector>
 #include <functional>
 
+#include "sycl/DeviceSYCL.h"
+
+
 using namespace std;
 using namespace pfc;
 
@@ -27,7 +30,7 @@ namespace pfc {
     };
     namespace ParticleInfo
     {
-        extern std::vector<ParticleType> typesVector;
+        extern sycl_pfc::sycl_vector<ParticleType> typesVector;
         extern const ParticleType* types;
         extern short numTypes;
     };
@@ -98,7 +101,12 @@ namespace pfc {
         void setP(const  MomentumType& newP)
         {
             p = newP;
-            gamma = sqrt(static_cast<GammaType>(1.0) + p.norm2());
+            gamma = std::sqrt(static_cast<GammaType>(1.0) + p.norm2());
+        }
+        void setP_SYCL(const  MomentumType& newP)
+        {
+            p = newP;
+            gamma = sycl::sqrt(static_cast<GammaType>(1.0) + p.norm2());
         }
         MomentumTypeProxy getProxyP() { return MomentumTypeProxy(p); } //only advanced users
         MomentumType getP() const { return p; }
@@ -110,7 +118,7 @@ namespace pfc {
 
         void setVelocity(const MomentumType& newVelocity)
         {
-            p = newVelocity / sqrt(constants::c * constants::c - newVelocity.norm2());
+            p = newVelocity / sqrt(Constants<FP>::c() * Constants<FP>::c() - newVelocity.norm2());
             gamma = sqrt((FP)1 + p.norm2());
         }
 
@@ -128,7 +136,7 @@ namespace pfc {
         TypeIndexType getType() const { return typeIndex; }
         void setType(TypeIndexType newType) { typeIndex = newType; }
 
-    private:
+    public:
 
         PositionType position;
         MomentumType p;
@@ -202,7 +210,12 @@ namespace pfc {
         void setP(const  MomentumType& newP)
         {
             p = newP;
-            gamma.get() = sqrt(static_cast<GammaType>(1.0) + p.norm2());
+            gamma.get() = std::sqrt(static_cast<GammaType>(1.0) + p.norm2());
+        }
+        void setP_SYCL(const  MomentumType& newP)
+        {
+            p = newP;
+            gamma.get() = sycl::sqrt(static_cast<GammaType>(1.0) + p.norm2());
         }
 
         MomentumType getVelocity() const
@@ -211,7 +224,7 @@ namespace pfc {
         }
         void setVelocity(const MomentumType& newVelocity)
         {
-            p = newVelocity / sqrt(constants::c * constants::c - newVelocity.norm2());
+            p = newVelocity / sqrt(Constants<FP>::c() * Constants<FP>::c() - newVelocity.norm2());
             gamma.get() = sqrt((FP)1 + p.norm2());
         }
 
@@ -229,7 +242,7 @@ namespace pfc {
         TypeIndexType getType() const { return typeIndex.get(); }
         void setType(TypeIndexType newType) { typeIndex.get() = newType; }
 
-    private:
+    public:
 
         PositionTypeProxy position;
         MomentumTypeProxy p;

@@ -29,7 +29,7 @@ namespace pfc
         {
             FP3 e = field.getE();
             FP3 b = field.getB();
-            FP eCoeff = timeStep * particle->getCharge() / (2 * particle->getMass() * Constants<FP>::lightVelocity());
+            FP eCoeff = timeStep * particle->getCharge() / ((FP)2 * particle->getMass() * Constants<FP>::lightVelocity());
             FP3 eMomentum = e * eCoeff;
             FP3 um = particle->getP() + eMomentum;
             FP3 t = b * eCoeff / sqrt((FP)1 + um.norm2());

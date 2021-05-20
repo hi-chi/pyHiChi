@@ -72,12 +72,6 @@ public:
     virtual void SetUp(const ::benchmark::State& st)
     {
         BaseFixture::SetUp(st);
-
-        ParticleInfo::typesVector = { { constants::electronMass, constants::electronCharge },
-        { constants::electronMass, -constants::electronCharge },
-        { constants::protonMass, -constants::electronCharge } };
-        ParticleInfo::types = &ParticleInfo::typesVector[0];
-        ParticleInfo::numTypes = sizeParticleTypes;
     }
 
     // Helper function to unify initialization of positions for 1d, 2d and 3d
@@ -93,8 +87,8 @@ public:
 
     Particle randomParticle(TypeIndexType type = Electron)
     {
-        Real minPosition = -10;
-        Real maxPosition = 10;
+        Real minPosition = -1e-4;
+        Real maxPosition = 1e-4;
         return randomParticle(getPosition(minPosition, minPosition, minPosition),
             getPosition(maxPosition, maxPosition, maxPosition), type);
     }
@@ -104,11 +98,11 @@ public:
         PositionType position;
         for (int d = 0; d < dimension; d++)
             position[d] = urand(minPosition[d], maxPosition[d]);
-        Real minMomentum = -10;
-        Real maxMomentum = 10;
+        Real minMomentum = -1e-10;
+        Real maxMomentum = 1-10;
         MomentumType momentum(urand(minMomentum, maxMomentum),
             urand(minMomentum, maxMomentum), urand(minMomentum, maxMomentum));
-        WeightType weight = static_cast<WeightType>(urand(1e-5, 1e5));
+        WeightType weight = static_cast<WeightType>(urand((FP)1e-5, (FP)1e5));
         return Particle(position, momentum, weight, type);
     }
 
@@ -160,8 +154,8 @@ public:
     virtual void SetUp(const ::benchmark::State& st)
     {
         ParticleArrayFixture<ParticleArray>::SetUp(st);
-        dt = 0.001;
-        FP3 minField(-10, -10, 10), maxField(10, 10, 10);
+        dt = 1e-17;
+        FP3 minField(-1e14, -1e14, -1e14), maxField(1e14, 1e14, 1e14);
 
         for (size_t index = 0; index < st.range_x(); index++)
             fields.push_back(ValueField(urandFP3(minField, maxField), urandFP3(minField, maxField)));
@@ -174,5 +168,36 @@ public:
     }
 
     std::vector<ValueField> fields;
+    FP dt;
+};
+
+
+#include "sycl/DeviceSYCL.h"
+template <class ParticleArrayType>
+class PusherTestSYCL : public ParticleArrayFixture<ParticleArrayType> {
+public:
+    typedef ParticleArrayType ParticleArray;
+    typedef typename ParticleArrayType::ParticleType Particle;
+
+    using BaseFixture::urandFP3;
+    
+    virtual void SetUp(const ::benchmark::State& st)
+    {
+        fields = new sycl_pfc::sycl_vector<ValueField>{ sycl_pfc::node.default_device };
+        ParticleArrayFixture<ParticleArray>::SetUp(st);
+        dt = 1e-17;
+        FP3 minField(-1e14, -1e14, -1e14), maxField(1e14, 1e14, 1e14);
+
+        for (size_t index = 0; index < st.range_x(); index++)
+            fields->push_back(ValueField(urandFP3(minField, maxField), urandFP3(minField, maxField)));
+    }
+
+    virtual void TearDown(const ::benchmark::State& st)
+    {
+        fields->clear();
+        ParticleArrayFixture<ParticleArray>::TearDown(st);
+    }
+
+    sycl_pfc::sycl_vector<ValueField> * fields;
     FP dt;
 };

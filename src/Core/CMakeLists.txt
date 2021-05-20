@@ -31,4 +31,12 @@ set(core_headers
     ${CORE_HEADER_DIR}/VectorsProxy.h
     ${CORE_HEADER_DIR}/macros.h)
 
-add_custom_target(core SOURCES ${core_headers})
+set(coreSYCL_headers
+    ${CORE_HEADER_DIR}/sycl/ParticleArray.h
+    ${CORE_HEADER_DIR}/sycl/DeviceSYCL.h
+    ${CORE_HEADER_DIR}/sycl/SpeciesSYCL.h)
+
+add_custom_target(core SOURCES ${core_headers} ${coreSYCL_headers})
+
+source_group("headers"   FILES ${core_headers})
+source_group("sycl_headers"     FILES ${coreSYCL_headers})

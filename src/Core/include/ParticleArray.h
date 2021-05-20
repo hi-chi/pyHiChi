@@ -2,6 +2,7 @@
 
 #include "Dimension.h"
 #include "Particle.h"
+#include "ParticleArrayAccessor.h"
 #include "ParticleTypes.h"
 #include "ParticleTraits.h"
 #include "Vectors.h"
@@ -11,6 +12,8 @@
 #include <vector>
 #include <string>
 #include <functional>
+
+#include <cstddef>
 
 namespace pfc {
 
@@ -23,15 +26,15 @@ namespace pfc {
     public:
 
         iteratorPArray(pArray_t* _pArray) : pPArray(_pArray), index(0) {};
-        iteratorPArray(pArray_t* _pArray, size_t _index): pPArray(_pArray), index(_index) {};
-        iteratorPArray(const iteratorPArray &it): pPArray(it.pPArray), index(it.index){};
+        iteratorPArray(pArray_t* _pArray, size_t _index) : pPArray(_pArray), index(_index) {};
+        iteratorPArray(const iteratorPArray& it) : pPArray(it.pPArray), index(it.index) {};
 
         size_t getIdx() { return index; };
 
         ParticleType operator *() { return pPArray->operator[](index); }
-        const iteratorPArray &operator ++() { ++index; return *this; }
-        const iteratorPArray &operator --() { --index; return *this; }
-        iteratorPArray operator ++(int) 
+        const iteratorPArray& operator ++() { ++index; return *this; }
+        const iteratorPArray& operator --() { --index; return *this; }
+        iteratorPArray operator ++(int)
         {
             iteratorPArray copy(*this);
             ++index;
@@ -39,51 +42,65 @@ namespace pfc {
         }
         iteratorPArray operator --(int)
         {
-            iteratorPArray copy(*this); 
+            iteratorPArray copy(*this);
             --index;
             return copy;
         }
-        iteratorPArray & operator =(const iteratorPArray & other) 
+        iteratorPArray& operator =(const iteratorPArray& other)
         {
             this->pParray = other.pPArray;
             this->index = other.index;
-            return *this; 
+            return *this;
         }
 
-        bool operator ==(const iteratorPArray &other) const
-        { return index == other.index; }
-        bool operator !=(const iteratorPArray &other) const
-        { return index != other.index; }
-        bool operator  <(const iteratorPArray &other) const
-        { return index < other.index; }
-        bool operator  >(const iteratorPArray &other) const
-        { return index > other.index; }
-        bool operator  <=(const iteratorPArray &other) const
-        { return index <= other.index; }
-        bool operator  >=(const iteratorPArray &other) const
-        { return index >= other.index; }
+        bool operator ==(const iteratorPArray& other) const
+        {
+            return index == other.index;
+        }
+        bool operator !=(const iteratorPArray& other) const
+        {
+            return index != other.index;
+        }
+        bool operator  <(const iteratorPArray& other) const
+        {
+            return index < other.index;
+        }
+        bool operator  >(const iteratorPArray& other) const
+        {
+            return index > other.index;
+        }
+        bool operator  <=(const iteratorPArray& other) const
+        {
+            return index <= other.index;
+        }
+        bool operator  >=(const iteratorPArray& other) const
+        {
+            return index >= other.index;
+        }
 
-        iteratorPArray & operator +(const size_t &add) const {
+        iteratorPArray& operator +(const size_t& add) const {
             iteratorPArray copy(*this);
             copy.index += add;
             return copy;
         }
-        iteratorPArray & operator +=(const size_t &add) {
+        iteratorPArray& operator +=(const size_t& add) {
             index += add;
             return *this;
         }
-        iteratorPArray & operator -(const size_t &add) const {
+        iteratorPArray& operator -(const size_t& add) const {
             iteratorPArray copy(*this);
             copy.index -= add;
             return copy;
         }
-        iteratorPArray & operator -=(const long int &add) {
+        iteratorPArray& operator -=(const long int& add) {
             index -= add;
             return *this;
         }
 
-        ParticleType operator [](const size_t &n) const
-        { return *pPArray[index + n]; }
+        ParticleType operator [](const size_t& n) const
+        {
+            return *pPArray[index + n];
+        }
     };
 
 
@@ -99,7 +116,7 @@ namespace pfc {
         typedef typename ParticleTraits<Particle<dimension>>::GammaType GammaType;
         typedef typename ParticleTraits<Particle<dimension>>::WeightType WeightType;
         typedef typename ParticleTraits<Particle<dimension>>::TypeIndexType TypeIndexType;
-        typedef Particle<dimension> ParticleType; 
+        typedef Particle<dimension> ParticleType;
         typedef Particle<dimension>& ParticleRef;
         typedef const Particle<dimension>& ConstParticleRef;
         static const int momentumDimension = VectorDimensionHelper<MomentumType>::dimension;
@@ -120,24 +137,26 @@ namespace pfc {
         {
             typeIndex = type;
         }
-        
+
         inline ParticleTypes getType()
         {
             return static_cast<ParticleTypes>(typeIndex);
         }
 
-        inline ParticleProxyType operator[](int idx) 
+        inline ParticleProxyType operator[](int idx)
         {
             return ParticleProxyType(particles[idx]);
-        } 
+        }
 
         inline ParticleProxyType back()
-        { return operator[](this->size() - 1); }
+        {
+            return operator[](this->size() - 1);
+        }
 
-        inline void pushBack(ConstParticleRef particle) 
-        { 
-            if(particle.getType() == typeIndex)
-                particles.push_back(particle); 
+        inline void pushBack(ConstParticleRef particle)
+        {
+            if (particle.getType() == typeIndex)
+                particles.push_back(particle);
         }
         inline void popBack() { particles.pop_back(); }
 
@@ -166,7 +185,8 @@ namespace pfc {
         inline const iterator cbegin() { return begin(); }
         inline const iterator cend() { return end(); }
 
-    private:
+
+    public:
         ParticleTypes typeIndex;
         std::vector<ParticleType> particles;
     };
@@ -238,7 +258,7 @@ namespace pfc {
                 weights.push_back(particle.getWeight());
                 gammas.push_back(particle.getGamma());
             }
-            
+
         }
         inline void popBack()
         {
@@ -294,7 +314,7 @@ namespace pfc {
         inline const iterator cbegin() { return begin(); }
         inline const iterator cend() { return end(); }
 
-    private:
+    public:
         std::vector<typename ScalarType<PositionType>::Type> positions[positionDimension];
         std::vector<typename ScalarType<MomentumType>::Type> ps[momentumDimension];
         std::vector<WeightType> weights;
@@ -313,7 +333,7 @@ namespace pfc {
 
         return ParticleProxyType(posProxy, momProxy, weightRef, typeRef, gammaRef);
     }
-    
+
     template<>
     inline ParticleArraySoA<Two>::ParticleProxyType ParticleArraySoA<Two>::operator[](int idx)
     {
@@ -337,6 +357,181 @@ namespace pfc {
 
         return ParticleProxyType(posProxy, momProxy, weightRef, typeRef, gammaRef);
     }
+
+
+
+
+
+    template<>
+    template<>
+    inline ParticleArrayAccessor<One>::ParticleArrayAccessor(ParticleArrayAoS<One>* org)
+    {
+        positions[0] = (PositionElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, position.x));
+        positions_stride[0] = sizeof(ParticleType) / sizeof(PositionElementType);
+
+        ps[0] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.x));
+        ps[1] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.y));
+        ps[2] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.z));
+        ps_stride[0] = sizeof(ParticleType) / sizeof(MomentumElementType);
+        ps_stride[1] = sizeof(ParticleType) / sizeof(MomentumElementType);
+        ps_stride[2] = sizeof(ParticleType) / sizeof(MomentumElementType);
+
+        weights = (WeightType*)((char*)(org->particles.data()) + offsetof(ParticleType, weight));
+        gammas = (GammaType*)((char*)(org->particles.data()) + offsetof(ParticleType, gamma));
+        typeIndex = (TypeIndexType*)((char*)(org->particles.data()) + offsetof(ParticleType, typeIndex));
+        weights_stride = sizeof(ParticleType) / sizeof(WeightType);
+        gammas_stride = sizeof(ParticleType) / sizeof(GammaType);
+        typeIndex_stride = sizeof(ParticleType) / sizeof(TypeIndexType);
+        _size = org->particles.size();
+
+        if (sizeof(ParticleType) % sizeof(PositionElementType) ||
+            sizeof(ParticleType) % sizeof(MomentumElementType) ||
+            sizeof(ParticleType) % sizeof(WeightType) ||
+            sizeof(ParticleType) % sizeof(GammaType) ||
+            sizeof(ParticleType) % sizeof(TypeIndexType))
+            std::cout << "Wrong create ParticleAccessor" << std::endl;
+    };
+
+    template<>
+    template<>
+    inline ParticleArrayAccessor<Two>::ParticleArrayAccessor(ParticleArrayAoS<Two>* org)
+    {
+        positions[0] = (PositionElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, position.x));
+        positions[1] = (PositionElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, position.y));
+        positions_stride[0] = sizeof(ParticleType) / sizeof(PositionElementType);
+        positions_stride[1] = sizeof(ParticleType) / sizeof(PositionElementType);
+
+        ps[0] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.x));
+        ps[1] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.y));
+        ps[2] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.z));
+        ps_stride[0] = sizeof(ParticleType) / sizeof(MomentumElementType);
+        ps_stride[1] = sizeof(ParticleType) / sizeof(MomentumElementType);
+        ps_stride[2] = sizeof(ParticleType) / sizeof(MomentumElementType);
+
+        weights = (WeightType*)((char*)(org->particles.data()) + offsetof(ParticleType, weight));
+        gammas = (GammaType*)((char*)(org->particles.data()) + offsetof(ParticleType, gamma));
+        typeIndex = (TypeIndexType*)((char*)(org->particles.data()) + offsetof(ParticleType, typeIndex));
+        weights_stride = sizeof(ParticleType) / sizeof(WeightType);
+        gammas_stride = sizeof(ParticleType) / sizeof(GammaType);
+        typeIndex_stride = sizeof(ParticleType) / sizeof(TypeIndexType);
+        _size = org->particles.size();
+
+        if (sizeof(ParticleType) % sizeof(PositionElementType) ||
+            sizeof(ParticleType) % sizeof(MomentumElementType) ||
+            sizeof(ParticleType) % sizeof(WeightType) ||
+            sizeof(ParticleType) % sizeof(GammaType) ||
+            sizeof(ParticleType) % sizeof(TypeIndexType))
+            std::cout << "Wrong create ParticleAccessor" << std::endl;
+    };
+
+    template<>
+    template<>
+    inline ParticleArrayAccessor<Three>::ParticleArrayAccessor(ParticleArrayAoS<Three>* org)
+    {
+        positions[0] = (PositionElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, position.x));
+        positions[1] = (PositionElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, position.y));
+        positions[2] = (PositionElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, position.z));
+        positions_stride[0] = sizeof(ParticleType) / sizeof(PositionElementType);
+        positions_stride[1] = sizeof(ParticleType) / sizeof(PositionElementType);
+        positions_stride[2] = sizeof(ParticleType) / sizeof(PositionElementType);
+
+        ps[0] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.x));
+        ps[1] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.y));
+        ps[2] = (MomentumElementType*)((char*)(org->particles.data()) + offsetof(ParticleType, p.z));
+        ps_stride[0] = sizeof(ParticleType) / sizeof(MomentumElementType);
+        ps_stride[1] = sizeof(ParticleType) / sizeof(MomentumElementType);
+        ps_stride[2] = sizeof(ParticleType) / sizeof(MomentumElementType);
+
+        weights = (WeightType*)((char*)(org->particles.data()) + offsetof(ParticleType, weight));
+        gammas = (GammaType*)((char*)(org->particles.data()) + offsetof(ParticleType, gamma));
+        typeIndex = (TypeIndexType*)((char*)(org->particles.data()) + offsetof(ParticleType, typeIndex));
+        weights_stride = sizeof(ParticleType) / sizeof(WeightType);
+        gammas_stride = sizeof(ParticleType) / sizeof(GammaType);
+        typeIndex_stride = sizeof(ParticleType) / sizeof(TypeIndexType);
+        _size = org->particles.size();
+
+        if (sizeof(ParticleType) % sizeof(PositionElementType) ||
+            sizeof(ParticleType) % sizeof(MomentumElementType) ||
+            sizeof(ParticleType) % sizeof(WeightType) ||
+            sizeof(ParticleType) % sizeof(GammaType) ||
+            sizeof(ParticleType) % sizeof(TypeIndexType))
+            std::cout << "Wrong create ParticleAccessor" << std::endl;
+    };
+
+    template<>
+    template<>
+    inline ParticleArrayAccessor<One>::ParticleArrayAccessor(ParticleArraySoA<One>* org)
+    {
+        positions[0] = (PositionElementType*)(org->positions[0].data());
+        positions_stride[0] = 1;
+
+        ps[0] = (MomentumElementType*)(org->ps[0].data());
+        ps[1] = (MomentumElementType*)(org->ps[1].data());
+        ps[2] = (MomentumElementType*)(org->ps[2].data());
+        ps_stride[0] = 1;
+        ps_stride[1] = 1;
+        ps_stride[2] = 1;
+
+        weights = (WeightType*)(org->weights.data());
+        gammas = (GammaType*)(org->gammas.data());
+        typeIndex = (TypeIndexType*)&(org->typeIndex);
+        weights_stride = 1;
+        gammas_stride = 1;
+        typeIndex_stride = 0;
+        _size = org->weights.size();
+    };
+
+    template<>
+    template<>
+    inline ParticleArrayAccessor<Two>::ParticleArrayAccessor(ParticleArraySoA<Two>* org)
+    {
+        positions[0] = (PositionElementType*)(org->positions[0].data());
+        positions[1] = (PositionElementType*)(org->positions[1].data());
+        positions_stride[0] = 1;
+        positions_stride[1] = 1;
+
+        ps[0] = (MomentumElementType*)(org->ps[0].data());
+        ps[1] = (MomentumElementType*)(org->ps[1].data());
+        ps[2] = (MomentumElementType*)(org->ps[2].data());
+        ps_stride[0] = 1;
+        ps_stride[1] = 1;
+        ps_stride[2] = 1;
+
+        weights = (WeightType*)(org->weights.data());
+        gammas = (GammaType*)(org->gammas.data());
+        typeIndex = (TypeIndexType*)&(org->typeIndex);
+        weights_stride = 1;
+        gammas_stride = 1;
+        typeIndex_stride = 0;
+        _size = org->weights.size();
+    };
+
+    template<>
+    template<>
+    inline ParticleArrayAccessor<Three>::ParticleArrayAccessor(ParticleArraySoA<Three>* org)
+    {
+        positions[0] = (PositionElementType*)(org->positions[0].data());
+        positions[1] = (PositionElementType*)(org->positions[1].data());
+        positions[2] = (PositionElementType*)(org->positions[2].data());
+        positions_stride[0] = 1;
+        positions_stride[1] = 1;
+        positions_stride[2] = 1;
+
+        ps[0] = (MomentumElementType*)(org->ps[0].data());
+        ps[1] = (MomentumElementType*)(org->ps[1].data());
+        ps[2] = (MomentumElementType*)(org->ps[2].data());
+        ps_stride[0] = 1;
+        ps_stride[1] = 1;
+        ps_stride[2] = 1;
+
+        weights = (WeightType*)(org->weights.data());
+        gammas = (GammaType*)(org->gammas.data());
+        typeIndex = (TypeIndexType*)&(org->typeIndex);
+        weights_stride = 1;
+        gammas_stride = 1;
+        typeIndex_stride = 0;
+        _size = org->weights.size();
+    };
 
 
     enum ParticleRepresentation { ParticleRepresentation_AoS, ParticleRepresentation_SoA };
