@@ -27,6 +27,7 @@ add_executable(tests
     src/testPSTD.cpp
     src/testPusherAndHandler.cpp
     src/testSaveLoadParticle.cpp
+    src/testSaveLoadGrid.cpp
     src/testScalarField.cpp
     src/testSpecies.cpp
     src/testThinning.cpp
