@@ -58,7 +58,10 @@ TYPED_TEST(SaveLoadParticle, testParticle)
 typedef ::testing::Types<
     ParticleArray<One, ParticleRepresentation_AoS>::Type,
     ParticleArray<Two, ParticleRepresentation_AoS>::Type,
-    ParticleArray<Three, ParticleRepresentation_AoS>::Type
+    ParticleArray<Three, ParticleRepresentation_AoS>::Type,
+    ParticleArray<One, ParticleRepresentation_SoA>::Type,
+    ParticleArray<Two, ParticleRepresentation_SoA>::Type,
+    ParticleArray<Three, ParticleRepresentation_SoA>::Type
 > typesArray;
 TYPED_TEST_CASE(ParticleArrayTest, typesArray);
 
@@ -68,7 +71,7 @@ TYPED_TEST(ParticleArrayTest, testParticleArraySaveLoad)
 
     ParticleArray particles, tmp, res;
     stringstream stream;
-    for (int i = 0; i < 50; i++)
+    for (int i = 0; i < 51; i++)
     {
         auto p = this->randomParticle();
         particles.pushBack(p);
@@ -77,6 +80,5 @@ TYPED_TEST(ParticleArrayTest, testParticleArraySaveLoad)
     particles.save(stream);
     particles = ParticleArray(); // reset ParticleArray
     res.load(stream);
-    ASSERT_EQ(res.size(), tmp.size());
     ASSERT_TRUE(this->eqParticleArrays(res, tmp));
 }
