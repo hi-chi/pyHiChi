@@ -29,6 +29,11 @@ endif()
 
 add_subdirectory(3rdparty/pybind11)
 
+if (USE_TESTS)
+   set(GTEST_HAS_PTHREAD, 0)
+   add_subdirectory(3rdparty/google/googletest)
+endif()
+
 if (USE_PTESTS)
    add_subdirectory(3rdparty/google/benchmark)
 endif()

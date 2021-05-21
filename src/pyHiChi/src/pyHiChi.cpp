@@ -107,7 +107,7 @@ using namespace pfc;
 
 std::vector<ParticleType> ParticleInfo::typesVector = { {constants::electronMass, constants::electronCharge},//electron
                                     {constants::electronMass, -constants::electronCharge},//positron
-                                    {constants::protonMass, 0.0},//proton
+                                    {constants::protonMass, -constants::electronCharge},//proton
                                     {constants::electronMass, 0.0 } };//photon
 const ParticleType* ParticleInfo::types = &ParticleInfo::typesVector[0];
 short ParticleInfo::numTypes = sizeParticleTypes;

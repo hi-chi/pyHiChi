@@ -1,9 +1,6 @@
-set(GTEST_HAS_PTHREAD, 0)
-add_subdirectory(gtest)
-
 include_directories(
     include
-    gtest/include
+    ../../3rdparty/google/googletest/googletest/include
     ../Core/include
     ../Modules/Particle/include
     ../Modules/Field/include
