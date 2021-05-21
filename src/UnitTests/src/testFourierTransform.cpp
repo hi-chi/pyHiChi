@@ -27,7 +27,7 @@ public:
         complexField(sizeComplex)
     {
         fourierTransform.initialize(&field, &complexField, size);
-        
+
         setField(&FourierTransformTest::fSin3);
 
         maxAbsoluteError = (FP)1e-7;
@@ -39,24 +39,24 @@ public:
 
     FP fSin3(int i, int j, int k) {
         const double A = 1000;
-        return A * sin(2 * constants::pi*(i * dx + j * dy + k * dz) / (b - a));
+        return A * sin(2 * constants::pi * (i * dx + j * dy + k * dz) / (b - a));
     }
 
     FP fSin(int i, int j, int k) {
         return sin(2 * constants::pi * i * dx / (b - a));
     }
 
-    void setField(FP (FourierTransformTest::* func)(int, int, int)) { 
+    void setField(FP(FourierTransformTest::* func)(int, int, int)) {
         for (int i = 0; i < size.x; i++)
             for (int j = 0; j < size.y; j++)
                 for (int k = 0; k < size.z; k++)
                     field(i, j, k) = (this->*func)(i, j, k);
     }
 
-    FP3 getFrequencyVector(const Int3 & index) {
-        FP kx(2 * constants::pi*((index.x <= size.x / 2) ? index.x : index.x - size.x) / (b - a));
-        FP ky(2 * constants::pi*((index.y <= size.y / 2) ? index.y : index.y - size.y) / (b - a));
-        FP kz(2 * constants::pi*((index.z <= size.z / 2) ? index.z : index.z - size.z) / (b - a));
+    FP3 getFrequencyVector(const Int3& index) {
+        FP kx(2 * constants::pi * ((index.x <= size.x / 2) ? index.x : index.x - size.x) / (b - a));
+        FP ky(2 * constants::pi * ((index.y <= size.y / 2) ? index.y : index.y - size.y) / (b - a));
+        FP kz(2 * constants::pi * ((index.z <= size.z / 2) ? index.z : index.z - size.z) / (b - a));
         return FP3(kx, ky, kz);
     }
 
@@ -139,7 +139,7 @@ public:
         pstd.reset(new PSTD(grid.get(), dt));
 
         sizeComplex = fourier_transform::getSizeOfComplexArray(grid->numCells);
-        complexGrid = pstd->complexGrid;
+        complexGrid = pstd->complexGrid.get();
 
         setBz(&FourierTransformSolverTest::fSin3);
 
@@ -149,7 +149,7 @@ public:
 
     FP fSin3(int i, int j, int k) {
         const double A = 1000;
-        return A * sin(2 * constants::pi*(i * dx + j * dy + k * dz) / (b - a));
+        return A * sin(2 * constants::pi * (i * dx + j * dy + k * dz) / (b - a));
     }
 
     FP fSin(int i, int j, int k) {
@@ -163,10 +163,10 @@ public:
                     grid->Bz(i, j, k) = (this->*func)(i, j, k);
     }
 
-    FP3 getFrequencyVector(const Int3 & index) {
-        FP kx(2 * constants::pi*((index.x <= size.x / 2) ? index.x : index.x - size.x) / (b - a));
-        FP ky(2 * constants::pi*((index.y <= size.y / 2) ? index.y : index.y - size.y) / (b - a));
-        FP kz(2 * constants::pi*((index.z <= size.z / 2) ? index.z : index.z - size.z) / (b - a));
+    FP3 getFrequencyVector(const Int3& index) {
+        FP kx(2 * constants::pi * ((index.x <= size.x / 2) ? index.x : index.x - size.x) / (b - a));
+        FP ky(2 * constants::pi * ((index.y <= size.y / 2) ? index.y : index.y - size.y) / (b - a));
+        FP kz(2 * constants::pi * ((index.z <= size.z / 2) ? index.z : index.z - size.z) / (b - a));
         return FP3(kx, ky, kz);
     }
 
