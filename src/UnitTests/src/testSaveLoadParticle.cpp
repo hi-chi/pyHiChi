@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "Particle.h"
 #include "ParticleArray.h"
+#include "Ensemble.h"
 
 using namespace pfc;
 template <class ParticleType>
@@ -65,20 +66,56 @@ typedef ::testing::Types<
 > typesArray;
 TYPED_TEST_CASE(ParticleArrayTest, typesArray);
 
-TYPED_TEST(ParticleArrayTest, testParticleArraySaveLoad)
+TYPED_TEST(ParticleArrayTest, testParticlesSaveLoad)
 {
     typedef typename ParticleArrayTest<TypeParam>::ParticleArray ParticleArray;
 
-    ParticleArray particles, tmp, res;
+    ParticleArray particles, particlesCopy, res;
     stringstream stream;
     for (int i = 0; i < 51; i++)
     {
         auto p = this->randomParticle();
         particles.pushBack(p);
-        tmp.pushBack(p);
+        particlesCopy.pushBack(p);
     }
     particles.save(stream);
     particles = ParticleArray(); // reset ParticleArray
     res.load(stream);
-    ASSERT_TRUE(this->eqParticleArrays(res, tmp));
+    ASSERT_TRUE(this->eqParticleArrays(res, particlesCopy));
+}
+
+TYPED_TEST(ParticleArrayTest, testEnsembleSaveLoad)
+{
+    typedef typename ParticleArrayTest<TypeParam>::ParticleArray ParticleArray;
+
+    Ensemble<ParticleArray> particles, particlesCopy, res;
+    stringstream stream;
+    for (int i = 0; i < 8; i++)
+    {
+        auto p = this->randomParticle(Electron);
+        particles.addParticle(p);
+        particlesCopy.addParticle(p);
+    }
+    for (int i = 0; i < 17; i++)
+    {
+        auto p = this->randomParticle(Proton);
+        particles.addParticle(p);
+        particlesCopy.addParticle(p);
+    }
+    for (int i = 0; i < 3; i++)
+    {
+        auto p = this->randomParticle(Photon);
+        particles.addParticle(p);
+        particlesCopy.addParticle(p);
+    }
+    particles.save(stream);
+    particles = Ensemble<ParticleArray>(); // reset ParticleEnsemble
+    res.load(stream);
+
+    for (int t = 0; t < sizeParticleTypes; t++)
+    {
+        ASSERT_TRUE(this->eqParticleArrays(res[t], particlesCopy[t]));
+        ASSERT_TRUE(this->eqParticleArrays(res[t], particlesCopy[t]));
+        ASSERT_TRUE(this->eqParticleArrays(res[particleNames[t]], particlesCopy[t]));
+    }
 }
