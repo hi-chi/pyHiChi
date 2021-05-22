@@ -4,6 +4,7 @@ include_directories(
     ../Core/include
     ../Modules/Particle/include
     ../Modules/Field/include
+    ../Simulation/include
     ${FFT_INCLUDES})
 
 add_executable(tests
@@ -25,6 +26,7 @@ add_executable(tests
     src/testPusherAndHandler.cpp
     src/testSaveLoadParticle.cpp
     src/testSaveLoadGrid.cpp
+    src/testSimulation.cpp
     src/testScalarField.cpp
     src/testSpecies.cpp
     src/testThinning.cpp
