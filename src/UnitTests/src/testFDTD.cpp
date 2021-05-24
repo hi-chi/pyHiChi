@@ -27,10 +27,10 @@ public:
         fdtd = new FDTD(grid, this->timeStep);
     }
 
-    FDTD * fdtd;
+    FDTD* fdtd;
 
     ~GridFDTDTest() {
-        //delete fdtd;
+        delete fdtd;
     }
 
     FP3 eTest(FP x, FP y, FP z, FP t);
@@ -40,37 +40,37 @@ public:
 template<>
 FP3 GridFDTDTest<axisX>::eTest(FP x, FP y, FP z, FP t)
 {
-    return FP3(0, sin(2 * constants::pi*(-constants::c*t + x)), 0);
+    return FP3(0, sin(2 * constants::pi * (-constants::c * t + x)), 0);
 }
 
 template<>
 FP3 GridFDTDTest<axisX>::bTest(FP x, FP y, FP z, FP t)
 {
-    return FP3(0, 0, sin(2 * constants::pi*(-constants::c*t + x)));
+    return FP3(0, 0, sin(2 * constants::pi * (-constants::c * t + x)));
 }
 
 template<>
 FP3 GridFDTDTest<axisY>::eTest(FP x, FP y, FP z, FP t)
 {
-    return FP3(0, 0, sin(2 * constants::pi*(-constants::c*t + y)));
+    return FP3(0, 0, sin(2 * constants::pi * (-constants::c * t + y)));
 }
 
 template<>
 FP3 GridFDTDTest<axisY>::bTest(FP x, FP y, FP z, FP t)
 {
-    return FP3(sin(2 * constants::pi*(-constants::c*t + y)), 0, 0);
+    return FP3(sin(2 * constants::pi * (-constants::c * t + y)), 0, 0);
 }
 
 template<>
 FP3 GridFDTDTest<axisZ>::eTest(FP x, FP y, FP z, FP t)
 {
-    return FP3(sin(2 * constants::pi*(-constants::c*t + z)), 0, 0);
+    return FP3(sin(2 * constants::pi * (-constants::c * t + z)), 0, 0);
 }
 
 template<>
 FP3 GridFDTDTest<axisZ>::bTest(FP x, FP y, FP z, FP t)
 {
-    return FP3(0, sin(2 * constants::pi*(-constants::c*t + z)), 0);
+    return FP3(0, sin(2 * constants::pi * (-constants::c * t + z)), 0);
 }
 
 typedef ::testing::Types<

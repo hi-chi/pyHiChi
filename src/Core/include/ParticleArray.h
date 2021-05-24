@@ -165,6 +165,21 @@ namespace pfc {
         inline iterator end() { return iterator(this, size()); }
         inline const iterator cbegin() { return begin(); }
         inline const iterator cend() { return end(); }
+        inline void save(std::ostream& os)
+        {
+            size_t tmp = size();
+            os.write((char*)&tmp, sizeof(tmp));
+            os.write((char*)&typeIndex, sizeof(typeIndex));
+            os.write((char*)particles.data(), sizeof(Particle<dimension>)*tmp);
+        }
+        inline void load(std::istream& is)
+        {
+            size_t tmp = 0;
+            is.read((char*)&tmp, sizeof(tmp));
+            is.read((char*)&typeIndex, sizeof(typeIndex));
+            particles.resize(tmp);
+            is.read((char*)particles.data(), sizeof(Particle<dimension>) * size());
+        }
 
     private:
         ParticleTypes typeIndex;
@@ -293,6 +308,39 @@ namespace pfc {
         inline iterator end() { return iterator(this, size()); }
         inline const iterator cbegin() { return begin(); }
         inline const iterator cend() { return end(); }
+
+        inline void save(std::ostream& os)
+        {
+            size_t tmp = size();
+            os.write((char*)&tmp, sizeof(tmp));
+            for (int i = 0; i < positionDimension; i++)
+                os.write((char*)positions[i].data(), sizeof(typename ScalarType<PositionType>::Type) * tmp);
+            for (int i = 0; i < momentumDimension; i++)
+                os.write((char*)ps[i].data(), sizeof(typename ScalarType<MomentumType>::Type) * tmp);
+            os.write((char*)weights.data(), sizeof(WeightType) * tmp);
+            os.write((char*)gammas.data(), sizeof(GammaType) * tmp);
+            os.write((char*)&typeIndex, sizeof(typeIndex));
+        }
+        inline void load(std::istream& is)
+        {
+            size_t tmp = 0;
+            is.read((char*)&tmp, sizeof(tmp));
+            for (int i = 0; i < positionDimension; i++)
+            {
+                positions[i].resize(tmp);
+                is.read((char*)positions[i].data(), sizeof(typename ScalarType<PositionType>::Type) * tmp);
+            }
+            for (int i = 0; i < momentumDimension; i++)
+            {
+                ps[i].resize(tmp);
+                is.read((char*)ps[i].data(), sizeof(typename ScalarType<MomentumType>::Type) * tmp);
+            }
+            weights.resize(tmp);
+            is.read((char*)weights.data(), sizeof(WeightType) * tmp);
+            gammas.resize(tmp);
+            is.read((char*)gammas.data(), sizeof(GammaType) * tmp);
+            is.read((char*)&typeIndex, sizeof(typeIndex));
+        }
 
     private:
         std::vector<typename ScalarType<PositionType>::Type> positions[positionDimension];
