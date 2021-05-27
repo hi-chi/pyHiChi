@@ -59,6 +59,7 @@ namespace pfc {
     inline void FieldSolver<gridType>::save(std::ostream& ostr)
     {
         ostr.write((char*)&globalTime, sizeof(globalTime));
+        ostr.write((char*)&dt, sizeof(globalTime));
         // if (pml.get()) pml->save(ostr);  // virtual
         // if (generator.get()) generator->save(ostr);  // virtual
     }
@@ -66,9 +67,9 @@ namespace pfc {
     template<GridTypes gridType>
     inline void FieldSolver<gridType>::load(std::istream& istr)
     {
-        // dt is not loaded, we get it with FieldSolver constructor
         // timeShiftE, timeShiftB, timeShiftJ are got with FieldSolver constructor too
         istr.read((char*)&globalTime, sizeof(globalTime));
+        istr.read((char*)&dt, sizeof(globalTime));
         // all the next modules have already created in FieldSolver constructor
         // we need to load them only
         // if (pml.get()) pml->load(istr);  // virtual
