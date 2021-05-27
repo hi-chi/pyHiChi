@@ -73,8 +73,22 @@ namespace pfc {
         }
 
 
+        void save(std::ostream& ostr) {
+            // save compiled functions
+            ostr.write((char*)&globalTime, sizeof(globalTime));
+            ostr.write((char*)&dt, sizeof(dt));
+        }
+
+        void load(std::istream& istr) {
+            // load compiled functions
+            istr.read((char*)&globalTime, sizeof(globalTime));
+            istr.read((char*)&dt, sizeof(dt));
+        }
+
+
         FP globalTime;
         FP dt;
+        FP timeShiftE = 0.0, timeShiftB = 0.0, timeShiftJ = 0.0;
 
     private:
 
