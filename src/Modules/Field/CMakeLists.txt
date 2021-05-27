@@ -12,6 +12,7 @@ set(FIELDMODULES_HEADER_DIR ${FIELDMODULES_INCLUDE_DIR})
 set(fieldModules_headers
     ${FIELDMODULES_HEADER_DIR}/Mapping.h
     ${FIELDMODULES_HEADER_DIR}/FieldConfiguration.h
+    ${FIELDMODULES_HEADER_DIR}/FieldEntity.h
     ${FIELDMODULES_HEADER_DIR}/Fdtd.h
     ${FIELDMODULES_HEADER_DIR}/FieldGenerator.h
     ${FIELDMODULES_HEADER_DIR}/FieldSolver.h
