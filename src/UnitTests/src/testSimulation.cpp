@@ -51,5 +51,5 @@ TYPED_TEST(SimulationTest, Simulation_boris_pusher)
     ensemble->addParticle(this->randomParticle(Positron));
     ensemble->addParticle(this->randomParticle(Proton));
     Simulation<YeeGrid, FDTD, ParticleArray3d> simulation(ptrField, ptrEnsemble, ptrPusher);
-    simulation.run();
+    simulation.runIteration();
 }

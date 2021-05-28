@@ -11,7 +11,10 @@ namespace pfc {
     public:
         virtual void save(std::ostream& ostr) = 0;
         virtual void load(std::istream& ostr) = 0;
+        virtual void runIteration() = 0;
         virtual void run() = 0;
+        size_t curIteration = 0;
+        size_t numIteration = 0;
     };
 
     template <class TGrid, class TFieldSolver, class TParticleArray = NoParticleArray>
@@ -36,9 +39,18 @@ namespace pfc {
             field->load(istr);
             if (ensemble) ensemble->load(istr);
         }
-        void run() override
+        void runIteration() override
         {
+            field->getFieldSolver()->updateFields();
             if (particlePusher) (*particlePusher)(ensemble.get(), field->getGrid(), field->getFieldSolver()->dt);
+            curIteration++;
+        }
+        void run()
+        {
+            for (size_t i = 0; i < numIteration; i++)
+            {
+                runIteration();
+            }
         }
     protected:
     };
