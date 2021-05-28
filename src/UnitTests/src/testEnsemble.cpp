@@ -1,7 +1,6 @@
 #include "TestingUtility.h"
 
 #include "Ensemble.h"
-
 #include "Particle.h"
 #include "ParticleArray.h"
 

@@ -101,4 +101,12 @@ namespace pfc {
 
     typedef Ensemble<ParticleArray3d> Ensemble3d;
 
+    class NoParticleArray {};
+    template<>
+    class Ensemble<NoParticleArray>
+    {
+    public:
+        inline void save(std::ostream& os) {}
+        inline void load(std::istream& is) {}
+    };
 } // namespace pfc

@@ -2,7 +2,7 @@
 #include "Constants.h"
 #include "Species.h"
 #include "FieldValue.h"
-
+#include "Ensemble.h"
 
 #include <array>
 #include <vector>
@@ -10,6 +10,8 @@
 #include <iostream>
 namespace pfc
 {
+    class NoPusher {};
+
     class ParticlePusher
     {
     public:
@@ -23,12 +25,9 @@ namespace pfc
     class BorisPusher : public ParticlePusher
     {
     public:
-
         template<class T_Particle>
-        inline void operator()(T_Particle* particle, ValueField& field, FP timeStep)
+        inline void operator()(T_Particle* particle, FP3& e, FP3& b, FP timeStep)
         {
-            FP3 e = field.getE();
-            FP3 b = field.getB();
             FP eCoeff = timeStep * particle->getCharge() / (2 * particle->getMass() * Constants<FP>::lightVelocity());
             FP3 eMomentum = e * eCoeff;
             FP3 um = particle->getP() + eMomentum;
@@ -37,6 +36,12 @@ namespace pfc
             FP3 s = t * (FP)2 / ((FP)1 + t.norm2());
             particle->setP(eMomentum + um + cross(uprime, s));
             particle->setPosition(particle->getPosition() + timeStep * particle->getVelocity());
+        }
+
+        template<class T_Particle>
+        inline void operator()(T_Particle* particle, ValueField& field, FP timeStep)
+        {
+            operator()(particle, field.getE(), field.getB(), timeStep);
         }
 
         template<class T_ParticleArray>
@@ -50,6 +55,40 @@ namespace pfc
             {
                 ParticleProxyType particle = (*particleArray)[i];
                 operator()(&particle, fields[i], timeStep);
+            }
+        };
+
+        template<class T_ParticleArray, class TGrid>
+        inline void operator()(T_ParticleArray* particleArray, TGrid* grid, FP timeStep)
+        {
+            typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
+
+            OMP_FOR()
+            OMP_SIMD()
+            for (int i = 0; i < particleArray->size(); i++)
+            {
+                ParticleProxyType particle = (*particleArray)[i];
+                FP3 pPos = particle.getPosition();
+                operator()(&particle, grid->getE(pPos), grid->getB(pPos), timeStep);
+            }
+        };
+
+        template<class T_ParticleArray, class TGrid>
+        inline void operator()(Ensemble<T_ParticleArray>* ensemble, TGrid* grid, FP timeStep)
+        {
+            typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
+
+            for (int i = 0; i < pfc::sizeParticleTypes; i++)
+            {
+                T_ParticleArray& particleArray = ensemble->operator[](i);
+                OMP_FOR()
+                OMP_SIMD()
+                for (int i = 0; i < particleArray.size(); i++)
+                {
+                    ParticleProxyType particle = particleArray[i];
+                    FP3 pPos = particle.getPosition();
+                    operator()(&particle, grid->getE(pPos), grid->getB(pPos), timeStep);
+                }
             }
         };
     };
