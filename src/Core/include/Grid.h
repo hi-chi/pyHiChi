@@ -296,6 +296,8 @@ namespace pfc {
         void setInterpolationType(InterpolationType type);
         InterpolationType getInterpolationType() const;
         bool isInside(const FP3& coord) const;
+        FP3 getMinCoord() {return origin - getNumExternalLeftCells() * steps;}
+        FP3 getMaxCoord() {return getMinCoord() + numInternalCells * steps; }
 
         void save(std::ostream& ostr);
         void load(std::istream& istr);
