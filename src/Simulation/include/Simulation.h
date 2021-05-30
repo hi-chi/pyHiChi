@@ -7,7 +7,7 @@
 
 namespace pfc {
 
-    class SimulationBase {
+    class BaseSimulation {
     public:
         virtual void save(std::ostream& ostr) = 0;
         virtual void load(std::istream& ostr) = 0;
@@ -18,7 +18,7 @@ namespace pfc {
     };
 
     template <class TGrid, class TFieldSolver, class TParticleArray = NoParticleArray>
-    class Simulation : public SimulationBase {
+    class Simulation : public BaseSimulation {
     public:
         std::shared_ptr<FieldEntity<TGrid, TFieldSolver>> field;
         std::shared_ptr<Ensemble<TParticleArray>> ensemble;
@@ -53,5 +53,15 @@ namespace pfc {
             }
         }
     protected:
+    };
+
+    class Domain
+    {
+    public:
+        FP3 locMinCoord;
+        FP3 locMaxCoord;
+        Int3 domainIdx;
+        int rank;
+        std::vector<Domain*> neighbors[3][3][3];
     };
 }

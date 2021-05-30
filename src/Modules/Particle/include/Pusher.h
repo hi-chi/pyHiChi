@@ -73,23 +73,12 @@ namespace pfc
             }
         };
 
+        // need fixed? ensemble???
         template<class T_ParticleArray, class TGrid>
         inline void operator()(Ensemble<T_ParticleArray>* ensemble, TGrid* grid, FP timeStep)
         {
-            typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
-
             for (int i = 0; i < pfc::sizeParticleTypes; i++)
-            {
-                T_ParticleArray& particleArray = ensemble->operator[](i);
-                OMP_FOR()
-                OMP_SIMD()
-                for (int i = 0; i < particleArray.size(); i++)
-                {
-                    ParticleProxyType particle = particleArray[i];
-                    FP3 pPos = particle.getPosition();
-                    operator()(&particle, grid->getE(pPos), grid->getB(pPos), timeStep);
-                }
-            }
+                operator()(&ensemble->operator[](i), grid, timeStep);
         };
     };
 

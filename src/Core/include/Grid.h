@@ -295,6 +295,7 @@ namespace pfc {
 
         void setInterpolationType(InterpolationType type);
         InterpolationType getInterpolationType() const;
+        bool isInside(const FP3& coord) const;
 
         void save(std::ostream& ostr);
         void load(std::istream& istr);
@@ -1033,6 +1034,15 @@ namespace pfc {
         Jx.load(istr);
         Jy.load(istr);
         Jz.load(istr);
+    }
+
+    // for particles
+    template<typename Data, GridTypes gridType_>
+    inline bool Grid<Data, gridType_>::isInside(const FP3& coord) const
+    {
+        FP3 minCoords = origin + steps * getNumExternalLeftCells();
+        FP3 maxCoords = minCoords + numInternalCells * steps;
+        return coord >= minCoords && coord <= maxCoords;
     }
 
     /*template<>

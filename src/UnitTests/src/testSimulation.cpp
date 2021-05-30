@@ -1,7 +1,6 @@
 #include <sstream>
 #include "Simulation.h"
 #include "TestingUtility.h"
-
 #include "Grid.h"
 #include "Fdtd.h"
 #include "FieldEntity.h"
@@ -52,4 +51,16 @@ TYPED_TEST(SimulationTest, Simulation_boris_pusher)
     ensemble->addParticle(this->randomParticle(Proton));
     Simulation<YeeGrid, FDTD, ParticleArray3d> simulation(ptrField, ptrEnsemble, ptrPusher);
     simulation.runIteration();
+}
+
+TYPED_TEST(SimulationTest, Simulation_boris_pusher_migration)
+{
+    for (int i = 0; i < 9; i++)
+        ensemble->addParticle(this->randomParticle());
+    ensemble->addParticle(this->randomParticle(Photon));
+    ensemble->addParticle(this->randomParticle(Positron));
+    ensemble->addParticle(this->randomParticle(Proton));
+    Simulation<YeeGrid, FDTD, ParticleArray3d> simulation(ptrField, ptrEnsemble, ptrPusher);
+    simulation.runIteration();   
+    ensemble->getMigrationParticles(fieldEntity->getGrid());
 }
