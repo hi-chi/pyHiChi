@@ -16,6 +16,17 @@ set(simulation_headers
     ${SIMULATION_HEADER_DIR}/Simulation.h)
 add_custom_target(simulation SOURCES ${simulation_headers})
 
+if (USE_MPI)
+    find_package(MPI)
+    if (MPI_FOUND)
+        message(STATUS "MPI FOUND")
+        add_definitions(-DUSE_MPI -DMPICH_IGNORE_CXX_SEEK)
+        include_directories(simulation_mpi ${MPI_INCLUDE_PATH})
+    else()
+        message(STATUS "MPI NOT FOUND")
+    endif()
+endif()
+
 if (USE_OMP)
     find_package(OpenMP)
     if (OPENMP_FOUND)

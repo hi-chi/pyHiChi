@@ -63,5 +63,6 @@ namespace pfc {
         Int3 domainIdx;
         int rank;
         std::vector<Domain*> neighbors[3][3][3];
+
     };
 }

@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 option(USE_MKL OFF)
 option(USE_FFTW OFF)
 option(USE_OMP ON)
+option(USE_MPI OFF)
 
 project(hiChi)
 

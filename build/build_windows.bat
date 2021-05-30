@@ -5,8 +5,9 @@ for %%x in (%*) do (
    set /A argCount+=1
 )
 
-set USE_OPENMP="OFF"
-set GENERATOR="Visual Studio 15 2017"
+set USE_OPENMP="ON"
+set USE_MPI="ON"
+set GENERATOR="Visual Studio 16 2019"
 set USE_FFTW="OFF"
 set USE_MKL="OFF"
 set PYTHON="python"
@@ -48,7 +49,7 @@ if "%1" NEQ "" (
 
 md visual_studio
 cd visual_studio
-cmake -G %GENERATOR% -A x64 -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS=ON -Dgtest_force_shared_crt=ON -DUSE_PTESTS=ON -DBENCHMARK_ENABLE_TESTING=OFF -DUSE_OMP=%USE_OPENMP% -DUSE_FFTW=%USE_FFTW% -DUSE_MKL=%USE_MKL% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
+cmake -G %GENERATOR% -A x64 -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS=ON -Dgtest_force_shared_crt=ON -DUSE_PTESTS=ON -DBENCHMARK_ENABLE_TESTING=OFF -DUSE_OMP=%USE_OPENMP% -DUSE_MPI=%USE_MPI% -DUSE_FFTW=%USE_FFTW% -DUSE_MKL=%USE_MKL% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
 cmake --build . --config Release
 
 xcopy /y src\pyHiChi\Release\* ..\..\bin\* > nul
