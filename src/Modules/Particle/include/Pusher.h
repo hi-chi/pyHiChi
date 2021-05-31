@@ -2,8 +2,6 @@
 #include "Constants.h"
 #include "Species.h"
 #include "FieldValue.h"
-#include "Ensemble.h"
-
 #include <array>
 #include <vector>
 
@@ -71,14 +69,6 @@ namespace pfc
                 FP3 pPos = particle.getPosition();
                 operator()(&particle, grid->getE(pPos), grid->getB(pPos), timeStep);
             }
-        };
-
-        // need fixed? ensemble???
-        template<class T_ParticleArray, class TGrid>
-        inline void operator()(Ensemble<T_ParticleArray>* ensemble, TGrid* grid, FP timeStep)
-        {
-            for (int i = 0; i < pfc::sizeParticleTypes; i++)
-                operator()(&ensemble->operator[](i), grid, timeStep);
         };
     };
 

@@ -62,5 +62,5 @@ TYPED_TEST(SimulationTest, Simulation_boris_pusher_migration)
     ensemble->addParticle(this->randomParticle(Proton));
     Simulation<YeeGrid, FDTD, ParticleArray3d> simulation(ptrField, ptrEnsemble, ptrPusher);
     simulation.runIteration();   
-    ensemble->getMigrationParticles(fieldEntity->getGrid());
+    //ensemble->getMigrationParticles(fieldEntity->getGrid());
 }

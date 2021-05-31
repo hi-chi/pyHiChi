@@ -2,6 +2,39 @@
 #include "Fdtd.h"
 #include <mpi.h>
 
+class MPIDomain : public BaseDomain
+{
+public:
+    MPIDomain(int MPI_rank, int MPI_size, Int3 domainSize)
+    {
+        this->MPI_rank = MPI_rank;
+        this->MPI_size = MPI_size;
+        this->domainSize = domainSize;
+        this->domainIndx = this->getInt3Rank();;
+    }
+    MPIDomain(Int3 domainRank, int MPI_size, Int3 domainSize)
+    {
+        this->MPI_size = MPI_size;
+        this->domainSize = domainSize;
+        this->domainIndx = domainRank;
+        this->MPI_rank = this->getLinearRank();
+    }
+    void init() override
+    {
+        for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+        for (int k = 0; k < 3; k++)
+        {
+            if (i == 1 && j == 1 && k == 1) neighbors[i][j][k] = this;
+            else 
+            {
+                Int3 domainRank(domainIndx.x + i - 1, domainIndx.y + j - 1, domainIndx.z + k - 1);
+                if (isInside(domainRank)) neighbors[i][j][k] = new MPIDomain(domainRank, MPI_size, domainSize);
+                else neighbors[i][j][k] = new NullDomain();
+            }
+        }
+    }
+};
 namespace pfc {
     namespace ParticleInfo {
         std::vector<ParticleType> typesVector = { {constants::electronMass, constants::electronCharge},//electron
@@ -20,9 +53,6 @@ namespace pfc {
 
         //for (int i = 0; i < 9; i++)
         //    ensemble->addParticle(this->randomParticle());
-        //ensemble->addParticle(this->randomParticle(Photon));
-        //ensemble->addParticle(this->randomParticle(Positron));
-        //ensemble->addParticle(this->randomParticle(Proton));
-        BaseSimulation* simulation = new Simulation<YeeGrid, FDTD, ParticleArray3d>(ptrField, ptrEnsemble, ptrPusher);
+        BaseSimulation* simulation = new Simulation<YeeGrid, FDTD, ParticleArray3d>(ptrField, ptrEnsemble, ptrPusher); //BaseSimulation* simulation = new Simulation<YeeGrid, FDTD>(ptrField);
         return 0;
     }
