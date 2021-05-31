@@ -62,20 +62,6 @@ namespace pfc {
             pArrays[particleNames[particle.getType()]].pushBack(particle);
         }
 
-        template<class TGrid>
-        void getMigrationParticles(TGrid* grid)
-        {
-            for (auto& tmp : pArrays)
-            {
-                pArray& particleArray = tmp.second;
-                for (auto& particle : particleArray)
-                {
-                    FP3 coord = particle.getPosition();
-                    grid->isInside(coord);
-                }
-            }
-        }
-
         inline void clear() 
         {
             pArrays.clear();
@@ -120,7 +106,12 @@ namespace pfc {
     class Ensemble<NoParticleArray>
     {
     public:
+        NoParticleArray noParticleArray;
         inline void save(std::ostream& os) {}
         inline void load(std::istream& is) {}
+        inline NoParticleArray& operator[](int ind)
+        {
+            return noParticleArray;
+        }
     };
 } // namespace pfc

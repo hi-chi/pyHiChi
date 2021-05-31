@@ -181,6 +181,11 @@ namespace pfc {
             is.read((char*)particles.data(), sizeof(Particle<dimension>) * size());
         }
 
+        void cutMigratedParticles(std::vector<Particle3d> v[3][3][3], FP3 minCoord, FP3 maxCoord)
+        {
+
+        }
+
     private:
         ParticleTypes typeIndex;
         std::vector<ParticleType> particles;
@@ -340,6 +345,25 @@ namespace pfc {
             gammas.resize(tmp);
             is.read((char*)gammas.data(), sizeof(GammaType) * tmp);
             is.read((char*)&typeIndex, sizeof(typeIndex));
+        }
+
+        void cutMigratedParticles(std::vector<Particle3d> v[3][3][3], FP3 minCoord, FP3 maxCoord)
+        {
+            for (int i = 0; i < this->size(); i++)
+            {
+                Int3 pos(1, 1, 1);
+                for (int j = 0; j < positionDimension; j++)
+                {
+                    if (positions[j][i] > maxCoord[j]) pos[j] = 2;
+                    else if (positions[j][i] < minCoord[j]) pos[j] = 0;
+                }
+                if (pos != Int3(1, 1, 1))
+                {
+                    v[pos.x][pos.y][pos.z].push_back(operator[](i));
+                    deleteParticle(i);
+                    i--;
+                }
+            }
         }
 
     private:
