@@ -5,6 +5,7 @@
 class MPIDomain : public BaseDomain
 {
 public:
+    static int realRank;
     MPI_Request req;
     MPI_Status status;
     MPIDomain(int MPI_rank, int MPI_size, Int3 domainSize)
@@ -13,7 +14,6 @@ public:
         this->MPI_size = MPI_size;
         this->domainSize = domainSize;
         this->domainIndx = this->getInt3Rank();
-        this->init();
     }
     MPIDomain(Int3 domainRank, int MPI_size, Int3 domainSize)
     {
@@ -21,10 +21,10 @@ public:
         this->domainSize = domainSize;
         this->domainIndx = domainRank;
         this->MPI_rank = this->getLinearRank();
-        this->init();
     }
-    void init()
+    void init() override
     {
+        int neib = 0;
         for (int i = 0; i < 3; i++)
         for (int j = 0; j < 3; j++)
         for (int k = 0; k < 3; k++)
@@ -33,33 +33,53 @@ public:
             else 
             {
                 Int3 domainRank(domainIndx.x + i - 1, domainIndx.y + j - 1, domainIndx.z + k - 1);
-                if (isInside(domainRank)) neighbors[i][j][k] = new MPIDomain(domainRank, MPI_size, domainSize);
+                if (isInside(domainRank))
+                {
+                    neighbors[i][j][k] = new MPIDomain(domainRank, MPI_size, domainSize);
+                    neib++;
+                }
                 else neighbors[i][j][k] = new NullDomain();
             }
         }
     }
     void iSend(char* ar, int size, MPI_TAG tag) override
     {
-        MPI_Isend(ar, size, MPI_CHAR, this->MPI_rank, tag, MPI_COMM_WORLD, &req);
+        MPI_Request reqs;
+        if (size > 0)
+        std::cout << "send from " << realRank << " to " << MPI_rank << " size = " << size << endl;
+        MPI_Isend(ar, size, MPI_CHAR, MPI_rank, tag, MPI_COMM_WORLD, &reqs);
     }
-
-    void waitRecive(MPI_TAG tag) override {} // need add tag
+    void barrier() override
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    void waitRecive(MPI_TAG tag) override
+    {
+        isMPImessage = 0;
+        //std::cout << "wait to " << MPI_rank << endl;
+    } // need add tag
     bool isMessage(MPI_TAG tag) override // need add tag
     {
+        if (isMPImessage)
+            return false;
         MPI_Iprobe(MPI_rank, tag, MPI_COMM_WORLD, &isMPImessage, &status);
+        //std::cout << "try wait to " << MPI_rank << endl;
         if (isMPImessage == 1)
         {
-            isMPImessage = 0;
-
+            //std::cout << "successfully wait to " << MPI_rank << endl;
             return true;
         }
         return false;
     }
-    void setMessage(char* ar, int& size, MPI_TAG tag) override 
+    void setMessage(char*& ar, int& size, MPI_TAG tag) override 
     {
         MPI_Get_count(&status, MPI_CHAR, &size);
+        if (size > 0)
+        std::cout << "setMessage from " << realRank << " try get to " << MPI_rank << " size = " << size << endl;
         ar = new char[size];
+        //std::cout << "setMessage from " << realRank << "successfully size=" << size << " Get to " << MPI_rank << endl;
         MPI_Recv(ar, size, MPI_CHAR, MPI_rank, tag, MPI_COMM_WORLD, &status);
+        //std::cout << "setMessage from " << realRank << "successfully size " << size << " MPI_Recv to " << MPI_rank << endl;
     }
 };
 namespace pfc {
@@ -87,29 +107,39 @@ namespace pfc {
         return Particle3d(position, momentum, weight, type);
     }
 }
+int MPIDomain::realRank = 0;
     int main(int argc, char* argv[])
     {
         int size_x = 1, size_y = 1, mpi_size = 1, mpi_rank = 0;
+        FP3 start = FP3(0.0, 0.0, 0.0);
+        FP3 end = FP3(1.0, 1.0, 1.0);
+        FP3 step = FP3(0.01, 0.01, 0.01);
+        Int3 cells = (end - start) / step, size_domain = cells, mpi_indx = Int3(0, 0, 0);
         if (argc > 1)
         {
             size_x = std::stoi(argv[1]);
             size_y = std::stoi(argv[2]);
+            size_domain.x /= size_x;
+            size_domain.y /= size_y;
             MPI_Init(&argc, &argv);
             MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
             MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-            std::cout << mpi_size << " " << mpi_rank << "\n";
-
+            mpi_indx.x = mpi_rank % size_x;
+            mpi_indx.y = mpi_rank / size_x;
+            start = size_domain * mpi_indx * step;
+            end = start + size_domain * step;
+            MPIDomain::realRank = mpi_rank;
         }
-        std::shared_ptr<FieldEntity<YeeGrid, FDTD>> ptrField = std::make_shared<FieldEntity<YeeGrid, FDTD>>(Int3(10, 10, 10), FP3(0.0, 0.0, 0.0), FP3(0.1, 0.1, 0.1), 2e-14);
+        //std::cout << mpi_indx << " " << start << " " << end << endl;
+        std::shared_ptr<FieldEntity<YeeGrid, FDTD>> ptrField = std::make_shared<FieldEntity<YeeGrid, FDTD>>(size_domain, start, step, 2e-14);
         std::shared_ptr<Ensemble<ParticleArray3d>> ptrEnsemble = std::make_shared<Ensemble<ParticleArray3d>>();
         std::shared_ptr<BorisPusher> ptrPusher = std::make_shared<BorisPusher>();
-
-
-
-        for (int i = 0; i < 10000; i++)
-            ptrEnsemble->addParticle(randomParticle());
+        for (int i = 0; i < 100; i++)
+            ptrEnsemble->addParticle(randomParticle(start, end));
         BaseSimulation* simulation = new Simulation<YeeGrid, FDTD, ParticleArray3d>(ptrField, ptrEnsemble, ptrPusher); //BaseSimulation* simulation = new Simulation<YeeGrid, FDTD>(ptrField);
-        for (int i = 0; i < 1; i++)
+        simulation->domain.reset(new MPIDomain(mpi_rank, mpi_size, Int3(size_x, size_y, 1)));
+        simulation->domain->init();
+        for (int i = 0; i < 10; i++)
             simulation->runIteration();
         if (argc > 1) MPI_Finalize();
         return 0;

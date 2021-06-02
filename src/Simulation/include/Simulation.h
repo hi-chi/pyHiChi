@@ -37,7 +37,14 @@ namespace pfc {
             return Int3((MPI_rank % (domainSize.x * domainSize.y)) % domainSize.x, (MPI_rank % (domainSize.x * domainSize.y)) / domainSize.x, MPI_rank / (domainSize.x * domainSize.y));
         }
         bool isInside(Int3 indx) { return indx >= Int3(0, 0, 0) && indx < domainSize; }
-        void init() {};
+        bool allReady()
+        {
+            BaseDomain** tmp = (BaseDomain**)neighbors;
+            for (int i = 0; i < 27; i++)
+                if (tmp[i]->isMPImessage == 0) return false;
+            return true;
+        }
+        virtual void init() {};
 
         virtual void waitRecive(MPI_TAG tag) { isMPImessage = 1; } // need add tag
         virtual bool isMessage(MPI_TAG tag) // need add tag
@@ -52,7 +59,8 @@ namespace pfc {
 
         virtual void iSend(char* ar, int size, MPI_TAG tag){}
         virtual void iRecive(char* ar, int size, MPI_TAG tag) {}
-        virtual void setMessage(char* ar, int &size, MPI_TAG tag) {}
+        virtual void setMessage(char*& ar, int &size, MPI_TAG tag) {}
+        virtual void barrier(){}
         virtual void finalize(){}
     protected:
         int isMPImessage = 0;
@@ -143,39 +151,46 @@ namespace pfc {
                     for (int j = 0; j < 3; j++)
                     for (int k = 0; k < 3; k++)
                     {
-                        char* ar = (char*)&migratedParticles[i][j][k];
-                        const int size = migratedParticles[i][j][k].size() * sizeof(Particle3d);
-                        domain->neighbors[i][j][k]->iSend(ar, size, MPI_TAG::TAG_PARTICLE);
-                        domain->neighbors[i][j][k]->waitRecive(MPI_TAG::TAG_PARTICLE);
-                        sizeParts[i][j][k] += migratedParticles[i][j][k].size();
+                        if (!(i == 1 && j == 1 && k == 1))
+                        {
+                            char* ar = (char*)&migratedParticles[i][j][k];
+                            const int size = migratedParticles[i][j][k].size() * sizeof(Particle3d);
+                            domain->neighbors[i][j][k]->iSend(ar, size, MPI_TAG::TAG_PARTICLE);
+                            domain->neighbors[i][j][k]->waitRecive(MPI_TAG::TAG_PARTICLE);
+                            sizeParts[i][j][k] += migratedParticles[i][j][k].size();
+                        }
                     }
                     BaseDomain** tmpNeighbors = (BaseDomain**)domain->neighbors;
                     int count = 0;
-                    while (count != 27)
+                    while (count != 26)
                     for (int i = 0; i < 3*3*3; i++)
                     {
-                        if (tmpNeighbors[i]->isMessage(MPI_TAG::TAG_PARTICLE))
+                        if (i != 13 && tmpNeighbors[i]->isMessage(MPI_TAG::TAG_PARTICLE))
                         {
                             count++;
                             int size = 0;
                             char* ar = 0;
                             tmpNeighbors[i]->setMessage(ar, size, MPI_TAG::TAG_PARTICLE);
                             Particle3d* parts = (Particle3d*)ar;
-                            // copy ar to Ensemble
-                            for (int i = 0; i < size / sizeof(Particle3d); i++)
-                                particleArr->pushBack(*parts);
-                            if (ar) delete ar;
+                            if (size > 0) {
+                                size /= sizeof(Particle3d);
+                                for (int i = 0; i < size; i++)
+                                    particleArr->pushBack(parts[i]);
+                                delete ar;
+                            }
                         }
+                        //if (count > 26)
+                        //std::cout << "count " << count << endl;
                     }
                 }
-
             }
-            std::cout << curIteration << " ";
-            for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-            for (int k = 0; k < 3; k++)
-                if (sizeParts[i][j][k] > 0) std::cout << Int3(i, j, k) << " " << sizeParts[i][j][k] << " ";
-            std::cout << "\n";
+            domain->barrier();
+            //std::cout << curIteration << endl;;
+            //for (int i = 0; i < 3; i++)
+            //for (int j = 0; j < 3; j++)
+            //for (int k = 0; k < 3; k++)
+            //    if (sizeParts[i][j][k] > 0) std::cout << Int3(i, j, k) << " " << sizeParts[i][j][k] << " ";
+            //std::cout << endl;
             curIteration++;
         }
         void run()
