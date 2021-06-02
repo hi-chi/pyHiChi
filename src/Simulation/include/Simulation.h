@@ -37,11 +37,25 @@ namespace pfc {
             return Int3((MPI_rank % (domainSize.x * domainSize.y)) % domainSize.x, (MPI_rank % (domainSize.x * domainSize.y)) / domainSize.x, MPI_rank / (domainSize.x * domainSize.y));
         }
         bool isInside(Int3 indx) { return indx >= Int3(0, 0, 0) && indx < domainSize; }
+        void init() {};
 
-        virtual void init() {};
+        virtual void waitRecive(MPI_TAG tag) { isMPImessage = 1; } // need add tag
+        virtual bool isMessage(MPI_TAG tag) // need add tag
+        {
+            if (isMPImessage == 1)
+            {
+                isMPImessage = 0;
+                return true;
+            }
+            return false;
+        }
+
         virtual void iSend(char* ar, int size, MPI_TAG tag){}
-        virtual void iRecive(char* ar, int size, MPI_TAG tag){} // ????
+        virtual void iRecive(char* ar, int size, MPI_TAG tag) {}
+        virtual void setMessage(char* ar, int &size, MPI_TAG tag) {}
         virtual void finalize(){}
+    protected:
+        int isMPImessage = 0;
     };
 
     class NullDomain : public BaseDomain
@@ -52,7 +66,11 @@ namespace pfc {
     class SingleDomain : public BaseDomain
     {
     public:
-        void init() override
+        SingleDomain()
+        {
+            this->init();
+        }
+        void init()
         {
             for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
@@ -92,13 +110,11 @@ namespace pfc {
 
         Simulation(const std::shared_ptr<FieldEntity<TGrid, TFieldSolver>>& field) : field(field) {
             domain.reset(new SingleDomain());
-            domain->init(); // need fixed
         }
         Simulation(const std::shared_ptr<FieldEntity<TGrid, TFieldSolver>>& field,
                    const std::shared_ptr<Ensemble<TParticleArray>>& ensemble,
                    const std::shared_ptr<BorisPusher>& particlePusher): field(field), ensemble(ensemble), particlePusher(particlePusher) {
             domain.reset(new SingleDomain());
-            domain->init(); // need fixed
         }
 
         void save(std::ostream& ostr) override
@@ -111,6 +127,7 @@ namespace pfc {
             field->load(istr);
             if (ensemble) ensemble->load(istr);
         }
+        int sizeParts[3][3][3] = {0};
         void runIteration() override
         {
             field->getFieldSolver()->updateFields();
@@ -120,22 +137,45 @@ namespace pfc {
                 {
                     TParticleArray* particleArr = &(*ensemble)[i];
                     particlePusher->operator()(particleArr, field->getGrid(), field->getFieldSolver()->dt);
-                    std::vector<Particle3d> migratedParticles[3][3][3]; // need fixed
+                    std::vector<Particle3d> migratedParticles[3][3][3];
                     particleArr->cutMigratedParticles(migratedParticles, field->getGrid()->getMinInternalCoord(), field->getGrid()->getMaxInternalCoord());
                     for (int i = 0; i < 3; i++)
                     for (int j = 0; j < 3; j++)
                     for (int k = 0; k < 3; k++)
                     {
-                        if (!(i == 1 && j == 1 && k == 1))
+                        char* ar = (char*)&migratedParticles[i][j][k];
+                        const int size = migratedParticles[i][j][k].size() * sizeof(Particle3d);
+                        domain->neighbors[i][j][k]->iSend(ar, size, MPI_TAG::TAG_PARTICLE);
+                        domain->neighbors[i][j][k]->waitRecive(MPI_TAG::TAG_PARTICLE);
+                        sizeParts[i][j][k] += migratedParticles[i][j][k].size();
+                    }
+                    BaseDomain** tmpNeighbors = (BaseDomain**)domain->neighbors;
+                    int count = 0;
+                    while (count != 27)
+                    for (int i = 0; i < 3*3*3; i++)
+                    {
+                        if (tmpNeighbors[i]->isMessage(MPI_TAG::TAG_PARTICLE))
                         {
-                            char* ar = (char*)&migratedParticles[i][j][k];
-                            const int size = migratedParticles[i][j][k].size() * sizeof(Particle3d);
-                            domain->neighbors[i][j][k]->iSend(ar, size, MPI_TAG::TAG_PARTICLE);
+                            count++;
+                            int size = 0;
+                            char* ar = 0;
+                            tmpNeighbors[i]->setMessage(ar, size, MPI_TAG::TAG_PARTICLE);
+                            Particle3d* parts = (Particle3d*)ar;
+                            // copy ar to Ensemble
+                            for (int i = 0; i < size / sizeof(Particle3d); i++)
+                                particleArr->pushBack(*parts);
+                            if (ar) delete ar;
                         }
                     }
                 }
 
             }
+            std::cout << curIteration << " ";
+            for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+            for (int k = 0; k < 3; k++)
+                if (sizeParts[i][j][k] > 0) std::cout << Int3(i, j, k) << " " << sizeParts[i][j][k] << " ";
+            std::cout << "\n";
             curIteration++;
         }
         void run()
