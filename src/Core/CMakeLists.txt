@@ -32,7 +32,7 @@ set(core_headers
     ${CORE_HEADER_DIR}/macros.h)
 
 set(coreSYCL_headers
-    ${CORE_HEADER_DIR}/sycl/ParticleArray.h
+    ${CORE_HEADER_DIR}/sycl/ParticleArraySYCL.h
     ${CORE_HEADER_DIR}/sycl/DeviceSYCL.h
     ${CORE_HEADER_DIR}/sycl/SpeciesSYCL.h)
 
