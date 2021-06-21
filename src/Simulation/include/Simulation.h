@@ -19,6 +19,7 @@ namespace pfc {
         int MPI_rank = 0;
         int MPI_size = 1;
         BaseDomain* neighbors[3][3][3];
+
         std::vector<BaseDomain*> jaggedNeighbors;
         int getLinearRank(Int3 indx)
         {
@@ -37,17 +38,10 @@ namespace pfc {
             return Int3((MPI_rank % (domainSize.x * domainSize.y)) % domainSize.x, (MPI_rank % (domainSize.x * domainSize.y)) / domainSize.x, MPI_rank / (domainSize.x * domainSize.y));
         }
         bool isInside(Int3 indx) { return indx >= Int3(0, 0, 0) && indx < domainSize; }
-        bool allReady()
-        {
-            BaseDomain** tmp = (BaseDomain**)neighbors;
-            for (int i = 0; i < 27; i++)
-                if (tmp[i]->isMPImessage == 0) return false;
-            return true;
-        }
         virtual void init() {};
 
         virtual void waitRecive(MPI_TAG tag) { isMPImessage = 1; } // need add tag
-        virtual bool isMessage(MPI_TAG tag) // need add tag
+        virtual bool isMessage(MPI_TAG tag) // need add tag to bool
         {
             if (isMPImessage == 1)
             {
@@ -59,7 +53,8 @@ namespace pfc {
 
         virtual void iSend(char* ar, int size, MPI_TAG tag){}
         virtual void iRecive(char* ar, int size, MPI_TAG tag) {}
-        virtual void setMessage(char*& ar, int &size, MPI_TAG tag) {}
+        virtual void Recive(char*& ar, int& size, MPI_TAG tag) {}
+        virtual int setMessage(char*& ar, MPI_TAG tag) { return 0; }
         virtual void barrier(){}
         virtual void finalize(){}
     protected:
@@ -138,6 +133,9 @@ namespace pfc {
         int sizeParts[3][3][3] = {0};
         void runIteration() override
         {
+            if (domain->MPI_rank == 0)
+                std::cout << curIteration << endl;
+            std::cout << "particle in " << domain->MPI_rank << " " << ensemble->size() << endl;
             field->getFieldSolver()->updateFields();
             if (particlePusher)
             {
@@ -146,51 +144,40 @@ namespace pfc {
                     TParticleArray* particleArr = &(*ensemble)[i];
                     particlePusher->operator()(particleArr, field->getGrid(), field->getFieldSolver()->dt);
                     std::vector<Particle3d> migratedParticles[3][3][3];
+
                     particleArr->cutMigratedParticles(migratedParticles, field->getGrid()->getMinInternalCoord(), field->getGrid()->getMaxInternalCoord());
                     for (int i = 0; i < 3; i++)
                     for (int j = 0; j < 3; j++)
                     for (int k = 0; k < 3; k++)
                     {
-                        if (!(i == 1 && j == 1 && k == 1))
-                        {
-                            char* ar = (char*)&migratedParticles[i][j][k];
-                            const int size = migratedParticles[i][j][k].size() * sizeof(Particle3d);
-                            domain->neighbors[i][j][k]->iSend(ar, size, MPI_TAG::TAG_PARTICLE);
-                            domain->neighbors[i][j][k]->waitRecive(MPI_TAG::TAG_PARTICLE);
-                            sizeParts[i][j][k] += migratedParticles[i][j][k].size();
-                        }
+                        char* ar = (char*)&migratedParticles[i][j][k];
+                        const int size = migratedParticles[i][j][k].size() * sizeof(Particle3d);
+                        domain->neighbors[i][j][k]->iSend(ar, size, MPI_TAG::TAG_PARTICLE);
+                        domain->neighbors[i][j][k]->waitRecive(MPI_TAG::TAG_PARTICLE);
+                        sizeParts[i][j][k] += migratedParticles[i][j][k].size();
                     }
                     BaseDomain** tmpNeighbors = (BaseDomain**)domain->neighbors;
-                    int count = 0;
-                    while (count != 26)
+                    for (int count = 0; count < 27;)
                     for (int i = 0; i < 3*3*3; i++)
                     {
-                        if (i != 13 && tmpNeighbors[i]->isMessage(MPI_TAG::TAG_PARTICLE))
+                        if (tmpNeighbors[i]->isMessage(MPI_TAG::TAG_PARTICLE))
                         {
                             count++;
-                            int size = 0;
                             char* ar = 0;
-                            tmpNeighbors[i]->setMessage(ar, size, MPI_TAG::TAG_PARTICLE);
+                            int byte_size = tmpNeighbors[i]->setMessage(ar, MPI_TAG::TAG_PARTICLE);
                             Particle3d* parts = (Particle3d*)ar;
-                            if (size > 0) {
-                                size /= sizeof(Particle3d);
-                                for (int i = 0; i < size; i++)
-                                    particleArr->pushBack(parts[i]);
+                            if (byte_size > 0)
+                            {
+                                std::cout << "MPI_rank " << domain->MPI_rank << " byte_size " << byte_size << endl;
+                                for (int j = 0; j < byte_size / sizeof(Particle3d); j++)
+                                    particleArr->pushBack(parts[j]);
                                 delete ar;
                             }
                         }
-                        //if (count > 26)
-                        //std::cout << "count " << count << endl;
                     }
+                    domain->barrier();
                 }
             }
-            domain->barrier();
-            //std::cout << curIteration << endl;;
-            //for (int i = 0; i < 3; i++)
-            //for (int j = 0; j < 3; j++)
-            //for (int k = 0; k < 3; k++)
-            //    if (sizeParts[i][j][k] > 0) std::cout << Int3(i, j, k) << " " << sizeParts[i][j][k] << " ";
-            //std::cout << endl;
             curIteration++;
         }
         void run()

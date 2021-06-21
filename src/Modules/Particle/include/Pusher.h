@@ -24,7 +24,7 @@ namespace pfc
     {
     public:
         template<class T_Particle>
-        inline void operator()(T_Particle* particle, FP3& e, FP3& b, FP timeStep)
+        inline void operator()(T_Particle* particle, const FP3& e, const FP3& b, FP timeStep)
         {
             FP eCoeff = timeStep * particle->getCharge() / (2 * particle->getMass() * Constants<FP>::lightVelocity());
             FP3 eMomentum = e * eCoeff;

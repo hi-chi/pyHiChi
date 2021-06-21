@@ -181,7 +181,7 @@ namespace pfc {
             is.read((char*)particles.data(), sizeof(Particle<dimension>) * size());
         }
 
-        void cutMigratedParticles(std::vector<Particle3d> v[3][3][3], FP3 minCoord, FP3 maxCoord)
+        void cutMigratedParticles(std::vector<Particle3d> v[3][3][3], const FP3& minCoord, const FP3& maxCoord)
         {
 
         }
@@ -347,7 +347,12 @@ namespace pfc {
             is.read((char*)&typeIndex, sizeof(typeIndex));
         }
 
-        void cutMigratedParticles(std::vector<Particle3d> v[3][3][3], FP3 minCoord, FP3 maxCoord)
+        void checkParticlePos()
+        {
+
+        }
+
+        void cutMigratedParticles(std::vector<Particle3d> v[3][3][3], const FP3& minCoord, const FP3& maxCoord)
         {
             for (int i = 0; i < this->size(); i++)
             {
