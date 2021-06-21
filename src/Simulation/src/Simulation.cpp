@@ -44,7 +44,6 @@ public:
     }
     void iSend(char* ar, int size, MPI_TAG tag) override
     {
-        //std::cout << "send from " << MPIDomain::realRank << " to " << MPI_rank << " size " << size << endl;
         MPI_Isend(ar, size, MPI_CHAR, MPI_rank, tag, MPI_COMM_WORLD, &req);
     }
     void barrier() override
@@ -54,11 +53,8 @@ public:
     void Recive(char*& ar, int& size, MPI_TAG tag) override
     {
         int tmp = 0;
-        //std::cout << "try_prob from " << MPIDomain::realRank << " to " << MPI_rank << " size " << size << endl;
         while (tmp != 1) { MPI_Iprobe(MPI_rank, tag, MPI_COMM_WORLD, &tmp, &status);}
-        //std::cout << "suc_prob from " << MPIDomain::realRank << " to " << MPI_rank << " size " << size << endl;
         MPI_Get_count(&status, MPI_CHAR, &size);
-        //std::cout << "recive from " << MPIDomain::realRank << " to " << MPI_rank << " size " << size << endl;
         ar = new char[size];
         MPI_Recv(ar, size, MPI_CHAR, MPI_rank, tag, MPI_COMM_WORLD, &status);
     }

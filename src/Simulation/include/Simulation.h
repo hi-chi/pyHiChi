@@ -21,17 +21,9 @@ namespace pfc {
         BaseDomain* neighbors[3][3][3];
 
         std::vector<BaseDomain*> jaggedNeighbors;
-        int getLinearRank(Int3 indx)
-        {
-            return domainSize.x * domainSize.y * indx.z + domainSize.x * indx.y + indx.x;
-        }
         int getLinearRank()
         {
             return domainSize.x * domainSize.y * domainIndx.z + domainSize.x * domainIndx.y + domainIndx.x;
-        }
-        Int3 getInt3Rank(int indx)
-        {
-            return Int3((indx % (domainSize.x * domainSize.y)) % domainSize.x, (indx % (domainSize.x * domainSize.y)) / domainSize.x, indx / (domainSize.x * domainSize.y));
         }
         Int3 getInt3Rank()
         {
@@ -69,26 +61,19 @@ namespace pfc {
     class SingleDomain : public BaseDomain
     {
     public:
-        SingleDomain()
-        {
-            this->init();
-        }
         void init()
         {
             for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
             for (int k = 0; k < 3; k++)
-            {
-                if (i == 1 && j == 1 && k == 1) neighbors[i][j][k] = this;
-                else neighbors[i][j][k] = new NullDomain();
-            }
+                neighbors[i][j][k] = new NullDomain();
         }
         ~SingleDomain()
         {
             for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
             for (int k = 0; k < 3; k++)
-                if (!(i == 1 && j == 1 && k == 1)) delete neighbors[i][j][k];
+                delete neighbors[i][j][k];
         }
     };
 
