@@ -45,36 +45,25 @@ public:
     void iSend(char* ar, int size, MPI_TAG tag) override
     {
         MPI_Isend(ar, size, MPI_CHAR, MPI_rank, tag, MPI_COMM_WORLD, &req);
-    }
+        isNewMessage = 0;
+    } // need add tag
     void barrier() override
     {
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    void Recive(char*& ar, int& size, MPI_TAG tag) override
-    {
-        int tmp = 0;
-        while (tmp != 1) { MPI_Iprobe(MPI_rank, tag, MPI_COMM_WORLD, &tmp, &status);}
-        MPI_Get_count(&status, MPI_CHAR, &size);
-        ar = new char[size];
-        MPI_Recv(ar, size, MPI_CHAR, MPI_rank, tag, MPI_COMM_WORLD, &status);
-    }
-    void waitRecive(MPI_TAG tag) override
-    {
-        isMPImessage = 0;
-    } // need add tag
     bool isMessage(MPI_TAG tag) override // need add tag
     {
-        if (isMPImessage)
+        if (isNewMessage)
             return false;
-        MPI_Iprobe(MPI_rank, tag, MPI_COMM_WORLD, &isMPImessage, &status);
-        if (isMPImessage == 1)
+        MPI_Iprobe(MPI_rank, tag, MPI_COMM_WORLD, &isNewMessage, &status);
+        if (isNewMessage == 1)
             return true;
         return false;
     }
-    int setMessage(char*& ar, MPI_TAG tag) override
+    int getMessage(char*& ar, MPI_TAG tag) override
     {
-        int size = 0;
-        MPI_Get_count(&status, MPI_CHAR, &size);
+        int size = status.count_lo;
+        //MPI_Get_count(&status, MPI_CHAR, &size);
         ar = new char[size];
         MPI_Recv(ar, size, MPI_CHAR, MPI_rank, tag, MPI_COMM_WORLD, &status);
         return size;

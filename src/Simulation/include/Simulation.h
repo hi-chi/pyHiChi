@@ -31,26 +31,22 @@ namespace pfc {
         }
         bool isInside(Int3 indx) { return indx >= Int3(0, 0, 0) && indx < domainSize; }
         virtual void init() {};
-
-        virtual void waitRecive(MPI_TAG tag) { isMPImessage = 1; } // need add tag
         virtual bool isMessage(MPI_TAG tag) // need add tag to bool
         {
-            if (isMPImessage == 1)
+            if (isNewMessage == 1)
             {
-                isMPImessage = 0;
+                isNewMessage = 0;
                 return true;
             }
             return false;
         }
 
-        virtual void iSend(char* ar, int size, MPI_TAG tag){}
-        virtual void iRecive(char* ar, int size, MPI_TAG tag) {}
-        virtual void Recive(char*& ar, int& size, MPI_TAG tag) {}
-        virtual int setMessage(char*& ar, MPI_TAG tag) { return 0; }
+        virtual void iSend(char* ar, int size, MPI_TAG tag){ isNewMessage = 1; } // need add tag
+        virtual int getMessage(char*& ar, MPI_TAG tag) { return 0; }
         virtual void barrier(){}
         virtual void finalize(){}
     protected:
-        int isMPImessage = 0;
+        int isNewMessage = 0;
     };
 
     class NullDomain : public BaseDomain
@@ -138,7 +134,6 @@ namespace pfc {
                         char* ar = (char*)&migratedParticles[i][j][k];
                         const int size = migratedParticles[i][j][k].size() * sizeof(Particle3d);
                         domain->neighbors[i][j][k]->iSend(ar, size, MPI_TAG::TAG_PARTICLE);
-                        domain->neighbors[i][j][k]->waitRecive(MPI_TAG::TAG_PARTICLE);
                         sizeParts[i][j][k] += migratedParticles[i][j][k].size();
                     }
                     BaseDomain** tmpNeighbors = (BaseDomain**)domain->neighbors;
@@ -149,7 +144,7 @@ namespace pfc {
                         {
                             count++;
                             char* ar = 0;
-                            int byte_size = tmpNeighbors[i]->setMessage(ar, MPI_TAG::TAG_PARTICLE);
+                            int byte_size = tmpNeighbors[i]->getMessage(ar, MPI_TAG::TAG_PARTICLE);
                             Particle3d* parts = (Particle3d*)ar;
                             if (byte_size > 0)
                             {
