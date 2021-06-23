@@ -4,6 +4,7 @@
 #include "Ensemble.h"
 #include "Pusher.h"
 #include <memory>
+#include <fstream>
 
 namespace pfc {
     enum MPI_TAG
@@ -11,6 +12,16 @@ namespace pfc {
         TAG_PARTICLE,
         TAG_FIELD
     };
+    struct Logger
+    {
+        std::unique_ptr<std::ofstream> pLogger;
+        Logger()
+        {
+            pLogger.reset(new std::ofstream("log.txt"));
+        }
+        std::ostream& operator*() { return *pLogger; }
+    };
+
     class BaseDomain
     {
     public:
@@ -29,8 +40,14 @@ namespace pfc {
         {
             return Int3((MPI_rank % (domainSize.x * domainSize.y)) % domainSize.x, (MPI_rank % (domainSize.x * domainSize.y)) / domainSize.x, MPI_rank / (domainSize.x * domainSize.y));
         }
+        Int3 getInt3Rank(int rank)
+        {
+            return Int3(rank % );
+        }
         bool isInside(Int3 indx) { return indx >= Int3(0, 0, 0) && indx < domainSize; }
         virtual void init() {};
+        virtual void setLogger(Logger& logger) {}
+
         virtual bool isMessage(MPI_TAG tag) // need add tag to bool
         {
             if (isNewMessage == 1)
@@ -40,7 +57,6 @@ namespace pfc {
             }
             return false;
         }
-
         virtual void iSend(char* ar, int size, MPI_TAG tag){ isNewMessage = 1; } // need add tag
         virtual int getMessage(char*& ar, MPI_TAG tag) { return 0; }
         virtual void barrier(){}
@@ -48,15 +64,17 @@ namespace pfc {
     protected:
         int isNewMessage = 0;
     };
-
     class NullDomain : public BaseDomain
     {
     public:
     };
-
     class SingleDomain : public BaseDomain
     {
     public:
+        SingleDomain()
+        {
+            init();
+        }
         void init()
         {
             for (int i = 0; i < 3; i++)
@@ -78,6 +96,7 @@ namespace pfc {
         size_t curIteration = 0;
         size_t numIteration = 0;
         std::unique_ptr<BaseDomain> domain = 0;
+        Logger logger = Logger();
 
         virtual void save(std::ostream& ostr) = 0;
         virtual void load(std::istream& ostr) = 0;
@@ -115,8 +134,8 @@ namespace pfc {
         void runIteration() override
         {
             if (domain->MPI_rank == 0)
-                std::cout << curIteration << endl;
-            std::cout << "particle in " << domain->MPI_rank << " " << ensemble->size() << endl;
+                *logger << curIteration << endl;
+            *logger << "particle in " << domain->MPI_rank << " " << ensemble->size() << endl;
             field->getFieldSolver()->updateFields();
             if (particlePusher)
             {
@@ -146,13 +165,15 @@ namespace pfc {
                             char* ar = 0;
                             int byte_size = tmpNeighbors[i]->getMessage(ar, MPI_TAG::TAG_PARTICLE);
                             Particle3d* parts = (Particle3d*)ar;
+                            *logger << "Start recieve " << domain->getInt3Rank(i) << endl;
                             if (byte_size > 0)
                             {
-                                std::cout << "MPI_rank " << domain->MPI_rank << " byte_size " << byte_size << endl;
+                                *logger << "Recieve from: MPI_rank " << domain->MPI_rank << " byte_size " << byte_size << endl;
                                 for (int j = 0; j < byte_size / sizeof(Particle3d); j++)
                                     particleArr->pushBack(parts[j]);
                                 delete ar;
                             }
+                            *logger << "End recieve" << endl;
                         }
                     }
                     domain->barrier();

@@ -36,7 +36,7 @@ TYPED_TEST(SimulationTest, Simulation_save_load)
     Simulation<YeeGrid, FDTD, ParticleArray3d> simulation(ptrField);
     std::stringstream sstr;
     simulation.save(sstr);
-    simulation = Simulation<YeeGrid, FDTD, ParticleArray3d>(ptrTmp);
+    //simulation = Simulation<YeeGrid, FDTD, ParticleArray3d>(ptrTmp);
     simulation.load(sstr);
     ASSERT_EQ(fieldEntity->fieldSolver->dt, simulation.field->fieldSolver->dt);
     ASSERT_EQ(fieldEntity->grid->numCells, simulation.field->grid->numCells);

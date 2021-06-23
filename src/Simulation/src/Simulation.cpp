@@ -5,7 +5,6 @@
 class MPIDomain : public BaseDomain
 {
 public:
-    static int realRank;
     MPI_Request req;
     MPI_Status status;
     MPIDomain(int MPI_rank, int MPI_size, Int3 domainSize)
@@ -22,6 +21,7 @@ public:
         this->domainIndx = domainRank;
         this->MPI_rank = this->getLinearRank();
     }
+
     void init() override
     {
         int neib = 0;
@@ -42,6 +42,11 @@ public:
             }
         }
     }
+    void setLogger(Logger& logger) override
+    {
+        logger.pLogger.reset(new std::ofstream("log_" + std::to_string(MPI_rank) + ".txt"));
+    }
+
     void iSend(char* ar, int size, MPI_TAG tag) override
     {
         MPI_Isend(ar, size, MPI_CHAR, MPI_rank, tag, MPI_COMM_WORLD, &req);
@@ -94,7 +99,6 @@ namespace pfc {
         return Particle3d(position, momentum, weight, type);
     }
 }
-int MPIDomain::realRank = 0;
     int main(int argc, char* argv[])
     {
         int size_x = 1, size_y = 1, mpi_size = 1, mpi_rank = 0;
@@ -116,7 +120,6 @@ int MPIDomain::realRank = 0;
             mpi_indx.y = mpi_rank / size_x;
             start = size_domain * mpi_indx * step;
             end = start + size_domain * step;
-            MPIDomain::realRank = mpi_rank;
         }
         std::shared_ptr<FieldEntity<YeeGrid, FDTD>> ptrField = std::make_shared<FieldEntity<YeeGrid, FDTD>>(size_domain, start, step, 2e-14);
         std::shared_ptr<Ensemble<ParticleArray3d>> ptrEnsemble = std::make_shared<Ensemble<ParticleArray3d>>();
@@ -126,11 +129,12 @@ int MPIDomain::realRank = 0;
 
         BaseSimulation* simulation = new Simulation<YeeGrid, FDTD, ParticleArray3d>(ptrField, ptrEnsemble, ptrPusher); //BaseSimulation* simulation = new Simulation<YeeGrid, FDTD>(ptrField);
         simulation->domain.reset(new MPIDomain(mpi_rank, mpi_size, Int3(size_x, size_y, 1)));
+        simulation->domain->setLogger(simulation->logger);
         //simulation->domain.reset(new SingleDomain());
         simulation->domain->init();
 
         int t = clock();
-        for (int i = 0; i < 1000; i++)
+        for (int i = 0; i < 100; i++)
             simulation->runIteration();
         std::cout << "time " << (clock() - t) << endl;
 
