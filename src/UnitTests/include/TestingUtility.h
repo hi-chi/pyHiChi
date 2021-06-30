@@ -48,6 +48,14 @@ using namespace pfc;
 // if expected value is not near zero, expect relative error is smaller than
 // m_maxRelativeError, else expect absolute error is smaller than
 // m_maxAbsoluteError.
+#define ASSERT_NEAR_VECTOR_D(expected, actual, dimension) \
+    if ((expected).norm() > this->maxAbsoluteError) \
+        for (int d = 0; d < dimension; d++) \
+            ASSERT_LE(abs(((expected))[d] - ((actual))[d]) / (expected).norm(), this->maxRelativeError); \
+    else \
+        for (int d = 0; d < dimension; d++) \
+            ASSERT_LE(abs(((expected))[d] - ((actual))[d]), this->maxAbsoluteError);
+
 #define ASSERT_NEAR_VECTOR(expected, actual) \
     if ((expected).norm() > this->maxAbsoluteError) \
         ASSERT_LE(dist(expected, actual) / (expected).norm(), this->maxRelativeError); \
