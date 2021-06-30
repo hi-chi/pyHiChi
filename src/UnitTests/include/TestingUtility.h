@@ -123,7 +123,11 @@ public:
     virtual void SetUp()
     {
         BaseFixture::SetUp();
-
+#ifndef PFC_USE_SINGLE_PRECISION
+        this->maxRelativeError = 1e-12;
+#else
+        this->maxRelativeError = 1e-6;
+#endif // #ifndef PFC_USE_SINGLE_PRECISION
     }
 
     // Helper function to unify initialization of positions for 1d, 2d and 3d
@@ -161,11 +165,11 @@ public:
     template<class ConstParticleRef1, class ConstParticleRef2>
     bool eqParticles_(ConstParticleRef1& a, ConstParticleRef2& b) const
     {
-        return (a.getPosition() == b.getPosition()) &&
-            (a.getMomentum() == b.getMomentum()) &&
+        return ((a.getPosition() - b.getPosition()).norm()/ a.getPosition().norm() < this->maxRelativeError) &&
+            ((a.getMomentum() - b.getMomentum()).norm()/ a.getMomentum().norm() < this->maxRelativeError) &&
             (a.getMass() == b.getMass()) &&
             (a.getCharge() == b.getCharge()) &&
-            (a.getWeight() == b.getWeight());
+            (abs(a.getWeight() - b.getWeight()) < this->maxRelativeError);
     }
 };
 
@@ -198,14 +202,15 @@ public:
 
     bool eqParticleArrays(SpeciesArray& a, SpeciesArray& b) const
     {
-        if (a.size() != b.size())
+        /*if (a.size() != b.size())
             return false;
         for (int i = 0; i < a.size(); i++)
         {
             if (!this->eqParticles_(a[i], b[i]))
                 return false;
         }
-        return true;
+        return true;*/
+        return ParticleArrayTest<SpeciesArrayType>::eqParticleArrays(a, b);
     }
 };
 
