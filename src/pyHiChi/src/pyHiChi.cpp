@@ -28,6 +28,7 @@
 #include "Enums.h"
 #include "Mapping.h"
 #include "FieldConfiguration.h"
+#include "res_solver.h"
 
 
 #define SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)                \
@@ -548,4 +549,21 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("get_B", &TightFocusingField::getB)
         ;
 
+	// -------------------- other functions ------------------------ 
+
+	py::class_<res_solver>(object, "res_solver")
+		.def(py::init<int, int, int, double, double, double>())
+		.def("E_in_set", &res_solver::E_in_set)
+		.def("N_plasma_set", &res_solver::N_plasma_set)
+		.def("incidence_angle_set", &res_solver::incidence_angle_set)
+		.def("compute", &res_solver::compute)
+		.def("Ey_out_get", &res_solver::Ey_out_get)
+		.def("Ez_out_get", &res_solver::Ez_out_get)
+		.def("initiate_x_s_tracking", &res_solver::initiate_x_s_tracking)
+		.def("x_s_get", &res_solver::x_s_get)
+		.def_readwrite("time_step", &res_solver::time_step)
+		.def_readwrite("beta_bound", &res_solver::beta_bound)
+		.def_readwrite("max_time_factor", &res_solver::max_time_factor)
+		.def_readwrite("x_s_bound_factor", &res_solver::x_s_bound_factor)
+		;
 }

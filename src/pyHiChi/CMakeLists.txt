@@ -21,6 +21,7 @@ endif()
 
 set(pyHiChi_source
     include/pyField.h
+	include/res_solver.h
     src/pyHiChi.cpp)
 
 pybind11_add_module(pyHiChi ${pyHiChi_source})
