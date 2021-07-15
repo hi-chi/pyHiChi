@@ -15,12 +15,25 @@
 #endif
 
 
-#if _OPENMP >= 201307
-    #define OMP_FOR()   __pragma("omp parallel for")
-    #define OMP_FOR_COLLAPSE()   __pragma("omp parallel for collapse(2)")
-    #define OMP_SIMD()  __pragma("omp simd")
+#ifdef _MSC_VER
+    #if _MSC_VER >= 1926
+        #define PRAGMA(opt) _Pragma(opt)
+    #else
+        #define PRAGMA(opt) __pragma(opt)
+    #endif
 #else
-    #define OMP_FOR()   __pragma("omp parallel for")
-    #define OMP_FOR_COLLAPSE()   __pragma("omp parallel for")
-    #define OMP_SIMD()  __pragma("ivdep")
+    #define PRAGMA(opt) _Pragma(opt)
+#endif
+
+
+#if _OPENMP >= 201307
+    #define OMP_FOR()   PRAGMA("omp parallel for")
+    #define OMP_FOR_COLLAPSE()   PRAGMA("omp parallel for collapse(2)")
+    #define OMP_FOR_SIMD()  PRAGMA("omp parallel for simd")
+    #define OMP_SIMD()  PRAGMA("omp simd")
+#else
+    #define OMP_FOR()   PRAGMA("omp parallel for")
+    #define OMP_FOR_COLLAPSE()   PRAGMA("omp parallel for")
+    #define OMP_FOR_SIMD()  PRAGMA("omp parallel for")
+    #define OMP_SIMD()  PRAGMA("ivdep")
 #endif

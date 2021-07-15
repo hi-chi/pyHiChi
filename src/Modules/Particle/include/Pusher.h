@@ -44,8 +44,7 @@ namespace pfc
         {
             typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
 
-            OMP_FOR()
-            OMP_SIMD()
+            OMP_FOR_SIMD()
             for (int i = 0; i < particleArray->size(); i++)
             {
                 ParticleProxyType particle = (*particleArray)[i];
@@ -84,8 +83,7 @@ namespace pfc
         {
             typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
 
-            OMP_FOR()
-            OMP_SIMD()
+            OMP_FOR_SIMD()
             for (int i = 0; i < particleArray->size(); i++)
             {
                 ParticleProxyType particle = (*particleArray)[i];
