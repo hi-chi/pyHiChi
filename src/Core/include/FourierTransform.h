@@ -28,8 +28,7 @@ namespace pfc
 
     class ArrayFourierTransform3d {
 #ifdef __USE_FFT__
-        Int3 size;
-        size_t memSizeRealData;
+        Int3 size, memSizeRealData;
         fftw_plan plans[2];  // RtoC/CtoR
         FP* realData;
         complexFP* complexData;
@@ -45,7 +44,7 @@ namespace pfc
         }
 
         void initialize(FP* _realData, complexFP* _complexData,
-            Int3 _size, int _memSizeRealData)
+            Int3 _size, Int3 _memSizeRealData)
         {
             size = _size;
             memSizeRealData = _memSizeRealData;
@@ -66,17 +65,20 @@ namespace pfc
         void doInverseFourierTransform()
         {
             fftw_execute(plans[fourier_transform::Direction::CtoR]);
-            FP normCoeff = (FP)size.x*size.y*size.z;
-            OMP_FOR()
-            for (int i = 0; i < memSizeRealData; i++)
-                realData[i] /= normCoeff;
+            FP normCoeff = (FP)size.volume();
+            int nx = memSizeRealData.x, ny = memSizeRealData.y, nz = memSizeRealData.z;
+            OMP_FOR_COLLAPSE()
+            for (int i = 0; i < size.x; i++)
+                for (int j = 0; j < size.y; j++)
+                    for (int k = 0; k < size.z; k++)
+                        realData[k + (j + i * ny) * nz] /= normCoeff;
         }
 
 #else
         ArrayFourierTransform3d() {}
 
         void initialize(FP* _realData, complexFP* _complexData,
-            Int3 _size, int _memSizeRealData) {}
+            Int3 _size, Int3 _memSizeRealData) {}
 
         void doDirectFourierTransform() {}
         void doInverseFourierTransform() {}
@@ -85,11 +87,11 @@ namespace pfc
 #endif
 
         void initialize(FP* _realData, complexFP* _complexData, Int3 _size) {
-            initialize(_realData, _complexData, _size, _size.volume());
+            initialize(_realData, _complexData, _size, _size);
         }
 
         ArrayFourierTransform3d(FP* _realData, complexFP* _complexData,
-            Int3 _size, int _memSizeRealData) {
+            Int3 _size, Int3 _memSizeRealData) {
             initialize(_realData, _complexData, _size, _memSizeRealData);
         }
 
@@ -148,12 +150,12 @@ namespace pfc
         FourierTransformField(ScalarField<FP>* _realData,
             SpectralScalarField<FP, complexFP>* _complexData, Int3 _size) :
             ArrayFourierTransform3d(_realData->getData(), _complexData->getData(),
-                _size, _realData->getSize().volume()) {}
+                _size, _realData->getSize()) {}
 
         void initialize(ScalarField<FP>* _realData,
             SpectralScalarField<FP, complexFP>* _complexData, Int3 _size) {
             ArrayFourierTransform3d::initialize(_realData->getData(),
-                _complexData->getData(), _size, _realData->getSize().volume());
+                _complexData->getData(), _size, _realData->getSize());
         }
     };
 
