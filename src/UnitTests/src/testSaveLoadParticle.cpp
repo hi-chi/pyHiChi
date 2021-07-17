@@ -108,13 +108,13 @@ TYPED_TEST(ParticleArrayTest, testEnsembleSaveLoad)
         particles.addParticle(p);
         particlesCopy.addParticle(p);
     }
+
     particles.save(stream);
     particles = Ensemble<ParticleArray>(); // reset ParticleEnsemble
     res.load(stream);
 
     for (int t = 0; t < sizeParticleTypes; t++)
     {
-        ASSERT_TRUE(this->eqParticleArrays(res[t], particlesCopy[t]));
         ASSERT_TRUE(this->eqParticleArrays(res[t], particlesCopy[t]));
         ASSERT_TRUE(this->eqParticleArrays(res[particleNames[t]], particlesCopy[t]));
     }
