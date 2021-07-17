@@ -13,11 +13,13 @@ namespace pfc {
         PmlPsatdBase(SpectralFieldSolver<TPSATDGridType>* solver, Int3 sizePML) :
             PmlSpectralTimeStraggered<TPSATDGridType>((SpectralFieldSolver<TPSATDGridType>*)solver, sizePML) {}
 
-        void computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt);
+        void computeTmpField(MemberOfFP3 coordK,
+            SpectralScalarField<FP, complexFP>& field, double dt);
     };
 
     template <GridTypes TPSATDGridType>
-    inline void PmlPsatdBase<TPSATDGridType>::computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt)
+    inline void PmlPsatdBase<TPSATDGridType>::computeTmpField(MemberOfFP3 coordK,
+        SpectralScalarField<FP, complexFP>& field, double dt)
     {
         SpectralFieldSolver<TPSATDGridType>* fs = PmlSpectralTimeStraggered<TPSATDGridType>::getFieldSolver();
         Int3 begin = fs->updateComplexBAreaBegin;
@@ -45,7 +47,8 @@ namespace pfc {
         PmlPsatdTimeStraggered(SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>* solver, Int3 sizePML) :
             PmlPsatdBase<GridTypes::PSATDTimeStraggeredGridType>((SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>*)solver, sizePML) {}
         
-        virtual void computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt) {
+        virtual void computeTmpField(MemberOfFP3 coordK,
+            SpectralScalarField<FP, complexFP>& field, double dt) {
             PmlPsatdBase<GridTypes::PSATDTimeStraggeredGridType>::computeTmpField(coordK, field, dt);
         }
     };
@@ -57,7 +60,8 @@ namespace pfc {
         PmlPsatd(SpectralFieldSolver<GridTypes::PSATDGridType>* solver, Int3 sizePML) :
             PmlPsatdBase<GridTypes::PSATDGridType>((SpectralFieldSolver<GridTypes::PSATDGridType>*)solver, sizePML) {}
 
-        virtual void computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt) {
+        virtual void computeTmpField(MemberOfFP3 coordK,
+            SpectralScalarField<FP, complexFP>& field, double dt) {
             PmlPsatdBase<GridTypes::PSATDGridType>::computeTmpField(coordK, field, dt);
         }
     };

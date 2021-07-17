@@ -1,5 +1,6 @@
 #pragma once
 #include "Grid.h"
+#include "SpectralGrid.h"
 #include "FieldGenerator.h"
 #include "Vectors.h"
 #include "FourierTransform.h"
@@ -138,8 +139,9 @@ namespace pfc {
             FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
             FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
         {
-            complexGrid.reset(new Grid<complexFP, gridType>(fourier_transform::getSizeOfComplexArray(_grid->numCells),
-                fourier_transform::getSizeOfComplexArray(_grid->globalGridDims), _grid));
+            complexGrid.reset(new SpectralGrid<FP, complexFP>(
+                fourier_transform::getSizeOfComplexArray(_grid->numCells),
+                _grid->globalGridDims, _grid));
             fourierTransform.initialize<gridType>(_grid, complexGrid.get());
         }
 
@@ -152,7 +154,7 @@ namespace pfc {
 
         void updateDims();
 
-        std::unique_ptr<Grid<complexFP, gridType>> complexGrid;
+        std::unique_ptr<SpectralGrid<FP, complexFP>> complexGrid;
 
         Int3 updateComplexEAreaBegin, updateComplexEAreaEnd;
         Int3 updateComplexBAreaBegin, updateComplexBAreaEnd;

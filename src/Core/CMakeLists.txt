@@ -27,6 +27,7 @@ set(core_headers
     ${CORE_HEADER_DIR}/ParticleTraits.h
     ${CORE_HEADER_DIR}/ParticleTypes.h
     ${CORE_HEADER_DIR}/ScalarField.h
+	${CORE_HEADER_DIR}/SpectralGrid.h
     ${CORE_HEADER_DIR}/Vectors.h
     ${CORE_HEADER_DIR}/VectorsProxy.h
     ${CORE_HEADER_DIR}/macros.h)

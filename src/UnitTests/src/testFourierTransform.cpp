@@ -18,7 +18,7 @@ public:
     ScalarField<FP> field;
     ScalarField<complexFP> complexField;
 
-    FourierTransformField fourierTransform;
+    ArrayFourierTransform3d fourierTransform;
 
     FourierTransformTest() :
         size(nx, ny, nz),
@@ -26,7 +26,7 @@ public:
         field(size),
         complexField(sizeComplex)
     {
-        fourierTransform.initialize(&field, &complexField, size);
+        fourierTransform.initialize(field.getData(), complexField.getData(), size);
 
         setField(&FourierTransformTest::fSin3);
 
@@ -128,7 +128,7 @@ public:
     std::unique_ptr<PSTD> pstd;
 
     std::unique_ptr<Grid<FP, GridTypes::PSTDGridType>> grid;
-    Grid<complexFP, GridTypes::PSTDGridType>* complexGrid = 0;
+    SpectralGrid<FP, complexFP>* complexGrid = 0;
 
     void SetUp() {
         size = Int3(nx, ny, nz);

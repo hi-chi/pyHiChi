@@ -18,17 +18,10 @@ namespace pfc {
 
         ScalarField() {};
         ScalarField(const Int3& size);
-        ScalarField(const ScalarField<Data>& field, bool ifShallowCopy = false);
-        ScalarField(Data* data, const Int3& size);
+        ScalarField(const ScalarField<Data>& field);
         ScalarField& operator =(const ScalarField& field);
 
-        ScalarField createShallowCopy() {  // common memory
-            return ScalarField(raw, size);
-        }
-
         std::vector<Data, NUMA_Allocator<Data>>& toVector() {
-            if (!ifStorage)
-                throw "Can't convert scalar field to std::vector";
             return elements;
         }
 
@@ -72,31 +65,25 @@ namespace pfc {
         FP interpolatePCS(const Int3& baseIdx, const FP3& coeffs) const;
 
         void save(std::ostream& ostr) {
-            ostr.write((char*)&ifStorage, sizeof(ifStorage));
             ostr.write((char*)&size, sizeof(size));
             ostr.write((char*)&dimensionCoeffInt, sizeof(dimensionCoeffInt));
             ostr.write((char*)&dimensionCoeffFP, sizeof(dimensionCoeffFP));
-            // POTENTIAL PROBLEM: grid is not always a storage
-            if (ifStorage) ostr.write((char*)raw, sizeof(Data) * size.volume());
+            ostr.write((char*)raw, sizeof(Data) * size.volume());
         }
 
         void load(std::istream& istr) {
-            istr.read((char*)&ifStorage, sizeof(ifStorage));
             istr.read((char*)&size, sizeof(size));
             istr.read((char*)&dimensionCoeffInt, sizeof(dimensionCoeffInt));
             istr.read((char*)&dimensionCoeffFP, sizeof(dimensionCoeffFP));
-            if (ifStorage) {
-                elements.resize(size.volume());
-                istr.read((char*)elements.data(), sizeof(Data) * size.volume());
-                raw = elements.data();
-            }
+            elements.resize(size.volume());
+            istr.read((char*)elements.data(), sizeof(Data) * size.volume());
+            raw = elements.data();
         }
 
     private:
 
         FP interpolateThreePoints(const Int3& baseIdx, FP c[3][3]) const;
 
-        bool ifStorage = true;  // if it's false then "elements" is empty, "raw" is a pointer to the data
         std::vector<Data, NUMA_Allocator<Data>> elements; // storage
         Data* raw; // raw pointer to elements vector
         Int3 size; // size of each dimension
@@ -117,45 +104,21 @@ namespace pfc {
     }
 
     template <class Data>
-    inline ScalarField<Data>::ScalarField(const ScalarField& field, bool ifShallowCopy)
+    inline ScalarField<Data>::ScalarField(const ScalarField& field)
     {
         size = field.size;
-        ifStorage = ifStorage;
-        if (!ifShallowCopy) {
-            elements = field.elements;
-            raw = elements.data();
-        }
-        else {
-            raw = field.raw;
-        }
+        elements = field.elements;
+        raw = elements.data();
         dimensionCoeffInt = field.dimensionCoeffInt;
         dimensionCoeffFP = field.dimensionCoeffFP;
-    }
-
-    template<typename Data>
-    inline ScalarField<Data>::ScalarField(Data* data, const Int3& _size)
-    {
-        size = _size;
-        ifStorage = false;
-        raw = data;
-        for (int d = 0; d < 3; d++) {
-            dimensionCoeffInt[d] = (size[d] > 1) ? 1 : 0;
-            dimensionCoeffFP[d] = (FP)dimensionCoeffInt[d];
-        }
     }
 
     template <class Data>
     inline ScalarField<Data>& ScalarField<Data>::operator=(const ScalarField<Data>& field)
     {
         size = field.size;
-        ifStorage = field.ifStorage;
-        if (ifStorage) {
-            elements = field.elements;
-            raw = elements.data();
-        }
-        else {
-            raw = field.raw;
-        }
+        elements = field.elements;
+        raw = elements.data();
         dimensionCoeffInt = field.dimensionCoeffInt;
         dimensionCoeffFP = field.dimensionCoeffFP;
         return *this;

@@ -2,7 +2,10 @@
 #include <omp.h>
 #include "ScalarField.h"
 #include "Grid.h"
+#include "SpectralGrid.h"
 #include "Enums.h"
+
+#include "macros.h"
 
 #ifdef __USE_FFT__
 #include "fftw3.h"
@@ -12,9 +15,9 @@ namespace pfc
 {
     namespace fourier_transform {
 
-        inline Int3 getSizeOfComplexArray(Int3 sizeOfFP)
+        inline Int3 getSizeOfComplexArray(Int3 sizeFP)
         {
-            return Int3(sizeOfFP.x, sizeOfFP.y, sizeOfFP.z / 2 + 1);
+            return Int3(sizeFP.x, sizeFP.y, sizeFP.z / 2 + 1);
         }
 
         enum Direction {
@@ -23,32 +26,35 @@ namespace pfc
     }
 
 
-    class FourierTransformField {
+    class ArrayFourierTransform3d {
 #ifdef __USE_FFT__
         Int3 size;
+        size_t memSizeRealData;
         fftw_plan plans[2];  // RtoC/CtoR
-        ScalarField<FP>* realField;
-        ScalarField<complexFP>* complexField;
+        FP* realData;
+        complexFP* complexData;
 #endif
 
     public:
 
 #ifdef __USE_FFT__
-        FourierTransformField()
+        ArrayFourierTransform3d()
         {
             plans[fourier_transform::Direction::RtoC] = 0;
             plans[fourier_transform::Direction::CtoR] = 0;
         }
 
-        void initialize(ScalarField<FP>* _realField, ScalarField<complexFP>* _complexField, Int3 _size)
+        void initialize(FP* _realData, complexFP* _complexData,
+            Int3 _size, int _memSizeRealData)
         {
             size = _size;
-            realField = _realField;
-            complexField = _complexField;
+            memSizeRealData = _memSizeRealData;
+            realData = _realData;
+            complexData = _complexData;
             createPlans();
         }
 
-        ~FourierTransformField() {
+        ~ArrayFourierTransform3d() {
             destroyPlans();
         }
 
@@ -60,28 +66,35 @@ namespace pfc
         void doInverseFourierTransform()
         {
             fftw_execute(plans[fourier_transform::Direction::CtoR]);
-            ScalarField<FP>& res = *realField;
-#pragma omp parallel for
-            for (int i = 0; i < size.x; i++)
-                for (int j = 0; j < size.y; j++)
-                    //#pragma omp simd
-                    for (int k = 0; k < size.z; k++)
-                        res(i, j, k) /= (FP)size.x*size.y*size.z;
+            FP normCoeff = (FP)size.x*size.y*size.z;
+            OMP_FOR()
+            for (int i = 0; i < memSizeRealData; i++)
+                realData[i] /= normCoeff;
         }
 
 #else
-        FourierTransformField() {}
+        ArrayFourierTransform3d() {}
 
-        void initialize(ScalarField<FP>* _realField, ScalarField<complexFP>* _complexField, Int3 _size) {}
+        void initialize(FP* _realData, complexFP* _complexData,
+            Int3 _size, int _memSizeRealData) {}
 
         void doDirectFourierTransform() {}
         void doInverseFourierTransform() {}
 
-        ~FourierTransformField() {}
+        ~ArrayFourierTransform3d() {}
 #endif
 
-        FourierTransformField(ScalarField<FP>* _realField, ScalarField<complexFP>* _complexField, Int3 _size) {
-            initialize(_realField, _complexField, _size);
+        void initialize(FP* _realData, complexFP* _complexData, Int3 _size) {
+            initialize(_realData, _complexData, _size, _size.volume());
+        }
+
+        ArrayFourierTransform3d(FP* _realData, complexFP* _complexData,
+            Int3 _size, int _memSizeRealData) {
+            initialize(_realData, _complexData, _size, _memSizeRealData);
+        }
+
+        ArrayFourierTransform3d(FP* _realData, complexFP* _complexData, Int3 _size) {
+            initialize(_realData, _complexData, _size);
         }
 
         void doFourierTransform(fourier_transform::Direction direction)
@@ -105,19 +118,16 @@ namespace pfc
         {
             int Nx = size.x, Ny = size.y, Nz = size.z;
 
-            ScalarField<FP>& arrD = *(realField);
-            ScalarField<complexFP>& arrC = *(complexField);
-
 #ifdef __USE_OMP__
             fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
             plans[fourier_transform::Direction::RtoC] = fftw_plan_dft_r2c_3d(Nx, Ny, Nz,
-                &(arrD(0, 0, 0)), (fftw_complex*)&(arrC(0, 0, 0)), FFTW_ESTIMATE);
+                &(realData[0]), (fftw_complex*)&(complexData[0]), FFTW_ESTIMATE);
 #ifdef __USE_OMP__
             fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
             plans[fourier_transform::Direction::CtoR] = fftw_plan_dft_c2r_3d(Nx, Ny, Nz,
-                (fftw_complex*)&(arrC(0, 0, 0)), &(arrD(0, 0, 0)), FFTW_ESTIMATE);
+                (fftw_complex*)&(complexData[0]), &(realData[0]), FFTW_ESTIMATE);
         }
 
         void destroyPlans()
@@ -131,6 +141,23 @@ namespace pfc
     };
 
 
+    class FourierTransformField : public ArrayFourierTransform3d {
+    public:
+
+        FourierTransformField() : ArrayFourierTransform3d() {}
+        FourierTransformField(ScalarField<FP>* _realData,
+            SpectralScalarField<FP, complexFP>* _complexData, Int3 _size) :
+            ArrayFourierTransform3d(_realData->getData(), _complexData->getData(),
+                _size, _realData->getSize().volume()) {}
+
+        void initialize(ScalarField<FP>* _realData,
+            SpectralScalarField<FP, complexFP>* _complexData, Int3 _size) {
+            ArrayFourierTransform3d::initialize(_realData->getData(),
+                _complexData->getData(), _size, _realData->getSize().volume());
+        }
+    };
+
+
     class FourierTransformGrid {
 
         FourierTransformField transform[3][3];  // field, coordinate
@@ -140,15 +167,15 @@ namespace pfc
         FourierTransformGrid() {}
         
         template<GridTypes gridType>
-        void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {
+        void initialize(Grid<FP, gridType>* gridFP, SpectralGrid<FP, complexFP>* gridCFP) {
             transform[Field::E][Coordinate::x].initialize(&gridFP->Ex, &gridCFP->Ex, gridFP->numCells);
             transform[Field::E][Coordinate::y].initialize(&gridFP->Ey, &gridCFP->Ey, gridFP->numCells);
             transform[Field::E][Coordinate::z].initialize(&gridFP->Ez, &gridCFP->Ez, gridFP->numCells);
-
+            
             transform[Field::B][Coordinate::x].initialize(&gridFP->Bx, &gridCFP->Bx, gridFP->numCells);
             transform[Field::B][Coordinate::y].initialize(&gridFP->By, &gridCFP->By, gridFP->numCells);
             transform[Field::B][Coordinate::z].initialize(&gridFP->Bz, &gridCFP->Bz, gridFP->numCells);
-
+            
             transform[Field::J][Coordinate::x].initialize(&gridFP->Jx, &gridCFP->Jx, gridFP->numCells);
             transform[Field::J][Coordinate::y].initialize(&gridFP->Jy, &gridCFP->Jy, gridFP->numCells);
             transform[Field::J][Coordinate::z].initialize(&gridFP->Jz, &gridCFP->Jz, gridFP->numCells);

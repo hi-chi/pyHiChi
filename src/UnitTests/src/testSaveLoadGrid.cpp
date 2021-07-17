@@ -30,10 +30,8 @@ public:
     using DataType = typename ActivateType<complexFP, FP, TGrid::isComplex>::type;
 
     SaveLoadGridTest() : gridSize(11, 21, 2), minCoords(0.0, 0.0, 0.0), maxCoords(1.0, 1.0, 1.0) {
-        if (!TGrid::isComplex)
-            grid.reset(new TGrid(gridSize, minCoords, (maxCoords - minCoords) / ((FP3)gridSize), gridSize));
-        else grid.reset(new TGrid(gridSize, gridSize));
-
+        grid.reset(new TGrid(gridSize, minCoords,
+            (maxCoords - minCoords) / ((FP3)gridSize), gridSize));
         grid2.reset(new TGrid());
 
         for (int i = 0; i < this->grid->Ex.getSize().x; i++)

@@ -42,7 +42,7 @@ namespace pfc {
         }
 
         void saveJ();
-        void assignJ(ScalarField<complexFP>& J, ScalarField<complexFP>& tmpJ);
+        void assignJ(SpectralScalarField<FP, complexFP>& J, ScalarField<complexFP>& tmpJ);
     };
 
     template<bool ifPoisson>
@@ -91,15 +91,16 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::assignJ(ScalarField<complexFP>& J, ScalarField<complexFP>& tmpJ)
+    inline void PSATDTimeStraggeredT<ifPoisson>::assignJ(
+        SpectralScalarField<FP, complexFP>& J, ScalarField<complexFP>& tmpJ)
     {
         const complexFP* const ptrJ = J.getData();
         complexFP* const ptrTmpJ = tmpJ.getData();
         const int n = J.getSize().volume();
 
         OMP_FOR()
-            for (int i = 0; i < n; i++)
-                ptrTmpJ[i] = ptrJ[i];
+        for (int i = 0; i < n; i++)
+            ptrTmpJ[i] = ptrJ[i];
     }
 
     template <bool ifPoisson>

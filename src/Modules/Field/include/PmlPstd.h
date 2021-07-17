@@ -12,10 +12,12 @@ namespace pfc {
         PmlPstd(SpectralFieldSolver<GridTypes::PSTDGridType>* solver, Int3 sizePML) :
             PmlSpectralTimeStraggered((SpectralFieldSolver<GridTypes::PSTDGridType>*)solver, sizePML) {}
 
-        virtual void computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt);
+        virtual void computeTmpField(MemberOfFP3 coordK,
+            SpectralScalarField<FP, complexFP>& field, double dt);
     };
 
-    inline void PmlPstd::computeTmpField(MemberOfFP3 coordK, ScalarField<complexFP>& field, double dt)
+    inline void PmlPstd::computeTmpField(MemberOfFP3 coordK,
+        SpectralScalarField<FP, complexFP>& field, double dt)
     {
         SpectralFieldSolver<GridTypes::PSTDGridType>* fs = getFieldSolver();
         Int3 begin = fs->updateComplexBAreaBegin;
