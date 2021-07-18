@@ -811,6 +811,9 @@ namespace pfc {
     template<typename Data, GridTypes gridType_>
     inline void Grid<Data, gridType_>::save(std::ostream& ostr)
     {
+        int savedGridType = (int)this->gridType;
+        ostr.write((char*)&savedGridType, sizeof(savedGridType));
+
         ostr.write((char*)&globalGridDims, sizeof(globalGridDims));
         ostr.write((char*)&steps, sizeof(steps));
         ostr.write((char*)&numInternalCells, sizeof(numInternalCells));
@@ -840,6 +843,11 @@ namespace pfc {
     template<typename Data, GridTypes gridType_>
     inline void Grid<Data, gridType_>::load(std::istream& istr)
     {
+        int loadedGridType = -1;
+        istr.read((char*)&loadedGridType, sizeof(loadedGridType));
+        if (loadedGridType != (int)this->gridType)
+            throw "ERROR: types of loaded grids do not match";
+
         istr.read((char*)&globalGridDims, sizeof(globalGridDims));
         istr.read((char*)&steps, sizeof(steps));
         istr.read((char*)&numInternalCells, sizeof(numInternalCells));

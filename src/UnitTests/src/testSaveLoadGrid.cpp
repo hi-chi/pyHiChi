@@ -25,14 +25,14 @@ class SaveLoadGridTest : public testing::Test {
 public:
     Int3 gridSize;
     FP3 minCoords, maxCoords;
-    std::unique_ptr<TGrid> grid, grid2;
+    std::unique_ptr<TGrid> grid;
 
     using DataType = typename ActivateType<complexFP, FP, TGrid::isComplex>::type;
+    using GridType = TGrid;
 
     SaveLoadGridTest() : gridSize(11, 21, 2), minCoords(0.0, 0.0, 0.0), maxCoords(1.0, 1.0, 1.0) {
         grid.reset(new TGrid(gridSize, minCoords,
             (maxCoords - minCoords) / ((FP3)gridSize), gridSize));
-        grid2.reset(new TGrid());
 
         for (int i = 0; i < this->grid->Ex.getSize().x; i++)
             for (int j = 0; j < this->grid->Ex.getSize().y; j++)
@@ -91,20 +91,34 @@ typedef ::testing::Types<
     YeeGrid,
     PSTDGrid,
     PSATDGrid,
-    PSATDTimeStraggeredGrid,
-    Grid<complexFP, GridTypes::PSTDGridType>,
-    Grid<complexFP, GridTypes::PSATDGridType>,
-    Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>
+    PSATDTimeStraggeredGrid
 > typesSaveLoadGridTest;
 TYPED_TEST_CASE(SaveLoadGridTest, typesSaveLoadGridTest);
 
 TYPED_TEST(SaveLoadGridTest, can_save_and_load_grid)
 {
+    using TGrid = typename SaveLoadGridTest<TypeParam>::GridType;
+
     std::stringstream sstr;
     grid->save(sstr);
+
+    std::unique_ptr<TGrid> grid2(new TGrid());
     grid2->load(sstr);
 
     ASSERT_TRUE(areGridsEqual(*grid, *grid2));
+}
+
+TYPED_TEST(SaveLoadGridTest, cannot_save_and_load_grid_of_wrong_type)
+{
+    using TGrid = typename SaveLoadGridTest<TypeParam>::GridType;
+    
+    std::stringstream sstr;
+    grid->save(sstr);
+
+    std::unique_ptr<YeeGrid> grid2(new YeeGrid());
+    if (!std::is_same<TGrid, YeeGrid>::value)
+        ASSERT_ANY_THROW(grid2->load(sstr));
+    else ASSERT_NO_THROW(grid2->load(sstr));
 }
 
 
