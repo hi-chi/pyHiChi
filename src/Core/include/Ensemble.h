@@ -82,6 +82,7 @@ namespace pfc {
         inline void load(std::istream& is)
         {
             size_t tmp = 0;
+            pArrays.clear();
             is.read((char*)&tmp, sizeof(tmp));
             for (size_t i = 0; i < tmp; i++)
             {
@@ -89,9 +90,7 @@ namespace pfc {
                 is.read((char*)&s_size, sizeof(s_size));
                 string s(s_size, '1');
                 is.read(&s[0], s_size);
-                pArray tmp_array;
-                tmp_array.load(is);
-                pArrays[s] = tmp_array;
+                pArrays[s].load(is);
             }
         }
 
