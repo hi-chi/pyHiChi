@@ -311,6 +311,8 @@ namespace pfc {
 
         inline void save(std::ostream& os)
         {
+            Dimension tmp_dim = dimension;
+            os.write((char*)&tmp_dim, sizeof(tmp_dim));
             size_t tmp = size();
             os.write((char*)&tmp, sizeof(tmp));
             for (int i = 0; i < positionDimension; i++)
@@ -323,6 +325,10 @@ namespace pfc {
         }
         inline void load(std::istream& is)
         {
+            Dimension tmp_dim = Dimension::One;
+            is.read((char*)&tmp_dim, sizeof(tmp_dim));
+            if (dimension != tmp_dim)
+                throw "ERROR: dimension of loaded ParticleArrays do not match";
             size_t tmp = 0;
             is.read((char*)&tmp, sizeof(tmp));
             for (int i = 0; i < positionDimension; i++)
