@@ -25,8 +25,11 @@ set(pyHiChi_source
 
 pybind11_add_module(pyHiChi ${pyHiChi_source})
 
-if (UNIX)
+if (APPLE)
+    target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
+elseif (UNIX)
     target_link_libraries(pyHiChi PUBLIC -Wl,--start-group ${FFT_LIBS} -Wl,--end-group)
 else()
     target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
 endif()
+

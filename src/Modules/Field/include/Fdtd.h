@@ -187,7 +187,7 @@ namespace pfc {
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
-#pragma simd
+                OMP_SIMD()
                 for (int k = begin.z; k < end.z; k++)
                 {
                     grid->Bx(i, j, k) += coeffZX * (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1)) -
@@ -228,7 +228,7 @@ namespace pfc {
         const Int3 end = internalBAreaEnd;
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
-#pragma simd
+        OMP_SIMD()
             for (int j = begin.y; j < end.y; j++)
             {
                 grid->Bx(i, j, 0) += -coeffYX * (grid->Ez(i, j, 0) - grid->Ez(i, j - 1, 0));
@@ -314,7 +314,7 @@ namespace pfc {
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
-#pragma simd
+                OMP_SIMD()
                 for (int k = begin.z; k < end.z; k++)
                 {
                     grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
@@ -391,7 +391,7 @@ namespace pfc {
         const Int3 end = internalEAreaEnd;
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
-#pragma simd
+            OMP_SIMD()
             for (int j = begin.y; j < end.y; j++) {
                 grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
                     coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
