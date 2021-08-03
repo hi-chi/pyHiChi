@@ -84,6 +84,26 @@ TYPED_TEST(ParticleArrayTest, testParticlesSaveLoad)
     ASSERT_TRUE(this->eqParticleArrays(res, particlesCopy));
 }
 
+TYPED_TEST(ParticleArrayTest, testParticlesSaveLoadProcessingWrongType)
+{
+    typedef typename ParticleArrayAoS<One> WrongParticleArrayType;
+    typedef typename ParticleArrayTest<TypeParam>::ParticleArray CorrectParticleArrayType;
+
+    CorrectParticleArrayType particles;
+    WrongParticleArrayType res;
+    stringstream stream;
+    for (int i = 0; i < 51; i++)
+    {
+        auto p = this->randomParticle();
+        particles.pushBack(p);
+    }
+    particles.save(stream);
+    particles = CorrectParticleArrayType(); // reset ParticleArray
+    if (!std::is_same<CorrectParticleArrayType, WrongParticleArrayType>::value)
+        ASSERT_ANY_THROW(res.load(stream));
+    else ASSERT_NO_THROW(res.load(stream));
+}
+
 TYPED_TEST(ParticleArrayTest, testEnsembleSaveLoad)
 {
     typedef typename ParticleArrayTest<TypeParam>::ParticleArray ParticleArray;
@@ -119,3 +139,36 @@ TYPED_TEST(ParticleArrayTest, testEnsembleSaveLoad)
         ASSERT_TRUE(this->eqParticleArrays(res[particleNames[t]], particlesCopy[t]));
     }
 }
+
+TYPED_TEST(ParticleArrayTest, testEnsembleSaveLoadProcessingWrongType)
+{
+    typedef typename ParticleArrayAoS<One> WrongParticleArrayType;
+    typedef typename ParticleArrayTest<TypeParam>::ParticleArray CorrectParticleArrayType;
+
+    Ensemble<CorrectParticleArrayType> particles;
+    Ensemble<WrongParticleArrayType> res;
+    stringstream stream;
+    for (int i = 0; i < 8; i++)
+    {
+        auto p = this->randomParticle(Electron);
+        particles.addParticle(p);
+    }
+    for (int i = 0; i < 17; i++)
+    {
+        auto p = this->randomParticle(Proton);
+        particles.addParticle(p);
+    }
+    for (int i = 0; i < 3; i++)
+    {
+        auto p = this->randomParticle(Photon);
+        particles.addParticle(p);
+    }
+
+    particles.save(stream);
+    particles = Ensemble<CorrectParticleArrayType>(); // reset ParticleArray
+
+    if (!std::is_same<CorrectParticleArrayType, WrongParticleArrayType>::value)
+        ASSERT_ANY_THROW(res.load(stream));
+    else ASSERT_NO_THROW(res.load(stream));
+}
+

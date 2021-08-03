@@ -87,12 +87,16 @@ namespace pfc {
     };
 
 
+    enum ParticleRepresentation { ParticleRepresentation_AoS, ParticleRepresentation_SoA };
+
 
     // Collection of particles with array-like semantics,
     // representation as array of structures
     template<Dimension dimension>
     class ParticleArrayAoS {
     public:
+
+        static const ParticleRepresentation particleRepresentationType = ParticleRepresentation::ParticleRepresentation_AoS;
 
         typedef typename ParticleTraits<Particle<dimension>>::PositionType PositionType;
         typedef typename ParticleTraits<Particle<dimension>>::MomentumType MomentumType;
@@ -167,6 +171,11 @@ namespace pfc {
         inline const iterator cend() { return end(); }
         inline void save(std::ostream& os)
         {
+            Dimension tmp_dim = dimension;
+            os.write((char*)&tmp_dim, sizeof(tmp_dim));
+            ParticleRepresentation tmp_repr = particleRepresentationType;
+            os.write((char*)&tmp_repr, sizeof(tmp_repr));
+
             size_t tmp = size();
             os.write((char*)&tmp, sizeof(tmp));
             os.write((char*)&typeIndex, sizeof(typeIndex));
@@ -174,6 +183,15 @@ namespace pfc {
         }
         inline void load(std::istream& is)
         {
+            Dimension tmp_dim = Dimension::One;
+            is.read((char*)&tmp_dim, sizeof(tmp_dim));
+            if (dimension != tmp_dim)
+                throw "ERROR: dimension of loaded ParticleArrays do not match";
+            ParticleRepresentation tmp_repr = particleRepresentationType;
+            is.read((char*)&tmp_repr, sizeof(tmp_repr));
+            if (particleRepresentationType != tmp_repr)
+                throw "ERROR: representation types of loaded ParticleArrays do not match";
+
             size_t tmp = 0;
             is.read((char*)&tmp, sizeof(tmp));
             is.read((char*)&typeIndex, sizeof(typeIndex));
@@ -191,6 +209,8 @@ namespace pfc {
     template<Dimension dimension>
     class ParticleArraySoA {
     public:
+
+        static const ParticleRepresentation particleRepresentationType = ParticleRepresentation::ParticleRepresentation_SoA;
 
         typedef typename ParticleTraits<Particle<dimension>>::PositionType PositionType;
         typedef typename ParticleTraits<Particle<dimension>>::MomentumType MomentumType;
@@ -313,6 +333,9 @@ namespace pfc {
         {
             Dimension tmp_dim = dimension;
             os.write((char*)&tmp_dim, sizeof(tmp_dim));
+            ParticleRepresentation tmp_repr = particleRepresentationType;
+            os.write((char*)&tmp_repr, sizeof(tmp_repr));
+
             size_t tmp = size();
             os.write((char*)&tmp, sizeof(tmp));
             for (int i = 0; i < positionDimension; i++)
@@ -329,6 +352,11 @@ namespace pfc {
             is.read((char*)&tmp_dim, sizeof(tmp_dim));
             if (dimension != tmp_dim)
                 throw "ERROR: dimension of loaded ParticleArrays do not match";
+            ParticleRepresentation tmp_repr = particleRepresentationType;
+            is.read((char*)&tmp_repr, sizeof(tmp_repr));
+            if (particleRepresentationType != tmp_repr)
+                throw "ERROR: representation types of loaded ParticleArrays do not match";
+
             size_t tmp = 0;
             is.read((char*)&tmp, sizeof(tmp));
             for (int i = 0; i < positionDimension; i++)
@@ -392,8 +420,6 @@ namespace pfc {
         return ParticleProxyType(posProxy, momProxy, weightRef, typeRef, gammaRef);
     }
 
-
-    enum ParticleRepresentation { ParticleRepresentation_AoS, ParticleRepresentation_SoA };
 
     inline std::string toString(ParticleRepresentation particleRepresentation)
     {
