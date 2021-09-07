@@ -120,7 +120,7 @@ void processParticles(QED* self, Ensemble3d* particles,
     {
         field->setTime(startTime + i * timeStep);
         self->processParticles(particles,
-            static_cast<Grid*>(field->getFieldEntity()), timeStep);
+            field->getField()->getGrid(), timeStep);
     }
 }
 

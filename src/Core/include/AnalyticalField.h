@@ -75,6 +75,7 @@ namespace pfc {
 
         FP globalTime;
         FP dt;
+        FP timeShiftE = 0.0, timeShiftB = 0.0, timeShiftJ = 0.0;
 
     private:
 
