@@ -141,10 +141,10 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     // ------------------- auxulary structures -------------------
 
-    py::enum_<Coordinate>(object, "Axis")
-        .value("X", Coordinate::x)
-        .value("Y", Coordinate::y)
-        .value("Z", Coordinate::z)
+    py::enum_<CoordinateEnum>(object, "Axis")
+        .value("X", CoordinateEnum::x)
+        .value("Y", CoordinateEnum::y)
+        .value("Z", CoordinateEnum::z)
         .export_values()
         ;
 
@@ -352,7 +352,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<PeriodicalMapping, std::shared_ptr<PeriodicalMapping>>(object, "PeriodicalMapping", pyMapping)
-        .def(py::init<Coordinate, FP, FP>(), py::arg("axis"), py::arg("c_min"), py::arg("c_max"))
+        .def(py::init<CoordinateEnum, FP, FP>(), py::arg("axis"), py::arg("c_min"), py::arg("c_max"))
         .def("get_direct_coords", &PeriodicalMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         .def("get_inverse_coords", &PeriodicalMapping::getInverseCoords, py::arg("coords"),
@@ -360,7 +360,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
     
     py::class_<RotationMapping, std::shared_ptr<RotationMapping>>(object, "RotationMapping", pyMapping)
-        .def(py::init<Coordinate, FP>(), py::arg("axis"), py::arg("angle"))
+        .def(py::init<CoordinateEnum, FP>(), py::arg("axis"), py::arg("angle"))
         .def("get_direct_coords", &RotationMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         .def("get_inverse_coords", &RotationMapping::getInverseCoords, py::arg("coords"),
@@ -368,7 +368,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<ScaleMapping, std::shared_ptr<ScaleMapping>>(object, "ScaleMapping", pyMapping)
-        .def(py::init<Coordinate, FP>(), py::arg("axis"), py::arg("scale"))
+        .def(py::init<CoordinateEnum, FP>(), py::arg("axis"), py::arg("scale"))
         .def("get_direct_coords", &ScaleMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         .def("get_inverse_coords", &ScaleMapping::getInverseCoords, py::arg("coords"),
@@ -385,7 +385,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<TightFocusingMapping, std::shared_ptr<TightFocusingMapping>>(object, "TightFocusingMapping", pyMapping)
         .def(py::init<FP, FP, FP>(), py::arg("R0"), py::arg("L"), py::arg("D"))
-        .def(py::init<FP, FP, FP, Coordinate>(), py::arg("R0"), py::arg("L"),
+        .def(py::init<FP, FP, FP, CoordinateEnum>(), py::arg("R0"), py::arg("L"),
             py::arg("D"), py::arg("axis"))
         .def("get_direct_coords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
