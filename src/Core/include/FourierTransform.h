@@ -141,31 +141,31 @@ namespace pfc
         
         template<GridTypes gridType>
         void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {
-            transform[Field::E][Coordinate::x].initialize(&gridFP->Ex, &gridCFP->Ex, gridFP->numCells);
-            transform[Field::E][Coordinate::y].initialize(&gridFP->Ey, &gridCFP->Ey, gridFP->numCells);
-            transform[Field::E][Coordinate::z].initialize(&gridFP->Ez, &gridCFP->Ez, gridFP->numCells);
+            transform[(int)FieldEnum::E][(int)CoordinateEnum::x].initialize(&gridFP->Ex, &gridCFP->Ex, gridFP->numCells);
+            transform[(int)FieldEnum::E][(int)CoordinateEnum::y].initialize(&gridFP->Ey, &gridCFP->Ey, gridFP->numCells);
+            transform[(int)FieldEnum::E][(int)CoordinateEnum::z].initialize(&gridFP->Ez, &gridCFP->Ez, gridFP->numCells);
 
-            transform[Field::B][Coordinate::x].initialize(&gridFP->Bx, &gridCFP->Bx, gridFP->numCells);
-            transform[Field::B][Coordinate::y].initialize(&gridFP->By, &gridCFP->By, gridFP->numCells);
-            transform[Field::B][Coordinate::z].initialize(&gridFP->Bz, &gridCFP->Bz, gridFP->numCells);
+            transform[(int)FieldEnum::B][(int)CoordinateEnum::x].initialize(&gridFP->Bx, &gridCFP->Bx, gridFP->numCells);
+            transform[(int)FieldEnum::B][(int)CoordinateEnum::y].initialize(&gridFP->By, &gridCFP->By, gridFP->numCells);
+            transform[(int)FieldEnum::B][(int)CoordinateEnum::z].initialize(&gridFP->Bz, &gridCFP->Bz, gridFP->numCells);
 
-            transform[Field::J][Coordinate::x].initialize(&gridFP->Jx, &gridCFP->Jx, gridFP->numCells);
-            transform[Field::J][Coordinate::y].initialize(&gridFP->Jy, &gridCFP->Jy, gridFP->numCells);
-            transform[Field::J][Coordinate::z].initialize(&gridFP->Jz, &gridCFP->Jz, gridFP->numCells);
+            transform[(int)FieldEnum::J][(int)CoordinateEnum::x].initialize(&gridFP->Jx, &gridCFP->Jx, gridFP->numCells);
+            transform[(int)FieldEnum::J][(int)CoordinateEnum::y].initialize(&gridFP->Jy, &gridCFP->Jy, gridFP->numCells);
+            transform[(int)FieldEnum::J][(int)CoordinateEnum::z].initialize(&gridFP->Jz, &gridCFP->Jz, gridFP->numCells);
         }
 
-        void doDirectFourierTransform(Field field, Coordinate coord) {
-            transform[field][coord].doDirectFourierTransform();
+        void doDirectFourierTransform(FieldEnum field, CoordinateEnum coord) {
+            transform[(int)field][(int)coord].doDirectFourierTransform();
         }
 
-        void doInverseFourierTransform(Field field, Coordinate coord) {
-            transform[field][coord].doInverseFourierTransform();
+        void doInverseFourierTransform(FieldEnum field, CoordinateEnum coord) {
+            transform[(int)field][(int)coord].doInverseFourierTransform();
         }
 
-        void doFourierTransform(Field field, Coordinate coord,
+        void doFourierTransform(FieldEnum field, CoordinateEnum coord,
             fourier_transform::Direction direction)
         {
-            transform[field][coord].doFourierTransform(direction);
+            transform[(int)field][(int)coord].doFourierTransform(direction);
         }
 
     };

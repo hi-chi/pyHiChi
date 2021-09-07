@@ -3,11 +3,11 @@
 
 namespace pfc
 {
-    enum Coordinate {
+    enum class CoordinateEnum {
         x, y, z
     };
 
-    enum Field {
+    enum class FieldEnum {
         E, B, J
     };
 }

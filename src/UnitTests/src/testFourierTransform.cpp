@@ -185,8 +185,8 @@ public:
 
 TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform)) {
 
-    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::RtoC);
-    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::CtoR);
+    pstd->fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, fourier_transform::Direction::RtoC);
+    pstd->fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, fourier_transform::Direction::CtoR);
 
     for (int i = 0; i < grid->numCells.x; i++)
         for (int j = 0; j < grid->numCells.y; j++)
@@ -198,7 +198,7 @@ TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
 
     setBz(&FourierTransformSolverTest::fSin);
 
-    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::RtoC);
+    pstd->fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, fourier_transform::Direction::RtoC);
 
     for (int i = 0; i < complexGrid->numCells.x; i++)
         for (int j = 0; j < complexGrid->numCells.y; j++)
@@ -209,9 +209,9 @@ TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
 
 TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(Lag)) {
 
-    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::RtoC);
+    pstd->fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, fourier_transform::Direction::RtoC);
     doShift();
-    pstd->fourierTransform.doFourierTransform(B, z, fourier_transform::Direction::CtoR);
+    pstd->fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, fourier_transform::Direction::CtoR);
 
     for (int i = 0; i < grid->numCells.x; i++)
         for (int j = 0; j < grid->numCells.y; j++)
