@@ -38,9 +38,6 @@
 
 
 #define SET_COMPUTATIONAL_GRID_METHODS(pyFieldType)                        \
-     .def(py::init<FP3, FP3, FP3, FP>(),                                   \
-        py::arg("grid_size"), py::arg("min_coords"),                       \
-        py::arg("spatial_steps"), py::arg("time_step"))                    \
     .def("set_J", &pyFieldType::setJ)                                      \
     .def("set_E", &pyFieldType::setE)                                      \
     .def("set_B", &pyFieldType::setB)                                      \
@@ -65,8 +62,6 @@
         py::arg("Ex"), py::arg("Ey"), py::arg("Ez"), py::arg("t"))         \
     .def("set_B", &pyFieldType::setBxyzt,                                  \
         py::arg("Bx"), py::arg("By"), py::arg("Bz"), py::arg("t"))         \
-    .def("zoom", &pyFieldType::zoom, py::arg("min_coord"),                 \
-        py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))          \
     SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)
 
 
@@ -419,6 +414,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("advance", &pyFieldBase::advance, py::arg("time_step"))
         ;
 
+    // sum and mul fields
+
     py::class_<pySumField, std::shared_ptr<pySumField>>(
         object, "SumField", pyClassFieldBase)
         SET_SUM_AND_MAP_FIELD_METHODS(pySumField)
@@ -428,6 +425,8 @@ PYBIND11_MODULE(pyHiChi, object) {
         object, "MulField", pyClassFieldBase)
         SET_SUM_AND_MAP_FIELD_METHODS(pyMulField)
         ;
+
+    // simple fields
 
     py::class_<pyAnalyticalField, std::shared_ptr<pyAnalyticalField>>(
         object, "AnalyticalField", pyClassFieldBase)
@@ -450,16 +449,22 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<pyYeeField, std::shared_ptr<pyYeeField>>(
         object, "YeeField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>(), py::arg("grid_size"), py::arg("min_coords"),
+            py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyYeeField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyYeeField)
         SET_COMMON_FIELD_METHODS(pyYeeField)
         .def("set_PML", &pyYeeField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
         .def("set_periodical_BC", &pyYeeField::setPeriodicalFieldGenerator)
+        .def("zoom", &pyYeeField::zoom, py::arg("min_coord"), \
+            py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
         ;
 
     py::class_<pyPSTDField, std::shared_ptr<pyPSTDField>>(
         object, "PSTDField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>(), py::arg("grid_size"), py::arg("min_coords"),
+            py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSTDField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSTDField)
         SET_COMMON_FIELD_METHODS(pyPSTDField)
@@ -469,10 +474,14 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("set", &pyPSTDField::pySetEMField, py::arg("func"))
         .def("apply_function", &pyPSTDField::applyFunction, py::arg("func"))
         .def("apply_function", &pyPSTDField::pyApplyFunction, py::arg("func"))
+        .def("zoom", &pyPSTDField::zoom, py::arg("min_coord"), \
+            py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
         ;
 
     py::class_<pyPSATDField, std::shared_ptr<pyPSATDField>>(
         object, "PSATDField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>(), py::arg("grid_size"), py::arg("min_coords"),
+            py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDField)
         SET_COMMON_FIELD_METHODS(pyPSATDField)
@@ -483,10 +492,14 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("set", &pyPSATDField::pySetEMField, py::arg("func"))
         .def("apply_function", &pyPSATDField::applyFunction, py::arg("func"))
         .def("apply_function", &pyPSATDField::pyApplyFunction, py::arg("func"))
+        .def("zoom", &pyPSATDField::zoom, py::arg("min_coord"), \
+            py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
         ;
 
     py::class_<pyPSATDPoissonField, std::shared_ptr<pyPSATDPoissonField>>(
         object, "PSATDPoissonField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>(), py::arg("grid_size"), py::arg("min_coords"),
+            py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDPoissonField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDPoissonField)
@@ -497,10 +510,14 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("set", &pyPSATDPoissonField::pySetEMField, py::arg("func"))
         .def("apply_function", &pyPSATDPoissonField::applyFunction, py::arg("func"))
         .def("apply_function", &pyPSATDPoissonField::pyApplyFunction, py::arg("func"))
+        .def("zoom", &pyPSATDPoissonField::zoom, py::arg("min_coord"), \
+            py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
         ;
 
     py::class_<pyPSATDTimeStraggeredField, std::shared_ptr<pyPSATDTimeStraggeredField>>(
         object, "PSATDSField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>(), py::arg("grid_size"), py::arg("min_coords"),
+            py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredField)
@@ -511,10 +528,14 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("set", &pyPSATDTimeStraggeredField::pySetEMField, py::arg("func"))
         .def("apply_function", &pyPSATDTimeStraggeredField::applyFunction, py::arg("func"))
         .def("apply_function", &pyPSATDTimeStraggeredField::pyApplyFunction, py::arg("func"))
+        .def("zoom", &pyPSATDTimeStraggeredField::zoom, py::arg("min_coord"), \
+            py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
         ;
 
     py::class_<pyPSATDTimeStraggeredPoissonField, std::shared_ptr<pyPSATDTimeStraggeredPoissonField>>(
         object, "PSATDSPoissonField", pyClassFieldBase)
+        .def(py::init<FP3, FP3, FP3, FP>(), py::arg("grid_size"), py::arg("min_coords"),
+            py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredPoissonField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
@@ -525,6 +546,107 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("set", &pyPSATDTimeStraggeredPoissonField::pySetEMField, py::arg("func"))
         .def("apply_function", &pyPSATDTimeStraggeredPoissonField::applyFunction, py::arg("func"))
         .def("apply_function", &pyPSATDTimeStraggeredPoissonField::pyApplyFunction, py::arg("func"))
+        .def("zoom", &pyPSATDTimeStraggeredPoissonField::zoom, py::arg("min_coord"), \
+            py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
+        ;
+
+    // mapped fields
+
+    py::class_<pyMappedAnalyticalField, std::shared_ptr<pyMappedAnalyticalField>>(
+        object, "MappedAnalyticalField", pyClassFieldBase)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedAnalyticalField)
+        SET_COMMON_FIELD_METHODS(pyMappedAnalyticalField)
+        .def("set_E", &pyMappedAnalyticalField::setExyz,
+            py::arg("Ex"), py::arg("Ey"), py::arg("Ez"))
+        .def("set_B", &pyMappedAnalyticalField::setBxyz,
+            py::arg("Bx"), py::arg("By"), py::arg("Bz"))
+        .def("set_J", &pyMappedAnalyticalField::setJxyz,
+            py::arg("Jx"), py::arg("Jy"), py::arg("Jz"))
+        .def("get_E", &pyMappedAnalyticalField::getEt,
+            py::arg("x"), py::arg("y"), py::arg("z"), py::arg("t"))
+        .def("get_B", &pyMappedAnalyticalField::getBt,
+            py::arg("x"), py::arg("y"), py::arg("z"), py::arg("t"))
+        .def("get_J", &pyMappedAnalyticalField::getJt,
+            py::arg("x"), py::arg("y"), py::arg("z"), py::arg("t"))
+        ;
+
+    py::class_<pyMappedYeeField, std::shared_ptr<pyMappedYeeField>>(
+        object, "MappedYeeField", pyClassFieldBase)
+        SET_COMPUTATIONAL_GRID_METHODS(pyMappedYeeField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedYeeField)
+        SET_COMMON_FIELD_METHODS(pyMappedYeeField)
+        .def("set_PML", &pyMappedYeeField::setPML,
+            py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("set_periodical_BC", &pyMappedYeeField::setPeriodicalFieldGenerator)
+        ;
+
+    py::class_<pyMappedPSTDField, std::shared_ptr<pyMappedPSTDField>>(
+        object, "MappedPSTDField", pyClassFieldBase)
+        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSTDField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSTDField)
+        SET_COMMON_FIELD_METHODS(pyMappedPSTDField)
+        .def("set_PML", &pyMappedPSTDField::setPML,
+            py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("set", &pyMappedPSTDField::setEMField, py::arg("func"))
+        .def("set", &pyMappedPSTDField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyMappedPSTDField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyMappedPSTDField::pyApplyFunction, py::arg("func"))
+        ;
+
+    py::class_<pyMappedPSATDField, std::shared_ptr<pyMappedPSATDField>>(
+        object, "MappedPSATDField", pyClassFieldBase)
+        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSATDField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSATDField)
+        SET_COMMON_FIELD_METHODS(pyMappedPSATDField)
+        .def("set_PML", &pyMappedPSATDField::setPML,
+            py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("convert_fields_poisson_equation", &pyMappedPSATDField::convertFieldsPoissonEquation)
+        .def("set", &pyMappedPSATDField::setEMField, py::arg("func"))
+        .def("set", &pyMappedPSATDField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDField::pyApplyFunction, py::arg("func"))
+        ;
+
+    py::class_<pyMappedPSATDPoissonField, std::shared_ptr<pyMappedPSATDPoissonField>>(
+        object, "MappedPSATDPoissonField", pyClassFieldBase)
+        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSATDPoissonField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSATDPoissonField)
+        SET_COMMON_FIELD_METHODS(pyMappedPSATDPoissonField)
+        .def("set_PML", &pyMappedPSATDPoissonField::setPML,
+            py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("convert_fields_poisson_equation", &pyMappedPSATDPoissonField::convertFieldsPoissonEquation)
+        .def("set", &pyMappedPSATDPoissonField::setEMField, py::arg("func"))
+        .def("set", &pyMappedPSATDPoissonField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDPoissonField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDPoissonField::pyApplyFunction, py::arg("func"))
+        ;
+
+    py::class_<pyMappedPSATDTimeStraggeredField, std::shared_ptr<pyMappedPSATDTimeStraggeredField>>(
+        object, "MappedPSATDSField", pyClassFieldBase)
+        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSATDTimeStraggeredField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSATDTimeStraggeredField)
+        SET_COMMON_FIELD_METHODS(pyMappedPSATDTimeStraggeredField)
+        .def("set_PML", &pyMappedPSATDTimeStraggeredField::setPML,
+            py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("convert_fields_poisson_equation", &pyMappedPSATDTimeStraggeredField::convertFieldsPoissonEquation)
+        .def("set", &pyMappedPSATDTimeStraggeredField::setEMField, py::arg("func"))
+        .def("set", &pyMappedPSATDTimeStraggeredField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDTimeStraggeredField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDTimeStraggeredField::pyApplyFunction, py::arg("func"))
+        ;
+
+    py::class_<pyMappedPSATDTimeStraggeredPoissonField, std::shared_ptr<pyMappedPSATDTimeStraggeredPoissonField>>(
+        object, "MappedPSATDSPoissonField", pyClassFieldBase)
+        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSATDTimeStraggeredPoissonField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSATDTimeStraggeredPoissonField)
+        SET_COMMON_FIELD_METHODS(pyMappedPSATDTimeStraggeredPoissonField)
+        .def("set_PML", &pyMappedPSATDTimeStraggeredPoissonField::setPML,
+            py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("convert_fields_poisson_equation", &pyMappedPSATDTimeStraggeredPoissonField::convertFieldsPoissonEquation)
+        .def("set", &pyMappedPSATDTimeStraggeredPoissonField::setEMField, py::arg("func"))
+        .def("set", &pyMappedPSATDTimeStraggeredPoissonField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDTimeStraggeredPoissonField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDTimeStraggeredPoissonField::pyApplyFunction, py::arg("func"))
         ;
 
     // ------------------- field configurations -------------------
