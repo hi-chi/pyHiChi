@@ -65,6 +65,8 @@
         py::arg("Ex"), py::arg("Ey"), py::arg("Ez"), py::arg("t"))         \
     .def("set_B", &pyFieldType::setBxyzt,                                  \
         py::arg("Bx"), py::arg("By"), py::arg("Bz"), py::arg("t"))         \
+    .def("zoom", &pyFieldType::zoom, py::arg("min_coord"),                 \
+        py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))          \
     SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)
 
 

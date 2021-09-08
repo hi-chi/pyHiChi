@@ -18,18 +18,21 @@ using namespace pybind11::literals;
 
 namespace pfc
 {
-    template <class TGrid, class TFieldSolver, class TDerived, bool ifStraggered>
+
+    // ===================== Interfaces for different fields =========================
+
+    template <class TGrid, class TFieldSolver, class TPyField, bool ifStraggered>
     class pyStraggeredFieldInterface {};
 
     // Interface for spatial straggered grids
-    template <class TGrid, class TFieldSolver, class TDerived>
-    class pyStraggeredFieldInterface<TGrid, TFieldSolver, TDerived, true>
+    template <class TGrid, class TFieldSolver, class TPyField>
+    class pyStraggeredFieldInterface<TGrid, TFieldSolver, TPyField, true>
     {
     public:
 
         template <class FieldConfigurationType>
         void setFieldConfiguration(const FieldConfigurationType* fieldConf) {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             const int chunkSize = 32;
@@ -76,14 +79,14 @@ namespace pfc
     };
 
     // Interface for collocated grids
-    template <class TGrid, class TFieldSolver, class TDerived>
-    class pyStraggeredFieldInterface<TGrid, TFieldSolver, TDerived, false>
+    template <class TGrid, class TFieldSolver, class TPyField>
+    class pyStraggeredFieldInterface<TGrid, TFieldSolver, TPyField, false>
     {
     public:
 
         template <class FieldConfigurationType>
         void setFieldConfiguration(const FieldConfigurationType* fieldConf) {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             const int chunkSize = 32;
             const int nChunks = grid->numCells.z / chunkSize;
@@ -120,7 +123,7 @@ namespace pfc
 
         void pySetEMField(py::function fValueField)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             for (int i = 0; i < grid->numCells.x; i++)
                 for (int j = 0; j < grid->numCells.y; j++)
@@ -143,7 +146,7 @@ namespace pfc
 
         void setEMField(int64_t _fValueField)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             void(*fValueField)(FP, FP, FP, FP*) = (void(*)(FP, FP, FP, FP*))_fValueField;
             const int chunkSize = 32;
@@ -182,7 +185,7 @@ namespace pfc
 
         void pyApplyFunction(py::function func)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             for (int i = 0; i < grid->numCells.x; i++)
                 for (int j = 0; j < grid->numCells.y; j++)
@@ -211,7 +214,7 @@ namespace pfc
 
         void applyFunction(int64_t _func)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             void(*fValueField)(FP, FP, FP, FP*) = (void(*)(FP, FP, FP, FP*))_func;
             const int chunkSize = 32;
@@ -257,20 +260,20 @@ namespace pfc
     };
 
 
-    template<class TGrid, class TFieldSolver, class TDerived, bool ifAnalyticalField>
+    template<class TGrid, class TFieldSolver, class TPyField, bool ifAnalyticalField>
     class pyGridFieldInterface {};
 
-    // Interface for fields with a computational grid
-    template<class TGrid, class TFieldSolver, class TDerived>
-    class pyGridFieldInterface<TGrid, TFieldSolver, TDerived, false> :
+    // Interface for fields with computational grid
+    template<class TGrid, class TFieldSolver, class TPyField>
+    class pyGridFieldInterface<TGrid, TFieldSolver, TPyField, false> :
         public pyStraggeredFieldInterface<TGrid, TFieldSolver,
-        TDerived, TGrid::ifFieldsSpatialStraggered && TGrid::ifFieldsTimeStraggered>
+        TPyField, TGrid::ifFieldsSpatialStraggered && TGrid::ifFieldsTimeStraggered>
     {
     public:
 
         void pySetExyz(py::function fEx, py::function fEy, py::function fEz)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             for (int i = 0; i < grid->numCells.x; i++)
@@ -289,7 +292,7 @@ namespace pfc
 
         void pySetE(py::function fE)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             for (int i = 0; i < grid->numCells.x; i++)
@@ -308,7 +311,7 @@ namespace pfc
 
         void setExyz(int64_t _fEx, int64_t _fEy, int64_t _fEz)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP(*fEx)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fEx;
@@ -331,7 +334,7 @@ namespace pfc
 
         void setExyzt(int64_t _fEx, int64_t _fEy, int64_t _fEz, FP t)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP(*fEx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fEx;
@@ -354,7 +357,7 @@ namespace pfc
 
         void setE(int64_t _fE)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP3(*fE)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fE;
@@ -375,7 +378,7 @@ namespace pfc
 
         void pySetBxyz(py::function fBx, py::function fBy, py::function fBz)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             for (int i = 0; i < grid->numCells.x; i++)
@@ -394,7 +397,7 @@ namespace pfc
 
         void pySetB(py::function fB)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             for (int i = 0; i < grid->numCells.x; i++)
@@ -413,7 +416,7 @@ namespace pfc
 
         void setBxyz(int64_t _fBx, int64_t _fBy, int64_t _fBz)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP(*fBx)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fBx;
@@ -436,7 +439,7 @@ namespace pfc
 
         void setBxyzt(int64_t _fBx, int64_t _fBy, int64_t _fBz, FP t)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP(*fBx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fBx;
@@ -459,7 +462,7 @@ namespace pfc
 
         void setB(int64_t _fB)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP3(*fB)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fB;
@@ -480,7 +483,7 @@ namespace pfc
 
         void pySetJxyz(py::function fJx, py::function fJy, py::function fJz)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             for (int i = 0; i < grid->numCells.x; i++)
@@ -499,7 +502,7 @@ namespace pfc
 
         void pySetJ(py::function fJ)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             for (int i = 0; i < grid->numCells.x; i++)
@@ -518,7 +521,7 @@ namespace pfc
 
         void setJxyz(int64_t _fJx, int64_t _fJy, int64_t _fJz)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP(*fJx)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fJx;
@@ -541,7 +544,7 @@ namespace pfc
 
         void setJxyzt(int64_t _fJx, int64_t _fJy, int64_t _fJz, FP t)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP(*fJx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fJx;
@@ -564,7 +567,7 @@ namespace pfc
 
         void setJ(int64_t _fJ)
         {
-            TDerived* derived = static_cast<TDerived*>(this);
+            TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP3(*fJ)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fJ;
@@ -584,149 +587,162 @@ namespace pfc
         }
 
         FP3 getE(const FP3& coords) const {
-            return static_cast<const TDerived*>(this)->getField()->getGrid()->getE(coords);
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getE(coords);
         }
 
         FP3 getB(const FP3& coords) const {
-            return static_cast<const TDerived*>(this)->getField()->getGrid()->getB(coords);
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getB(coords);
         }
 
         FP3 getJ(const FP3& coords) const {
-            return static_cast<const TDerived*>(this)->getField()->getGrid()->getJ(coords);
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJ(coords);
         }
 
         void getFields(const FP3& coords, FP3& e, FP3& b) const {
-            static_cast<const TDerived*>(this)->getField()->getGrid()->getFields(coords, e, b);
+            static_cast<const TPyField*>(this)->getField()->getGrid()->getFields(coords, e, b);
+        }
+
+        std::shared_ptr<TPyField> zoom(const FP3& minCoord,
+            const FP3& zoomedGridSize, const FP3& zoomedGridStep) const {
+            std::shared_ptr<TPyField> zoomedField;
+            Field<TGrid, TFieldSolver>* field = static_cast<const TPyField*>(this)->getField();
+            zoomedField.reset(new TPyField((Int3)zoomedGridSize, minCoord, zoomedGridStep,
+                field->getFieldSolver()->dt));
+            field->getGrid()->copyValues(zoomedField->getField()->getGrid());
+            return zoomedField;
         }
     };
 
 
     // Interface for analytical fields
-    template<class TGrid, class TFieldSolver, class TDerived>
-    class pyGridFieldInterface<TGrid, TFieldSolver, TDerived, true> {
+    template<class TGrid, class TFieldSolver, class TPyField>
+    class pyGridFieldInterface<TGrid, TFieldSolver, TPyField, true> {
     public:
 
         void setExyz(int64_t fEx, int64_t fEy, int64_t fEz) {
             FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEx;
             FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEy;
             FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEz;
-            static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->setE(fx, fy, fz);
+            static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->setE(fx, fy, fz);
         }
 
         void setBxyz(int64_t fBx, int64_t fBy, int64_t fBz) {
             FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBx;
             FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBy;
             FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBz;
-            static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->setB(fx, fy, fz);
+            static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->setB(fx, fy, fz);
         }
 
         void setJxyz(int64_t fJx, int64_t fJy, int64_t fJz) {
             FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJx;
             FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJy;
             FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJz;
-            static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->setJ(fx, fy, fz);
+            static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->setJ(fx, fy, fz);
         }
 
         FP3 getE(const FP3& coords) const {
-            return static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->getE(coords);
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getE(coords);
         }
 
         FP3 getB(const FP3& coords) const {
-            return static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->getB(coords);
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getB(coords);
         }
 
         FP3 getJ(const FP3& coords) const {
-            return static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->getJ(coords);
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJ(coords);
         }
 
         FP3 getEt(FP x, FP y, FP z, FP t) const {
-            return static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->getE(x, y, z, t);
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getE(x, y, z, t);
         }
 
         FP3 getBt(FP x, FP y, FP z, FP t) const {
-            return static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->getB(x, y, z, t);
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getB(x, y, z, t);
         }
 
         FP3 getJt(FP x, FP y, FP z, FP t) const {
-            return static_cast<const TDerived*>(this)->getField()->getAnalyticalField()->getJ(x, y, z, t);
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJ(x, y, z, t);
         }
     };
 
 
-    template <class TGrid, class TFieldSolver, class TDerived, bool>
+    template <class TGrid, class TFieldSolver, class TPyField, bool>
     class pyPoissonFieldSolverInterface {};
 
-    template <class TGrid, class TFieldSolver, class TDerived>
-    class pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TDerived, true> {
+    // Interface for solvers that support Poisson's equation
+    template <class TGrid, class TFieldSolver, class TPyField>
+    class pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TPyField, true> {
     public:
         void convertFieldsPoissonEquation() {
-            static_cast<TDerived*>(this)->getField()->getFieldSolver()->convertFieldsPoissonEquation();
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->convertFieldsPoissonEquation();
         }
     };
 
 
-    template <class TGrid, class TFieldSolver, class TDerived, bool>
+    template <class TGrid, class TFieldSolver, class TPyField, bool>
     class pyFieldGeneratorSolverInterface {};
 
-    template <class TGrid, class TFieldSolver, class TDerived>
-    class pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TDerived, true> {
+    // Interface for solvers that support field generator
+    template <class TGrid, class TFieldSolver, class TPyField>
+    class pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TPyField, true> {
     public:
         void setPeriodicalFieldGenerator() {
             PeriodicalFieldGenerator<TGrid::gridType> gen;
-            static_cast<TDerived*>(this)->getField()->getFieldSolver()->setFieldGenerator(&gen);
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setFieldGenerator(&gen);
         }
 
         void setReflectFieldGenerator() {
             ReflectFieldGenerator<TGrid::gridType> gen;
-            static_cast<TDerived*>(this)->getField()->getFieldSolver()->setFieldGenerator(&gen);
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setFieldGenerator(&gen);
         }
     };
 
 
-    template <class TGrid, class TFieldSolver, class TDerived, bool>
+    template <class TGrid, class TFieldSolver, class TPyField, bool>
     class pyPMLSolverInterface {};
 
-    template <class TGrid, class TFieldSolver, class TDerived>
-    class pyPMLSolverInterface<TGrid, TFieldSolver, TDerived, true> {
+    // Interface for solvers that support PML
+    template <class TGrid, class TFieldSolver, class TPyField>
+    class pyPMLSolverInterface<TGrid, TFieldSolver, TPyField, true> {
     public:
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz) {
-            static_cast<TDerived*>(this)->getField()->getFieldSolver()->setPML(sizePMLx, sizePMLy, sizePMLz);
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setPML(sizePMLx, sizePMLy, sizePMLz);
         }
     };
 
 
     // Interface for field solvers
-    template<class TGrid, class TFieldSolver, class TDerived>
+    template<class TGrid, class TFieldSolver, class TPyField>
     class pyFieldSolverInterface :
-        public pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TDerived,
+        public pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TPyField,
         std::is_same<TFieldSolver, PSATD>::value || std::is_same<TFieldSolver, PSATDPoisson>::value ||
         std::is_same<TFieldSolver, PSATDTimeStraggered>::value ||
         std::is_same<TFieldSolver, PSATDTimeStraggeredPoisson>::value>,
-        public pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TDerived,
+        public pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TPyField,
         std::is_same<TFieldSolver, FDTD>::value>,
-        public pyPMLSolverInterface<TGrid, TFieldSolver, TDerived,
+        public pyPMLSolverInterface<TGrid, TFieldSolver, TPyField,
         !std::is_same<TFieldSolver, NoFieldSolver>::value>
     {
     public:
 
         void setTime(FP time) {
-            static_cast<TDerived*>(this)->getField()->getFieldSolver()->globalTime = time;
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->globalTime = time;
         }
 
         FP getTime() {
-            return static_cast<TDerived*>(this)->getField()->getFieldSolver()->globalTime;
+            return static_cast<TPyField*>(this)->getField()->getFieldSolver()->globalTime;
         }
 
         void changeTimeStep(double dt) {
-            static_cast<TDerived*>(this)->getField()->getFieldSolver()->setTimeStep(dt);
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setTimeStep(dt);
         }
 
         void updateFields() {
-            static_cast<TDerived*>(this)->getField()->getFieldSolver()->updateFields();
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->updateFields();
         }
 
         void advance(FP dt) {
-            auto fieldSolver = static_cast<TDerived*>(this)->getField()->getFieldSolver();
+            auto fieldSolver = static_cast<TPyField*>(this)->getField()->getFieldSolver();
             FP oldDt = fieldSolver->dt;
             fieldSolver->setTimeStep(dt);
             fieldSolver->updateFields();
@@ -735,22 +751,24 @@ namespace pfc
     };
 
 
-    // Interface for all fields
-    template<class TGrid, class TFieldSolver, class TDerived>
+    // Interface for all kinds of field
+    template<class TGrid, class TFieldSolver, class TPyField>
     class pyFieldInterface :
-        public pyGridFieldInterface<TGrid, TFieldSolver, TDerived,
+        public pyGridFieldInterface<TGrid, TFieldSolver, TPyField,
         std::is_same<TFieldSolver, NoFieldSolver>::value>,
-        public pyFieldSolverInterface<TGrid, TFieldSolver, TDerived>
+        public pyFieldSolverInterface<TGrid, TFieldSolver, TPyField>
     {
     public:
 
         void refresh() {
-            static_cast<TDerived*>(this)->getField()->refresh();
+            static_cast<TPyField*>(this)->getField()->refresh();
         }
     };
 
 
-    // Base class for all fields (necessary to sum fields)
+
+    // ===================== Base class for all pyFields ========================
+
     class pyFieldBase {
     public:
 
@@ -776,7 +794,9 @@ namespace pfc
     };
 
 
-    // Main field class
+
+    // ====== Main pyField class that inherits all of relevant interfaces above and supports mappings =======
+    
     template<class TGrid, class TFieldSolver>
     class pyField : public pyFieldInterface<TGrid, TFieldSolver, pyField<TGrid, TFieldSolver>>,
         public pyFieldBase
@@ -900,6 +920,9 @@ namespace pfc
     pyAnalyticalField::pyField(FP dt) :
         field(new Field<NoGrid, NoFieldSolver>(dt)) {}
 
+
+
+    // ============= Some pyField classes that give sum and mul of any pyFields =============
 
     // Object returned when summing fields
     class pySumField : public pyFieldBase
