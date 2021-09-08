@@ -31,7 +31,13 @@ Installing
 - [`fftw3`](http://www.fftw.org/), will be installed automatically in case it is not available
 - Additionally to run our examples: [`numpy`](https://numpy.org/) and [`matplotlib`](https://matplotlib.org/)
 
-### On Linux
+The easiest way to install the required Python libraries is to run
+```bash
+pip install -r requirements.txt
+```
+The `requirements.txt` file contains a complete list of the necessary Python libraries, including version control where needed.
+
+### On Linux/Mac
 
 First, install the [dependencies](###Dependencies). To build the project one needs `gcc` or `icc` supporting C++11.
 Run `./build_linux.sh` with the following options:
@@ -40,7 +46,7 @@ Run `./build_linux.sh` with the following options:
 - `-fftw` to enable FFTW support
 - `-python <path>` to use a non-standard path to Python
 
-After the installation, the binaries will appear in `../bin`. One needs to copy these files to the folder with the Python script to be executed. For example, one can use small tests from the folder `example-tests`. 
+After the installation, the binaries will appear in `../bin`. One needs to copy these files to the folder with the Python script to be executed. For example, one can use small tests from the folder `example-tests`.
 
 ### On Windows
 
@@ -52,7 +58,7 @@ Run `build_windows.bat` with the following options:
 - `/fftw` to enable FFTW support
 - `/python <path>` to use a non-standard path to Python
 
-After the installation, the binaries will appear in `../bin`. One needs to copy these files to the folder with the Python script to be executed. For example, one can use small tests from the folder `example-tests`. 
+After the installation, the binaries will appear in `../bin`. One needs to copy these files to the folder with the Python script to be executed. For example, one can use small tests from the folder `example-tests`.
 
 Documentation
 -------------
