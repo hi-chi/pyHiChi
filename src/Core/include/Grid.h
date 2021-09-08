@@ -36,6 +36,10 @@ namespace pfc {
         // copy constructor, can make shallow copies
         Grid(const Grid& grid, bool ifShallowCopy = false);
 
+        // copy values from *this to *grid
+        template <class TGrid>
+        void copyValues(TGrid* grid) const;
+
         forceinline const FP3 BxPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftBx;
@@ -672,6 +676,31 @@ namespace pfc {
 
 
     // end SPECTRAL GRIDS
+
+    template <typename Data, GridTypes gT>
+    template <class TGrid>
+    inline void Grid<Data, gT>::copyValues(TGrid* grid) const {
+        const int nx = grid->numCells.x, ny = grid->numCells.y, nz = grid->numCells.z;
+
+        OMP_FOR_COLLAPSE()
+        for (int i = 0; i < nx; i++)
+            for (int j = 0; j < ny; j++)
+                OMP_SIMD()
+                for (int k = 0; k < nz; k++) {
+                    grid->Ex(i, j, k) = this->getEx(grid->ExPosition(i, j, k));
+                    grid->Ey(i, j, k) = this->getEy(grid->EyPosition(i, j, k));
+                    grid->Ez(i, j, k) = this->getEz(grid->EzPosition(i, j, k));
+                    
+                    grid->Bx(i, j, k) = this->getBx(grid->BxPosition(i, j, k));
+                    grid->By(i, j, k) = this->getBy(grid->ByPosition(i, j, k));
+                    grid->Bz(i, j, k) = this->getBz(grid->BzPosition(i, j, k));
+                    
+                    grid->Jx(i, j, k) = this->getJx(grid->JxPosition(i, j, k));
+                    grid->Jy(i, j, k) = this->getJy(grid->JyPosition(i, j, k));
+                    grid->Jz(i, j, k) = this->getJz(grid->JzPosition(i, j, k));
+                }
+    }
+
     
     template< typename Data, GridTypes gT>
     inline FP Grid<Data, gT>::getFieldCIC(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const
