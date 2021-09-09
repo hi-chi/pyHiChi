@@ -1,5 +1,6 @@
 #pragma once
 #include "pyFieldInterface.h"
+#include "ScalarField.h"
 
 #include "pybind11/pybind11.h"
 
@@ -8,6 +9,35 @@ using namespace pybind11::literals;
 
 namespace pfc
 {
+
+    // wrapper over ScalarField class object
+    class pyScalarField {
+    public:
+
+        pyScalarField(ScalarField<FP>* scalarField) :scalarField(scalarField) {}
+
+        FP* getData() const {
+            return scalarField->getData();
+        }
+
+        Int3 getSize() const {
+            return scalarField->getSize();
+        }
+
+        // read-only accessors
+        FP get(const Int3& index) const {
+            return (*scalarField)(index);
+        }
+
+        FP get(int i, int j, int k) const {
+            return (*scalarField)(i, j, k);
+        }
+
+    private:
+
+        ScalarField<FP>* scalarField;
+    };
+
 
     // Base class for all pyFields
     class pyFieldBase {
@@ -72,11 +102,11 @@ namespace pfc
                 );
         }
     
-        inline FP3 getE(const FP3& coords) const override {
+        FP3 getE(const FP3& coords) const override {
             return BaseInterface::getE(coords);
         }
     
-        inline FP3 getB(const FP3& coords) const override {
+        FP3 getB(const FP3& coords) const override {
             return BaseInterface::getB(coords);
         }
     
@@ -102,6 +132,36 @@ namespace pfc
             this->getField()->getGrid()->copyValues(zoomedField->getField()->getGrid());
             return zoomedField;
         }
+
+        std::shared_ptr<pyScalarField> getEx() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Ex));
+        }
+        std::shared_ptr<pyScalarField> getEy() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Ey));
+        }
+        std::shared_ptr<pyScalarField> getEz() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Ez));
+        }
+
+        std::shared_ptr<pyScalarField> getBx() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Bx));
+        }
+        std::shared_ptr<pyScalarField> getBy() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->By));
+        }
+        std::shared_ptr<pyScalarField> getBz() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Bz));
+        }
+
+        std::shared_ptr<pyScalarField> getJx() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Jx));
+        }
+        std::shared_ptr<pyScalarField> getJy() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Jy));
+        }
+        std::shared_ptr<pyScalarField> getJz() {
+            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Jz));
+        }
     
     private:
     
@@ -124,6 +184,7 @@ namespace pfc
 
 
     // pyField class that supports mappings
+    // wrapper over pyField class object or pyMappedField class object
     template<class TGrid, class TFieldSolver>
     class pyMappedField : public pyFieldInterface<TGrid, TFieldSolver,
         pyMappedField<TGrid, TFieldSolver>>, public pyFieldBase
@@ -166,7 +227,7 @@ namespace pfc
                 );
         }
 
-        inline FP3 getE(const FP3& coords) const override {
+        FP3 getE(const FP3& coords) const override {
             bool status = true;
             FP time = getField()->getFieldSolver()->globalTime +
                 getField()->getFieldSolver()->timeShiftE;
@@ -175,7 +236,7 @@ namespace pfc
             return BaseInterface::getE(inverseCoords);
         }
 
-        inline FP3 getB(const FP3& coords) const override {
+        FP3 getB(const FP3& coords) const override {
             bool status = true;
             FP time = getField()->getFieldSolver()->globalTime +
                 getField()->getFieldSolver()->timeShiftB;

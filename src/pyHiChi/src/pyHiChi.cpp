@@ -65,6 +65,18 @@
     SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)
 
 
+#define SET_SCALAR_FIELD_METHODS(pyFieldType)                              \
+    .def("get_Jx", &pyFieldType::getJx)                                    \
+    .def("get_Jy", &pyFieldType::getJy)                                    \
+    .def("get_Jz", &pyFieldType::getJz)                                    \
+    .def("get_Ex", &pyFieldType::getEx)                                    \
+    .def("get_Ey", &pyFieldType::getEy)                                    \
+    .def("get_Ez", &pyFieldType::getEz)                                    \
+    .def("get_Bx", &pyFieldType::getBx)                                    \
+    .def("get_By", &pyFieldType::getBy)                                    \
+    .def("get_Bz", &pyFieldType::getBz)
+
+
 #define SET_COMMON_FIELD_METHODS(pyFieldType)                             \
     .def("change_time_step", &pyFieldType::changeTimeStep,                \
         py::arg("time_step"))                                             \
@@ -407,6 +419,28 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("if_perform_inverse_mapping", &TightFocusingMapping::setIfCut)
         ;
 
+    // ------------------- py scalar field -------------------
+
+    py::class_<pyScalarField, std::shared_ptr<pyScalarField>>(
+        object, "ScalarField", py::buffer_protocol())
+        .def_buffer([](pyScalarField& sf) -> py::buffer_info {  // cast to np.array
+                return py::buffer_info(
+                    sf.getData(),                               // Pointer to buffer
+                    sizeof(FP),                                 // Size of one scalar
+                    py::format_descriptor<FP>::format(),        // Python struct-style format descriptor
+                    3,                                          // Number of dimensions
+                    { sf.getSize().x, sf.getSize().y, sf.getSize().z },  // Buffer dimensions
+                    {                                                    // Strides (in bytes) for each index
+                        sizeof(FP) * sf.getSize().y * sf.getSize().z,    
+                        sizeof(FP) * sf.getSize().z,
+                        sizeof(FP)
+                    }
+                );
+            })
+        .def("get_size", &pyScalarField::getSize)
+        .def("get", static_cast<FP(pyScalarField::*)(int, int, int) const>(&pyScalarField::get))
+        ;
+
     // ------------------- py fields -------------------
 
     // abstract class
@@ -467,6 +501,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyYeeField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyYeeField)
+        SET_SCALAR_FIELD_METHODS(pyYeeField)
         SET_COMMON_FIELD_METHODS(pyYeeField)
         .def("set_PML", &pyYeeField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
@@ -481,6 +516,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSTDField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSTDField)
+        SET_SCALAR_FIELD_METHODS(pyPSTDField)
         SET_COMMON_FIELD_METHODS(pyPSTDField)
         .def("set_PML", &pyPSTDField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
@@ -498,6 +534,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDField)
+        SET_SCALAR_FIELD_METHODS(pyPSATDField)
         SET_COMMON_FIELD_METHODS(pyPSATDField)
         .def("set_PML", &pyPSATDField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
@@ -516,6 +553,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDPoissonField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDPoissonField)
+        SET_SCALAR_FIELD_METHODS(pyPSATDPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDPoissonField)
         .def("set_PML", &pyPSATDPoissonField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
@@ -534,6 +572,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredField)
+        SET_SCALAR_FIELD_METHODS(pyPSATDTimeStraggeredField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredField)
         .def("set_PML", &pyPSATDTimeStraggeredField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
@@ -552,6 +591,7 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("spatial_steps"), py::arg("time_step"))
         SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredPoissonField)
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
+        SET_SCALAR_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
         .def("set_PML", &pyPSATDTimeStraggeredPoissonField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
