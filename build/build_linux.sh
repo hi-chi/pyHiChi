@@ -105,7 +105,9 @@ if [ $? -ne 0 ]; then
 fi
 mkdir -p ../../bin
 cp src/pyHiChi/pyHiChi*.so ../../bin/pyHiChi.so
-cd ..
+cd ../../bin/
+stubgen -m pyHiChi -o .
+cd ../build/
 
 if $clean ; then
     BUILD_DIR="unix_makefiles"
