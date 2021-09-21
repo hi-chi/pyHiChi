@@ -2,4 +2,6 @@ cmake>=3.1
 numba
 numpy
 matplotlib
-mypy
+mypy # Stubs (.pyi) 
+sphinx # API docs
+sphinx_rtd_theme # ReadTheDocs theme
