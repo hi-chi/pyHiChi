@@ -126,6 +126,7 @@ void processParticles(QED* self, Ensemble3d* particles,
 
 
 PYBIND11_MODULE(pyHiChi, object) {
+    object.doc() = "This is a pybind11 module"; // optional module docstring
 
     // ------------------- constants -------------------
 
@@ -139,7 +140,7 @@ PYBIND11_MODULE(pyHiChi, object) {
     object.attr("eV") = constants::eV;
     object.attr("meV") = constants::meV;
 
-    // ------------------- auxulary structures -------------------
+    // ------------------- auxilary structures -------------------
 
     py::enum_<Coordinate>(object, "Axis")
         .value("X", Coordinate::x)
@@ -177,7 +178,24 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def_readwrite("z", &FP3::z)
         ;
 
-    object.def("cross", (const Vector3<FP> (*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) cross);
+    // Example of how to add long docstring information. The text inside R"mydelimiter( )mydelimiter" is written in the reStructuredText format.
+    object.def("cross", (const Vector3<FP> (*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) cross,
+    R"mydelimiter(
+    Vector cross product.
+
+    The function computes the vector cross product :math:`C = A \times B` between two 3-dimensional input vectors,
+    :math:`A` and :math:`B`, returning the resulting vector :math:`C`.
+
+    Args:
+        A: Description of A.
+
+        B: Description of B.
+
+    Returns:
+        Vector3d: Description of return value
+    )mydelimiter",
+    py::arg("A"),py::arg("B"));
+
     object.def("cross", (FP3(*)(const FP3&, const FP3&)) cross);
     object.def("dot", (FP(*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) dot);
     object.def("dot", (FP(*)(const FP3&, const FP3&)) dot);
@@ -428,7 +446,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     py::class_<pyAnalyticalField, std::shared_ptr<pyAnalyticalField>>(
-        object, "AnalyticalField", pyClassFieldBase)
+        object, "AnalyticalField", pyClassFieldBase,"Description about the AnalyticalField class.") // Example of how to add short docstring information.
         SET_SUM_AND_MAP_FIELD_METHODS(pyAnalyticalField)
         SET_COMMON_FIELD_METHODS(pyAnalyticalField)
         .def(py::init<FP>(), py::arg("time_step"))

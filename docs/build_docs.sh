@@ -1,4 +1,6 @@
 #!/bin/bash
 
-sphinx-apidoc -o source/ ../bin/
+# This is just a quick script to generate the API docs then make the html.
+
+sphinx-apidoc -o . ../bin/
 make html

@@ -5,3 +5,4 @@ matplotlib
 mypy # Stubs (.pyi) 
 sphinx # API docs
 sphinx_rtd_theme # ReadTheDocs theme
+myst-parser # Markdown support for Sphinx

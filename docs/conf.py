@@ -12,14 +12,14 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../bin'))
+sys.path.insert(0, os.path.abspath('../bin'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'pyHiChi'
-copyright = '2021, pyHiChi'
-author = 'pyHiChi'
+copyright = '2021, hi-chi'
+author = 'hi-chi'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
@@ -32,17 +32,23 @@ release = '0.0.1'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',  # Core library for html generation from docstrings
-    'sphinx.ext.napoleon', # Google and NumPy docstring styles
+    'sphinx.ext.napoleon',  # Google and NumPy docstring styles
+    'myst_parser',  # Markdown support
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['.templates']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# Suffix definitions
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 # -- Options for HTML output -------------------------------------------------
 
