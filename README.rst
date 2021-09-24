@@ -2,10 +2,12 @@ pyHiChi
 =======
 
 
-.. image:: https://img.shields.io/badge/language-python-orange.svg
-.. image:: https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgrey.svg
-.. image:: https://img.shields.io/badge/license-MIT-blue.svg
+.. |Language| image:: https://img.shields.io/badge/language-python-orange.svg
+.. |Platform| image:: https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgrey.svg
+.. |License| image:: https://img.shields.io/badge/license-MIT-blue.svg
    :target: https://opensource.org/licenses/MIT
+
+|Language| |Platform| |License|
 
 
 The project High-Intensity Collisions and Interactions (Hi-Chi) is an open-source collection of Python-controlled tools for performing simulations and data analysis in the research area of strong-field particle and plasma physics. The tools are being developed in C++ and provide high performance using either local or supercomputer resources. The project is intended to offer an environment for testing, benchmarking and aggregative use of individual components, ranging from basic routines to supercomputer codes.
