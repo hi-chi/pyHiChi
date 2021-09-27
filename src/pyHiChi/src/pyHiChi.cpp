@@ -180,28 +180,29 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     // Example of how to add long docstring information. The text inside R"mydelimiter( )mydelimiter" is written in the reStructuredText format.
     object.def("cross", (const Vector3<FP> (*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) cross,
-    R"mydelimiter(
-    Vector cross product.
+        R"mydelimiter(
+        Vector cross product.
 
-    The function computes the vector cross product :math:`C = A \times B` between two 3-dimensional input vectors,
-    :math:`A` and :math:`B`, returning the resulting vector :math:`C`.
+        The function computes the vector cross product :math:`C = A \times B` between two 3-dimensional input vectors,
+        :math:`A` and :math:`B`, returning the resulting vector :math:`C`.
 
-    Args:
-        A: Description of A.
+        Args:
+            a: Description of a.
 
-        B: Description of B.
+            b: Description of b.
 
-    Returns:
-        Vector3d: Description of return value
-    )mydelimiter",
-    py::arg("A"),py::arg("B"));
+        Returns:
+            Vector3d: Description of return value
+        )mydelimiter",
+        py::arg("a"),py::arg("b"));
 
-    object.def("cross", (FP3(*)(const FP3&, const FP3&)) cross);
-    object.def("dot", (FP(*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) dot);
-    object.def("dot", (FP(*)(const FP3&, const FP3&)) dot);
+    object.def("cross", (FP3(*)(const FP3&, const FP3&)) cross, py::arg("a"), py::arg("b"));
+    object.def("dot", (FP(*)(const Vector3Proxy<FP>&, const Vector3Proxy<FP>&)) dot, py::arg("a"), py::arg("b"));
+    object.def("dot", (FP(*)(const FP3&, const FP3&)) dot, py::arg("a"), py::arg("b"));
 
     py::class_<ValueField>(object, "FieldValue")
-        .def(py::init<FP3, FP3>(), py::arg("E"), py::arg("B"))
+        .def(py::init<FP3, FP3>(),
+            py::arg("E"), py::arg("B"))
         .def(py::init<FP, FP, FP, FP, FP, FP>(),
             py::arg("Ex"), py::arg("Ey"), py::arg("Ez"),
             py::arg("Bx"), py::arg("By"), py::arg("Bz"))
@@ -219,13 +220,13 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::init<Particle3d&>())
         .def(py::init<ParticleProxy3d&>())
         .def("get_position", &ParticleProxy3d::getPosition)
-        .def("set_position", &ParticleProxy3d::setPosition)
+        .def("set_position", &ParticleProxy3d::setPosition, py::arg("position"))
         .def("get_momentum", &ParticleProxy3d::getMomentum)
-        .def("set_momentum", &ParticleProxy3d::setMomentum)
+        .def("set_momentum", &ParticleProxy3d::setMomentum, py::arg("momentum"))
         .def("get_velocity", &ParticleProxy3d::getVelocity)
-        .def("set_velocity", &ParticleProxy3d::setVelocity)
+        .def("set_velocity", &ParticleProxy3d::setVelocity, py::arg("velocity"))
         .def("get_weight", &ParticleProxy3d::getWeight)
-        .def("set_weight", &ParticleProxy3d::setWeight)
+        .def("set_weight", &ParticleProxy3d::setWeight, py::arg("weight"))
         .def("get_gamma", &ParticleProxy3d::getGamma)
         .def("get_mass", &ParticleProxy3d::getMass)
         .def("get_charge", &ParticleProxy3d::getCharge)
@@ -240,16 +241,19 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<Particle3d>(object, "Particle")
         .def(py::init<>())
-        .def(py::init<FP3, FP3>())
-        .def(py::init<FP3, FP3, FP, ParticleTypes>())
+        .def(py::init<FP3, FP3>(),
+            py::arg("position") = FP3(0,0,0), py::arg("momentum") = FP3(0,0,0))
+        .def(py::init<FP3, FP3, FP, ParticleTypes>(),
+            py::arg("position") = FP3(0,0,0), py::arg("momentum") = FP3(0,0,0),
+            py::arg("weight") = FP(1), py::arg("type") = ParticleTypes::Electron)
         .def("get_position", &Particle3d::getPosition)
-        .def("set_position", &Particle3d::setPosition)
+        .def("set_position", &Particle3d::setPosition, py::arg("position"))
         .def("get_momentum", &Particle3d::getMomentum)
-        .def("set_momentum", &Particle3d::setMomentum)
+        .def("set_momentum", &Particle3d::setMomentum, py::arg("momentum"))
         .def("get_velocity", &Particle3d::getVelocity)
-        .def("set_velocity", &Particle3d::setVelocity)
+        .def("set_velocity", &Particle3d::setVelocity, py::arg("velocity"))
         .def("get_weight", &Particle3d::getWeight)
-        .def("set_weight", &Particle3d::setWeight)
+        .def("set_weight", &Particle3d::setWeight, py::arg("weight"))
         .def("get_gamma", &Particle3d::getGamma)
         .def("get_mass", &Particle3d::getMass)
         .def("get_charge", &Particle3d::getCharge)
@@ -258,7 +262,7 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<ParticleArray3d>(object, "ParticleArray")
         .def(py::init<>())
-        .def(py::init<ParticleTypes>())
+        .def(py::init<ParticleTypes>(), py::arg("type") = ParticleTypes::Electron)
         .def("add", &ParticleArray3d::pushBack)
         .def("get_type", &ParticleArray3d::getType)
         .def("size", &ParticleArray3d::size)
@@ -278,8 +282,8 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<Ensemble3d>(object, "Ensemble")
         .def(py::init<>())
-        .def(py::init<Ensemble3d>())
-        .def("add", &Ensemble3d::addParticle)
+        .def(py::init<Ensemble3d>(), py::arg("ensemble"))
+        .def("add", &Ensemble3d::addParticle, py::arg("particle"))
         .def("size", &Ensemble3d::size)
         .def("__getitem__", [](Ensemble3d& arr, size_t i) {
         if (i >= sizeParticleTypes) throw py::index_error();
@@ -364,41 +368,41 @@ PYBIND11_MODULE(pyHiChi, object) {
     py::class_<IdentityMapping, std::shared_ptr<IdentityMapping>>(object, "IdentityMapping", pyMapping)
         .def(py::init<const FP3&, const FP3&>(), py::arg("a"), py::arg("b"))
         .def("get_direct_coords", &IdentityMapping::getDirectCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         .def("get_inverse_coords", &IdentityMapping::getInverseCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         ;
 
     py::class_<PeriodicalMapping, std::shared_ptr<PeriodicalMapping>>(object, "PeriodicalMapping", pyMapping)
         .def(py::init<Coordinate, FP, FP>(), py::arg("axis"), py::arg("c_min"), py::arg("c_max"))
         .def("get_direct_coords", &PeriodicalMapping::getDirectCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         .def("get_inverse_coords", &PeriodicalMapping::getInverseCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         ;
     
     py::class_<RotationMapping, std::shared_ptr<RotationMapping>>(object, "RotationMapping", pyMapping)
         .def(py::init<Coordinate, FP>(), py::arg("axis"), py::arg("angle"))
         .def("get_direct_coords", &RotationMapping::getDirectCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         .def("get_inverse_coords", &RotationMapping::getInverseCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         ;
 
     py::class_<ScaleMapping, std::shared_ptr<ScaleMapping>>(object, "ScaleMapping", pyMapping)
         .def(py::init<Coordinate, FP>(), py::arg("axis"), py::arg("scale"))
         .def("get_direct_coords", &ScaleMapping::getDirectCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         .def("get_inverse_coords", &ScaleMapping::getInverseCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         ;
 
     py::class_<ShiftMapping, std::shared_ptr<ShiftMapping>>(object, "ShiftMapping", pyMapping)
         .def(py::init<FP3>(), py::arg("shift"))
         .def("get_direct_coords", &ShiftMapping::getDirectCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         .def("get_inverse_coords", &ShiftMapping::getInverseCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         ;
 
     py::class_<TightFocusingMapping, std::shared_ptr<TightFocusingMapping>>(object, "TightFocusingMapping", pyMapping)
@@ -406,12 +410,12 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::init<FP, FP, FP, Coordinate>(), py::arg("R0"), py::arg("L"),
             py::arg("D"), py::arg("axis"))
         .def("get_direct_coords", &TightFocusingMapping::getDirectCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         .def("get_inverse_coords", &TightFocusingMapping::getInverseCoords, py::arg("coords"),
-            py::arg("time") = 0.0, py::arg("status") = 0)
+            py::arg("time") = 0.0, py::arg("status") = false)
         .def("get_min_coord", &TightFocusingMapping::getMinCoord)
         .def("get_max_coord", &TightFocusingMapping::getMaxCoord)
-        .def("if_perform_inverse_mapping", &TightFocusingMapping::setIfCut)
+        .def("if_perform_inverse_mapping", &TightFocusingMapping::setIfCut, py::arg("status") = true)
         ;
 
     // ------------------- py fields -------------------
@@ -547,8 +551,8 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<NullField>(object, "NullField")
         .def(py::init<>())
-        .def("get_E", &NullField::getE)
-        .def("get_B", &NullField::getB)
+        .def("get_E", &NullField::getE, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_B", &NullField::getB, py::arg("x"), py::arg("y"), py::arg("z"))
         ;
 
     py::class_<TightFocusingField>(object, "TightFocusingField")
@@ -562,8 +566,8 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("f_number"), py::arg("R0"), py::arg("wavelength"), py::arg("pulselength"),
             py::arg("totalPower"), py::arg("edge_smoothing_angle"),
             py::arg("polarisation"), py::arg("FP exclusionRadius"))
-        .def("get_E", &TightFocusingField::getE)
-        .def("get_B", &TightFocusingField::getB)
+        .def("get_E", &TightFocusingField::getE, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_B", &TightFocusingField::getB, py::arg("x"), py::arg("y"), py::arg("z"))
         ;
 
 }
