@@ -714,14 +714,10 @@ PYBIND11_MODULE(pyHiChi, object) {
     py::class_<TightFocusingField>(object, "TightFocusingField")
         .def(py::init<FP, FP, FP, FP, FP, FP>(), 
             py::arg("f_number"), py::arg("R0"), py::arg("wavelength"), py::arg("pulselength"),
-            py::arg("totalPower"), py::arg("edge_smoothing_angle"))
+            py::arg("total_power"), py::arg("edge_smoothing_angle"))
         .def(py::init<FP, FP, FP, FP, FP, FP, FP3>(),
             py::arg("f_number"), py::arg("R0"), py::arg("wavelength"), py::arg("pulselength"),
-            py::arg("totalPower"), py::arg("edge_smoothing_angle"), py::arg("polarisation"))
-        .def(py::init<FP, FP, FP, FP, FP, FP, FP3, FP>(),
-            py::arg("f_number"), py::arg("R0"), py::arg("wavelength"), py::arg("pulselength"),
-            py::arg("totalPower"), py::arg("edge_smoothing_angle"),
-            py::arg("polarisation"), py::arg("FP exclusionRadius"))
+            py::arg("total_power"), py::arg("edge_smoothing_angle"), py::arg("polarisation"))
         .def("get_E", &TightFocusingField::getE)
         .def("get_B", &TightFocusingField::getB)
         ;
