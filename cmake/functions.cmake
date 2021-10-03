@@ -6,11 +6,11 @@ function(link_fft_libs)
 		list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 		find_package(MKL)
 		if (MKL_FOUND)
-				set(FFT_INCLUDES ${MKL_INCLUDE_DIRS} PARENT_SCOPE)
-				set(FFT_LIBS ${MKL_LIBRARIES} PARENT_SCOPE)
-			message(STATUS "using MKL")
+			set(FFT_INCLUDES ${MKL_INCLUDE_DIRS} PARENT_SCOPE)
+			set(FFT_LIBS ${MKL_LIBRARIES} PARENT_SCOPE)
+			message(STATUS "Using MKL")
 		else()
-				message(WARNING "Cannot find MKL")
+			message(WARNING "Cannot find MKL")
 		endif()
 	endif()
 	
@@ -20,7 +20,7 @@ function(link_fft_libs)
 	
 	if (USE_FFTW)
 		
-		if (NOT FFTW_DIR)
+		if (NOT ${FFTW_DIR})
 			set(FFTW_VERSION 3.3.8)
 			set(INSTALL_DIR "${CMAKE_BINARY_DIR}/3rdparty")
 			include(ExternalProject)
@@ -39,14 +39,37 @@ function(link_fft_libs)
 			install(DIRECTORY "${INSTALL_DIR}" DESTINATION .)
 			set(FFTW_DIR ${INSTALL_DIR}/fftw)
 		endif()
+        
+        message(STATUS "Looking for FFTW: ${FFTW_DIR}")
 		
-		set(FFT_INCLUDES ${FFTW_DIR}/include PARENT_SCOPE)
-		set(FFTW3_LIB ${FFTW_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}fftw3${CMAKE_STATIC_LIBRARY_SUFFIX})
+        if (EXISTS ${FFTW_DIR}/include)
+            set(FFT_INCLUDES ${FFTW_DIR}/include PARENT_SCOPE)
+        else()
+            message(WARNING "Cannot find ${FFTW_DIR}/include")
+        endif()
+        
+        find_library(
+            FFTW3_LIB
+            ${CMAKE_STATIC_LIBRARY_PREFIX}fftw3${CMAKE_STATIC_LIBRARY_SUFFIX}
+            PATHS ${FFTW_DIR}/lib ${FFTW_DIR}/lib64
+        )
+        if (NOT ${FFTW3_LIB})
+            message(WARNING "Cannot find fftw3 lib")
+        endif()
+        
 		if(USE_OMP)
-			set(FFTW3_OMP_LIB ${FFTW_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}fftw3_omp${CMAKE_STATIC_LIBRARY_SUFFIX})
+            find_library(
+                FFTW3_OMP_LIB
+                ${CMAKE_STATIC_LIBRARY_PREFIX}fftw3_omp${CMAKE_STATIC_LIBRARY_SUFFIX}
+                PATHS ${FFTW_DIR}/lib ${FFTW_DIR}/lib64
+            )
+            if (NOT ${FFTW3_OMP_LIB})
+                message(WARNING "Cannot find fftw3_omp lib")
+            endif()
 		endif()
+        
 		set(FFT_LIBS ${FFTW3_OMP_LIB} ${FFTW3_LIB} PARENT_SCOPE)
-		message(STATUS "using FFTW: ${FFTW_DIR}")
+        message(STATUS "Using FFTW: ${FFT_LIBS}")
 		
 	endif()
 	
