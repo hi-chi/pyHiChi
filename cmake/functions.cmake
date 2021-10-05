@@ -21,6 +21,7 @@ function(link_fft_libs)
 	if (USE_FFTW)
 		
 		if (NOT FFTW_DIR)
+			
 			set(FFTW_VERSION 3.3.8)
 			set(INSTALL_DIR "${CMAKE_BINARY_DIR}/3rdparty")
 			include(ExternalProject)
@@ -38,41 +39,49 @@ function(link_fft_libs)
 			)
 			install(DIRECTORY "${INSTALL_DIR}" DESTINATION .)
 			set(FFTW_DIR ${INSTALL_DIR}/fftw)
-		endif()
+			
+			set(FFT_INCLUDES ${FFTW_DIR}/${CMAKE_INSTALL_INCLUDEDIR})
+			
+			set(FFTW3_LIB ${FFTW_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}fftw3${CMAKE_STATIC_LIBRARY_SUFFIX})
+			if(USE_OMP)
+				set(FFTW3_OMP_LIB ${FFTW_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}fftw3_omp${CMAKE_STATIC_LIBRARY_SUFFIX})
+			endif()
 		
-		message(STATUS "Looking for FFTW: ${FFTW_DIR}")
-		
-		if (EXISTS "${FFTW_DIR}/include")
-			set(FFT_INCLUDES ${FFTW_DIR}/include PARENT_SCOPE)
 		else()
-			message(WARNING "Cannot find ${FFTW_DIR}/include")
-		endif()
 		
-		find_library(
-			FFTW3_LIB
-			NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}fftw3${CMAKE_STATIC_LIBRARY_SUFFIX}
-			PATHS "${FFTW_DIR}/lib" "${FFTW_DIR}/lib64"
-		)
-		if (FFTW3_LIB)
-			set(FFT_LIBS ${FFT_LIBS} ${FFTW3_LIB})
-		else()
-			message(WARNING "Cannot find fftw3 lib")
-		endif()
-		
-		if(USE_OMP)
+			if (EXISTS "${FFTW_DIR}/include")
+				set(FFT_INCLUDES ${FFTW_DIR}/include)
+			else()
+				message(WARNING "Cannot find 'include' directory in '${FFTW_DIR}' directory")
+			endif()
+			
 			find_library(
-				FFTW3_OMP_LIB
-				NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}fftw3_omp${CMAKE_STATIC_LIBRARY_SUFFIX}
+				FFTW3_LIB
+				NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}fftw3${CMAKE_STATIC_LIBRARY_SUFFIX}
 				PATHS "${FFTW_DIR}/lib" "${FFTW_DIR}/lib64"
 			)
-			if (FFTW3_OMP_LIB)
-				set(FFT_LIBS ${FFT_LIBS} ${FFTW3_OMP_LIB})
-			else()
-				message(WARNING "Cannot find fftw3_omp lib")
+			if (NOT FFTW3_LIB)
+				message(WARNING "Cannot find fftw3 library in '${FFTW_DIR}/lib' or '${FFTW_DIR}/lib64' directory")
 			endif()
+			
+			if(USE_OMP)
+				find_library(
+					FFTW3_OMP_LIB
+					NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}fftw3_omp${CMAKE_STATIC_LIBRARY_SUFFIX}
+					PATHS "${FFTW_DIR}/lib" "${FFTW_DIR}/lib64"
+				)
+				if (NOT FFTW3_OMP_LIB)
+					message(WARNING "Cannot find fftw3_omp library in '${FFTW_DIR}/lib' or '${FFTW_DIR}/lib64' directory")
+				endif()
+			endif()
+		
 		endif()
 		
+		set(FFT_LIBS ${FFTW3_OMP_LIB} ${FFTW3_LIB})
+		
+		set(FFT_INCLUDES ${FFT_INCLUDES} PARENT_SCOPE)
 		set(FFT_LIBS ${FFT_LIBS} PARENT_SCOPE)
+		
 		message(STATUS "Using FFTW: ${FFT_LIBS}")
 		
 	endif()
