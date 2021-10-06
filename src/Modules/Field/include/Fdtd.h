@@ -8,7 +8,7 @@
 #include <algorithm>
 
 namespace pfc {
-    
+
     class FDTD : public RealFieldSolver<YeeGridType>
     {
 
@@ -18,7 +18,7 @@ namespace pfc {
         void updateFields();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setFieldGenerator(FieldGeneratorYee * _generator);
+        void setFieldGenerator(FieldGeneratorYee* _generator);
 
         void updateHalfB();
         void updateE();
@@ -26,9 +26,9 @@ namespace pfc {
         void setTimeStep(FP dt);
 
         FP getCourantCondition() const {
-            double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
-                1.0 / (grid->steps.y*grid->steps.y) +
-                1.0 / (grid->steps.z*grid->steps.z));
+            double tmp = sqrt(1.0 / (grid->steps.x * grid->steps.x) +
+                1.0 / (grid->steps.y * grid->steps.y) +
+                1.0 / (grid->steps.z * grid->steps.z));
             return 1.0 / (constants::c * tmp);
         }
 
@@ -51,7 +51,7 @@ namespace pfc {
     };
 
     inline FDTD::FDTD(YeeGrid* grid, FP dt) :
-        RealFieldSolver(grid, dt, 0.0, 0.5*dt, 0.0)
+        RealFieldSolver(grid, dt, 0.0, 0.5 * dt, 0.0)
     {
         if (!ifCourantConditionSatisfied(dt)) {
             std::cout
@@ -76,7 +76,7 @@ namespace pfc {
     {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            this->timeShiftB = 0.5*dt;
+            this->timeShiftB = 0.5 * dt;
             if (pml->sizePML == Int3(0, 0, 0))
                 pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));
             else pml.reset(new PmlFdtd(this, pml->sizePML));
@@ -89,7 +89,7 @@ namespace pfc {
         }
     }
 
-    inline void FDTD::setFieldGenerator(FieldGeneratorYee * _generator)
+    inline void FDTD::setFieldGenerator(FieldGeneratorYee* _generator)
     {
         generator.reset(_generator->createInstance(this));
     }
@@ -184,20 +184,20 @@ namespace pfc {
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
         OMP_FOR_COLLAPSE()
-        for (int i = begin.x; i < end.x; i++)
-            for (int j = begin.y; j < end.y; j++)
-            {
-#pragma simd
-                for (int k = begin.z; k < end.z; k++)
+            for (int i = begin.x; i < end.x; i++)
+                for (int j = begin.y; j < end.y; j++)
                 {
-                    grid->Bx(i, j, k) += coeffZX * (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1)) -
-                        coeffYX * (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
-                    grid->By(i, j, k) += coeffXY * (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k)) -
-                        coeffZY * (grid->Ex(i, j, k) - grid->Ex(i, j, k - 1));
-                    grid->Bz(i, j, k) += coeffYZ * (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k)) -
-                        coeffXZ * (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
+#pragma simd
+                    for (int k = begin.z; k < end.z; k++)
+                    {
+                        grid->Bx(i, j, k) += coeffZX * (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1)) -
+                            coeffYX * (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
+                        grid->By(i, j, k) += coeffXY * (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k)) -
+                            coeffZY * (grid->Ex(i, j, k) - grid->Ex(i, j, k - 1));
+                        grid->Bz(i, j, k) += coeffYZ * (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k)) -
+                            coeffXZ * (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
+                    }
                 }
-            }
     }
 
     inline void FDTD::updateHalfB2D()
@@ -227,16 +227,16 @@ namespace pfc {
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
         OMP_FOR()
-        for (int i = begin.x; i < end.x; i++) {
+            for (int i = begin.x; i < end.x; i++) {
 #pragma simd
-            for (int j = begin.y; j < end.y; j++)
-            {
-                grid->Bx(i, j, 0) += -coeffYX * (grid->Ez(i, j, 0) - grid->Ez(i, j - 1, 0));
-                grid->By(i, j, 0) += coeffXY * (grid->Ez(i, j, 0) - grid->Ez(i - 1, j, 0));
-                grid->Bz(i, j, 0) += coeffYZ * (grid->Ex(i, j, 0) - grid->Ex(i, j - 1, 0)) -
-                    coeffXZ * (grid->Ey(i, j, 0) - grid->Ey(i - 1, j, 0));
+                for (int j = begin.y; j < end.y; j++)
+                {
+                    grid->Bx(i, j, 0) += -coeffYX * (grid->Ez(i, j, 0) - grid->Ez(i, j - 1, 0));
+                    grid->By(i, j, 0) += coeffXY * (grid->Ez(i, j, 0) - grid->Ez(i - 1, j, 0));
+                    grid->Bz(i, j, 0) += coeffYZ * (grid->Ex(i, j, 0) - grid->Ex(i, j - 1, 0)) -
+                        coeffXZ * (grid->Ey(i, j, 0) - grid->Ey(i - 1, j, 0));
+                }
             }
-        }
     }
 
     inline void FDTD::updateHalfB1D()
@@ -264,10 +264,10 @@ namespace pfc {
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
         OMP_FOR()
-        for (int i = begin.x; i < end.x; i++) {
-            grid->By(i, 0, 0) += coeffXY * (grid->Ez(i, 0, 0) - grid->Ez(i - 1, 0, 0));
-            grid->Bz(i, 0, 0) += -coeffXZ * (grid->Ey(i, 0, 0) - grid->Ey(i - 1, 0, 0));
-        }
+            for (int i = begin.x; i < end.x; i++) {
+                grid->By(i, 0, 0) += coeffXY * (grid->Ez(i, 0, 0) - grid->Ez(i - 1, 0, 0));
+                grid->Bz(i, 0, 0) += -coeffXZ * (grid->Ey(i, 0, 0) - grid->Ey(i - 1, 0, 0));
+            }
     }
 
     // Update grid values of electric field in FDTD.
@@ -311,54 +311,54 @@ namespace pfc {
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
         OMP_FOR_COLLAPSE()
-        for (int i = begin.x; i < end.x; i++)
-            for (int j = begin.y; j < end.y; j++)
-            {
-#pragma simd
-                for (int k = begin.z; k < end.z; k++)
+            for (int i = begin.x; i < end.x; i++)
+                for (int j = begin.y; j < end.y; j++)
                 {
-                    grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
-                        coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
-                        coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
-                    grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
-                        coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
-                        coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                    grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
-                        coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
-                        coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
+#pragma simd
+                    for (int k = begin.z; k < end.z; k++)
+                    {
+                        grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
+                            coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
+                            coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
+                        grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
+                            coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
+                            coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
+                        grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
+                            coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
+                            coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
+                    }
                 }
-            }
 
         // Process edge values
         if (updateEAreaEnd.x == grid->numCells.x - 1)
         {
             int i = updateEAreaEnd.x;
             OMP_FOR()
-            for (int j = begin.y; j < end.y; j++)
-                for (int k = begin.z; k < end.z; k++)
-                    grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
-                    coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
-                    coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
+                for (int j = begin.y; j < end.y; j++)
+                    for (int k = begin.z; k < end.z; k++)
+                        grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
+                        coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
+                        coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
         }
         if (updateEAreaEnd.y == grid->numCells.y - 1)
         {
             int j = updateEAreaEnd.y;
             OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                for (int k = begin.z; k < end.z; k++)
-                    grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
-                    coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
-                    coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
+                for (int i = begin.x; i < end.x; i++)
+                    for (int k = begin.z; k < end.z; k++)
+                        grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
+                        coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
+                        coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
         }
         if (updateEAreaEnd.z == grid->numCells.z - 1)
         {
             int k = updateEAreaEnd.z;
             OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                for (int j = begin.y; j < end.y; j++)
-                    grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
-                    coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
-                    coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
+                for (int i = begin.x; i < end.x; i++)
+                    for (int j = begin.y; j < end.y; j++)
+                        grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
+                        coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
+                        coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
         }
     }
 
@@ -390,35 +390,35 @@ namespace pfc {
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
         OMP_FOR()
-        for (int i = begin.x; i < end.x; i++) {
+            for (int i = begin.x; i < end.x; i++) {
 #pragma simd
-            for (int j = begin.y; j < end.y; j++) {
-                grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
-                    coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
-                grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
-                    coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
-                grid->Ez(i, j, 0) += coeffCurrent * grid->Jz(i, j, 0) +
-                    coeffXZ * (grid->By(i + 1, j, 0) - grid->By(i, j, 0)) -
-                    coeffYZ * (grid->Bx(i, j + 1, 0) - grid->Bx(i, j, 0));
+                for (int j = begin.y; j < end.y; j++) {
+                    grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
+                        coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
+                    grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
+                        coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
+                    grid->Ez(i, j, 0) += coeffCurrent * grid->Jz(i, j, 0) +
+                        coeffXZ * (grid->By(i + 1, j, 0) - grid->By(i, j, 0)) -
+                        coeffYZ * (grid->Bx(i, j + 1, 0) - grid->Bx(i, j, 0));
+                }
             }
-        }
 
         // Process edge values
         if (updateEAreaEnd.x == grid->numCells.x - 1)
         {
             int i = updateEAreaEnd.x;
             OMP_FOR()
-            for (int j = begin.y; j < end.y; j++)
-                grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
-                coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
+                for (int j = begin.y; j < end.y; j++)
+                    grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
+                    coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
         }
         if (updateEAreaEnd.y == grid->numCells.y - 1)
         {
             int j = updateEAreaEnd.y;
             OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
-                coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
+                for (int i = begin.x; i < end.x; i++)
+                    grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
+                    coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
         }
     }
 
@@ -448,13 +448,12 @@ namespace pfc {
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
         OMP_FOR()
-        for (int i = begin.x; i < end.x; i++) {
-            grid->Ex(i, 0, 0) += coeffCurrent * grid->Jx(i, 0, 0);
-            grid->Ey(i, 0, 0) += coeffCurrent * grid->Jy(i, 0, 0) -
-                coeffXY * (grid->Bz(i + 1, 0, 0) - grid->Bz(i, 0, 0));
-            grid->Ez(i, 0, 0) += coeffCurrent * grid->Jz(i, 0, 0) +
-                coeffXZ * (grid->By(i + 1, 0, 0) - grid->By(i, 0, 0));
-        }
+            for (int i = begin.x; i < end.x; i++) {
+                grid->Ex(i, 0, 0) += coeffCurrent * grid->Jx(i, 0, 0);
+                grid->Ey(i, 0, 0) += coeffCurrent * grid->Jy(i, 0, 0) -
+                    coeffXY * (grid->Bz(i + 1, 0, 0) - grid->Bz(i, 0, 0));
+                grid->Ez(i, 0, 0) += coeffCurrent * grid->Jz(i, 0, 0) +
+                    coeffXZ * (grid->By(i + 1, 0, 0) - grid->By(i, 0, 0));
+            }
     }
-
 }

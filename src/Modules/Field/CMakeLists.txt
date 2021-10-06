@@ -22,4 +22,13 @@ set(fieldModules_headers
     ${FIELDMODULES_HEADER_DIR}/PmlSpectralTimeStraggered.h
     ${FIELDMODULES_HEADER_DIR}/Pstd.h
     ${FIELDMODULES_HEADER_DIR}/Psatd.h)
-add_custom_target(fieldModules SOURCES ${fieldModules_headers})
+
+set(fieldModulesSYCL_headers
+    ${FIELDMODULES_HEADER_DIR}/sycl/FdtdSYCL.h
+    ${FIELDMODULES_HEADER_DIR}/sycl/PmlFdtdSYCL.h
+)
+
+add_custom_target(fieldModules SOURCES ${fieldModules_headers} ${fieldModulesSYCL_headers})
+
+source_group("headers"   FILES ${fieldModules_headers})
+source_group("sycl_headers"     FILES ${fieldModulesSYCL_headers})

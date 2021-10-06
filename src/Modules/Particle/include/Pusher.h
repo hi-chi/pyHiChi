@@ -45,7 +45,6 @@ namespace pfc
             typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
 
             OMP_FOR()
-            OMP_SIMD()
             for (int i = 0; i < particleArray->size(); i++)
             {
                 ParticleProxyType particle = (*particleArray)[i];
@@ -71,7 +70,7 @@ namespace pfc
                 FP c = Constants<FP>::lightVelocity();
                 FP electronCharge = Constants<FP>::electronCharge();
                 FP electronMass = Constants<FP>::electronMass();
-                FP3 dp = timeStep * (2.0 / 3.0) * sqr(sqr(electronCharge) / (electronMass * sqr(c))) *
+                FP3 dp = timeStep * (FP)(2.0 / 3.0) * sqr(sqr(electronCharge) / (electronMass * sqr(c))) *
                     (VP(e, b) + (1 / c) * (VP(b, VP(b, v)) + SP(v, e) * e) -
                         (1 / c) * sqr(gamma) * (sqr(e + (1 / c) * VP(v, b)) - sqr(SP(e, v) / c)) * v);
 
@@ -85,7 +84,6 @@ namespace pfc
             typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
 
             OMP_FOR()
-            OMP_SIMD()
             for (int i = 0; i < particleArray->size(); i++)
             {
                 ParticleProxyType particle = (*particleArray)[i];

@@ -7,8 +7,10 @@ include_directories(
     ${FFT_INCLUDES})
 
 add_executable(ptests
-    src/ptestPusherSYCL.cpp
+    src/ptestFDTD.cpp
+    src/ptestFDTDSYCL.cpp
     src/ptestPusher.cpp
+    src/ptestPusherSYCL.cpp
     src/Main.cpp)
 
 if (APPLE)
