@@ -22,7 +22,7 @@ def field_value(x, y, z):
 field = hichi.PSATDField(grid_size, min_coords, grid_step, time_step)
 field.set_E(null_value, field_value, null_value)
 field.set_B(null_value, null_value, field_value)
-scalar_field = field.get_Ey()
+scalar_field = field.get_Ey_array()
 
 # makes 3d np.array of Ey field component
 scalar_field_arr = np.array(scalar_field)

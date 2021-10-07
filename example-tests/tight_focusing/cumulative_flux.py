@@ -106,12 +106,12 @@ zoomed_field.advance(-focus_area_size / hichi.c)
 zoomed_field.change_time_step(time_step)
 
 for i in range(ntimes):
-    #ex_yzt[i, :, :] = np.array(zoomed_field.get_Ex(), copy=False)[xi_index, :, :-2]
-    ey_yzt[i, :, :] = np.array(zoomed_field.get_Ey(), copy=False)[xi_index, :, :-2]
-    ez_yzt[i, :, :] = np.array(zoomed_field.get_Ez(), copy=False)[xi_index, :, :-2]
-    #bx_yzt[i, :, :] = np.array(zoomed_field.get_Bx(), copy=False)[xi_index, :, :-2]
-    by_yzt[i, :, :] = np.array(zoomed_field.get_By(), copy=False)[xi_index, :, :-2]
-    bz_yzt[i, :, :] = np.array(zoomed_field.get_Bz(), copy=False)[xi_index, :, :-2]
+    #ex_yzt[i, :, :] = np.array(zoomed_field.get_Ex_array(), copy=False)[xi_index, :, :-2]
+    ey_yzt[i, :, :] = np.array(zoomed_field.get_Ey_array(), copy=False)[xi_index, :, :-2]
+    ez_yzt[i, :, :] = np.array(zoomed_field.get_Ez_array(), copy=False)[xi_index, :, :-2]
+    #bx_yzt[i, :, :] = np.array(zoomed_field.get_Bx_array(), copy=False)[xi_index, :, :-2]
+    by_yzt[i, :, :] = np.array(zoomed_field.get_By_array(), copy=False)[xi_index, :, :-2]
+    bz_yzt[i, :, :] = np.array(zoomed_field.get_Bz_array(), copy=False)[xi_index, :, :-2]
     zoomed_field.update_fields()
 
 #e_yzt_in_focus = (ex_yzt[:, nx//2, ny//2]**2 + \
