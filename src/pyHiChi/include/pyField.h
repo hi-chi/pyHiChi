@@ -64,6 +64,8 @@ namespace pfc
             const std::shared_ptr<Mapping>& mapping) const = 0;
     };
 
+    template<class TGrid, class TFieldSolver>
+    class pyMappedField;
 
     // Simple pyField class
     template<class TGrid, class TFieldSolver>
