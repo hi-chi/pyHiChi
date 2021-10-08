@@ -8,6 +8,7 @@
 #include <pybind11/operators.h>
 
 #include "pyField.h"
+#include "pyFieldMacroses.h"
 
 #include "Constants.h"
 #include "Dimension.h"
@@ -28,86 +29,6 @@
 #include "Enums.h"
 #include "Mapping.h"
 #include "FieldConfiguration.h"
-
-
-#define SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)                \
-    .def("set", &pyFieldType::setFieldConfiguration<NullField>,           \
-        py::arg("field_configuration"))                                   \
-    .def("set", &pyFieldType::setFieldConfiguration<TightFocusingField>,  \
-        py::arg("field_configuration")) 
-
-
-#define SET_COMPUTATIONAL_GRID_METHODS(pyFieldType)                        \
-    .def("set_J", &pyFieldType::setJ)                                      \
-    .def("set_E", &pyFieldType::setE)                                      \
-    .def("set_B", &pyFieldType::setB)                                      \
-    .def("set_J", &pyFieldType::pySetJ)                                    \
-    .def("set_E", &pyFieldType::pySetE)                                    \
-    .def("set_B", &pyFieldType::pySetB)                                    \
-    .def("set_J", &pyFieldType::setJxyz,                                   \
-        py::arg("Jx"), py::arg("Jy"), py::arg("Jz"))                       \
-    .def("set_E", &pyFieldType::setExyz,                                   \
-        py::arg("Ex"), py::arg("Ey"), py::arg("Ez"))                       \
-    .def("set_B", &pyFieldType::setBxyz,                                   \
-        py::arg("Bx"), py::arg("By"), py::arg("Bz"))                       \
-    .def("set_J", &pyFieldType::pySetJxyz,                                 \
-        py::arg("Jx"), py::arg("Jy"), py::arg("Jz"))                       \
-    .def("set_E", &pyFieldType::pySetExyz,                                 \
-        py::arg("Ex"), py::arg("Ey"), py::arg("Ez"))                       \
-    .def("set_B", &pyFieldType::pySetBxyz,                                 \
-        py::arg("Bx"), py::arg("By"), py::arg("Bz"))                       \
-    .def("set_J", &pyFieldType::setJxyzt,                                  \
-        py::arg("Jx"), py::arg("Jy"), py::arg("Jz"), py::arg("t"))         \
-    .def("set_E", &pyFieldType::setExyzt,                                  \
-        py::arg("Ex"), py::arg("Ey"), py::arg("Ez"), py::arg("t"))         \
-    .def("set_B", &pyFieldType::setBxyzt,                                  \
-        py::arg("Bx"), py::arg("By"), py::arg("Bz"), py::arg("t"))         \
-    SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)
-
-
-#define SET_SCALAR_FIELD_METHODS(pyFieldType)                              \
-    .def("get_Jx_array", &pyFieldType::getJx)                              \
-    .def("get_Jy_array", &pyFieldType::getJy)                              \
-    .def("get_Jz_array", &pyFieldType::getJz)                              \
-    .def("get_Ex_array", &pyFieldType::getEx)                              \
-    .def("get_Ey_array", &pyFieldType::getEy)                              \
-    .def("get_Ez_array", &pyFieldType::getEz)                              \
-    .def("get_Bx_array", &pyFieldType::getBx)                              \
-    .def("get_By_array", &pyFieldType::getBy)                              \
-    .def("get_Bz_array", &pyFieldType::getBz)
-
-
-#define SET_COMMON_FIELD_METHODS(pyFieldType)                             \
-    .def("change_time_step", &pyFieldType::changeTimeStep,                \
-        py::arg("time_step"))                                             \
-    .def("refresh", &pyFieldType::refresh)                                \
-    .def("set_time", &pyFieldType::setTime, py::arg("time"))              \
-    .def("get_time", &pyFieldType::getTime)
-
-
-#define SET_SUM_AND_MAP_FIELD_METHODS(pyFieldType)                        \
-    .def("apply_mapping", [](std::shared_ptr<pyFieldType> self,           \
-        std::shared_ptr<Mapping> mapping) {                               \
-        return self->applyMapping(                                        \
-            std::static_pointer_cast<pyFieldBase>(self), mapping          \
-            );                                                            \
-    }, py::arg("mapping"))                                                \
-    .def("__add__", [](std::shared_ptr<pyFieldType> self,                 \
-        std::shared_ptr<pyFieldBase> other) {                             \
-        return std::make_shared<pySumField>(                              \
-            std::static_pointer_cast<pyFieldBase>(self), other            \
-            );                                                            \
-    }, py::is_operator())                                                 \
-    .def("__mul__", [](std::shared_ptr<pyFieldType> self, FP factor) {    \
-        return std::make_shared<pyMulField>(                              \
-            std::static_pointer_cast<pyFieldBase>(self), factor           \
-            );                                                            \
-    }, py::is_operator())                                                 \
-    .def("__rmul__", [](std::shared_ptr<pyFieldType> self, FP factor) {   \
-        return std::make_shared<pyMulField>(                              \
-            std::static_pointer_cast<pyFieldBase>(self), factor           \
-            );                                                            \
-    }, py::is_operator())
 
 
 namespace py = pybind11;
@@ -432,20 +353,59 @@ PYBIND11_MODULE(pyHiChi, object) {
     // abstract class
     py::class_<pyFieldBase, std::shared_ptr<pyFieldBase>> pyClassFieldBase(object, "FieldBase");
     pyClassFieldBase.def("get_fields", &pyFieldBase::getFields)
-        .def("get_J", static_cast<FP3(pyFieldBase::*)(FP, FP, FP) const>(&pyFieldBase::getJ),
-            py::arg("x"), py::arg("y"), py::arg("z"))
-        .def("get_E", static_cast<FP3(pyFieldBase::*)(FP, FP, FP) const>(&pyFieldBase::getE),
-            py::arg("x"), py::arg("y"), py::arg("z"))
-        .def("get_B", static_cast<FP3(pyFieldBase::*)(FP, FP, FP) const>(&pyFieldBase::getB),
-            py::arg("x"), py::arg("y"), py::arg("z"))
-        .def("get_J", static_cast<FP3(pyFieldBase::*)(const FP3&) const>(&pyFieldBase::getJ),
-            py::arg("coords"))
-        .def("get_E", static_cast<FP3(pyFieldBase::*)(const FP3&) const>(&pyFieldBase::getE),
-            py::arg("coords"))
-        .def("get_B", static_cast<FP3(pyFieldBase::*)(const FP3&) const>(&pyFieldBase::getB),
-            py::arg("coords"))
+        .def("get_E", &pyFieldBase::getE, py::arg("coords"))
+        .def("get_B", &pyFieldBase::getB, py::arg("coords"))
+        .def("get_J", &pyFieldBase::getJ, py::arg("coords"))
+        .def("get_Ex", &pyFieldBase::getEx, py::arg("coords"))
+        .def("get_Ey", &pyFieldBase::getEy, py::arg("coords"))
+        .def("get_Ez", &pyFieldBase::getEz, py::arg("coords"))
+        .def("get_Bx", &pyFieldBase::getBx, py::arg("coords"))
+        .def("get_By", &pyFieldBase::getBy, py::arg("coords"))
+        .def("get_Bz", &pyFieldBase::getBz, py::arg("coords"))
+        .def("get_Jx", &pyFieldBase::getJx, py::arg("coords"))
+        .def("get_Jy", &pyFieldBase::getJy, py::arg("coords"))
+        .def("get_Jz", &pyFieldBase::getJz, py::arg("coords"))
+        .def("get_E", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getE(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_B", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getB(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_J", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getJ(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_Ex", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getEx(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_Ey", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getEy(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_Ez", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getEz(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_Bx", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getBx(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_By", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getBy(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_Bz", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getBz(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_Jx", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getJx(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_Jy", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getJy(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        .def("get_Jz", [](std::shared_ptr<pyFieldBase> self, FP x, FP y, FP z) {
+                return self->getJz(FP3(x, y, z));
+            }, py::arg("x"), py::arg("y"), py::arg("z"))
+        
         .def("update_fields", &pyFieldBase::updateFields)
         .def("advance", &pyFieldBase::advance, py::arg("time_step"))
+
+        SET_ALL_PYFIELDBASE_SECTION_METHODS()
         ;
 
     // sum and mul fields
