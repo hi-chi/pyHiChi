@@ -37,15 +37,15 @@
 
 
 #define SET_SCALAR_FIELD_METHODS(pyFieldType)                              \
-    .def("get_Jx_array", &pyFieldType::getJx)                              \
-    .def("get_Jy_array", &pyFieldType::getJy)                              \
-    .def("get_Jz_array", &pyFieldType::getJz)                              \
-    .def("get_Ex_array", &pyFieldType::getEx)                              \
-    .def("get_Ey_array", &pyFieldType::getEy)                              \
-    .def("get_Ez_array", &pyFieldType::getEz)                              \
-    .def("get_Bx_array", &pyFieldType::getBx)                              \
-    .def("get_By_array", &pyFieldType::getBy)                              \
-    .def("get_Bz_array", &pyFieldType::getBz)
+    .def("get_Jx_array", &pyFieldType::getJxArray)                         \
+    .def("get_Jy_array", &pyFieldType::getJyArray)                         \
+    .def("get_Jz_array", &pyFieldType::getJzArray)                         \
+    .def("get_Ex_array", &pyFieldType::getExArray)                         \
+    .def("get_Ey_array", &pyFieldType::getEyArray)                         \
+    .def("get_Ez_array", &pyFieldType::getEzArray)                         \
+    .def("get_Bx_array", &pyFieldType::getBxArray)                         \
+    .def("get_By_array", &pyFieldType::getByArray)                         \
+    .def("get_Bz_array", &pyFieldType::getBzArray)
 
 
 #define SET_COMMON_FIELD_METHODS(pyFieldType)                             \
