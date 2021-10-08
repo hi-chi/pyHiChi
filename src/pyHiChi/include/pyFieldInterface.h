@@ -587,13 +587,41 @@ namespace pfc
         FP3 getE(const FP3& coords) const {
             return static_cast<const TPyField*>(this)->getField()->getGrid()->getE(coords);
         }
-
         FP3 getB(const FP3& coords) const {
             return static_cast<const TPyField*>(this)->getField()->getGrid()->getB(coords);
         }
-
         FP3 getJ(const FP3& coords) const {
             return static_cast<const TPyField*>(this)->getField()->getGrid()->getJ(coords);
+        }
+
+        FP getEx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getEx(coords);
+        }
+        FP getEy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getEy(coords);
+        }
+        FP getEz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getEz(coords);
+        }
+
+        FP getBx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getBx(coords);
+        }
+        FP getBy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getBy(coords);
+        }
+        FP getBz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getBz(coords);
+        }
+
+        FP getJx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJx(coords);
+        }
+        FP getJy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJy(coords);
+        }
+        FP getJz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJz(coords);
         }
 
         void getFields(const FP3& coords, FP3& e, FP3& b) const {
@@ -631,23 +659,49 @@ namespace pfc
         FP3 getE(const FP3& coords) const {
             return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getE(coords);
         }
-
         FP3 getB(const FP3& coords) const {
             return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getB(coords);
         }
-
         FP3 getJ(const FP3& coords) const {
             return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJ(coords);
+        }
+
+        FP getEx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getEx(coords);
+        }
+        FP getEy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getEy(coords);
+        }
+        FP getEz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getEz(coords);
+        }
+
+        FP getBx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getBx(coords);
+        }
+        FP getBy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getBy(coords);
+        }
+        FP getBz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getBz(coords);
+        }
+
+        FP getJx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJx(coords);
+        }
+        FP getJy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJy(coords);
+        }
+        FP getJz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJz(coords);
         }
 
         FP3 getEt(FP x, FP y, FP z, FP t) const {
             return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getE(x, y, z, t);
         }
-
         FP3 getBt(FP x, FP y, FP z, FP t) const {
             return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getB(x, y, z, t);
         }
-
         FP3 getJt(FP x, FP y, FP z, FP t) const {
             return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJ(x, y, z, t);
         }

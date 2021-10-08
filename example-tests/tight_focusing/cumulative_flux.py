@@ -40,7 +40,7 @@ tight_focusing_conf = hichi.TightFocusingField(f_number=f_number,
                                                total_power=hichi.c,
                                                edge_smoothing_angle=0.1
                                               )
-FACTOR = 2.0
+FACTOR = 1.0
 NX = int(FACTOR*200)
 NY = int(FACTOR*200)
 NZ = int(FACTOR*200)
@@ -90,10 +90,7 @@ time_final = focus_time_step + focus_area_size / hichi.c
 time_step = (time_final - time_start) / ntimes
 times = np.arange(time_start, time_final, time_step)
 
-xi_minus_xf_index = 3  # zi -> xi because the pulse moves along x axis
-                       # xi = xf - xi_minus_xf_index*grid_step.x
-xi_minus_xf = xi_minus_xf_index*grid_step.x
-xi_index = nx // 2 - xi_minus_xf_index
+xi_pos = -pulselength/4
 
 #ex_yzt = np.zeros(shape=(ntimes, ny, nz), dtype='float64')
 ey_yzt = np.zeros(shape=(ntimes, ny, nz), dtype='float64')
@@ -106,19 +103,17 @@ zoomed_field.advance(-focus_area_size / hichi.c)
 zoomed_field.change_time_step(time_step)
 
 for i in range(ntimes):
-    #ex_yzt[i, :, :] = np.array(zoomed_field.get_Ex_array(), copy=False)[xi_index, :, :-2]
-    ey_yzt[i, :, :] = np.array(zoomed_field.get_Ey_array(), copy=False)[xi_index, :, :-2]
-    ez_yzt[i, :, :] = np.array(zoomed_field.get_Ez_array(), copy=False)[xi_index, :, :-2]
-    #bx_yzt[i, :, :] = np.array(zoomed_field.get_Bx_array(), copy=False)[xi_index, :, :-2]
-    by_yzt[i, :, :] = np.array(zoomed_field.get_By_array(), copy=False)[xi_index, :, :-2]
-    bz_yzt[i, :, :] = np.array(zoomed_field.get_Bz_array(), copy=False)[xi_index, :, :-2]
+    args = {"x_pos":xi_pos,
+        "y_min":zoomed_min_coords.y, "y_max":zoomed_max_coords.y, "y_size":int(zoomed_grid_size.y), 
+        "z_min":zoomed_min_coords.z, "z_max":zoomed_max_coords.z, "z_size":int(zoomed_grid_size.z) 
+    }
+    #ex_yzt[i, :, :] = zoomed_field.get_Ez_yz_plane(**args)
+    ey_yzt[i, :, :] = zoomed_field.get_Ey_yz_plane(**args)
+    ez_yzt[i, :, :] = zoomed_field.get_Ez_yz_plane(**args)
+    #bx_yzt[i, :, :] = zoomed_field.get_Bx_yz_plane(**args)
+    by_yzt[i, :, :] = zoomed_field.get_By_yz_plane(**args)
+    bz_yzt[i, :, :] = zoomed_field.get_Bz_yz_plane(**args)
     zoomed_field.update_fields()
-
-#e_yzt_in_focus = (ex_yzt[:, nx//2, ny//2]**2 + \
-#    ey_yzt[:, nx//2, ny//2]**2 + ez_yzt[:, nx//2, ny//2]**2)**0.5
-#plt.plot(times, e_yzt_in_focus)
-#plt.title("E(t) in focus")
-#plt.show()
 
 
 # ------- compute integral -------
