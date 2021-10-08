@@ -83,11 +83,10 @@ namespace pfc
             FP step = (maxCoord - minCoord) / size;
             OMP_FOR()
             for (py::ssize_t i = 0; i < size; i++) {
-                FP c = minCoord + step * i;
                 FP3 coords;
                 coords[(int)crossAxis1] = pos1;
                 coords[(int)crossAxis1] = pos2;
-                coords[(int)axis] = c;
+                coords[(int)axis] = minCoord + step * i;
                 accRes(i) = (this->*getFieldValue)(coords);
             }
             return res;
@@ -106,11 +105,10 @@ namespace pfc
             OMP_FOR()
             for (py::ssize_t i = 0; i < size1; i++)
                 for (py::ssize_t j = 0; j < size2; j++) {
-                    FP c1 = minCoord1 + step1 * i, c2 = minCoord2 + step2 * j;
                     FP3 coords;
                     coords[(int)crossAxis] = pos;
-                    coords[(int)axis1] = c1;
-                    coords[(int)axis2] = c2;
+                    coords[(int)axis1] = minCoord1 + step1 * i;
+                    coords[(int)axis2] = minCoord2 + step2 * j;
                     accRes(i, j) = (this->*getFieldValue)(coords);
                 }
             return res;
@@ -131,12 +129,10 @@ namespace pfc
             for (py::ssize_t i = 0; i < size1; i++)
                 for (py::ssize_t j = 0; j < size2; j++)
                     for (py::ssize_t k = 0; k < size3; k++) {
-                        FP c1 = minCoord1 + step1 * i, c2 = minCoord2 + step2 * j,
-                            c3 = minCoord3 + step3 * k;
                         FP3 coords;
-                        coords[(int)axis1] = c1;
-                        coords[(int)axis2] = c2;
-                        coords[(int)axis3] = c3;
+                        coords[(int)axis1] = minCoord1 + step1 * i;
+                        coords[(int)axis2] = minCoord2 + step2 * j;
+                        coords[(int)axis3] = minCoord3 + step3 * k;
                         accRes(i, j, k) = (this->*getFieldValue)(coords);
                     }
             return res;
