@@ -331,6 +331,34 @@ PYBIND11_MODULE(pyHiChi, object) {
             pyAnalyticalField, AnalyticalField>)
         ;
 
+
+
+    py::class_<Scalar_Fast_QED_only_electron_Yee>(object, "Fast_QED_Yee")
+        .def(py::init<>())
+        .def("process_particles", &Scalar_Fast_QED_only_electron_Yee::processParticles)
+        .def("process_particles", &processParticles<Scalar_Fast_QED_only_electron_Yee,
+            pyYeeField, YeeGrid>)
+        ;
+
+    py::class_<Scalar_Fast_QED_only_electron_PSTD>(object, "Fast_QED_PSTD")
+        .def(py::init<>())
+        .def("process_particles", &Scalar_Fast_QED_only_electron_PSTD::processParticles)
+        .def("process_particles", &processParticles<Scalar_Fast_QED_only_electron_PSTD,
+            pyPSTDField, PSTDGrid>)
+        ;
+
+    py::class_<Scalar_Fast_QED_only_electron_PSATD>(object, "Fast_QED_PSATD")
+        .def(py::init<>())
+        .def("process_particles", &Scalar_Fast_QED_only_electron_PSATD::processParticles)
+        .def("process_particles", &processParticles<Scalar_Fast_QED_only_electron_PSATD,
+            pyPSATDField, PSATDGrid>)
+        ;
+    py::class_<Scalar_Fast_QED_only_electron_Analytical>(object, "Fast_QED_Analytical")
+        .def(py::init<>())
+        .def("process_particles", &Scalar_Fast_QED_only_electron_Analytical::processParticles)
+        .def("process_particles", &processParticles<Scalar_Fast_QED_only_electron_Analytical,
+            pyAnalyticalField, AnalyticalField>)
+        ;
     // ------------------- thinnings -------------------
 
     object.def("simple_thinning", &Thinning<ParticleArray3d>::simple);
