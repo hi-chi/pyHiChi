@@ -12,6 +12,7 @@
 #include "Constants.h"
 #include "Dimension.h"
 #include "Ensemble.h"
+#include "Fast_QED.h"
 #include "Fdtd.h"
 #include "FieldGenerator.h"
 #include "FieldValue.h"
