@@ -13,11 +13,11 @@ using namespace constants;
 namespace pfc
 {
     template <class TGrid>  // may be AnalyticalField or any Grid type
-    class ScalarQED_AEG_only_electron : public ParticlePusher
+    class ScalarQED_AEG: public ParticlePusher
     {
     public:
 
-        ScalarQED_AEG_only_electron()
+        ScalarQED_AEG()
         {
             MinProbability = 5e-4;
             MaxProbability = 0.01;
@@ -29,7 +29,7 @@ namespace pfc
                 * Constants<FP>::lightVelocity() / sqr(Constants<FP>::planck());
 
             coeffPhoton_probability = 1.0;
-            coeffPair_probability = 0.0;
+            coeffPair_probability = 1.0;
 
             distribution = std::uniform_real_distribution<FP>(0.0, 1.0);
             int max_threads;
@@ -44,6 +44,26 @@ namespace pfc
             afterAvalanchePhotons.resize(max_threads);
             afterAvalancheParticles.resize(max_threads);
 
+        }
+
+        void disable_photon_emission()
+        {
+            this->coeffPhoton_probability = 0.0;
+        }
+
+        void enable_photon_emission()
+        {
+            this->coeffPhoton_probability = 1.0;
+        }
+
+        void disable_pair_production()
+        {
+            this->coeffPair_probability = 0.0;
+        }
+
+        void enable_pair_production()
+        {
+            this->coeffPair_probability = 1.0;
         }
 
         void processParticles(Ensemble3d* particles, TGrid* grid, FP timeStep)
@@ -63,11 +83,11 @@ namespace pfc
                 afterAvalancheParticles[th].clear();
             }
 
-            if ((*particles)[Photon].size() && coeffPair_probability != 0)
+            if ((*particles)[Photon].size())
                 HandlePhotons((*particles)[Photon], grid, timeStep);
-            if ((*particles)[Electron].size() && coeffPhoton_probability != 0)
+            if ((*particles)[Electron].size())
                 HandleParticles((*particles)[Electron], grid, timeStep);
-            if ((*particles)[Positron].size() && coeffPhoton_probability != 0)
+            if ((*particles)[Positron].size())
                 HandleParticles((*particles)[Positron], grid, timeStep);
 
             for (int th = 0; th < max_threads; th++)
@@ -140,7 +160,10 @@ namespace pfc
                 {
                     FP r0 = random_number_omp();
                     if (r0 > EstimatedProbability / MinProbability)
+                    {
+                        afterAvalanchePhotons[thread_id].push_back(particles[i]);
                         continue;
+                    }
                     else
                         Factor = MinProbability / EstimatedProbability;
                 }
@@ -164,27 +187,31 @@ namespace pfc
                         NewParticle.setMomentum((1 - delta) * particles[i].getMomentum());
 
                         afterAvalancheParticles[thread_id].push_back(NewParticle);
-
-                        //deletePhoton
+                    }
+                    else
+                    {
+                        afterAvalanchePhotons[thread_id].push_back(particles[i]);
                     }
                 }
                 else {
                     //=======handle avalanche========
+                    
+                    particles[i].setPosition(particles[i].getPosition() - dt * Constants<FP>::lightVelocity() * k); // go back
                     AvalancheParticles[thread_id].clear();
                     AvalanchePhotons[thread_id].clear();
                     AvalanchePhotons[thread_id].push_back(particles[i]);
-                    particles[i].setPosition(particles[i].getPosition() - dt * Constants<FP>::lightVelocity() * k); // go back
-
+                    
                     RunAvalanche(H_eff, e, b, Photon, pGamma, dt);
-
-                    //deletePhoton
-
+                    
                     for (int k = 0; k != AvalanchePhotons[thread_id].size(); k++)
                         afterAvalanchePhotons[thread_id].push_back(AvalanchePhotons[thread_id][k]);
                     for (int k = 0; k != AvalancheParticles[thread_id].size(); k++)
                         afterAvalancheParticles[thread_id].push_back(AvalancheParticles[thread_id][k]);
+                    
                 }
             }
+
+            particles.clear();
         }
 
         void HandleParticles(ParticleArray3d& particles, TGrid* grid, FP timeStep)
@@ -345,7 +372,7 @@ namespace pfc
 
         FP estimatedPhotons(FP HE, FP gamma)
         {
-            return (0.0827 * HE) * preFactor;
+            return (0.0827 * HE) * preFactor * coeffPair_probability;
         }
 
         FP estimatedParticles(FP HE, FP gamma)
@@ -448,8 +475,8 @@ namespace pfc
         vector<vector<Particle3d>> afterAvalanchePhotons, afterAvalancheParticles;
     };
 
-    typedef ScalarQED_AEG_only_electron<YeeGrid> ScalarQED_AEG_only_electron_Yee;
-    typedef ScalarQED_AEG_only_electron<PSTDGrid> ScalarQED_AEG_only_electron_PSTD;
-    typedef ScalarQED_AEG_only_electron<PSATDGrid> ScalarQED_AEG_only_electron_PSATD;
-    typedef ScalarQED_AEG_only_electron<AnalyticalField> ScalarQED_AEG_only_electron_Analytical;
+    typedef ScalarQED_AEG<YeeGrid> ScalarQED_AEG_Yee;
+    typedef ScalarQED_AEG<PSTDGrid> ScalarQED_AEG_PSTD;
+    typedef ScalarQED_AEG<PSATDGrid> ScalarQED_AEG_PSATD;
+    typedef ScalarQED_AEG<AnalyticalField> ScalarQED_AEG_Analytical;
 }
