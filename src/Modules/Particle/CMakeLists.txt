@@ -17,5 +17,9 @@ set(particleModules_headers
 
     ${PARTICLEMODULES_HEADER_DIR}/Merging.h
     ${PARTICLEMODULES_HEADER_DIR}/Thinning.h
+
+
+    ${PARTICLEMODULES_HEADER_DIR}/QED_emis.in
+    ${PARTICLEMODULES_HEADER_DIR}/QED_pair_half.in
 )
 add_custom_target(particleModules SOURCES ${particleModules_headers})
