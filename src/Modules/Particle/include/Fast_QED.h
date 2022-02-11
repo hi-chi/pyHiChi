@@ -610,66 +610,6 @@ namespace pfc
             return delta;
         }
 
-// to delete
-        /*FP Photon_Generator_test(FP r, FP chi)
-        {
-            double* g = g_emis;
-            int N = 192;
-            FP a = ((FP)2.0) / ((FP)3.0 * chi);
-            FP x_target = a;
-
-            FP logA = log(a) / log((FP)1.5);
-
-            int index_a = std::max(std::min((int)std::floor(logA), 29), -30);
-
-            FP delta;
-            int index_f = 0;
-            FP f1, f2;
-            if (r > 1e-1)
-            {
-                if (r < 0.93)
-                {
-                    index_f = std::floor((r - 0.1) / 0.83 * 95);
-                    f1 = 0.1 + 0.83 / 95.0 * index_f;
-                    f2 = f1 + 0.83 / 95.0;
-                }
-                else if (r < 1.0)
-                {
-                    index_f = std::min((int)std::floor(-log2(1.0 - (r - 0.93) / 0.07) / 0.2 + 95), N - 1);
-                    f1 = (0.07 * (1.0 - pow(2.0, -(index_f - 95) * 0.2)) + 0.93);
-                    f2 = (0.07 * (1.0 - pow(2.0, -(index_f - 94) * 0.2)) + 0.93);
-                }
-                else
-                {
-                    return 1.0;
-                }
-            }
-        
-
-            index_f += (index_a + 30) * 192;
-
-            FP x1 = pow(1.5, -index_a);
-            FP x2 = pow(1.5, -(index_a + 1));
-            x_target = 1.0 / x_target;
-
-            if (r > 1e-1)
-            {
-                FP z1 = g[index_f] + (g[index_f + 1] - g[index_f]) * (r - f1) / (f2 - f1);
-                index_f += N;
-                FP z2 = g[index_f] + (g[index_f + 1] - g[index_f]) * (r - f1) / (f2 - f1);
-
-                delta = z1 + (z2 - z1) * (x_target - x1) / (x2 - x1);
-            }
-            else
-            {
-                FP z1 = (x2 - x_target) / (x2 - x1) * g[index_f]
-                    + (x_target - x1) / (x2 - x1) * g[index_f + N];
-                delta = pow(r, 3.0) * z1 / pow(1e-1, 3.0);
-            }
-
-            return delta;
-        }*/
-
         FP countIntegralPhoton(const FP& chi)
         {
             FP a = ((FP)2.0) / ((FP)3.0 * chi);
@@ -828,66 +768,6 @@ namespace pfc
             return r / (preFactor * Pdelta);
         }
 
-        /*FP Pair_Generator(FP chi)
-        {
-            double* g = g_pair;
-            FP r = random_number_omp();
-            int N = 192;
-            FP a = ((FP)2.0) / ((FP)3.0 * chi);
-            FP x_target = a;
-
-            FP logA = log(a) / log((FP)1.5);
-
-            int index_a = std::max(std::min((int)std::floor(logA), 29), -30);
-
-            FP delta;
-            int index_f = 0;
-            FP f1, f2;
-            if (r > 1e-1)
-            {
-                if (r < 0.93)
-                {
-                    index_f = std::floor((r - 0.1) / 0.83 * 95);
-                    f1 = 0.1 + 0.83 / 95.0 * index_f;
-                    f2 = f1 + 0.83 / 95.0;
-                }
-                else if (r < 1.0)
-                {
-                    index_f = std::min((int)std::floor(-log2(1.0 - (r - 0.93) / 0.07) / 0.2 + 95), N - 1);
-                    f1 = (0.07 * (1.0 - pow(2.0, -(index_f - 95) * 0.2)) + 0.93);
-                    f2 = (0.07 * (1.0 - pow(2.0, -(index_f - 94) * 0.2)) + 0.93);
-                }
-                else
-                {
-                    return 1.0;
-                }
-            }
-
-
-            index_f += (index_a + 30) * 192;
-
-            FP x1 = pow(1.5, -index_a);
-            FP x2 = pow(1.5, -(index_a + 1));
-            x_target = 1.0 / x_target;
-
-            if (r > 1e-1)
-            {
-                FP z1 = g[index_f] + (g[index_f + 1] - g[index_f]) * (r - f1) / (f2 - f1);
-                index_f += N;
-                FP z2 = g[index_f] + (g[index_f + 1] - g[index_f]) * (r - f1) / (f2 - f1);
-
-                delta = z1 + (z2 - z1) * (x_target - x1) / (x2 - x1);
-            }
-            else
-            {
-                FP z1 = (x2 - x_target) / (x2 - x1) * g[index_f]
-                    + (x_target - x1) / (x2 - x1) * g[index_f + N];
-                delta = pow(r, 3.0) * z1 / pow(1e-1, 3.0);
-            }
-
-            return delta;
-        }*/
-
         FP Pair_Generator(FP chi)
         {
             FP r = random_number_omp();
@@ -896,14 +776,6 @@ namespace pfc
             else
                 return Pair_Generator_half(r, chi);
         }
-
-        /*FP Pair_Generator_test(FP r, FP chi)
-        {
-            if (r < 0.5)
-                return 1.0 - Pair_Generator_half(1.0 - r, chi);
-            else
-                return Pair_Generator_half(r, chi);
-        }*/
 
         FP Pair_Generator_half(FP r, FP chi)
         {
