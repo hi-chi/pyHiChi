@@ -219,6 +219,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .value("ELECTRON", Electron)
         .value("POSITRON", Positron)
         .value("PROTON", Proton)
+        .value("PHOTON", Photon)
         .export_values();
 
     py::class_<Particle3d>(object, "Particle")
@@ -304,62 +305,109 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     // -------------------------- QED ---------------------------
 
-    py::class_<ScalarQED_AEG_only_electron_Yee>(object, "QED_Yee")
+    py::class_<ScalarQED_AEG_Yee>(object, "QED_Yee")
         .def(py::init<>())
-        .def("process_particles", &ScalarQED_AEG_only_electron_Yee::processParticles)
-        .def("process_particles", &processParticles<ScalarQED_AEG_only_electron_Yee,
+        .def("process_particles", &ScalarQED_AEG_Yee::processParticles)
+        .def("process_particles", &processParticles<ScalarQED_AEG_Yee,
             pyYeeField, YeeGrid>)
+
+        .def("disable_photon_emission", &ScalarQED_AEG_Yee::disable_photon_emission)
+        .def("enable_photon_emission", &ScalarQED_AEG_Yee::enable_photon_emission)
+        .def("disable_pair_production", &ScalarQED_AEG_Yee::disable_pair_production)
+        .def("enable_pair_production", &ScalarQED_AEG_Yee::enable_pair_production)
+
         ;
 
-    py::class_<ScalarQED_AEG_only_electron_PSTD>(object, "QED_PSTD")
+    py::class_<ScalarQED_AEG_PSTD>(object, "QED_PSTD")
         .def(py::init<>())
-        .def("process_particles", &ScalarQED_AEG_only_electron_PSTD::processParticles)
-        .def("process_particles", &processParticles<ScalarQED_AEG_only_electron_PSTD,
+        .def("process_particles", &ScalarQED_AEG_PSTD::processParticles)
+        .def("process_particles", &processParticles<ScalarQED_AEG_PSTD,
             pyPSTDField, PSTDGrid>)
+        
+        .def("disable_photon_emission", &ScalarQED_AEG_PSTD::disable_photon_emission)
+        .def("enable_photon_emission", &ScalarQED_AEG_PSTD::enable_photon_emission)
+        .def("disable_pair_production", &ScalarQED_AEG_PSTD::disable_pair_production)
+        .def("enable_pair_production", &ScalarQED_AEG_PSTD::enable_pair_production)
+
         ;
 
-    py::class_<ScalarQED_AEG_only_electron_PSATD>(object, "QED_PSATD")
+    py::class_<ScalarQED_AEG_PSATD>(object, "QED_PSATD")
         .def(py::init<>())
-        .def("process_particles", &ScalarQED_AEG_only_electron_PSATD::processParticles)
-        .def("process_particles", &processParticles<ScalarQED_AEG_only_electron_PSATD,
+        .def("process_particles", &ScalarQED_AEG_PSATD::processParticles)
+        .def("process_particles", &processParticles<ScalarQED_AEG_PSATD,
             pyPSATDField, PSATDGrid>)
+
+        .def("disable_photon_emission", &ScalarQED_AEG_PSATD::disable_photon_emission)
+        .def("enable_photon_emission", &ScalarQED_AEG_PSATD::enable_photon_emission)
+        .def("disable_pair_production", &ScalarQED_AEG_PSATD::disable_pair_production)
+        .def("enable_pair_production", &ScalarQED_AEG_PSATD::enable_pair_production)
+
         ;
 
-    py::class_<ScalarQED_AEG_only_electron_Analytical>(object, "QED_Analytical")
+    py::class_<ScalarQED_AEG_Analytical>(object, "QED_Analytical")
         .def(py::init<>())
-        .def("process_particles", &ScalarQED_AEG_only_electron_Analytical::processParticles)
-        .def("process_particles", &processParticles<ScalarQED_AEG_only_electron_Analytical,
+        .def("process_particles", &ScalarQED_AEG_Analytical::processParticles)
+        .def("process_particles", &processParticles<ScalarQED_AEG_Analytical,
             pyAnalyticalField, AnalyticalField>)
+
+        .def("disable_photon_emission", &ScalarQED_AEG_Analytical::disable_photon_emission)
+        .def("enable_photon_emission", &ScalarQED_AEG_Analytical::enable_photon_emission)
+        .def("disable_pair_production", &ScalarQED_AEG_Analytical::disable_pair_production)
+        .def("enable_pair_production", &ScalarQED_AEG_Analytical::enable_pair_production)
+
         ;
 
 
-
-    py::class_<Scalar_Fast_QED_only_electron_Yee>(object, "Fast_QED_Yee")
+    py::class_<Scalar_Fast_QED_Yee>(object, "Fast_QED_Yee")
         .def(py::init<>())
-        .def("process_particles", &Scalar_Fast_QED_only_electron_Yee::processParticles)
-        .def("process_particles", &processParticles<Scalar_Fast_QED_only_electron_Yee,
+        .def("process_particles", &Scalar_Fast_QED_Yee::processParticles)
+        .def("process_particles", &processParticles<Scalar_Fast_QED_Yee,
             pyYeeField, YeeGrid>)
+
+        .def("disable_photon_emission", &Scalar_Fast_QED_Yee::disable_photon_emission)
+        .def("enable_photon_emission", &Scalar_Fast_QED_Yee::enable_photon_emission)
+        .def("disable_pair_production", &Scalar_Fast_QED_Yee::disable_pair_production)
+        .def("enable_pair_production", &Scalar_Fast_QED_Yee::enable_pair_production)
+
         ;
 
-    py::class_<Scalar_Fast_QED_only_electron_PSTD>(object, "Fast_QED_PSTD")
+    py::class_<Scalar_Fast_QED_PSTD>(object, "Fast_QED_PSTD")
         .def(py::init<>())
-        .def("process_particles", &Scalar_Fast_QED_only_electron_PSTD::processParticles)
-        .def("process_particles", &processParticles<Scalar_Fast_QED_only_electron_PSTD,
+        .def("process_particles", &Scalar_Fast_QED_PSTD::processParticles)
+        .def("process_particles", &processParticles<Scalar_Fast_QED_PSTD,
             pyPSTDField, PSTDGrid>)
+
+        .def("disable_photon_emission", &Scalar_Fast_QED_PSTD::disable_photon_emission)
+        .def("enable_photon_emission", &Scalar_Fast_QED_PSTD::enable_photon_emission)
+        .def("disable_pair_production", &Scalar_Fast_QED_PSTD::disable_pair_production)
+        .def("enable_pair_production", &Scalar_Fast_QED_PSTD::enable_pair_production)
         ;
 
-    py::class_<Scalar_Fast_QED_only_electron_PSATD>(object, "Fast_QED_PSATD")
+    py::class_<Scalar_Fast_QED_PSATD>(object, "Fast_QED_PSATD")
         .def(py::init<>())
-        .def("process_particles", &Scalar_Fast_QED_only_electron_PSATD::processParticles)
-        .def("process_particles", &processParticles<Scalar_Fast_QED_only_electron_PSATD,
+        .def("process_particles", &Scalar_Fast_QED_PSATD::processParticles)
+        .def("process_particles", &processParticles<Scalar_Fast_QED_PSATD,
             pyPSATDField, PSATDGrid>)
+
+        .def("disable_photon_emission", &Scalar_Fast_QED_PSATD::disable_photon_emission)
+        .def("enable_photon_emission", &Scalar_Fast_QED_PSATD::enable_photon_emission)
+        .def("disable_pair_production", &Scalar_Fast_QED_PSATD::disable_pair_production)
+        .def("enable_pair_production", &Scalar_Fast_QED_PSATD::enable_pair_production)
         ;
-    py::class_<Scalar_Fast_QED_only_electron_Analytical>(object, "Fast_QED_Analytical")
+
+    py::class_<Scalar_Fast_QED_Analytical>(object, "Fast_QED_Analytical")
         .def(py::init<>())
-        .def("process_particles", &Scalar_Fast_QED_only_electron_Analytical::processParticles)
-        .def("process_particles", &processParticles<Scalar_Fast_QED_only_electron_Analytical,
+        .def("process_particles", &Scalar_Fast_QED_Analytical::processParticles)
+        .def("process_particles", &processParticles<Scalar_Fast_QED_Analytical,
             pyAnalyticalField, AnalyticalField>)
+
+        .def("disable_photon_emission", &Scalar_Fast_QED_Analytical::disable_photon_emission)
+        .def("enable_photon_emission", &Scalar_Fast_QED_Analytical::enable_photon_emission)
+        .def("disable_pair_production", &Scalar_Fast_QED_Analytical::disable_pair_production)
+        .def("enable_pair_production", &Scalar_Fast_QED_Analytical::enable_pair_production)
+
         ;
+
     // ------------------- thinnings -------------------
 
     object.def("simple_thinning", &Thinning<ParticleArray3d>::simple);
