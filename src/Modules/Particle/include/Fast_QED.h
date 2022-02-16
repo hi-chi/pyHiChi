@@ -575,9 +575,18 @@ namespace pfc
                 }
                 else if (r < 1.0)
                 {
-                    index_f = std::min((int)std::floor(-log2(1.0 - (r - 0.93) / 0.07) / 0.2 + 95), N - 1);
-                    f1 = (0.07 * (1.0 - pow(2.0, -(index_f - 95) * 0.2)) + 0.93);
-                    f2 = (0.07 * (1.0 - pow(2.0, -(index_f - 94) * 0.2)) + 0.93);
+                    index_f = (int)std::floor(-log2(1.0 - (r - 0.93) / 0.07) / 0.2 + 95);
+                    if (index_f < N - 2)
+                    {
+                        f1 = (0.07 * (1.0 - pow(2.0, -(index_f - 95) * 0.2)) + 0.93);
+                        f2 = (0.07 * (1.0 - pow(2.0, -(index_f - 94) * 0.2)) + 0.93);
+                    }
+                    else
+                    {
+                        index_f = N - 2;
+                        f1 = (0.07 * (1.0 - pow(2.0, -(index_f - 95) * 0.2)) + 0.93);
+                        f2 = 1.0;
+                    }
                 }
                 else
                 {
@@ -799,9 +808,18 @@ namespace pfc
             }
             else if (r < 1.0)
             {
-                index_f = std::min((int)std::floor(-log2(1.0 - (r - 0.95) / 0.05) / 0.2 + 64), N - 1);
-                f1 = (0.05 * (1.0 - pow(2.0, -(index_f - 64) * 0.2)) + 0.95);
-                f2 = (0.05 * (1.0 - pow(2.0, -(index_f - 63) * 0.2)) + 0.95);
+                index_f = (int)std::floor(-log2(1.0 - (r - 0.95) / 0.05) / 0.2 + 64);
+                if (index_f < N - 2)
+                {
+                    f1 = (0.05 * (1.0 - pow(2.0, -(index_f - 64) * 0.2)) + 0.95);
+                    f2 = (0.05 * (1.0 - pow(2.0, -(index_f - 63) * 0.2)) + 0.95);
+                }
+                else
+                {
+                    index_f = N - 2;
+                    f1 = (0.05 * (1.0 - pow(2.0, -(index_f - 64) * 0.2)) + 0.95);
+                    f2 = 1.0;
+                }
             }
             else
             {
