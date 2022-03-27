@@ -1,4 +1,5 @@
 #pragma once
+#include "omp.h"
 
 #ifdef _MSC_VER
     #define forceinline __forceinline
@@ -16,11 +17,13 @@
 
 
 #if _OPENMP >= 201307
-    #define OMP_FOR()   __pragma("omp parallel for")
-    #define OMP_FOR_COLLAPSE()   __pragma("omp parallel for collapse(2)")
-    #define OMP_SIMD()  __pragma("omp simd")
+    #define OMP_FOR()   _Pragma("omp parallel for")
+    #define OMP_FOR_COLLAPSE()   _Pragma("omp parallel for collapse(2)")
+    #define OMP_SIMD()  _Pragma("omp simd")
+    #define OMP_FOR_SIMD() _Pragma("omp parallel for simd")
 #else
-    #define OMP_FOR()   __pragma("omp parallel for")
-    #define OMP_FOR_COLLAPSE()   __pragma("omp parallel for")
-    #define OMP_SIMD()  __pragma("ivdep")
+    #define OMP_FOR()   _Pragma("omp parallel for")
+    #define OMP_FOR_COLLAPSE()   _Pragma("omp parallel for")
+    #define OMP_SIMD()  _Pragma("ivdep")
+    #define OMP_FOR_SIMD()   _Pragma("omp parallel for")
 #endif

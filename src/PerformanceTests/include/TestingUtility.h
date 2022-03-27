@@ -13,6 +13,8 @@
 
 #include <vector>
 
+#include "sycl/DeviceSYCL.h"
+
 class BaseFixture : public benchmark::Fixture {
 public:
 
@@ -172,7 +174,6 @@ public:
 };
 
 
-#include "sycl/DeviceSYCL.h"
 template <class ParticleArrayType>
 class PusherTestSYCL : public ParticleArrayFixture<ParticleArrayType> {
 public:
@@ -201,3 +202,51 @@ public:
     sycl_pfc::sycl_vector<ValueField> * fields;
     FP dt;
 };
+
+
+template<class gridType>
+class BaseGridFixture : public BaseFixture {
+public:
+    gridType* grid;
+    FP3 minCoords;
+    FP3 maxCoords;
+    FP timeStep;
+protected:
+    virtual void SetUp(const ::benchmark::State& st)
+    {
+        BaseFixture::SetUp(st);
+        timeStep = 1e-15;
+
+        Int3 gridSize(768, 768, 768);
+        minCoords = FP3(-1.0, -1.0, -1.0);
+        maxCoords = FP3(1.0, 1.0, 1.0);
+        FP3 steps((maxCoords.x - minCoords.x) / gridSize.x,
+            (maxCoords.y - minCoords.y) / gridSize.y,
+            (maxCoords.z - minCoords.z) / gridSize.z);
+        grid = new gridType(gridSize, minCoords, steps, gridSize);
+    }
+
+    FP3 internalPoint() {
+        return urandFP3(minCoords, maxCoords);
+    }
+
+    ~BaseGridFixture()
+    {
+        delete(grid);
+    }
+};
+
+enum axis
+{
+    X = 0,
+    Y = 1,
+    Z = 2
+};
+
+template<axis a>
+class ax
+{};
+
+typedef ax<X> axisX;
+typedef ax<Y> axisY;
+typedef ax<Z> axisZ;

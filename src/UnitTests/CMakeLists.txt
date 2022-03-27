@@ -31,6 +31,7 @@ add_executable(tests
     src/TestingUtility.cpp
     src/Main.cpp
     
+    src/testFDTDSYCL.cpp
     src/testPusherSYCL.cpp)
 
 if (APPLE)

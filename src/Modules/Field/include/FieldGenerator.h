@@ -222,7 +222,7 @@ namespace pfc
             int begin2 = this->fieldSolver->internalEAreaBegin[dim2];
             int end1 = this->fieldSolver->internalEAreaEnd[dim1];
             int end2 = this->fieldSolver->internalEAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
+OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -263,7 +263,7 @@ namespace pfc
             int begin2 = 0;
             int end1 = grid->numCells[dim1];
             int end2 = grid->numCells[dim2];
-//OMP_FOR_COLLAPSE()
+OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
