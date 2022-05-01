@@ -408,6 +408,22 @@ PYBIND11_MODULE(pyHiChi, object) {
 
         ;
 
+    py::class_<Compton>(object, "Compton")
+        .def(py::init<>())
+        
+        .def("rate", &Compton::rate, py::arg("chi"))
+        .def("inv_cdf", &Compton::inv_cdf, py::arg("r"), py::arg("chi"))
+        
+        ;
+
+    py::class_<Breit_wheeler>(object, "Breit_wheeler")
+        .def(py::init<>())
+
+        .def("rate", &Breit_wheeler::rate, py::arg("chi"))
+        .def("inv_cdf", &Breit_wheeler::inv_cdf, py::arg("r"), py::arg("chi"))
+        
+        ;
+
     // ------------------- thinnings -------------------
 
     object.def("simple_thinning", &Thinning<ParticleArray3d>::simple);
