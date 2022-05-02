@@ -2,6 +2,8 @@
 #include "Constants.h"
 #include "FP.h"
 
+#include <cmath>
+
 using namespace constants;
 namespace pfc
 {
@@ -14,6 +16,29 @@ namespace pfc
 
         double* g_pair;
         FP preFactor;
+
+        //Corless R. M., Gonnet G. H., Hare D. E., Jeffrey D. J., & Knuth D. E.,
+        //On the LambertW function. (1996).
+        //Advances in Computational mathematics, 5(1), 329-359
+        FP lambertW(FP x) {
+            FP w = x;
+            if (x > 1.8)
+            {
+                FP lnx = log(x);
+                FP lnlnx = log(lnx);
+                w = lnx - lnlnx + lnlnx / lnx;
+            }
+            for (int i = 0; i < 25; i++) {
+                FP expw = exp(w);
+                FP wexpw = w * expw;
+                FP w1expw = (w + 1) * expw;
+                FP wexpwmx = (wexpw - x);
+                w -= wexpwmx / (w1expw - (w + 2) * wexpwmx / (2 * w + 2));
+                if (abs((x - wexpw) / w1expw) < 1e-12)
+                    break;
+            }
+            return w;
+        }
     public:
         Breit_wheeler() {
             g_pair = (double*)int_g_pair;
@@ -223,12 +248,24 @@ namespace pfc
             FP x2 = pow(1.5, -(index_a + 1));
             x_target = 1.0 / x_target;
 
-            FP z1 = g[index_f] + (g[index_f + 1] - g[index_f]) * (r - f1) / (f2 - f1);
-            index_f += N;
-            FP z2 = g[index_f] + (g[index_f + 1] - g[index_f]) * (r - f1) / (f2 - f1);
+            FP y0 = 0.05 * pow(2.0, -(62) * 0.2);
+            if (r > y0)
+            {
+                FP z1 = g[index_f] + (g[index_f + 1] - g[index_f]) * (r - f1) / (f2 - f1);
+                index_f += N;
+                FP z2 = g[index_f] + (g[index_f + 1] - g[index_f]) * (r - f1) / (f2 - f1);
 
-            delta = z1 + (z2 - z1) * (x_target - x1) / (x2 - x1);
-
+                delta = z1 + (z2 - z1) * (x_target - x1) / (x2 - x1);
+            }
+            else
+            {
+                FP z0 = (x2 - x_target) / (x2 - x1) * g[index_f + 1]
+                    + (x_target - x1) / (x2 - x1) * g[index_f + 1 + N];
+                FP x0 = z0 * chi;
+                FP coeff = y0 * (pow(x0, (FP)-1.5) * exp(((FP)2.0)/((FP)3.0 * x0)));
+                delta = ((FP)4.0)/((FP)9.0 * chi * 
+                    lambertW(((FP)4.0) / ((FP)9.0) * pow(coeff / r, ((FP)2.0)/((FP)3.0))));
+            }
             return delta;
         }
     };
