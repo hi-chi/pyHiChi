@@ -5,13 +5,13 @@ namespace pfc {
 // Mathematical and physical constants in CGS
 namespace constants
 {
-    const double pi = 3.14159265358;
+    const double pi = 3.141592653589793;
     const double c = 29979245800.0;
     const double lightVelocity = c;
-    const double electronCharge = -4.80320427e-10;
-    const double electronMass = 9.10938215e-28;
-    const double protonMass = 1.672622964e-24;
-    const double planck = 1.0545716818e-27;
+    const double electronCharge = -4.803204712570263e-10;
+    const double electronMass = 9.1093837015e-28;
+    const double protonMass = 1.67262192369e-24;
+    const double planck = 1.0545718176461565e-27;
     const double eV = 1.60217656535e-12;
     const double meV = 1e6 * eV;
 } // namespace pfc::constants
