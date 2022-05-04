@@ -91,4 +91,40 @@ namespace pfc
             }
         };
     };
+
+    class VayPusher : public ParticlePusher
+    {
+    public:
+
+        template<class T_Particle>
+        inline void operator()(T_Particle* particle, ValueField& field, FP timeStep)
+        {
+            FP3 e = field.getE();
+            FP3 b = field.getB();
+            FP eCoeff = timeStep * particle->getCharge() / ((FP)2 * particle->getMass() * Constants<FP>::lightVelocity());
+            FP3 eMomentum = e * eCoeff;
+            FP3 tau = b * eCoeff;
+            FP3 um = particle->getP() + eMomentum * (FP)2 + cross(particle->getVelocity() / Constants<FP>::lightVelocity(), tau);
+            FP u_ = dot(um, tau);
+            FP sigma = (FP)1 + um.norm2() - tau.norm2();
+            FP gamma = sqrt((sigma + sqrt(sigma * sigma + (FP)4 * (tau.norm2() + u_ * u_))) / (FP)2);
+            FP3 t = tau / gamma;
+            FP s = (FP)1 / ((FP)1 + t.norm2());
+            particle->setP(s * (um + dot(um, t) * t + cross(um, t)));
+            particle->setPosition(particle->getPosition() + timeStep * particle->getVelocity());
+        }
+
+        template<class T_ParticleArray>
+        inline void operator()(T_ParticleArray* particleArray, std::vector<ValueField>& fields, FP timeStep)
+        {
+            typedef typename T_ParticleArray::ParticleProxyType ParticleProxyType;
+
+            OMP_FOR_SIMD()
+                for (int i = 0; i < particleArray->size(); i++)
+                {
+                    ParticleProxyType particle = (*particleArray)[i];
+                    operator()(&particle, fields[i], timeStep);
+                }
+        };
+    };
 }
