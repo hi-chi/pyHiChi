@@ -179,7 +179,7 @@ TYPED_TEST(PusherTest, VayPusherOscillationInStaticMagneticField)
     MomentumType p0 = particle.getMomentum();
     GammaType gamma = particle.getGamma();
 
-    BorisPusher scalarPusher;
+    VayPusher scalarPusher;
     FP B0 = 10.0;
     FP Ex = 0.0, Ey = 0.0, Ez = 0.0;
     FP Bx = 0.0, By = 0.0, Bz = B0;
