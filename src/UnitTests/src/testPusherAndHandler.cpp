@@ -140,12 +140,12 @@ TYPED_TEST(PusherTest, VayPusherRelativisticAccelerationInStaticField)
     particle.setVelocity(startVelocity);
 
     VayPusher scalarPusher;
-    FP E0 = 10.0;
+    FP E0 = 1.0;
     FP Ex = E0, Ey = 0.0, Ez = 0.0;
     FP Bx = 0.0, By = 0.0, Bz = 0.0;
     auto field = ValueField(Ex, Ey, Ez, Bx, By, Bz);
    
-    FP N = 100;
+    FP N = 1000;
     FP timeStep = particle.getMass() * Constants<FP>::lightVelocity() / (particle.getCharge() * E0 * N);
 
     for (int i = 0; i < N; i++) {
@@ -174,18 +174,18 @@ TYPED_TEST(PusherTest, VayPusherOscillationInStaticMagneticField)
 
     PositionType startPosition = { (FP)0, (FP)0, (FP)0 };
     particle.setPosition(startPosition);
-    MomentumType startVelocity = { (FP)1000, (FP)0, (FP)0 };
+    MomentumType startVelocity = { (FP)10E-5 * Constants<FP>::lightVelocity(), (FP)0, (FP)0 };
     particle.setVelocity(startVelocity);
     MomentumType p0 = particle.getMomentum();
     GammaType gamma = particle.getGamma();
 
-    VayPusher scalarPusher;
+    BorisPusher scalarPusher;
     FP B0 = 10.0;
     FP Ex = 0.0, Ey = 0.0, Ez = 0.0;
     FP Bx = 0.0, By = 0.0, Bz = B0;
     auto field = ValueField(Ex, Ey, Ez, Bx, By, Bz);
 
-    FP N = 100;
+    FP N = 1000;
     FP timeStep = Constants<FP>::pi() * particle.getMass() * Constants<FP>::lightVelocity() * gamma / (fabs(particle.getCharge()) * B0 * N);
 
     for (int i = 0; i < N; i++) {

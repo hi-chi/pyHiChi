@@ -292,6 +292,13 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("__call__", (void (BorisPusher::*)(ParticleArray3d*, std::vector<ValueField>&, FP)) &BorisPusher::operator())
         ;
 
+    py::class_<VayPusher>(object, "VayPusher")
+        .def(py::init<>())
+        .def("__call__", (void (VayPusher::*)(ParticleProxy3d*, ValueField&, FP))& VayPusher::operator())
+        .def("__call__", (void (VayPusher::*)(Particle3d*, ValueField&, FP))& VayPusher::operator())
+        .def("__call__", (void (VayPusher::*)(ParticleArray3d*, std::vector<ValueField>&, FP))& VayPusher::operator())
+        ;
+
     // ------------------- other particle modules -------------------
 
     py::class_<RadiationReaction>(object, "RadiationReaction")
