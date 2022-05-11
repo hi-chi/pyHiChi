@@ -124,3 +124,80 @@ TYPED_TEST(PusherTest, VayPusherSaveEnergyForChunk)
         ASSERT_NEAR_FP(energy[i], p.norm2());
     }
 }
+
+TYPED_TEST(PusherTest, VayPusherRelativisticAccelerationInStaticField)
+{
+    typedef typename SpeciesTest<TypeParam>::SpeciesArray SpeciesArray;
+    typedef typename SpeciesTest<TypeParam>::MomentumType MomentumType;
+
+    SpeciesArray speciesParticles;
+    speciesParticles.pushBack(this->randomParticle(speciesParticles.getType()));
+    auto particle = speciesParticles.back();
+
+    PositionType startPosition = { (FP)0, (FP)0, (FP)0 };
+    particle.setPosition(startPosition);
+    MomentumType startVelocity = { (FP)0, (FP)0, (FP)0 };
+    particle.setVelocity(startVelocity);
+
+    VayPusher scalarPusher;
+    FP E0 = 10.0;
+    FP Ex = E0, Ey = 0.0, Ez = 0.0;
+    FP Bx = 0.0, By = 0.0, Bz = 0.0;
+    auto field = ValueField(Ex, Ey, Ez, Bx, By, Bz);
+   
+    FP N = 100;
+    FP timeStep = particle.getMass() * Constants<FP>::lightVelocity() / (particle.getCharge() * E0 * N);
+
+    for (int i = 0; i < N; i++) {
+        scalarPusher(&particle, field, timeStep);
+    }
+
+    FP p_final = particle.getMass() * Constants<FP>::lightVelocity();
+    MomentumType p = particle.getMomentum();
+    MomentumType finalMomentum = { p_final, (FP)0, (FP)0 };
+    ASSERT_NEAR_FP3(finalMomentum, p);
+
+    FP r_final= particle.getMass() * Constants<FP>::lightVelocity() * Constants<FP>::lightVelocity() * (sqrt((FP)2) - (FP)1) / (particle.getCharge() * E0);
+    PositionType r = particle.getPosition();
+    PositionType finalPosition = { r_final, (FP)0, (FP)0 };
+    ASSERT_NEAR_FP3(finalPosition, r);
+}
+
+TYPED_TEST(PusherTest, VayPusherOscillationInStaticMagneticField)
+{
+    typedef typename SpeciesTest<TypeParam>::SpeciesArray SpeciesArray;
+    typedef typename SpeciesTest<TypeParam>::MomentumType MomentumType;
+
+    SpeciesArray speciesParticles;
+    speciesParticles.pushBack(this->randomParticle(speciesParticles.getType()));
+    auto particle = speciesParticles.back();
+
+    PositionType startPosition = { (FP)0, (FP)0, (FP)0 };
+    particle.setPosition(startPosition);
+    MomentumType startVelocity = { (FP)1000, (FP)0, (FP)0 };
+    particle.setVelocity(startVelocity);
+    MomentumType p0 = particle.getMomentum();
+    GammaType gamma = particle.getGamma();
+
+    VayPusher scalarPusher;
+    FP B0 = 10.0;
+    FP Ex = 0.0, Ey = 0.0, Ez = 0.0;
+    FP Bx = 0.0, By = 0.0, Bz = B0;
+    auto field = ValueField(Ex, Ey, Ez, Bx, By, Bz);
+
+    FP N = 100;
+    FP timeStep = Constants<FP>::pi() * particle.getMass() * Constants<FP>::lightVelocity() * gamma / (fabs(particle.getCharge()) * B0 * N);
+
+    for (int i = 0; i < N; i++) {
+        scalarPusher(&particle, field, timeStep);
+    }
+
+    MomentumType p = particle.getMomentum();
+    MomentumType finalMomentum = { -p0[0], (FP)0, (FP)0 };
+    ASSERT_NEAR_FP3(finalMomentum, p);
+
+    FP r_final = -(FP)2 * p0[0] * Constants<FP>::lightVelocity() / (particle.getCharge() * B0);
+    PositionType r = particle.getPosition();
+    PositionType finalPosition = { (FP)0, r_final , (FP)0 };
+    ASSERT_NEAR_FP3(finalPosition, r);
+}
