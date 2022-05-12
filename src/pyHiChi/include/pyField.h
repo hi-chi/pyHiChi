@@ -301,18 +301,17 @@ namespace pfc
         pyMappedField(const std::shared_ptr<pyFieldBase>& other,
             const std::shared_ptr<Mapping>& mapping) :
             pyWrappedField(other), mapping(mapping)
-        {
-            pyFieldPointer =
-                std::dynamic_pointer_cast<pyField<TGrid, TFieldSolver>>(pyWrappedField).get();
-            pyMappedFieldPointer =
-                std::dynamic_pointer_cast<pyMappedField<TGrid, TFieldSolver>>(pyWrappedField).get();
-            if (!pyFieldPointer && !pyMappedFieldPointer)
-                std::cout << "ERROR in pyMappedField::getField(): wrong cast" << std::endl;
-        }
+        {}
 
         inline Field<TGrid, TFieldSolver>* getField() const {
+            std::shared_ptr<pyField<TGrid, TFieldSolver>> pyFieldPointer =
+                std::dynamic_pointer_cast<pyField<TGrid, TFieldSolver>>(pyWrappedField);
             if (pyFieldPointer) return pyFieldPointer->getField();
+
+            std::shared_ptr<pyMappedField<TGrid, TFieldSolver>> pyMappedFieldPointer =
+                std::dynamic_pointer_cast<pyMappedField<TGrid, TFieldSolver>>(pyWrappedField);
             if (pyMappedFieldPointer) return pyMappedFieldPointer->getField();
+
             return 0;
         }
 
@@ -397,6 +396,8 @@ namespace pfc
         inline FP3 getDirectCoords(const FP3& coords, FP time, bool* status) const {
             FP3 coords_ = coords;
             *status = true;
+            std::shared_ptr<pyMappedField<TGrid, TFieldSolver>> pyMappedFieldPointer =
+                std::dynamic_pointer_cast<pyMappedField<TGrid, TFieldSolver>>(pyWrappedField);
             if (pyMappedFieldPointer)
                 coords_ = pyMappedFieldPointer->getDirectCoords(coords_, time, status);
             bool status2 = true;
@@ -408,6 +409,8 @@ namespace pfc
         inline FP3 getInverseCoords(const FP3& coords, FP time, bool* status) const {
             FP3 coords_ = coords;
             *status = true;
+            std::shared_ptr<pyMappedField<TGrid, TFieldSolver>> pyMappedFieldPointer =
+                std::dynamic_pointer_cast<pyMappedField<TGrid, TFieldSolver>>(pyWrappedField);
             if (pyMappedFieldPointer)
                 coords_ = pyMappedFieldPointer->getInverseCoords(coords_, time, status);
             bool status2 = true;
@@ -421,13 +424,8 @@ namespace pfc
         std::shared_ptr<pyFieldBase> pyWrappedField;
         std::shared_ptr<Mapping> mapping;
 
-        // these pointers are used not to do dynamic cast each time
-        // always one of them is NULL
-        pyField<TGrid, TFieldSolver>* pyFieldPointer;
-        pyMappedField<TGrid, TFieldSolver>* pyMappedFieldPointer;
-
         FP getFieldComp(const FP3& coords, FP timeShift,
-            FP(BaseInterface::*getFieldValue)(const FP3&) const) const
+            FP(BaseInterface::* getFieldValue)(const FP3&) const) const
         {
             bool status = true;
             FP time = getField()->getFieldSolver()->globalTime + timeShift;
@@ -437,7 +435,7 @@ namespace pfc
         }
 
         FP3 getFieldComp3(const FP3& coords, FP timeShift,
-            FP3(BaseInterface::*getFieldValue)(const FP3&) const) const
+            FP3(BaseInterface::* getFieldValue)(const FP3&) const) const
         {
             bool status = true;
             FP time = getField()->getFieldSolver()->globalTime + timeShift;
