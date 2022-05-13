@@ -3,6 +3,7 @@
 #include "Constants.h"
 #include "Enums.h"
 #include <functional>
+#include <array>
 
 namespace pfc {
 
@@ -114,25 +115,20 @@ namespace pfc {
 
     public:
 
+        static const int dim = 3;
+        using TRotMatrix = std::array<std::array<FP, (size_t)dim>, (size_t)dim>;
+
         // rotation around the axis according to the rule of the right hand
-        RotationMapping(CoordinateEnum axis, FP angle) : rotationMatrix(dim * dim) {
+        RotationMapping(CoordinateEnum axis, FP angle) {
             createRotationMatrix(rotationMatrix, (int)axis, angle);
         }
 
-        // rotation around the axis + new polarization vector
-        RotationMapping(CoordinateEnum axis, FP angle, CoordinateEnum propDir, FP polarizationAngle) :
-            RotationMapping(axis, angle)
-        {
-            std::vector<FP> polarizationMatrix(dim * dim), coordRotMatrix(dim * dim);
+        // rotation around the axis + change of polarization vector
+        RotationMapping(CoordinateEnum axis, FP angle, CoordinateEnum propDir, FP polarizationAngle) {
+            TRotMatrix polarizationMatrix = { 0.0 }, coordRotMatrix = { 0.0 };
             createRotationMatrix(polarizationMatrix, (int)propDir, polarizationAngle);
             createRotationMatrix(coordRotMatrix, (int)axis, angle);
-            for (int i = 0; i < dim; i++)
-                for (int j = 0; j < dim; j++) {
-                    FP sum = 0.0;
-                    for (int k = 0; k < dim; k++)
-                        sum += coordRotMatrix[i * dim + k] * polarizationMatrix[k * dim + j];
-                    rotationMatrix[i * dim + j] = sum;
-                }
+            mulMatrices(coordRotMatrix, polarizationMatrix, this->rotationMatrix);
         }
 
         FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
@@ -162,34 +158,34 @@ namespace pfc {
         FP3 mulRotationMatrix(const FP3& coords) {
             FP3 directCoords;
             directCoords.x =
-                rotationMatrix[0 * dim + 0] * coords.x +
-                rotationMatrix[0 * dim + 1] * coords.y +
-                rotationMatrix[0 * dim + 2] * coords.z;
+                rotationMatrix[0][0] * coords.x +
+                rotationMatrix[0][1] * coords.y +
+                rotationMatrix[0][2] * coords.z;
             directCoords.y =
-                rotationMatrix[1 * dim + 0] * coords.x +
-                rotationMatrix[1 * dim + 1] * coords.y +
-                rotationMatrix[1 * dim + 2] * coords.z;
+                rotationMatrix[1][0] * coords.x +
+                rotationMatrix[1][1] * coords.y +
+                rotationMatrix[1][2] * coords.z;
             directCoords.z =
-                rotationMatrix[2 * dim + 0] * coords.x +
-                rotationMatrix[2 * dim + 1] * coords.y +
-                rotationMatrix[2 * dim + 2] * coords.z;
+                rotationMatrix[2][0] * coords.x +
+                rotationMatrix[2][1] * coords.y +
+                rotationMatrix[2][2] * coords.z;
             return directCoords;
         }
 
         FP3 mulInverseRotationMatrix(const FP3& coords) {
             FP3 inverseCoords;
             inverseCoords.x =
-                rotationMatrix[0 * dim + 0] * coords.x +
-                rotationMatrix[1 * dim + 0] * coords.y +
-                rotationMatrix[2 * dim + 0] * coords.z;
+                rotationMatrix[0][0] * coords.x +
+                rotationMatrix[1][0] * coords.y +
+                rotationMatrix[2][0] * coords.z;
             inverseCoords.y =
-                rotationMatrix[0 * dim + 1] * coords.x +
-                rotationMatrix[1 * dim + 1] * coords.y +
-                rotationMatrix[2 * dim + 1] * coords.z;
+                rotationMatrix[0][1] * coords.x +
+                rotationMatrix[1][1] * coords.y +
+                rotationMatrix[2][1] * coords.z;
             inverseCoords.z =
-                rotationMatrix[0 * dim + 2] * coords.x +
-                rotationMatrix[1 * dim + 2] * coords.y +
-                rotationMatrix[2 * dim + 2] * coords.z;
+                rotationMatrix[0][2] * coords.x +
+                rotationMatrix[1][2] * coords.y +
+                rotationMatrix[2][2] * coords.z;
             return inverseCoords;
         }
 
@@ -197,19 +193,28 @@ namespace pfc {
             return new RotationMapping(*this);
         }
 
-        // mapping from inverse to direct coords
-        std::vector<FP> rotationMatrix;
-        static const int dim = 3;
+        TRotMatrix rotationMatrix = { 0.0 };
 
     protected:
 
-        void createRotationMatrix(std::vector<FP>& matr, int axis, FP angle) {
+        void createRotationMatrix(TRotMatrix& matr, int axis, FP angle)
+        {
             int axis1 = (axis + 1) % dim, axis2 = (axis + 2) % dim;
-            matr[axis1 * dim + axis1] = cos(angle);
-            matr[axis1 * dim + axis2] = -sin(angle);
-            matr[axis2 * dim + axis1] = sin(angle);
-            matr[axis2 * dim + axis2] = cos(angle);
-            matr[axis * dim + axis] = (FP)1.0;
+            matr[axis1][axis1] = cos(angle);
+            matr[axis1][axis2] = -sin(angle);
+            matr[axis2][axis1] = sin(angle);
+            matr[axis2][axis2] = cos(angle);
+            matr[axis][axis] = (FP)1.0;
+        }
+
+        void mulMatrices(const TRotMatrix& a, const TRotMatrix& b, TRotMatrix& res) {
+            for (int i = 0; i < dim; i++)
+                for (int j = 0; j < dim; j++) {
+                    FP sum = 0.0;
+                    for (int k = 0; k < dim; k++)
+                        sum += a[i][k] * b[k][j];
+                    res[i][j] = sum;
+                }
         }
 
     };
