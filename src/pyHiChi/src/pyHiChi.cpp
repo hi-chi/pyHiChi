@@ -305,6 +305,8 @@ PYBIND11_MODULE(pyHiChi, object) {
     
     py::class_<RotationMapping, std::shared_ptr<RotationMapping>>(object, "RotationMapping", pyMapping)
         .def(py::init<CoordinateEnum, FP>(), py::arg("axis"), py::arg("angle"))
+        .def(py::init<CoordinateEnum, FP, CoordinateEnum, FP>(), py::arg("axis"), py::arg("angle"),
+            py::arg("prop_dir"), py::arg("pol_angle"))
         .def("get_direct_coords", &RotationMapping::getDirectCoords, py::arg("coords"),
             py::arg("time") = 0.0, py::arg("status") = 0)
         .def("get_inverse_coords", &RotationMapping::getInverseCoords, py::arg("coords"),
