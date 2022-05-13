@@ -31,6 +31,7 @@ fi
 clean=false
 python_path="python"
 USE_FFTW="OFF"
+fftw_path=""
 USE_MKL="OFF"
 USE_OMP="OFF"
 USE_TESTS="OFF"
@@ -56,6 +57,10 @@ case $key in
     USE_FFTW="ON"
     shift # past argument
     ;;
+    -fftw_dir)
+    fftw_path="$2"
+    shift # past argument
+    ;;
     -mkl_fft)
     USE_MKL="ON"
     shift # past argument
@@ -78,7 +83,7 @@ if [ $USE_OMP = "ON" ]; then
     CPU_OPTIONS="$CPU_OPTIONS -DUSE_OMP=ON"
 fi
 if [ $USE_FFTW = "ON" ]; then
-    CPU_OPTIONS="$CPU_OPTIONS -DUSE_FFTW=ON"
+    CPU_OPTIONS="$CPU_OPTIONS -DUSE_FFTW=ON -DFFTW_DIR=$fftw_path"
 fi
 if [ $USE_MKL = "ON" ]; then
     CPU_OPTIONS="$CPU_OPTIONS -DUSE_MKL=ON"

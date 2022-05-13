@@ -9,6 +9,7 @@ set USE_OPENMP="OFF"
 set GENERATOR="Visual Studio 15 2017"
 set TOOLSET=""
 set USE_FFTW="OFF"
+set FFTW_DIR=""
 set USE_MKL="OFF"
 set USE_TESTS="ON"
 set USE_PTESTS="ON"
@@ -22,6 +23,12 @@ if "%1"=="/openmp" (
 )
 if "%1"=="/fftw" (
   set USE_FFTW="ON"
+  shift
+  goto Options
+)
+if "%1"=="/fftw_dir" (
+  set FFTW_DIR=%2
+  shift
   shift
   goto Options
 )
@@ -62,7 +69,7 @@ if %TOOLSET% NEQ "" (
 
 md visual_studio
 cd visual_studio
-cmake %GENERATOR_TOOLSET_CMAKE_LINE% -A x64 -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS=%USE_TESTS% -Dgtest_force_shared_crt=ON -DUSE_PTESTS=%USE_PTESTS% -DBENCHMARK_ENABLE_TESTING=OFF -DRUN_HAVE_STD_REGEX=0 -DUSE_OMP=%USE_OPENMP% -DUSE_FFTW=%USE_FFTW% -DUSE_MKL=%USE_MKL% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
+cmake %GENERATOR_TOOLSET_CMAKE_LINE% -A x64 -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS=%USE_TESTS% -Dgtest_force_shared_crt=ON -DUSE_PTESTS=%USE_PTESTS% -DBENCHMARK_ENABLE_TESTING=OFF -DRUN_HAVE_STD_REGEX=0 -DUSE_OMP=%USE_OPENMP% -DUSE_FFTW=%USE_FFTW% -DFFTW_DIR=%FFTW_DIR% -DUSE_MKL=%USE_MKL% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
 cmake --build . --config Release
 
 xcopy /y src\pyHiChi\Release\* ..\..\bin\* > nul

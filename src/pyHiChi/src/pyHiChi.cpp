@@ -262,12 +262,26 @@ PYBIND11_MODULE(pyHiChi, object) {
         ;
 
     // ------------------- thinnings -------------------
+   
+    py::enum_<Thinning<ParticleArray3d>::Features>(object, "Conserve")
+        .value("momentum", Thinning<ParticleArray3d>::Features::Momentum)
+        .value("position", Thinning<ParticleArray3d>::Features::Position)
+        .value("energy", Thinning<ParticleArray3d>::Features::Energy)
+        .value("dis_momentum", Thinning<ParticleArray3d>::Features::Dispersion_Momentum)
+        .value("dis_position", Thinning<ParticleArray3d>::Features::Dispersion_Position)
+        .value("dis_energy", Thinning<ParticleArray3d>::Features::Dispersion_Energy)
+        .export_values()
+        ; 
 
-    object.def("simple_thinning", &Thinning<ParticleArray3d>::simple);
-    object.def("leveling_thinning", &Thinning<ParticleArray3d>::leveling);
-    object.def("number_conservative_thinning", &Thinning<ParticleArray3d>::numberConservative);
-    object.def("energy_conservative_thinning", &Thinning<ParticleArray3d>::energyConservative);
-    object.def("k_means_mergining", &Merging<ParticleArray3d>::merge_with_kmeans);
+    py::class_<Thinning<ParticleArray3d>>(object, "Thinout")
+        .def(py::init<>())
+        .def("simple_thinning", &Thinning<ParticleArray3d>::simple)
+        .def("leveling_thinning", &Thinning<ParticleArray3d>::leveling)
+        .def("number_conservative_thinning", &Thinning<ParticleArray3d>::numberConservative)
+        .def("energy_conservative_thinning", &Thinning<ParticleArray3d>::energyConservative)
+        .def("conservative_thinning", &Thinning<ParticleArray3d>::thinningConservative)
+        .def("k_means_mergining", &Merging<ParticleArray3d>::merge_with_kmeans)
+        ; 
 
     // ------------------- mappings -------------------
 
