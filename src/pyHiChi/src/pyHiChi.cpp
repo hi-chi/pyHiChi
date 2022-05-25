@@ -294,9 +294,9 @@ PYBIND11_MODULE(pyHiChi, object) {
 
     py::class_<VayPusher>(object, "VayPusher")
         .def(py::init<>())
-        .def("__call__", (void (VayPusher::*)(ParticleProxy3d*, ValueField&, FP))& VayPusher::operator())
-        .def("__call__", (void (VayPusher::*)(Particle3d*, ValueField&, FP))& VayPusher::operator())
-        .def("__call__", (void (VayPusher::*)(ParticleArray3d*, std::vector<ValueField>&, FP))& VayPusher::operator())
+        .def("__call__", (void (VayPusher::*)(ParticleProxy3d*, ValueField&, FP)) &VayPusher::operator())
+        .def("__call__", (void (VayPusher::*)(Particle3d*, ValueField&, FP)) &VayPusher::operator())
+        .def("__call__", (void (VayPusher::*)(ParticleArray3d*, std::vector<ValueField>&, FP)) &VayPusher::operator())
         ;
 
     // ------------------- other particle modules -------------------
