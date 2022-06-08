@@ -1,0 +1,33 @@
+name: Build application
+
+on: [push, pull_request]
+
+jobs:
+  ubuntu-gcc-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup environment
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
+        sudo apt-get install g++-9
+        sudo apt-get install libomp-9-dev
+        sudo apt-get install python3-pip python3-dev
+        sudo python3 -m pip install --upgrade pip
+    - name: Update submodules
+      run: git submodule update --init --recursive
+    - name: Build
+      run: |
+        mkdir build_pyHiChi
+        cd build_pyHiChi
+        cmake -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS="ON" -DUSE_PTESTS="OFF" -DBENCHMARK_ENABLE_TESTING=OFF -DRUN_HAVE_STD_REGEX=0 -DUSE_OMP="ON" -DUSE_FFTW="ON" ..
+        cmake --build .
+        cd ..
+      env:
+        CC: gcc-9
+        CXX: g++-9
+    - name: Run tests
+      run: |
+        export OMP_NUM_THREADS=4
+        ls -l build_pyHiChi
