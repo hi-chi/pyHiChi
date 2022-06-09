@@ -11,21 +11,27 @@ jobs:
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install g++-9 libomp-9-dev fftw3 fftw-dev
+        sudo apt-get install g++-10 libomp-10-dev ninja-build
         sudo apt-get install python3-pip python3-dev
         sudo python3 -m pip install --upgrade pip
     - name: Update submodules
       run: git submodule update --init --recursive
     - name: Build
+      shell: bash
       run: |
         mkdir build_pyHiChi
-        cd build_pyHiChi
-        cmake -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS="ON" -DUSE_PTESTS="OFF" -DBENCHMARK_ENABLE_TESTING=OFF -DRUN_HAVE_STD_REGEX=0 -DUSE_OMP="ON" -DUSE_FFTW="OFF" ..
-        cmake --build .
-        cd ..
+        cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
+            -D BENCHMARK_ENABLE_TESTING=OFF \
+            -D RUN_HAVE_STD_REGEX=0 \
+            -D USE_OMP="ON" \
+            -D USE_FFTW="OFF" \
+            -B build_pyHiChi
+        ninja -C build_pyHiChi
       env:
-        CC: gcc-9
-        CXX: g++-9
+        CC: gcc-10
+        CXX: g++-10
     - name: Run tests
       run: |
         export OMP_NUM_THREADS=4
