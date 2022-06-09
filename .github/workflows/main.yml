@@ -21,7 +21,7 @@ jobs:
       run: |
         mkdir build_pyHiChi
         cd build_pyHiChi
-        cmake -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS="ON" -DUSE_PTESTS="OFF" -DBENCHMARK_ENABLE_TESTING=OFF -DRUN_HAVE_STD_REGEX=0 -DUSE_OMP="ON" -DUSE_FFTW="ON" ..
+        cmake -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS="ON" -DUSE_PTESTS="OFF" -DBENCHMARK_ENABLE_TESTING=OFF -DRUN_HAVE_STD_REGEX=0 -DUSE_OMP="ON" -DUSE_FFTW="OFF" ..
         cmake --build .
         cd ..
       env:
