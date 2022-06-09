@@ -255,7 +255,7 @@ namespace pfc
                     particles_arrays.pop();
                     weight[indexPart] = partParticleArray[indexPart].getWeight();
                     int indexFeat = 0;
-                    for (set<Features>::iterator it = features.begin(); it != features.end();
+                    for (auto it = features.begin(); it != features.end();
                         ++it, indexFeat++)
                     {
                         switch (*it)
