@@ -11,8 +11,7 @@ jobs:
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install g++-9
-        sudo apt-get install libomp-9-dev
+        sudo apt-get install g++-9 libomp-9-dev fftw3 fftw-dev
         sudo apt-get install python3-pip python3-dev
         sudo python3 -m pip install --upgrade pip
     - name: Update submodules
