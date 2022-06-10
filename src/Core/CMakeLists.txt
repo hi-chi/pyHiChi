@@ -31,4 +31,8 @@ set(core_headers
     ${CORE_HEADER_DIR}/VectorsProxy.h
     ${CORE_HEADER_DIR}/macros.h)
 
+if (FFT_INCLUDES)
+    set(core_headers ${core_headers} 
+        ${FFT_INCLUDES}/fftw3.h)
+endif()
 add_custom_target(core SOURCES ${core_headers})
