@@ -57,4 +57,4 @@ jobs:
     - name: Run tests
       run: |
         export OMP_NUM_THREADS=4
-        ls -l ${PWD}/build_pyHiChi
+        ${PWD}/build_pyHiChi/src/UnitTests/tests 
