@@ -1,6 +1,7 @@
 pyHiChi
 =======
 
+![Build application](https://github.com/hi-chi/pyHiChi/workflows/Build%20application/badge.svg?branch=master)
 ![Language](https://img.shields.io/badge/language-python-orange.svg)
 ![Platforms](https://img.shields.io/badge/platform-linux%20%7C%20windows-lightgrey.svg)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
