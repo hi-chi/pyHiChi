@@ -138,7 +138,7 @@ jobs:
             -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
             -D ENABLE_AVX2=ON \
             -D CMAKE_INSTALL_PREFIX=${PWD}/fftw_install \
-            -D ENABLE_OPENMP=ON \
+            -D ENABLE_OPENMP=OFF \
             -D BUILD_TESTS=OFF \
             -S ${PWD}/fftw \
             -B ${PWD}/fftw_build
@@ -156,7 +156,7 @@ jobs:
             -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
             -D BENCHMARK_ENABLE_TESTING=OFF \
             -D RUN_HAVE_STD_REGEX=0 \
-            -D USE_OMP="ON" \
+            -D USE_OMP="OFF" \
             -D USE_FFTW="ON" \
             -D FFTW_DIR=${PWD}/fftw_install \
             -B ${PWD}/build_pyHiChi
