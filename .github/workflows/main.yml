@@ -184,8 +184,10 @@ jobs:
     - name: Build FFTW
       shell: bash
       run: |
+        export CMAKE_BUILD_PARALLEL_LEVEL=4
         mkdir fftw_build fftw_install
         cmake \
+            -A x64 \
             -D CMAKE_BUILD_TYPE=Release \
             -D BUILD_SHARED_LIBS=OFF \
             -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -200,8 +202,11 @@ jobs:
     - name: Build pyHiChi
       shell: bash
       run: |
+        export CMAKE_BUILD_PARALLEL_LEVEL=4
         mkdir build_pyHiChi
         cmake \
+            -A x64 \
+            -D gtest_force_shared_crt="ON" \
             -D CMAKE_BUILD_TYPE=Release \
             -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
             -D BENCHMARK_ENABLE_TESTING=OFF \
