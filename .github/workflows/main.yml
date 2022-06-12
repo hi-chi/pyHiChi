@@ -123,8 +123,7 @@ jobs:
       run: |
         brew update-reset
         brew unlink python@3.8
-        brew install gcc --without-multilib 
-        brew install llvm libomp clang-omp ninja
+        brew install gcc llvm libomp clang-omp ninja
         sudo python3 -m pip install --upgrade pip
         echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile
     - name: Update submodules
