@@ -123,16 +123,13 @@ jobs:
       run: |
         brew update-reset
         brew unlink python@3.8
-        brew install libomp ninja
+        brew install libomp ninja pybind11
         sudo python3 -m pip install --upgrade pip
     - name: Update submodules
       run: git submodule update --init --recursive
     - name: Build FFTW
       shell: bash
       run: |
-        export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib"
-        export CFLAGS="$CFLAGS -I$(brew --prefix libomp)/include"
-        export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
         wget https://fftw.org/fftw-3.3.10.tar.gz
         tar -xzf fftw-3.3.10.tar.gz
         mv fftw-3.3.10 fftw
@@ -152,9 +149,6 @@ jobs:
     - name: Build pyHiChi
       shell: bash
       run: |
-        export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib"
-        export CFLAGS="$CFLAGS -I$(brew --prefix libomp)/include"
-        export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
         mkdir build_pyHiChi
         cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
@@ -185,7 +179,6 @@ jobs:
     - name: Build FFTW
       shell: bash
       run: |
-        export CMAKE_BUILD_PARALLEL_LEVEL=4
         mkdir fftw_build fftw_install
         cmake \
             -A x64 \
@@ -203,7 +196,6 @@ jobs:
     - name: Build pyHiChi
       shell: bash
       run: |
-        export CMAKE_BUILD_PARALLEL_LEVEL=4
         mkdir build_pyHiChi
         cmake \
             -A x64 \
