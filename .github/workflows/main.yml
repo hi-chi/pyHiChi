@@ -158,6 +158,7 @@ jobs:
         mkdir build_pyHiChi
         cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
+            -D gtest_force_shared_crt="ON" \
             -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
             -D BENCHMARK_ENABLE_TESTING=OFF \
             -D RUN_HAVE_STD_REGEX=0 \
@@ -220,4 +221,4 @@ jobs:
       shell: bash
       run: |
         export OMP_NUM_THREADS=4
-        ${PWD}/build_pyHiChi/src/UnitTests/tests --gtest_repeat=10 --gtest_break_on_failure
+        ${PWD}/build_pyHiChi/src/UnitTests/Release/tests.exe --gtest_repeat=10 --gtest_break_on_failure
