@@ -123,13 +123,18 @@ jobs:
       run: |
         brew update-reset
         brew unlink python@3.8
-        brew install libomp ninja pybind11
+        brew install gcc --without-multilib 
+        brew install llvm libomp clang-omp ninja
         sudo python3 -m pip install --upgrade pip
+        echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile
     - name: Update submodules
       run: git submodule update --init --recursive
     - name: Build FFTW
       shell: bash
       run: |
+        export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib"
+        export CFLAGS="$CFLAGS -I$(brew --prefix libomp)/include"
+        export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
         wget https://fftw.org/fftw-3.3.10.tar.gz
         tar -xzf fftw-3.3.10.tar.gz
         mv fftw-3.3.10 fftw
@@ -140,7 +145,7 @@ jobs:
             -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
             -D ENABLE_AVX2=ON \
             -D CMAKE_INSTALL_PREFIX=${PWD}/fftw_install \
-            -D ENABLE_OPENMP=OFF \
+            -D ENABLE_OPENMP=ON \
             -D BUILD_TESTS=OFF \
             -S ${PWD}/fftw \
             -B ${PWD}/fftw_build
