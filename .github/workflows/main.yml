@@ -24,6 +24,7 @@ jobs:
         mv fftw-3.3.10 fftw
         mkdir fftw_build fftw_install
         cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
             -D BUILD_SHARED_LIBS=OFF \
             -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
             -D ENABLE_AVX2=ON \
@@ -79,6 +80,7 @@ jobs:
         mv fftw-3.3.10 fftw
         mkdir fftw_build fftw_install
         cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
             -D BUILD_SHARED_LIBS=OFF \
             -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
             -D ENABLE_AVX2=ON \
@@ -123,6 +125,8 @@ jobs:
         brew unlink python@3.8
         brew install libomp ninja
         sudo python3 -m pip install --upgrade pip
+    - name: Update submodules
+      run: git submodule update --init --recursive
     - name: Build FFTW
       shell: bash
       run: |
@@ -134,6 +138,7 @@ jobs:
         mv fftw-3.3.10 fftw
         mkdir fftw_build fftw_install
         cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
             -D BUILD_SHARED_LIBS=OFF \
             -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
             -D ENABLE_AVX2=ON \
@@ -162,6 +167,52 @@ jobs:
             -B ${PWD}/build_pyHiChi
         ninja -C ${PWD}/build_pyHiChi
     - name: Run tests
+      run: |
+        export OMP_NUM_THREADS=4
+        ${PWD}/build_pyHiChi/src/UnitTests/tests --gtest_repeat=10 --gtest_break_on_failure
+  windows-msvc-build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Download dependencies
+      run: |
+        Invoke-WebRequest https://fftw.org/fftw-3.3.10.tar.gz -OutFile fftw-3.3.10.tar.gz
+        tar -xzf fftw-3.3.10.tar.gz
+        Rename-Item fftw-3.3.10 fftw
+    - name: Update submodules
+      run: git submodule update --init --recursive
+    - name: Build FFTW
+      shell: bash
+      run: |
+        mkdir fftw_build fftw_install
+        cmake \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D BUILD_SHARED_LIBS=OFF \
+            -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -D ENABLE_AVX2=ON \
+            -D CMAKE_INSTALL_PREFIX=${PWD}/fftw_install \
+            -D ENABLE_OPENMP=ON \
+            -D BUILD_TESTS=OFF \
+            -S ${PWD}/fftw \
+            -B ${PWD}/fftw_build
+        cmake --build ${PWD}/fftw_build --config Release
+        cmake --install ${PWD}/fftw_build --config Release
+    - name: Build pyHiChi
+      shell: bash
+      run: |
+        mkdir build_pyHiChi
+        cmake \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
+            -D BENCHMARK_ENABLE_TESTING=OFF \
+            -D RUN_HAVE_STD_REGEX=0 \
+            -D USE_OMP="ON" \
+            -D USE_FFTW="ON" \
+            -D FFTW_DIR=${PWD}/fftw_install \
+            -B ${PWD}/build_pyHiChi
+        cmake --build ${PWD}/build_pyHiChi --config Release
+    - name: Run tests
+      shell: bash
       run: |
         export OMP_NUM_THREADS=4
         ${PWD}/build_pyHiChi/src/UnitTests/tests --gtest_repeat=10 --gtest_break_on_failure
