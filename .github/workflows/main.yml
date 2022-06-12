@@ -149,6 +149,9 @@ jobs:
     - name: Build pyHiChi
       shell: bash
       run: |
+        export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib"
+        export CFLAGS="$CFLAGS -I$(brew --prefix libomp)/include"
+        export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
         mkdir build_pyHiChi
         cmake -G Ninja \
             -D CMAKE_BUILD_TYPE=Release \
@@ -156,7 +159,7 @@ jobs:
             -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
             -D BENCHMARK_ENABLE_TESTING=OFF \
             -D RUN_HAVE_STD_REGEX=0 \
-            -D USE_OMP="OFF" \
+            -D USE_OMP="ON" \
             -D USE_FFTW="ON" \
             -D FFTW_DIR=${PWD}/fftw_install \
             -B ${PWD}/build_pyHiChi
@@ -179,6 +182,7 @@ jobs:
     - name: Build FFTW
       shell: bash
       run: |
+        export CMAKE_BUILD_PARALLEL_LEVEL=4
         mkdir fftw_build fftw_install
         cmake \
             -A x64 \
@@ -196,6 +200,7 @@ jobs:
     - name: Build pyHiChi
       shell: bash
       run: |
+        export CMAKE_BUILD_PARALLEL_LEVEL=4
         mkdir build_pyHiChi
         cmake \
             -A x64 \
