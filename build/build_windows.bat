@@ -69,6 +69,26 @@ if %TOOLSET% NEQ "" (
 
 md visual_studio
 cd visual_studio
+
+
+if %USE_FFTW% EQU "ON" (
+  if %FFTW_DIR% EQU "" (
+    echo Installing FFTW...
+    
+    md 3rdparty\fftw
+    cd 3rdparty\fftw
+    
+    cmake %GENERATOR_TOOLSET_CMAKE_LINE% -A x64 -DCMAKE_BUILD_TYPE=Release -DUSE_OMP=%USE_OPENMP% ../../../../3rdparty/fftw
+    cmake --build . --config Release
+    
+    cd ..\..
+
+    echo FFTW is installed
+    set FFTW_DIR=.\..\..\3rdparty\fftw\fftw-install
+  )
+)
+
+
 cmake %GENERATOR_TOOLSET_CMAKE_LINE% -A x64 -DCMAKE_BUILD_TYPE=Release -DUSE_TESTS=%USE_TESTS% -Dgtest_force_shared_crt=ON -DUSE_PTESTS=%USE_PTESTS% -DBENCHMARK_ENABLE_TESTING=OFF -DRUN_HAVE_STD_REGEX=0 -DUSE_OMP=%USE_OPENMP% -DUSE_FFTW=%USE_FFTW% -DFFTW_DIR=%FFTW_DIR% -DUSE_MKL=%USE_MKL% -DPYTHON_EXECUTABLE:FILEPATH=%PYTHON% ../..
 cmake --build . --config Release
 
