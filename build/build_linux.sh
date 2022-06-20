@@ -103,6 +103,37 @@ if [ ! -d $BUILD_DIR ]; then
 fi
 cd $BUILD_DIR
 
+
+# fftw
+if [ $USE_FFTW = "ON" ]; then
+    if [ $fftw_path = "" ]; then
+        echo "Installing FFTW..."
+        
+        FFTW_INSTALL_DIR=$(pwd)/../../3rdparty/fftw
+        
+        THIRDPARTY_DIR="3rdparty"
+        if [ ! -d $THIRDPARTY_DIR ]; then
+            mkdir -p $THIRDPARTY_DIR
+        fi
+        cd $THIRDPARTY_DIR
+        
+        FFTW_BUILD_DIR="fftw"
+        if [ ! -d $FFTW_BUILD_DIR ]; then
+            mkdir -p $FFTW_BUILD_DIR
+        fi
+        cd $FFTW_BUILD_DIR
+        
+        CXX=$CXX_COMPILER CC=$C_COMPILER LD=$LINKER cmake -G "Unix Makefiles" $CPU_OPTIONS $FFTW_INSTALL_DIR
+        make -j $NUM_CORES -k 2> /dev/null
+        
+        cd ../..
+        
+        fftw_path=$FFTW_INSTALL_DIR/fftw-install
+    fi
+fi
+
+
+# hi-chi
 CXX=$CXX_COMPILER CC=$C_COMPILER LD=$LINKER cmake -G "Unix Makefiles" $CPU_OPTIONS ../..
 make -j $NUM_CORES -k 2> /dev/null
 if [ $? -ne 0 ]; then
