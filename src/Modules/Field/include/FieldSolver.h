@@ -170,25 +170,25 @@ namespace pfc {
     template<GridTypes gridType>
     inline void SpectralFieldSolver<gridType>::doFourierTransformB(fourier_transform::Direction direction)
     {
-        fourierTransform.doFourierTransform(B, x, direction);
-        fourierTransform.doFourierTransform(B, y, direction);
-        fourierTransform.doFourierTransform(B, z, direction);
+        fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::x, direction);
+        fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::y, direction);
+        fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, direction);
     }
 
     template<GridTypes gridType>
     inline void SpectralFieldSolver<gridType>::doFourierTransformE(fourier_transform::Direction direction)
     {
-        fourierTransform.doFourierTransform(E, x, direction);
-        fourierTransform.doFourierTransform(E, y, direction);
-        fourierTransform.doFourierTransform(E, z, direction);
+        fourierTransform.doFourierTransform(FieldEnum::E, CoordinateEnum::x, direction);
+        fourierTransform.doFourierTransform(FieldEnum::E, CoordinateEnum::y, direction);
+        fourierTransform.doFourierTransform(FieldEnum::E, CoordinateEnum::z, direction);
     }
 
     template<GridTypes gridType>
     inline void SpectralFieldSolver<gridType>::doFourierTransformJ(fourier_transform::Direction direction)
     {
-        fourierTransform.doFourierTransform(J, x, direction);
-        fourierTransform.doFourierTransform(J, y, direction);
-        fourierTransform.doFourierTransform(J, z, direction);
+        fourierTransform.doFourierTransform(FieldEnum::J, CoordinateEnum::x, direction);
+        fourierTransform.doFourierTransform(FieldEnum::J, CoordinateEnum::y, direction);
+        fourierTransform.doFourierTransform(FieldEnum::J, CoordinateEnum::z, direction);
     }
 
     template<GridTypes gridType>

@@ -66,11 +66,11 @@ namespace pfc {
     public:
 
         // create periodical mapping: axis = ...[cMin, cMax)[cMin, cMax)[cMin, cMax)...
-        PeriodicalMapping(Coordinate axis, FP cMin, FP cMax) :
+        PeriodicalMapping(CoordinateEnum axis, FP cMin, FP cMax) :
             axis(axis), cMin(cMin), cMax(cMax), D(cMax-cMin) {}
 
         FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
-            if (status) *status = (coords[axis] >= cMin && coords[axis] < cMax) ? true : false;
+            if (status) *status = (coords[(int)axis] >= cMin && coords[(int)axis] < cMax) ? true : false;
             return coords;
         }
 
@@ -78,8 +78,8 @@ namespace pfc {
             setOkStatus(status);
             FP3 inverseCoords = coords;
             double tmp;
-            FP frac = std::modf((coords[axis] - cMin) / D, &tmp);
-            inverseCoords[axis] = cMin + (frac >= 0 ? frac : (1 + frac)) * D;
+            FP frac = std::modf((coords[(int)axis] - cMin) / D, &tmp);
+            inverseCoords[(int)axis] = cMin + (frac >= 0 ? frac : (1 + frac)) * D;
             return inverseCoords;
         }
 
@@ -88,7 +88,7 @@ namespace pfc {
         }
 
         FP cMin, cMax, D;
-        Coordinate axis = Coordinate::x;
+        CoordinateEnum axis = CoordinateEnum::x;
 
     };
 
@@ -98,31 +98,31 @@ namespace pfc {
     public:
 
         // rotation occurs around the axis according to the rule of the right hand
-        RotationMapping(Coordinate axis, double angle): axis(axis), angle(angle) {
-            Coordinate axis1 = Coordinate(((int)axis + 1) % 3),
-                axis2 = Coordinate(((int)axis + 2) % 3);
-            rotationMatrix[axis1][axis1] = cos(angle);
-            rotationMatrix[axis1][axis2] = -sin(angle);
-            rotationMatrix[axis2][axis1] = sin(angle);
-            rotationMatrix[axis2][axis2] = cos(angle);
-            rotationMatrix[axis][axis] = 1.0;
+        RotationMapping(CoordinateEnum axis, double angle): axis(axis), angle(angle) {
+            CoordinateEnum axis1 = CoordinateEnum(((int)axis + 1) % 3),
+                axis2 = CoordinateEnum(((int)axis + 2) % 3);
+            rotationMatrix[(int)axis1][(int)axis1] = cos(angle);
+            rotationMatrix[(int)axis1][(int)axis2] = -sin(angle);
+            rotationMatrix[(int)axis2][(int)axis1] = sin(angle);
+            rotationMatrix[(int)axis2][(int)axis2] = cos(angle);
+            rotationMatrix[(int)axis][(int)axis] = 1.0;
         }
 
         FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             FP3 directCoords;
             directCoords.x =
-                rotationMatrix[Coordinate::x][Coordinate::x] * coords.x +
-                rotationMatrix[Coordinate::x][Coordinate::y] * coords.y +
-                rotationMatrix[Coordinate::x][Coordinate::z] * coords.z;
+                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::x] * coords.x +
+                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::y] * coords.y +
+                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::z] * coords.z;
             directCoords.y =
-                rotationMatrix[Coordinate::y][Coordinate::x] * coords.x +
-                rotationMatrix[Coordinate::y][Coordinate::y] * coords.y +
-                rotationMatrix[Coordinate::y][Coordinate::z] * coords.z;
+                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::x] * coords.x +
+                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::y] * coords.y +
+                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::z] * coords.z;
             directCoords.z =
-                rotationMatrix[Coordinate::z][Coordinate::x] * coords.x +
-                rotationMatrix[Coordinate::z][Coordinate::y] * coords.y +
-                rotationMatrix[Coordinate::z][Coordinate::z] * coords.z;
+                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::x] * coords.x +
+                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::y] * coords.y +
+                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::z] * coords.z;
             return directCoords;
         }
 
@@ -130,17 +130,17 @@ namespace pfc {
             setOkStatus(status);
             FP3 inverseCoords;
             inverseCoords.x =
-                rotationMatrix[Coordinate::x][Coordinate::x] * coords.x +
-                rotationMatrix[Coordinate::y][Coordinate::x] * coords.y +
-                rotationMatrix[Coordinate::z][Coordinate::x] * coords.z;
+                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::x] * coords.x +
+                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::x] * coords.y +
+                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::x] * coords.z;
             inverseCoords.y =
-                rotationMatrix[Coordinate::x][Coordinate::y] * coords.x +
-                rotationMatrix[Coordinate::y][Coordinate::y] * coords.y +
-                rotationMatrix[Coordinate::z][Coordinate::y] * coords.z;
+                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::y] * coords.x +
+                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::y] * coords.y +
+                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::y] * coords.z;
             inverseCoords.z =
-                rotationMatrix[Coordinate::x][Coordinate::z] * coords.x +
-                rotationMatrix[Coordinate::y][Coordinate::z] * coords.y +
-                rotationMatrix[Coordinate::z][Coordinate::z] * coords.z;
+                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::z] * coords.x +
+                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::z] * coords.y +
+                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::z] * coords.z;
             return inverseCoords;
         }
 
@@ -148,7 +148,7 @@ namespace pfc {
             return new RotationMapping(*this);
         }
 
-        Coordinate axis;
+        CoordinateEnum axis;
         FP angle;  // in radians
         // mapping from inverse to direct coords
         FP rotationMatrix[3][3] = { {0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0} };
@@ -185,19 +185,19 @@ namespace pfc {
 
     public:
 
-        ScaleMapping(Coordinate axis, FP coef) : axis(axis), coef(coef) {}
+        ScaleMapping(CoordinateEnum axis, FP coef) : axis(axis), coef(coef) {}
 
         FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             FP3 directCoords = coords;
-            directCoords[axis] *= coef;
+            directCoords[(int)axis] *= coef;
             return directCoords;
         }
 
         FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
             FP3 inverseCoords = coords;
-            inverseCoords[axis] /= coef;
+            inverseCoords[(int)axis] /= coef;
             return inverseCoords;
         }
 
@@ -206,7 +206,7 @@ namespace pfc {
         }
 
         FP coef;
-        Coordinate axis;
+        CoordinateEnum axis;
 
     };
 
@@ -215,7 +215,7 @@ namespace pfc {
 
     public:
 
-        TightFocusingMapping(FP R0, FP L, FP D, Coordinate axis = Coordinate::x) :
+        TightFocusingMapping(FP R0, FP L, FP D, CoordinateEnum axis = CoordinateEnum::x) :
             Rmax(R0 + 0.5*L), ifCut(true),
             periodicalMapping(axis, -R0 - D + 0.5*L, -R0 + 0.5*L)
         {}
@@ -232,8 +232,8 @@ namespace pfc {
             if (ifCut) this->setFailStatus(status);
             else setOkStatus(status);
 
-            if (coords[periodicalMapping.axis] < periodicalMapping.cMin + ct ||
-                coords[periodicalMapping.axis] >= periodicalMapping.cMax + ct)
+            if (coords[(int)periodicalMapping.axis] < periodicalMapping.cMin + ct ||
+                coords[(int)periodicalMapping.axis] >= periodicalMapping.cMax + ct)
                 return coords;
 
             int nPeriods = 0;
@@ -253,7 +253,7 @@ namespace pfc {
 
             for (int i = 0; i < nPeriods; i++) {
 
-                coordsShift[periodicalMapping.axis] += shift;
+                coordsShift[(int)periodicalMapping.axis] += shift;
 
                 if (ifInArea(coordsShift, time)) {
                     directCoords = coordsShift;
@@ -286,20 +286,20 @@ namespace pfc {
 
             if (periodicalMapping.cMax + ct < 0) {
                 if ((r >= Rmax - ct) || (r < -periodicalMapping.cMax - ct) ||
-                    (coords[periodicalMapping.axis] > 0))
+                    (coords[(int)periodicalMapping.axis] > 0))
                     return false;
             }
             else if ((periodicalMapping.cMax + ct >= 0) && (-Rmax + ct <= 0))
             {
-                if (coords[periodicalMapping.axis] < 0 && r > periodicalMapping.cMax + Rmax)
+                if (coords[(int)periodicalMapping.axis] < 0 && r > periodicalMapping.cMax + Rmax)
                     return false;
-                if (coords[periodicalMapping.axis] >= 0 && r > periodicalMapping.cMax + ct)
+                if (coords[(int)periodicalMapping.axis] >= 0 && r > periodicalMapping.cMax + ct)
                     return false;
             }
             else if (-Rmax + ct > 0)
             {
                 if ((r <= -Rmax + ct) || (r > periodicalMapping.cMax + ct) ||
-                    (coords[periodicalMapping.axis] < 0))
+                    (coords[(int)periodicalMapping.axis] < 0))
                     return false;
             }
 

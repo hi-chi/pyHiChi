@@ -1,0 +1,225 @@
+name: Build application
+
+on: [push, pull_request]
+
+jobs:
+  ubuntu-gcc-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup environment
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
+        sudo apt-get install g++-10 libomp-10-dev ninja-build
+        sudo apt-get install python3-pip python3-dev
+        sudo python3 -m pip install --upgrade pip
+    - name: Update submodules
+      run: git submodule update --init --recursive
+    - name: Build FFTW
+      shell: bash
+      run: |
+        wget https://fftw.org/fftw-3.3.10.tar.gz
+        tar -xzf fftw-3.3.10.tar.gz
+        mv fftw-3.3.10 fftw
+        mkdir fftw_build fftw_install
+        cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D BUILD_SHARED_LIBS=OFF \
+            -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -D ENABLE_AVX2=ON \
+            -D CMAKE_INSTALL_PREFIX=${PWD}/fftw_install \
+            -D ENABLE_OPENMP=ON \
+            -D BUILD_TESTS=OFF \
+            -S ${PWD}/fftw \
+            -B ${PWD}/fftw_build
+        ninja -C ${PWD}/fftw_build
+        ninja install -C ${PWD}/fftw_build
+      env:
+        CC: gcc-10
+        CXX: g++-10
+    - name: Build pyHiChi
+      shell: bash
+      run: |
+        mkdir build_pyHiChi
+        cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
+            -D BENCHMARK_ENABLE_TESTING=OFF \
+            -D RUN_HAVE_STD_REGEX=0 \
+            -D USE_OMP="ON" \
+            -D USE_FFTW="ON" \
+            -D FFTW_DIR=${PWD}/fftw_install \
+            -B ${PWD}/build_pyHiChi
+        ninja -C ${PWD}/build_pyHiChi
+      env:
+        CC: gcc-10
+        CXX: g++-10
+    - name: Run tests
+      run: |
+        export OMP_NUM_THREADS=4
+        ${PWD}/build_pyHiChi/src/UnitTests/tests --gtest_repeat=10 --gtest_break_on_failure
+  ubuntu-clang-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup environment
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
+        sudo apt-get install clang-8 libomp-10-dev ninja-build
+        sudo apt-get install python3-pip python3-dev
+        sudo python3 -m pip install --upgrade pip
+    - name: Update submodules
+      run: git submodule update --init --recursive
+    - name: Build FFTW
+      shell: bash
+      run: |
+        wget https://fftw.org/fftw-3.3.10.tar.gz
+        tar -xzf fftw-3.3.10.tar.gz
+        mv fftw-3.3.10 fftw
+        mkdir fftw_build fftw_install
+        cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D BUILD_SHARED_LIBS=OFF \
+            -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -D ENABLE_AVX2=ON \
+            -D CMAKE_INSTALL_PREFIX=${PWD}/fftw_install \
+            -D ENABLE_OPENMP=ON \
+            -D BUILD_TESTS=OFF \
+            -S ${PWD}/fftw \
+            -B ${PWD}/fftw_build
+        ninja -C ${PWD}/fftw_build
+        ninja install -C ${PWD}/fftw_build
+      env:
+        CC: clang-8
+        CXX: clang++-8
+    - name: Build pyHiChi
+      shell: bash
+      run: |
+        mkdir build_pyHiChi
+        cmake -G Ninja \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
+            -D BENCHMARK_ENABLE_TESTING=OFF \
+            -D RUN_HAVE_STD_REGEX=0 \
+            -D USE_OMP="ON" \
+            -D USE_FFTW="ON" \
+            -D FFTW_DIR=${PWD}/fftw_install \
+            -B ${PWD}/build_pyHiChi
+        ninja -C ${PWD}/build_pyHiChi
+      env:
+        CC: clang-8
+        CXX: clang++-8
+    - name: Run tests
+      run: |
+        export OMP_NUM_THREADS=4
+        ${PWD}/build_pyHiChi/src/UnitTests/tests --gtest_repeat=10 --gtest_break_on_failure
+  # macos-clang-build:
+  #   runs-on: macOS-latest
+  #   steps:
+  #   - uses: actions/checkout@v1
+  #   - name: Setup environment
+  #     run: |
+  #       brew update-reset
+  #       brew unlink python@3.8
+  #       brew install gcc llvm libomp ninja
+  #       sudo python3 -m pip install --upgrade pip
+  #       echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile
+  #   - name: Update submodules
+  #     run: git submodule update --init --recursive
+  #   - name: Build FFTW
+  #     shell: bash
+  #     run: |
+  #       export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib"
+  #       export CFLAGS="$CFLAGS -I$(brew --prefix libomp)/include"
+  #       export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
+  #       wget https://fftw.org/fftw-3.3.10.tar.gz
+  #       tar -xzf fftw-3.3.10.tar.gz
+  #       mv fftw-3.3.10 fftw
+  #       mkdir fftw_build fftw_install
+  #       cmake -G Ninja \
+  #           -D CMAKE_BUILD_TYPE=Release \
+  #           -D BUILD_SHARED_LIBS=OFF \
+  #           -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+  #           -D ENABLE_AVX2=ON \
+  #           -D CMAKE_INSTALL_PREFIX=${PWD}/fftw_install \
+  #           -D ENABLE_OPENMP=ON \
+  #           -D BUILD_TESTS=OFF \
+  #           -S ${PWD}/fftw \
+  #           -B ${PWD}/fftw_build
+  #       ninja -C ${PWD}/fftw_build
+  #       ninja install -C ${PWD}/fftw_build
+  #   - name: Build pyHiChi
+  #     shell: bash
+  #     run: |
+  #       export LDFLAGS="$LDFLAGS -L$(brew --prefix libomp)/lib"
+  #       export CFLAGS="$CFLAGS -I$(brew --prefix libomp)/include"
+  #       export CXXFLAGS="$CXXFLAGS -I$(brew --prefix libomp)/include"
+  #       mkdir build_pyHiChi
+  #       cmake -G Ninja \
+  #           -D CMAKE_BUILD_TYPE=Release \
+  #           -D gtest_force_shared_crt="ON" \
+  #           -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
+  #           -D BENCHMARK_ENABLE_TESTING=OFF \
+  #           -D RUN_HAVE_STD_REGEX=0 \
+  #           -D USE_OMP="ON" \
+  #           -D USE_FFTW="ON" \
+  #           -D FFTW_DIR=${PWD}/fftw_install \
+  #           -B ${PWD}/build_pyHiChi
+  #       ninja -C ${PWD}/build_pyHiChi
+  #   - name: Run tests
+  #     run: |
+  #       export OMP_NUM_THREADS=4
+  #       ${PWD}/build_pyHiChi/src/UnitTests/tests --gtest_repeat=10 --gtest_break_on_failure
+  windows-msvc-build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Download dependencies
+      run: |
+        Invoke-WebRequest https://fftw.org/fftw-3.3.10.tar.gz -OutFile fftw-3.3.10.tar.gz
+        tar -xzf fftw-3.3.10.tar.gz
+        Rename-Item fftw-3.3.10 fftw
+    - name: Update submodules
+      run: git submodule update --init --recursive
+    - name: Build FFTW
+      shell: bash
+      run: |
+        export CMAKE_BUILD_PARALLEL_LEVEL=4
+        mkdir fftw_build fftw_install
+        cmake \
+            -A x64 \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D BUILD_SHARED_LIBS=OFF \
+            -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -D ENABLE_AVX2=ON \
+            -D CMAKE_INSTALL_PREFIX=${PWD}/fftw_install \
+            -D ENABLE_OPENMP=ON \
+            -D BUILD_TESTS=OFF \
+            -S ${PWD}/fftw \
+            -B ${PWD}/fftw_build
+        cmake --build ${PWD}/fftw_build --config Release
+        cmake --install ${PWD}/fftw_build --config Release
+    - name: Build pyHiChi
+      shell: bash
+      run: |
+        export CMAKE_BUILD_PARALLEL_LEVEL=4
+        mkdir build_pyHiChi
+        cmake \
+            -A x64 \
+            -D gtest_force_shared_crt="ON" \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D USE_TESTS="ON" -DUSE_PTESTS="OFF" \
+            -D BENCHMARK_ENABLE_TESTING=OFF \
+            -D RUN_HAVE_STD_REGEX=0 \
+            -D USE_OMP="ON" \
+            -D USE_FFTW="ON" \
+            -D FFTW_DIR=${PWD}/fftw_install \
+            -B ${PWD}/build_pyHiChi
+        cmake --build ${PWD}/build_pyHiChi --config Release
+    - name: Run tests
+      shell: bash
+      run: |
+        export OMP_NUM_THREADS=4
+        ${PWD}/build_pyHiChi/src/UnitTests/Release/tests.exe --gtest_repeat=10 --gtest_break_on_failure

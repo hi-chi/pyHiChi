@@ -21,12 +21,17 @@ endif()
 
 set(pyHiChi_source
     include/pyField.h
+    include/pyFieldInterface.h
+    include/pyFieldMacroses.h
     src/pyHiChi.cpp)
 
 pybind11_add_module(pyHiChi ${pyHiChi_source})
 
-if (UNIX)
+if (APPLE)
+    target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
+elseif (UNIX)
     target_link_libraries(pyHiChi PUBLIC -Wl,--start-group ${FFT_LIBS} -Wl,--end-group)
 else()
     target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
 endif()
+
