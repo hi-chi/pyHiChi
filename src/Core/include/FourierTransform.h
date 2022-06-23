@@ -169,7 +169,7 @@ namespace pfc
         FourierTransformGrid() {}
         
         template<GridTypes gridType>
-        void initialize(Grid<FP, gridType>* gridFP, Grid<complexFP, gridType>* gridCFP) {
+        void initialize(Grid<FP, gridType>* gridFP, SpectralGrid<FP, complexFP>* gridCFP) {
             transform[(int)FieldEnum::E][(int)CoordinateEnum::x].initialize(&gridFP->Ex, &gridCFP->Ex, gridFP->numCells);
             transform[(int)FieldEnum::E][(int)CoordinateEnum::y].initialize(&gridFP->Ey, &gridCFP->Ey, gridFP->numCells);
             transform[(int)FieldEnum::E][(int)CoordinateEnum::z].initialize(&gridFP->Ez, &gridCFP->Ez, gridFP->numCells);
