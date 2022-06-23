@@ -25,7 +25,7 @@ public:
 
     virtual void SetUp()
     {
-        maxRelativeError = 1e-12;
+        BaseParticleFixture<ParticleType>::maxRelativeError = 1e-12;
     }
 };
 
@@ -36,22 +36,22 @@ TYPED_TEST(SaveLoadParticle, testParticle)
 {
     using ParticleType = typename SaveLoadParticle<TypeParam>::Particle;
 
-    momentum = MomentumType(-231.3e9, 0.0, 1.23e-5);
-    position = getPosition(-0.06, 13e-5, -2e3);
-    weight = static_cast<WeightType>(1.4e2);
-    type = ParticleTypes::Proton;
-    particle = ParticleType(position, momentum, weight, type);
+    this->momentum = MomentumType(-231.3e9, 0.0, 1.23e-5);
+    this->position = getPosition(-0.06, 13e-5, -2e3);
+    this->weight = static_cast<WeightType>(1.4e2);
+    this->type = ParticleTypes::Proton;
+    this->particle = ParticleType(this->position, this->momentum, this->weight, this->type);
     
-    particle.save(stream);
-    particle = ParticleType(); // reset particle
+    this->particle.save(this->stream);
+    this->particle = ParticleType(); // reset particle
     ParticleType particleRes;
-    particleRes.load(stream);
+    particleRes.load(this->stream);
     
-    ASSERT_EQ_VECTOR(position, particleRes.getPosition(), this->dimension);
-    ASSERT_EQ_VECTOR(momentum, particleRes.getMomentum(), this->momentumDimension);
+    ASSERT_EQ_VECTOR(this->position, particleRes.getPosition(), this->dimension);
+    ASSERT_EQ_VECTOR(this->momentum, particleRes.getMomentum(), this->momentumDimension);
     ASSERT_EQ(Constants<MassType>::protonMass(), particleRes.getMass());
     ASSERT_EQ(-Constants<ChargeType>::electronCharge(), particleRes.getCharge());
-    ASSERT_EQ(weight, particleRes.getWeight());
+    ASSERT_EQ(this->weight, particleRes.getWeight());
 }
 
 
