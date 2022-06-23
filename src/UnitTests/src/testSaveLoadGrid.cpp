@@ -37,19 +37,19 @@ public:
         for (int i = 0; i < this->grid->Ex.getSize().x; i++)
             for (int j = 0; j < this->grid->Ex.getSize().y; j++)
                 for (int k = 0; k < this->grid->Ex.getSize().z; k++) {
-                    FP3 coords = grid->ExPosition(i, j, k);
-                    grid->Ex(i, j, k) = eTest(coords.x, coords.y, coords.z, 0.0).x;
-                    coords = grid->EyPosition(i, j, k);
-                    grid->Ey(i, j, k) = eTest(coords.x, coords.y, coords.z, 0.0).y;
-                    coords = grid->EzPosition(i, j, k);
-                    grid->Ez(i, j, k) = eTest(coords.x, coords.y, coords.z, 0.0).z;
+                    FP3 coords = this->grid->ExPosition(i, j, k);
+                    this->grid->Ex(i, j, k) = eTest(coords.x, coords.y, coords.z, 0.0).x;
+                    coords = this->grid->EyPosition(i, j, k);
+                    this->grid->Ey(i, j, k) = eTest(coords.x, coords.y, coords.z, 0.0).y;
+                    coords = this->grid->EzPosition(i, j, k);
+                    this->grid->Ez(i, j, k) = eTest(coords.x, coords.y, coords.z, 0.0).z;
 
-                    coords = grid->BxPosition(i, j, k);
-                    grid->Bx(i, j, k) = bTest(coords.x, coords.y, coords.z, 0.0).x;
-                    coords = grid->ByPosition(i, j, k);
-                    grid->By(i, j, k) = bTest(coords.x, coords.y, coords.z, 0.0).y;
-                    coords = grid->BzPosition(i, j, k);
-                    grid->Bz(i, j, k) = bTest(coords.x, coords.y, coords.z, 0.0).z;
+                    coords = this->grid->BxPosition(i, j, k);
+                    this->grid->Bx(i, j, k) = bTest(coords.x, coords.y, coords.z, 0.0).x;
+                    coords = this->grid->ByPosition(i, j, k);
+                    this->grid->By(i, j, k) = bTest(coords.x, coords.y, coords.z, 0.0).y;
+                    coords = this->grid->BzPosition(i, j, k);
+                    this->grid->Bz(i, j, k) = bTest(coords.x, coords.y, coords.z, 0.0).z;
                 }
     }
 
@@ -100,12 +100,12 @@ TYPED_TEST(SaveLoadGridTest, can_save_and_load_grid)
     using TGrid = typename SaveLoadGridTest<TypeParam>::GridType;
 
     std::stringstream sstr;
-    grid->save(sstr);
+    this->grid->save(sstr);
 
     std::unique_ptr<TGrid> grid2(new TGrid());
     grid2->load(sstr);
 
-    ASSERT_TRUE(areGridsEqual(*grid, *grid2));
+    ASSERT_TRUE(this->areGridsEqual(*(this->grid), *grid2));
 }
 
 TYPED_TEST(SaveLoadGridTest, cannot_save_and_load_grid_of_wrong_type)
@@ -113,7 +113,7 @@ TYPED_TEST(SaveLoadGridTest, cannot_save_and_load_grid_of_wrong_type)
     using TGrid = typename SaveLoadGridTest<TypeParam>::GridType;
     
     std::stringstream sstr;
-    grid->save(sstr);
+    this->grid->save(sstr);
 
     std::unique_ptr<YeeGrid> grid2(new YeeGrid());
     if (!std::is_same<TGrid, YeeGrid>::value)
@@ -141,49 +141,49 @@ public:
 
     virtual void SetUp() {
         BaseGridFixture<TGrid>::SetUp();
-        solver.reset(new TSolver(grid, this->timeStep));
+        this->solver.reset(new TSolver(this->grid, this->timeStep));
         initializeGrid();
     }
 
     void initializeGrid() {
-        for (int i = 0; i < grid->numCells.x; i++)
-            for (int j = 0; j < grid->numCells.y; j++)
-                for (int k = 0; k < grid->numCells.z; k++) {
-                    FP3 coords = grid->ExPosition(i, j, k);
-                    grid->Ex(i, j, k) = funcE(coords.x, coords.y, coords.z, 0).x;
-                    coords = grid->EyPosition(i, j, k);
-                    grid->Ey(i, j, k) = funcE(coords.x, coords.y, coords.z, 0).y;
-                    coords = grid->EzPosition(i, j, k);
-                    grid->Ez(i, j, k) = funcE(coords.x, coords.y, coords.z, 0).z;
-                    coords = grid->BxPosition(i, j, k);
-                    grid->Bx(i, j, k) = funcB(coords.x, coords.y, coords.z, 0).x;
-                    coords = grid->ByPosition(i, j, k);
-                    grid->By(i, j, k) = funcB(coords.x, coords.y, coords.z, 0).y;
-                    coords = grid->BzPosition(i, j, k);
-                    grid->Bz(i, j, k) = funcB(coords.x, coords.y, coords.z, 0).z;
+        for (int i = 0; i < this->grid->numCells.x; i++)
+            for (int j = 0; j < this->grid->numCells.y; j++)
+                for (int k = 0; k < this->grid->numCells.z; k++) {
+                    FP3 coords = this->grid->ExPosition(i, j, k);
+                    this->grid->Ex(i, j, k) = funcE(coords.x, coords.y, coords.z, 0).x;
+                    coords = this->grid->EyPosition(i, j, k);
+                    this->grid->Ey(i, j, k) = funcE(coords.x, coords.y, coords.z, 0).y;
+                    coords = this->grid->EzPosition(i, j, k);
+                    this->grid->Ez(i, j, k) = funcE(coords.x, coords.y, coords.z, 0).z;
+                    coords = this->grid->BxPosition(i, j, k);
+                    this->grid->Bx(i, j, k) = funcB(coords.x, coords.y, coords.z, 0).x;
+                    coords = this->grid->ByPosition(i, j, k);
+                    this->grid->By(i, j, k) = funcB(coords.x, coords.y, coords.z, 0).y;
+                    coords = this->grid->BzPosition(i, j, k);
+                    this->grid->Bz(i, j, k) = funcB(coords.x, coords.y, coords.z, 0).z;
                 }
     }
 
     FP3 funcE(FP x, FP y, FP z, FP t) {
-        return FP3(sin(2 * constants::pi / (grid->steps.z * grid->numCells.z)
+        return FP3(sin(2 * constants::pi / (this->grid->steps.z * this->grid->numCells.z)
             * (z - constants::c * t)), 0.0, 0.0);
     }
 
     FP3 funcB(FP x, FP y, FP z, FP t) {
-        return FP3(0.0, sin(2 * constants::pi / (grid->steps.z * grid->numCells.z)
+        return FP3(0.0, sin(2 * constants::pi / (this->grid->steps.z * this->grid->numCells.z)
             * (z - constants::c * t)), 0.0);
     }
 
     void saveGridAndSolver(std::ostream& ostr) {
-        grid->save(ostr);
-        solver->save(ostr);
+        this->grid->save(ostr);
+        this->solver->save(ostr);
     }
 
     void loadGridAndSolver(std::istream& istr) {
-        grid2.reset(new TGrid());
-        grid2->load(istr);
-        solver2.reset(new TSolver(grid2.get(), this->timeStep));
-        solver2->load(istr);
+        this->grid2.reset(new TGrid());
+        this->grid2->load(istr);
+        this->solver2.reset(new TSolver(this->grid2.get(), this->timeStep));
+        this->solver2->load(istr);
     }
 };
 
@@ -199,28 +199,28 @@ TYPED_TEST_CASE(SaveLoadGridSolverTest, typesSaveLoadGridSolverTest);
 
 TYPED_TEST(SaveLoadGridSolverTest, can_save_and_load_grid_and_solver)
 {
-    for (int step = 0; step < numSteps / 2; ++step)
-        solver->updateFields();
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver->updateFields();
 
     std::stringstream sstr;
-    saveGridAndSolver(sstr);
+    this->saveGridAndSolver(sstr);
 
-    for (int step = 0; step < numSteps / 2; ++step)
-        solver->updateFields();
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver->updateFields();
 
-    loadGridAndSolver(sstr);
+    this->loadGridAndSolver(sstr);
 
-    for (int step = 0; step < numSteps / 2; ++step)
-        solver2->updateFields();
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver2->updateFields();
 
-    for (int i = 0; i < grid->numCells.x; ++i)
-        for (int j = 0; j < grid->numCells.y; ++j)
-            for (int k = 0; k < grid->numCells.z; ++k)
+    for (int i = 0; i < this->grid->numCells.x; ++i)
+        for (int j = 0; j < this->grid->numCells.y; ++j)
+            for (int k = 0; k < this->grid->numCells.z; ++k)
             {
-                FP3 expectedE(grid->Ex(i, j, k), grid->Ey(i, j, k), grid->Ez(i, j, k));
-                FP3 expectedB(grid->Bx(i, j, k), grid->By(i, j, k), grid->Bz(i, j, k));
-                FP3 actualE(grid2->Ex(i, j, k), grid2->Ey(i, j, k), grid2->Ez(i, j, k));
-                FP3 actualB(grid2->Bx(i, j, k), grid2->By(i, j, k), grid2->Bz(i, j, k));
+                FP3 expectedE(this->grid->Ex(i, j, k), this->grid->Ey(i, j, k), this->grid->Ez(i, j, k));
+                FP3 expectedB(this->grid->Bx(i, j, k), this->grid->By(i, j, k), this->grid->Bz(i, j, k));
+                FP3 actualE(this->grid2->Ex(i, j, k), this->grid2->Ey(i, j, k), this->grid2->Ez(i, j, k));
+                FP3 actualB(this->grid2->Bx(i, j, k), this->grid2->By(i, j, k), this->grid2->Bz(i, j, k));
                 ASSERT_NEAR_FP3(expectedE, actualE);
                 ASSERT_NEAR_FP3(expectedB, actualB);
             }

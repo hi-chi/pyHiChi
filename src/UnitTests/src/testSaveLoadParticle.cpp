@@ -35,10 +35,12 @@ TYPED_TEST_CASE(SaveLoadParticle, types);
 TYPED_TEST(SaveLoadParticle, testParticle)
 {
     using ParticleType = typename SaveLoadParticle<TypeParam>::Particle;
+    using MomentumType = typename SaveLoadParticle<TypeParam>::MomentumType;
+    using WeightType = typename SaveLoadParticle<TypeParam>::WeightType;
 
-    this->momentum = SaveLoadParticle<TypeParam>::MomentumType(-231.3e9, 0.0, 1.23e-5);
+    this->momentum = MomentumType(-231.3e9, 0.0, 1.23e-5);
     this->position = this->getPosition(-0.06, 13e-5, -2e3);
-    this->weight = static_cast<SaveLoadParticle<TypeParam>::WeightType>(1.4e2);
+    this->weight = static_cast<WeightType>(1.4e2);
     this->type = ParticleTypes::Proton;
     this->particle = ParticleType(this->position, this->momentum, this->weight, this->type);
     
@@ -142,8 +144,8 @@ TYPED_TEST(ParticleArrayTest, testEnsembleSaveLoad)
 
 TYPED_TEST(ParticleArrayTest, testEnsembleSaveLoadProcessingWrongType)
 {
-    typedef typename ParticleArrayAoS<One> WrongParticleArrayType;
-    typedef typename ParticleArrayTest<TypeParam>::ParticleArray CorrectParticleArrayType;
+    using WrongParticleArrayType = ParticleArrayAoS<One>;
+    using CorrectParticleArrayType = typename ParticleArrayTest<TypeParam>::ParticleArray;
 
     Ensemble<CorrectParticleArrayType> particles;
     Ensemble<WrongParticleArrayType> res;
