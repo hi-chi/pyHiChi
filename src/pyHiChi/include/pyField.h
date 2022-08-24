@@ -332,55 +332,55 @@ namespace pfc
         }
 
         FP3 getE(const FP3& coords) const override {
-            return this->getFieldComp3(coords, getField()->getFieldSolver()->timeShiftE,
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftE,
                 &BaseInterface::getE);
         }
         FP3 getB(const FP3& coords) const override {
-            return this->getFieldComp3(coords, getField()->getFieldSolver()->timeShiftB,
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftB,
                 &BaseInterface::getB);
         }
         FP3 getJ(const FP3& coords) const override {
-            return this->getFieldComp3(coords, getField()->getFieldSolver()->timeShiftJ,
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftJ,
                 &BaseInterface::getJ);
         }
 
         FP getEx(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftE,
-                &BaseInterface::getEx, &BaseInterface::getE, CoordinateEnum::x);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftE,
+                &BaseInterface::getE).x;
         }
         FP getEy(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftE,
-                &BaseInterface::getEy, &BaseInterface::getE, CoordinateEnum::y);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftE,
+                &BaseInterface::getE).y;
         }
         FP getEz(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftE,
-                &BaseInterface::getEz, &BaseInterface::getE, CoordinateEnum::z);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftE,
+                &BaseInterface::getE).z;
         }
 
         FP getBx(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftB,
-                &BaseInterface::getBx, &BaseInterface::getB, CoordinateEnum::x);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftB,
+                &BaseInterface::getB).x;
         }
         FP getBy(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftB,
-                &BaseInterface::getBy, &BaseInterface::getB, CoordinateEnum::y);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftB,
+                &BaseInterface::getB).y;
         }
         FP getBz(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftB,
-                &BaseInterface::getBz, &BaseInterface::getB, CoordinateEnum::z);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftB,
+                &BaseInterface::getB).z;
         }
 
         FP getJx(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftJ,
-                &BaseInterface::getJx, &BaseInterface::getJ, CoordinateEnum::x);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftJ,
+                &BaseInterface::getJ).x;
         }
         FP getJy(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftJ,
-                &BaseInterface::getJy, &BaseInterface::getJ, CoordinateEnum::y);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftJ,
+                &BaseInterface::getJ).y;
         }
         FP getJz(const FP3& coords) const override {
-            return this->getFieldComp(coords, getField()->getFieldSolver()->timeShiftJ,
-                &BaseInterface::getJz, &BaseInterface::getJ, CoordinateEnum::z);
+            return this->computeField(coords, getField()->getFieldSolver()->timeShiftJ,
+                &BaseInterface::getJ).z;
         }
 
         void updateFields() override {
@@ -394,12 +394,14 @@ namespace pfc
     protected:
 
         inline FP3 getDirectCoords(const FP3& coords, FP time, bool* status) const {
+            // get current coordinates (including recursive mappings)
             FP3 coords_ = coords;
             *status = true;
             std::shared_ptr<pyMappedField<TGrid, TFieldSolver>> pyMappedFieldPointer =
                 std::dynamic_pointer_cast<pyMappedField<TGrid, TFieldSolver>>(pyWrappedField);
-            if (pyMappedFieldPointer)
+            if (pyMappedFieldPointer)  // recursion call
                 coords_ = pyMappedFieldPointer->getDirectCoords(coords_, time, status);
+            // enable current mapping
             bool status2 = true;
             if (mapping) coords_ = mapping->getDirectCoords(coords_, time, &status2);
             *status = *status && status2;
@@ -407,16 +409,34 @@ namespace pfc
         }
 
         inline FP3 getInverseCoords(const FP3& coords, FP time, bool* status) const {
+            // get current coordinates (including recursive mappings)
             FP3 coords_ = coords;
             *status = true;
             std::shared_ptr<pyMappedField<TGrid, TFieldSolver>> pyMappedFieldPointer =
                 std::dynamic_pointer_cast<pyMappedField<TGrid, TFieldSolver>>(pyWrappedField);
-            if (pyMappedFieldPointer)
+            if (pyMappedFieldPointer)   // recursion call
                 coords_ = pyMappedFieldPointer->getInverseCoords(coords_, time, status);
+            // enable current mapping
             bool status2 = true;
             if (mapping) coords_ = mapping->getInverseCoords(coords_, time, &status2);
             *status = *status && status2;
             return coords_;
+        }
+
+        inline FP3 getInverseField(const FP3& mappedCoords, FP time,
+            FP3(BaseInterface::* getField3d)(const FP3&) const) const
+        {
+            // get current field (including recursive mappings)
+            FP3 curField;
+            std::shared_ptr<pyMappedField<TGrid, TFieldSolver>> pyMappedFieldPointer =
+                std::dynamic_pointer_cast<pyMappedField<TGrid, TFieldSolver>>(pyWrappedField);
+            if (pyMappedFieldPointer)  // recursion call
+                curField = pyMappedFieldPointer->getInverseField(mappedCoords, time, getField3d);
+            else curField = (this->*getField3d)(mappedCoords);  // recursion end point
+            // enable current mapping
+            if (mapping && mapping->isRequireFieldTransform())
+                curField = mapping->getInverseFields(curField, time);
+            return curField;
         }
 
     private:
@@ -424,33 +444,16 @@ namespace pfc
         std::shared_ptr<pyFieldBase> pyWrappedField;
         std::shared_ptr<Mapping> mapping;
 
-        FP getFieldComp(const FP3& coords, FP timeShift,
-            FP(BaseInterface::* getFieldValue)(const FP3&) const,
-            FP3(BaseInterface::* getFieldVector)(const FP3&) const,
-            CoordinateEnum component) const
-        {
-            bool status = true;
-            FP time = getField()->getFieldSolver()->globalTime + timeShift;
-            FP3 inverseCoords = getInverseCoords(coords, time, &status);
-            if (!status) return 0.0;
-            if (mapping && mapping->isRequireFieldTransform()) {
-                FP3 res = (this->*getFieldVector)(inverseCoords);
-                return mapping->getInverseFields(res, time, status)[(int)component];
-            }
-            return (this->*getFieldValue)(inverseCoords);
-        }
-
-        FP3 getFieldComp3(const FP3& coords, FP timeShift,
+        FP3 computeField(const FP3& coords, FP timeShift,
             FP3(BaseInterface::* getFieldValue)(const FP3&) const) const
         {
-            bool status = true;
             FP time = getField()->getFieldSolver()->globalTime + timeShift;
+            // get mapped coordinates
+            bool status = true;
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return FP3(0.0, 0.0, 0.0);
-            FP3 res = (this->*getFieldValue)(inverseCoords);
-            if (mapping && mapping->isRequireFieldTransform())
-                return mapping->getInverseFields(res, time, status);
-            return res;
+            // get mapped field
+            return this->getInverseField(inverseCoords, time, getFieldValue);
         }
 
     };
