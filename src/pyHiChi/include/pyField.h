@@ -423,16 +423,23 @@ namespace pfc
             return coords_;
         }
 
-        inline FP3 getInverseField(const FP3& mappedCoords, FP time,
+        inline FP3 getInverseField(const FP3& coords, FP time,
             FP3(BaseInterface::* getField3d)(const FP3&) const) const
         {
+            // do transform to get native coordinates (before the transorm)
+            FP3 inversedCoords = coords;
+            bool status = true;
+            if (mapping) inversedCoords = mapping->getInverseCoords(coords, time, &status);
+            if (!status) return FP3(0.0, 0.0, 0.0);
+
             // get current field (including recursive mappings)
             FP3 curField;
             std::shared_ptr<pyMappedField<TGrid, TFieldSolver>> pyMappedFieldPointer =
                 std::dynamic_pointer_cast<pyMappedField<TGrid, TFieldSolver>>(pyWrappedField);
             if (pyMappedFieldPointer)  // recursion call
-                curField = pyMappedFieldPointer->getInverseField(mappedCoords, time, getField3d);
-            else curField = (this->*getField3d)(mappedCoords);  // recursion end point
+                curField = pyMappedFieldPointer->getInverseField(inversedCoords, time, getField3d);
+            else curField = (this->*getField3d)(inversedCoords);  // recursion end point
+
             // enable current mapping
             if (mapping && mapping->isRequireFieldTransform())
                 curField = mapping->getInverseFields(curField, time);
@@ -448,12 +455,7 @@ namespace pfc
             FP3(BaseInterface::* getFieldValue)(const FP3&) const) const
         {
             FP time = getField()->getFieldSolver()->globalTime + timeShift;
-            // get mapped coordinates
-            bool status = true;
-            FP3 inverseCoords = getInverseCoords(coords, time, &status);
-            if (!status) return FP3(0.0, 0.0, 0.0);
-            // get mapped field
-            return this->getInverseField(inverseCoords, time, getFieldValue);
+            return this->getInverseField(coords, time, getFieldValue);
         }
 
     };
