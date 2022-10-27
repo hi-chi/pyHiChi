@@ -170,6 +170,7 @@ TYPED_TEST(PusherTest, VayPusherOscillationInStaticMagneticField)
     typedef typename SpeciesTest<TypeParam>::SpeciesArray SpeciesArray;
     typedef typename SpeciesTest<TypeParam>::MomentumType MomentumType;
     typedef typename SpeciesTest<TypeParam>::PositionType PositionType;
+    typedef typename SpeciesTest<TypeParam>::GammaType GammaType;
 
     SpeciesArray speciesParticles;
     speciesParticles.pushBack(this->randomParticle(speciesParticles.getType()));
