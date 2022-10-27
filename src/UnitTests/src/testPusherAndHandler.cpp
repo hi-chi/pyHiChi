@@ -129,6 +129,7 @@ TYPED_TEST(PusherTest, VayPusherRelativisticAccelerationInStaticField)
 {
     typedef typename SpeciesTest<TypeParam>::SpeciesArray SpeciesArray;
     typedef typename SpeciesTest<TypeParam>::MomentumType MomentumType;
+    typedef typename SpeciesTest<TypeParam>::PositionType PositionType;
 
     SpeciesArray speciesParticles;
     speciesParticles.pushBack(this->randomParticle(speciesParticles.getType()));
@@ -168,6 +169,7 @@ TYPED_TEST(PusherTest, VayPusherOscillationInStaticMagneticField)
 {
     typedef typename SpeciesTest<TypeParam>::SpeciesArray SpeciesArray;
     typedef typename SpeciesTest<TypeParam>::MomentumType MomentumType;
+    typedef typename SpeciesTest<TypeParam>::PositionType PositionType;
 
     SpeciesArray speciesParticles;
     speciesParticles.pushBack(this->randomParticle(speciesParticles.getType()));
