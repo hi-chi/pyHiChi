@@ -104,7 +104,7 @@ if [ $? -ne 0 ]; then
     make
 fi
 mkdir -p ../../bin
-cp src/pyHiChi/pyHiChi.so ../../bin/pyHiChi.so
+cp src/pyHiChi/pyHiChi*.so ../../bin/
 cd ..
 
 if $clean ; then
