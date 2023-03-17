@@ -1,0 +1,17 @@
+# Can be run in batch, without graphic
+# or interactively: Idle> /control/execute run1.mac
+#
+# Change the default number of workers (in multi-threading mode) 
+#/run/numberOfWorkers 16
+#
+# Initialize kernel
+/run/initialize
+#
+#
+/control/verbose 2
+/run/verbose 2
+/event/verbose 0
+/tracking/verbose 0
+#/tracking/verbose 3
+#
+#/run/beamOn will be executed in main()

@@ -1,0 +1,25 @@
+#class tools::wcsv::ntuple
+#title Hits
+#separator 44
+#vector_separator 59
+#column int fTrackID
+#column int fParentID
+#column int fPicID
+#column string fType
+#column double fX
+#column double fY
+#column double fZ
+#column double fTime
+#column double fDirX
+#column double fDirY
+#column double fDirZ
+#column double fPx
+#column double fPy
+#column double fPz
+#column double fV
+#column double fW
+68,2,12,gamma,-457.901,-99.1092,-104.423,1.63213,-0.885716,-0.288212,-0.363925,-0.282353,-0.0918775,-0.116014,299.792,1
+3,1,35,e+,-306.153,-366.249,50.3211,1.67763,-0.581393,-0.797932,-0.159018,-3.81602,-5.23729,-1.04373,298.888,1
+4,3,35,gamma,-334.021,-238.548,248.847,1.62858,-0.720631,-0.346605,0.600464,-0.237498,-0.11423,0.197894,299.792,1
+2,1,35,e-,-239.351,-124.945,396.862,1.87909,-0.286012,0.0748089,0.955301,-0.468704,0.122593,1.56551,286.201,1
+5,2,35,gamma,-350.809,-202.279,257.713,1.65669,-0.760176,-0.20194,0.617537,-0.294253,-0.078168,0.239039,299.792,1

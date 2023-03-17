@@ -101,6 +101,12 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::self /= py::self)
         .def(py::self / FP())
         .def(py::self /= FP())
+        .def(py::self < py::self)
+        .def(py::self <= py::self)
+        .def(py::self > py::self)
+        .def(py::self >= py::self)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
 
         .def_readwrite("x", &FP3::x)
         .def_readwrite("y", &FP3::y)
@@ -148,6 +154,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .value("ELECTRON", Electron)
         .value("POSITRON", Positron)
         .value("PROTON", Proton)
+        .value("PHOTON", Photon)
         .export_values();
 
     py::class_<Particle3d>(object, "Particle")
