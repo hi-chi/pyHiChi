@@ -179,6 +179,9 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::init<>())
         .def(py::init<ParticleTypes>())
         .def("add", &ParticleArray3d::pushBack)
+        .def("add", [](ParticleArray3d& pArr, const ParticleProxy3d& p) {
+        pArr.pushBack(Particle3d(p));
+     })
         .def("get_type", &ParticleArray3d::getType)
         .def("size", &ParticleArray3d::size)
         .def("delete", (void (ParticleArray3d::*)(int)) &ParticleArray3d::deleteParticle)
@@ -199,6 +202,9 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def(py::init<>())
         .def(py::init<Ensemble3d>())
         .def("add", &Ensemble3d::addParticle)
+        .def("add", [](Ensemble3d& ens, const ParticleProxy3d& p) {
+        ens.addParticle(Particle3d(p));
+    })
         .def("size", &Ensemble3d::size)
         .def("__getitem__", [](Ensemble3d& arr, size_t i) {
         if (i >= sizeParticleTypes) throw py::index_error();

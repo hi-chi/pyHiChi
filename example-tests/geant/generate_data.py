@@ -44,7 +44,7 @@ grid_step = (max_coords - min_coords) / grid_size
 photon_R = 1.0*wavelength
 
 photon_volume = 4.0/3.0*np.pi*(photon_R*photon_R*photon_R)
-num_particles = 20
+num_particles = 20  # 100000
 particle_factor = 1
 density = num_particles*particle_factor/photon_volume
 
@@ -54,12 +54,10 @@ energy_range = 20*electron_rest_energy
 average_photon_momentum = 20*hichi.ELECTRON_MASS*hichi.c
 
 # model parameters
-time = 0.0
-
 time_step = wavelength/hichi.c/4.0
 n_iter = 15
 
-# photon generating
+# particle generating
 
 def particle_density(x, y, z):
     return density * block(np.sqrt(x*x + y*y + z*z), 0.0, photon_R)
@@ -70,24 +68,25 @@ def generate_particle(pos):
     factor = particle_factor
     return hichi.Particle(pos, momentum, factor, hichi.ParticleTypes.PHOTON)
 
-def generate_particles():
-    particles = hichi.ParticleArray(hichi.ParticleTypes.PHOTON)
-
+def generate_particles(particles):
+    # walk trought all grid cells
     for i in range(grid_size_int[0]):
         for j in range(grid_size_int[1]):
             for k in range(grid_size_int[2]):
+                
+                # compute correct particle number in the cell using particle density
                 dv_start = min_coords + hichi.Vector3d(i, j, k)*grid_step
                 dv_end = dv_start + grid_step
                 dv = dv_end - dv_start
                 center = (dv_start + dv_end) / 2.0
                 expectedParticleNum = particle_density(center.x, center.y, center.z) * dv.volume() / particle_factor
-                    
+                
+                # round expectedParticleNum to int
                 particleNum = int(expectedParticleNum)
                 if np.random.rand(1) < expectedParticleNum - float(particleNum):
                     particleNum += 1
-                    
-                #print(dv_start, dv_end, center, expectedParticleNum)
                 
+                # generate the computed particle number inside the cell with random positions
                 rn = np.random.rand(particleNum, 3)
                 positions = [hichi.Vector3d(rn[pi][0], rn[pi][1], rn[pi][2])*dv + dv_start for pi in range(particleNum)]
                 for pi in range(particleNum):
@@ -97,38 +96,51 @@ def generate_particles():
     
     return particles
 
-particles = generate_particles()
+particles = hichi.ParticleArray(hichi.ParticleTypes.PHOTON)
+absorbed_particles = hichi.ParticleArray(hichi.ParticleTypes.PHOTON)
+absorbed_times = []
+
+generate_particles(particles)
 
 # particle absorbing, when they move out of the box
 
-absorbed_particles = []
-absorbed_times = []
-
-def absorbe_particles(time):
+def absorbe_particles(iter):
+    time = iter*time_step
+    
+    # filter absorbed particles
     cond = lambda ip: not min_coords <= ip[1].get_position() < max_coords
     curr_absorbed_indices = [index for index, p in filter(cond, enumerate(particles))]
     
-    absorbed_particles.extend([particles[i] for i in curr_absorbed_indices])
-    absorbed_times.extend([time for p in curr_absorbed_indices])
+    # save absorbed particles to the 'absorbed_particle' array
+    for i in curr_absorbed_indices:
+        absorbed_particles.add(particles[i])
+    absorbed_times.extend([time for i in curr_absorbed_indices])
     
-    for index in curr_absorbed_indices[::-1]:  # curr_absorbed_indices is a sorted array
-        particles.delete(index)  # delete = swap with the last and size-=1   
+    # delete absorbed particles from the 'particles' array
+    curr_absorbed_indices.sort()   
+    for index in curr_absorbed_indices[::-1]:
+        particles.delete(index)  # delete = swap with the last and size-=1
 
 # simulation start
 
 field = hichi.PSATDField(grid_size, min_coords, grid_step, time_step)  # field is always zero
 pusher = hichi.BorisPusher()
 
-def update():
-    absorbe_particles(time)
-
+def update(iter):
+    # absorbing
+    absorbe_particles(iter)
+    
+    # pusher
     fields_array = [hichi.FieldValue(field.get_E(p.get_position()), field.get_B(p.get_position())) for p in particles]
     pusher(particles, fields_array, time_step)
+    
+    # solver
     field.update_fields()
     
+    # TODO: current deposition
+    
 for iter in range(n_iter):
-    update()
-    time += time_step
+    update(iter)
 
 # print absorbed particles to file in a correct format
     
