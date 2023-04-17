@@ -67,7 +67,7 @@ namespace pfc {
             //printf("%d, %d\n",globalLeftDims[d] * 2 , grid->globalGridDims[d]);
             if (globalLeftDims[d] * 2 > grid->globalGridDims[d])
             {
-                printf("Error PML");
+                printf("Check pml size: possibly, grid size is less than pml size");
                 globalLeftDims[d] = 0;
             }
         }
