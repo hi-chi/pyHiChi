@@ -99,8 +99,19 @@ int main(int argc, char** argv) {
 
         // чтение частиц из файла
         PicParticleContainer particles;
-        PicParticleReader::ReadFromFile(params.picParticleFiles, particles);
 
+        try {
+            PicParticleReader::ReadFromFile(params.picParticleFiles, particles);
+        }
+        catch (const std::exception& e) {
+            std::cout << "Error when reading files: " << e.what() << std::endl;
+            exit(1);
+        }
+        catch (...) {
+            std::cout << "Error when reading files: unexpected error" << std::endl;
+            exit(1);
+        }
+        
         // в main используются единицы измерения Picador (СГС)
         // здесь должна быть запущена фильтрация частиц из Picador, которые не попадают в область Geant
         // но геометрия такая, что все частицы попадут

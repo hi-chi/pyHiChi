@@ -4,60 +4,90 @@
 void PicParticleReader::ReadFromFile(const std::vector<std::string>& fileNames,
     PicParticleContainer& particles)
 {
-    size_t counter = 1;
     std::for_each(fileNames.begin(), fileNames.end(),
-        [&counter, &particles](const std::string& fileName) {
+        [&particles](const std::string& fileName) {
             // считываем из файла частицы в массив структур PicParticle
-            std::ifstream file(fileName);
+            std::ifstream file(fileName, std::ios::binary);
 
             if (file.is_open()) {
 
-                if (!file.eof()) { // заголовок
-                    std::string line;
-                    std::getline(file, line);
+                std::string stype;
+                // read type
+                if (!file.eof()) {
+                    std::getline(file, stype);
                 }
+                else throw(std::exception("particle type not found, incorrect format"));
 
-                while (!file.eof()) {
-
+                size_t nParticles = 0;
+                // read particle number 
+                if (!file.eof()) {
+                    std::string snumber;
+                    std::getline(file, snumber);
                     std::stringstream sstr;
-                    std::string line;
-                    std::getline(file, line);
-                    sstr << line;
+                    sstr << snumber;
+                    sstr >> nParticles;
+                }
+                else throw(std::exception("particle number is not found, incorrect format"));
 
-                    if (line == "\0" || line == "\n") break;
+                try {
+                    // read and save particles
+                    for (int i = 0; i < nParticles; i++) {
 
-                    PicParticle particle;
-                    particle.id = counter++;
+                        PicParticle particle;
 
-                    std::string stype;
-                    sstr >> stype;
-                    particle.SetType(stype);
+                        particle.id = i;
+                        particle.SetType(stype);
 
-                    sstr >> particle.mass;
-                    sstr >> particle.charge;
-                    sstr >> particle.factor;
-                    
-                    sstr >> particle.position.x;
-                    sstr >> particle.position.y;
-                    sstr >> particle.position.z;
-                    
-                    sstr >> particle.velocity.x;
-                    sstr >> particle.velocity.y;
-                    sstr >> particle.velocity.z;
-                     
-                    sstr >> particle.momentum.x;
-                    sstr >> particle.momentum.y;
-                    sstr >> particle.momentum.z;
-                    
-                    sstr >> particle.emissionTime;
+                        double mass = 0.0, charge = 0.0, factor = 0.0,
+                            posx = 0.0, posy = 0.0, posz = 0.0,
+                            velx = 0.0, vely = 0.0, velz = 0.0,
+                            momx = 0.0, momy = 0.0, momz = 0.0, t = 0.0;
 
-                    particles.Push(particle);
+                        file.read((char*)&mass, sizeof(mass));
+                        file.read((char*)&charge, sizeof(charge));
+                        file.read((char*)&factor, sizeof(factor));
+
+                        file.read((char*)&posx, sizeof(posx));
+                        file.read((char*)&posy, sizeof(posy));
+                        file.read((char*)&posz, sizeof(posz));
+
+                        file.read((char*)&velx, sizeof(velx));
+                        file.read((char*)&vely, sizeof(vely));
+                        file.read((char*)&velz, sizeof(velz));
+
+                        file.read((char*)&momx, sizeof(momx));
+                        file.read((char*)&momy, sizeof(momy));
+                        file.read((char*)&momz, sizeof(momz));
+
+                        file.read((char*)&t, sizeof(t));
+
+                        particle.mass = mass;
+                        particle.charge = charge;
+                        particle.factor = factor;
+
+                        particle.position.x = posx;
+                        particle.position.y = posy;
+                        particle.position.z = posz;
+
+                        particle.velocity.x = velx;
+                        particle.velocity.y = vely;
+                        particle.velocity.z = velz;
+
+                        particle.momentum.x = momx;
+                        particle.momentum.y = momy;
+                        particle.momentum.z = momz;
+
+                        particle.emissionTime = t;
+
+                        particles.Push(particle);
+                    }
+                }
+                catch (...) {
+                    throw std::exception("error when reading particles");
                 }
 
                 file.close();
             }
-            else {
-                std::cout << "ERROR: can not open file " << fileName << "." << std::endl;
-            }
+            else throw std::exception(("can not open file " + fileName).c_str());
         });
 }

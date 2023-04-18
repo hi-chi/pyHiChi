@@ -4,6 +4,7 @@ import sys
 sys.path.append("../../bin/")
 import pyHiChi as hichi
 import numpy as np
+import array
 
 FILE_NAME = 'hichi_particles.txt'
 
@@ -145,19 +146,18 @@ for iter in range(n_iter):
 # print absorbed particles to file in a correct format
     
 def write_geant_output(file_name):
-    with open(file_name, 'w') as file:
-        file.write("Type Mass Charge Factor Position(x) Position(y) Position(z) " + 
-                   "Velocity(x) Velocity(y) Velocity(z) Momentum(x) Momentum(y) Momentum(z) Time\n")
+    with open(file_name, 'wb') as file:
+        file.write(bytes(particle_types[hichi.ParticleTypes.PHOTON] + "\n", encoding="utf-8"))
+        file.write(bytes(str(absorbed_particles.size()) + "\n", encoding="utf-8"))
         for p, t in zip(absorbed_particles, absorbed_times):
-            res = ""
-            res += str(particle_types[p.get_type()]) + " "
-            res += str(p.get_mass()) + " "
-            res += str(p.get_charge()) + " "
-            res += str(p.get_weight()) + " "
-            res += str(p.get_position().x) + " " + str(p.get_position().y) + " " + str(p.get_position().z) + " "
-            res += str(p.get_velocity().x) + " " + str(p.get_velocity().y) + " " + str(p.get_velocity().z) + " "
-            res += str(p.get_momentum().x) + " " + str(p.get_momentum().y) + " " + str(p.get_momentum().z) + " "
-            res += str(t) + "\n"
-            file.write(res)
+            list_values = [
+                p.get_mass(), p.get_charge(), p.get_weight(),
+                p.get_position().x, p.get_position().y, p.get_position().z,
+                p.get_velocity().x, p.get_velocity().y, p.get_velocity().z,
+                p.get_momentum().x, p.get_momentum().y, p.get_momentum().z,
+                t
+            ]
+            array_values = array.array("d", list_values)
+            array_values.tofile(file)
             
 write_geant_output(FILE_NAME)
