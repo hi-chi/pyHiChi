@@ -148,7 +148,6 @@ for iter in range(n_iter):
 def write_geant_output(file_name):
     with open(file_name, 'wb') as file:
         file.write(bytes(particle_types[hichi.ParticleTypes.PHOTON] + "\n", encoding="utf-8"))
-        file.write(bytes(str(absorbed_particles.size()) + "\n", encoding="utf-8"))
         for p, t in zip(absorbed_particles, absorbed_times):
             list_values = [
                 p.get_mass(), p.get_charge(), p.get_weight(),

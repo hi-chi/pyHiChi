@@ -19,23 +19,14 @@ void PicParticleReader::ReadFromFile(const std::vector<std::string>& fileNames,
                 else throw(std::exception("particle type not found, incorrect format"));
 
                 size_t nParticles = 0;
-                // read particle number 
-                if (!file.eof()) {
-                    std::string snumber;
-                    std::getline(file, snumber);
-                    std::stringstream sstr;
-                    sstr << snumber;
-                    sstr >> nParticles;
-                }
-                else throw(std::exception("particle number is not found, incorrect format"));
 
                 try {
                     // read and save particles
-                    for (int i = 0; i < nParticles; i++) {
+                    while (!file.eof()) {
 
                         PicParticle particle;
 
-                        particle.id = i;
+                        particle.id = nParticles++;
                         particle.SetType(stype);
 
                         double mass = 0.0, charge = 0.0, factor = 0.0,
