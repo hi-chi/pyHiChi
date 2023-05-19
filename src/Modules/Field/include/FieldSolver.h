@@ -32,6 +32,12 @@ namespace pfc {
             this->generator.reset(nullptr);
         }
 
+        void updateDims();
+        void updateInternalDims();
+
+        virtual void save(std::ostream& ostr);
+        virtual void load(std::istream& istr);
+
         Grid<FP, gridType>* grid;
 
         std::unique_ptr<Pml<gridType>> pml;
@@ -43,12 +49,6 @@ namespace pfc {
         // Index space being updated in non-PML area.
         Int3 internalBAreaBegin, internalBAreaEnd;
         Int3 internalEAreaBegin, internalEAreaEnd;
-
-        void updateDims();
-        void updateInternalDims();
-
-        virtual void save(std::ostream& ostr);
-        virtual void load(std::istream& istr);
 
         FP globalTime;
         FP dt;

@@ -12,13 +12,19 @@ namespace pfc {
     class PSATDT : public SpectralFieldSolver<PSATDGridType>
     {
     public:
-        PSATDT(PSATDGrid* grid, FP dt);
+
+        using GridType = PSATDGrid;
+        using PmlType = PmlPsatd;
+        using PeriodicalFieldGeneratorType = PeriodicalFieldGeneratorPsatd;
+
+        PSATDT(GridType* grid, FP dt);
 
         void updateFields();
 
         virtual void updateEB();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setFieldGenerator(PeriodicalFieldGeneratorType* _generator);
 
         void setTimeStep(FP dt);
 
@@ -37,8 +43,8 @@ namespace pfc {
     };
 
     template <bool ifPoisson>
-    inline PSATDT<ifPoisson>::PSATDT(PSATDGrid* _grid, FP dt) :
-        SpectralFieldSolver<GridTypes::PSATDGridType>(_grid, dt, 0.0, 0.0, 0.5 * dt)
+    inline PSATDT<ifPoisson>::PSATDT(PSATDT<ifPoisson>::GridType* grid, FP dt) :
+        SpectralFieldSolver(grid, dt, 0.0, 0.0, 0.5 * dt)
     {
         updateDims();
         updateInternalDims();
@@ -47,8 +53,14 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPsatd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDT<ifPoisson>::setFieldGenerator(PSATDT<ifPoisson>::PeriodicalFieldGeneratorType* _generator)
+    {
+        generator.reset(_generator->createInstance(this));
     }
 
     template <bool ifPoisson>
@@ -56,7 +68,8 @@ namespace pfc {
     {
         this->dt = dt;
         this->timeShiftJ = 0.5 * dt;
-        if (pml.get()) pml.reset(new PmlPsatd(this, pml->sizePML));
+        if (pml) pml.reset(new PmlType(this, pml->sizePML));
+        if (generator) generator.reset(generator->createInstance(this));
     }
 
     template <bool ifPoisson>

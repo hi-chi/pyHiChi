@@ -8,9 +8,13 @@
 namespace pfc {
     class PSTD : public SpectralFieldSolver<PSTDGridType>
     {
-
     public:
-        PSTD(PSTDGrid * grid, double dt);
+
+        using GridType = PSTDGrid;
+        using PmlType = PmlPstd;
+        using PeriodicalFieldGeneratorType = PeriodicalFieldGeneratorPstd;
+
+        PSTD(GridType* grid, double dt);
 
         void updateFields();
 
@@ -18,6 +22,7 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setFieldGenerator(PeriodicalFieldGeneratorType* _generator);
 
         void setTimeStep(FP dt);
 
@@ -40,8 +45,8 @@ namespace pfc {
 
     };
 
-    inline PSTD::PSTD(PSTDGrid* grid, double dt) :
-        SpectralFieldSolver<GridTypes::PSTDGridType>(grid, dt, 0.0, 0.5*dt, 0.5*dt)
+    inline PSTD::PSTD(PSTD::GridType* grid, FP dt) :
+        SpectralFieldSolver(grid, dt, 0.0, 0.5 * dt, 0.5 * dt)
     {
         if (!ifCourantConditionSatisfied(dt)) {
             std::cout
@@ -55,17 +60,23 @@ namespace pfc {
 
     inline void PSTD::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPstd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
+    }
+
+    inline void PSTD::setFieldGenerator(PSTD::PeriodicalFieldGeneratorType* _generator)
+    {
+        generator.reset(_generator->createInstance(this));
     }
 
     inline void PSTD::setTimeStep(FP dt)
     {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            this->timeShiftB = 0.5*dt;
-            this->timeShiftJ = 0.5*dt;
-            if (pml.get()) pml.reset(new PmlPstd(this, pml->sizePML));
+            this->timeShiftB = 0.5 * dt;
+            this->timeShiftJ = 0.5 * dt;
+            if (pml) pml.reset(new PmlType(this, pml->sizePML));
+            if (generator) generator.reset(generator->createInstance(this));
         }
         else {
             std::cout

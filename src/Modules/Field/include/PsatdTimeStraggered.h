@@ -13,7 +13,12 @@ namespace pfc {
     {
 
     public:
-        PSATDTimeStraggeredT(PSATDTimeStraggeredGrid* grid, FP dt);
+
+        using GridType = PSATDTimeStraggeredGrid;
+        using PmlType = PmlPsatdTimeStraggered;
+        using PeriodicalFieldGeneratorType = PeriodicalFieldGeneratorPsatdTimeStraggered;
+
+        PSATDTimeStraggeredT(GridType* grid, FP dt);
 
         void updateFields();
 
@@ -21,6 +26,7 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setFieldGenerator(PeriodicalFieldGeneratorType* _generator);
 
         void setTimeStep(FP dt);
 
@@ -64,8 +70,8 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline PSATDTimeStraggeredT<ifPoisson>::PSATDTimeStraggeredT(PSATDTimeStraggeredGrid* _grid, FP dt) :
-        SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>(_grid, dt, 0.0, 0.5 * dt, 0.5 * dt),
+    inline PSATDTimeStraggeredT<ifPoisson>::PSATDTimeStraggeredT(PSATDTimeStraggeredT<ifPoisson>::GridType* grid, FP dt) :
+        SpectralFieldSolver(grid, dt, 0.0, 0.5 * dt, 0.5 * dt),
         tmpJx(complexGrid->sizeStorage),
         tmpJy(complexGrid->sizeStorage),
         tmpJz(complexGrid->sizeStorage)
@@ -77,8 +83,15 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPsatdTimeStraggered(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDTimeStraggeredT<ifPoisson>::setFieldGenerator(
+        PSATDTimeStraggeredT<ifPoisson>::PeriodicalFieldGeneratorType* _generator)
+    {
+        generator.reset(_generator->createInstance(this));
     }
 
     template <bool ifPoisson>
@@ -87,7 +100,8 @@ namespace pfc {
         this->dt = dt;
         this->timeShiftB = 0.5 * dt;
         this->timeShiftJ = 0.5 * dt;
-        if (pml.get()) pml.reset(new PmlPsatdTimeStraggered(this, pml->sizePML));
+        if (pml) pml.reset(new PmlType(this, pml->sizePML));
+        if (generator) generator.reset(generator->createInstance(this));
     }
 
     template <bool ifPoisson>

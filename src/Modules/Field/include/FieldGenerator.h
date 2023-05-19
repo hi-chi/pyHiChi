@@ -9,22 +9,24 @@ namespace pfc
     class FieldSolver;
     template<GridTypes gridTypes>
     class RealFieldSolver;
+    template<GridTypes gridTypes>
+    class SpectralFieldSolver;
 
     template<GridTypes gridTypes>
     class FieldGenerator
     {
     public:
 
-        FieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0);
+        FieldGenerator(FieldSolver<gridTypes>* fieldSolver = 0);
 
         // copy constructor, other fieldSolver is possible
-        FieldGenerator(const FieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0);
+        FieldGenerator(const FieldGenerator& gen, FieldSolver<gridTypes>* fieldSolver = 0);
 
         virtual void generateB();
         virtual void generateE();
-        RealFieldSolver<gridTypes>* fieldSolver;
+        FieldSolver<gridTypes>* fieldSolver;
 
-        virtual FieldGenerator<gridTypes>* createInstance(RealFieldSolver<gridTypes>* fieldSolver) = 0;
+        virtual FieldGenerator<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver) = 0;
 
     private:
 
@@ -40,7 +42,7 @@ namespace pfc
     typedef FieldGenerator<GridTypes::YeeGridType> FieldGeneratorYee;
 
     template<GridTypes gridTypes>
-    FieldGenerator<gridTypes>::FieldGenerator(RealFieldSolver<gridTypes>* _fieldSolver)
+    FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* _fieldSolver)
     {
         fieldSolver = _fieldSolver;
         leftCoeff = FP3(0, 0, 0);
@@ -55,7 +57,7 @@ namespace pfc
 
     template<GridTypes gridTypes>
     inline FieldGenerator<gridTypes>::FieldGenerator(const FieldGenerator & gen,
-        RealFieldSolver<gridTypes>* fieldSolver)
+        FieldSolver<gridTypes>* fieldSolver)
     {
         if (fieldSolver)
             this->fieldSolver = fieldSolver;
@@ -129,7 +131,6 @@ namespace pfc
         }
     }
 
-
     template<GridTypes gridTypes>
     void FieldGenerator<gridTypes>::generateE()
     {
@@ -200,11 +201,11 @@ namespace pfc
             FieldGenerator<gridTypes>(gen, fieldSolver) {
         }
 
-        virtual void generateB();
-        virtual void generateE();
+        void generateB() override;
+        void generateE() override;
 
-        FieldGenerator<gridTypes>* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
-            return new PeriodicalFieldGenerator(*this, fieldSolver);
+        FieldGenerator<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver) override {
+            return new PeriodicalFieldGenerator(*this, static_cast<RealFieldSolver<gridTypes>*>(fieldSolver));
         }
     };
 
@@ -235,7 +236,6 @@ namespace pfc
                     indexR[dim1] = j;
                     indexR[dim2] = k;
 
-
                     grid->Bx(indexL) = grid->Bx(indexR);
                     grid->By(indexL) = grid->By(indexR);
                     grid->Bz(indexL) = grid->Bz(indexR);
@@ -249,7 +249,6 @@ namespace pfc
                 }
         }
     }
-
 
     template<GridTypes gridTypes>
     void PeriodicalFieldGenerator<gridTypes>::generateE()
@@ -290,6 +289,7 @@ namespace pfc
         }
     }
 
+
     template<GridTypes gridTypes>
     class ReflectFieldGenerator : public FieldGenerator<gridTypes>
     {
@@ -303,11 +303,11 @@ namespace pfc
             FieldGenerator<gridTypes>(gen, fieldSolver) {
         }
 
-        virtual void generateB();
-        virtual void generateE();
+        void generateB() override;
+        void generateE() override;
 
-        FieldGenerator<gridTypes>* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
-            return new ReflectFieldGenerator(*this, fieldSolver);
+        FieldGenerator<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver) override {
+            return new ReflectFieldGenerator(*this, static_cast<RealFieldSolver<gridTypes>*>(fieldSolver));
         }
     };
 
@@ -348,7 +348,6 @@ namespace pfc
         }
     }
 
-
     template<GridTypes gridTypes>
     void ReflectFieldGenerator<gridTypes>::generateE()
     {
@@ -374,7 +373,6 @@ namespace pfc
                     indexR[dim1] = j;
                     indexR[dim2] = k;
 
-
                     grid->Ex(indexL) = (FP)0.0;
                     grid->Ey(indexL) = (FP)0.0;
                     grid->Ez(indexL) = (FP)0.0;
@@ -384,4 +382,29 @@ namespace pfc
                 }
         }
     }
+
+
+    template <GridTypes gridTypes>
+    class SpectralPeriodicalFieldGenerator : public FieldGenerator<gridTypes> {
+    public:
+
+        SpectralPeriodicalFieldGenerator(SpectralFieldSolver<gridTypes>* fieldSolver = 0):
+            FieldGenerator<gridTypes>(fieldSolver) {
+        }
+
+        // copy constructor, other fieldSolver is possible
+        SpectralPeriodicalFieldGenerator(const SpectralPeriodicalFieldGenerator& gen,
+            SpectralFieldSolver<gridTypes>* fieldSolver = 0):
+            FieldGenerator<gridTypes>(gen, fieldSolver) {}
+
+        FieldGenerator<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver = 0) override {
+            return new SpectralPeriodicalFieldGenerator(*this,
+                static_cast<SpectralFieldSolver<gridTypes>*>(fieldSolver));
+        }
+
+    };
+
+    typedef SpectralPeriodicalFieldGenerator<GridTypes::PSTDGridType> PeriodicalFieldGeneratorPstd;
+    typedef SpectralPeriodicalFieldGenerator<GridTypes::PSATDGridType> PeriodicalFieldGeneratorPsatd;
+    typedef SpectralPeriodicalFieldGenerator<GridTypes::PSATDTimeStraggeredGridType> PeriodicalFieldGeneratorPsatdTimeStraggered;
 }
