@@ -30,7 +30,8 @@ def func_jz(x, y, z, t):
     return np.sin(2.0*np.pi*t/T) * \
         np.cos(np.pi*x/Tc)**2 * block(x, -0.5*Tc, 0.5*Tc) * \
         np.cos(np.pi*y/Tc)**2 * block(y, -0.5*Tc, 0.5*Tc)
-    
+
+
 # -------------- simulation parameters --------------
 
 grid_size = hichi.Vector3d(256, 256, 1)
@@ -50,6 +51,7 @@ field.set_B(null_value.address, null_value.address, null_value.address)
 def update_fields(t):
     field.set_J(func_jx.address, func_jy.address, func_jz.address, t)
     field.update_fields()
+
 
 # -------------- show --------------
 
