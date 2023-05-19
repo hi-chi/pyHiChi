@@ -1,6 +1,9 @@
 #include "TestingUtility.h"
 
 #include "Fdtd.h"
+#include "Pstd.h"
+#include "Psatd.h"
+#include "PsatdTimeStraggered.h"
 
 using namespace pfc;
 enum axis

@@ -9,6 +9,7 @@
 #include "Fdtd.h"
 #include "Pstd.h"
 #include "Psatd.h"
+#include "PsatdTimeStraggered.h"
 
 template <class T1, class T2, bool isFirstType>
 struct ActivateType {
