@@ -7,6 +7,7 @@
 #include "Psatd.h"
 #include "PsatdTimeStraggered.h"
 
+
 template <class TFieldSolver, class TGrid, int VDimension, CoordinateEnum VAxis>
 struct TypeDefinitionsFieldSolverTest
 {
@@ -180,6 +181,11 @@ TYPED_TEST(FieldSolverTest, GridInitializationTest)
 
 TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
 {
+    // to disable testing of spectral solvers without enabled fftw
+#ifndef __USE_FFT__
+    SUCCEED();
+#else
+
     generator.reset(new FieldSolverType::PeriodicalFieldGeneratorType(fieldSolver.get()));
     fieldSolver->setFieldGenerator(generator.get());
 
@@ -230,4 +236,7 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
                 actualB.z = this->grid->Bz(i, j, k);
                 ASSERT_NEAR_FP3(expectedB, actualB);
             }
+
+#endif
+    
 }
