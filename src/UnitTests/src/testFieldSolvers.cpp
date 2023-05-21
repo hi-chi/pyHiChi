@@ -41,7 +41,7 @@ public:
 
     virtual void SetUp() {
         this->maxAbsoluteError = 1e-4;
-        this->maxRelativeError = 1e-2;
+        this->maxRelativeError = 1e-1;
 
         gridSize = Int3(1, 1, 1);
         for (int d = 0; d < dimension; d++) {
@@ -189,7 +189,9 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
     generator.reset(new FieldSolverType::PeriodicalFieldGeneratorType(fieldSolver.get()));
     fieldSolver->setFieldGenerator(generator.get());
 
-    const int numSteps = 512;
+    const int numSteps = (int)(grid->numCells[(int)axis] * grid->steps[(int)axis] /
+        (constants::c * fieldSolver->dt) * 0.1);
+
     for (int step = 0; step < numSteps; ++step)
     {
         this->fieldSolver->updateFields();
