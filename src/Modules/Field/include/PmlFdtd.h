@@ -1,4 +1,6 @@
 #pragma once
+#include <limits>
+
 #include "Grid.h"
 #include "FieldSolver.h"
 #include "Fdtd.h"
@@ -10,8 +12,8 @@ namespace pfc {
     class PmlFdtd : public PmlReal<YeeGridType>
     {
     public:
-        PmlFdtd(FDTD * solver, Int3 sizePML) :
-            PmlReal((RealFieldSolver<YeeGridType>*)solver, sizePML) {}
+        PmlFdtd(FDTD* solver, Int3 sizePml) :
+            PmlReal((RealFieldSolver<YeeGridType>*)solver, sizePml) {}
 
         void updateB();
         void updateE();
@@ -25,7 +27,7 @@ namespace pfc {
         void updateE2D();
         void updateE1D();
     };
-    
+
     inline void PmlFdtd::updateB()
     {
         if (fieldSolver->grid->dimensionality == 3)
@@ -36,51 +38,60 @@ namespace pfc {
             updateB1D();
     }
 
-
     inline void PmlFdtd::updateB3D()
     {
-        // For all cells (i, j, k) in PML use following computational scheme
-        // with precomputed coefficients coeffBa, coeffBb:
-        //
-        // byx(i, j, k) = coeffBa.x(i, j, k) * byx(i, j, k) +
-        //     coeffBb.x(i, j, k) * (e.z(i, j, k) - e.z(i - 1, j, k)),
-        // bzx(i, j, k) = coeffBa.x(i, j, k) * bzx(i, j, k) -
-        //     coeffBb.x(i, j, k) * (e.y(i, j, k) - e.y(i - 1, j, k));
-        //
-        // bxy(i, j, k) = coeffBa.y(i, j, k) * bxy(i, j, k) -
-        //     coeffBb.y(i, j, k) * (e.z(i, j, k) - e.z(i, j - 1, k)),
-        // bzy(i, j, k) = coeffBa.y(i, j, k) * bzy(i, j, k) +
-        //     coeffBb.y(i, j, k) * (e.x(i, j, k) - e.x(i, j - 1, k));
-        //
-        // bxz(i, j, k) = coeffBa.z(i, j, k) * bxz(i, j, k) +
-        //     coeffBb.z(i, j, k) * (e.y(i, j, k) - e.y(i, j, k - 1)),
-        // byz(i, j, k) = coeffBa.z(i, j, k) * byz(i, j, k) -
-        //     coeffBb.z(i, j, k) * (e.x(i, j, k) - e.x(i, j, k - 1));
-        //
-        // b.x(i, j, k) = bxy(i, j, k) + bxz(i, j, k),
-        // b.y(i, j, k) = byx(i, j, k) + byz(i, j, k),
-        // b.z(i, j, k) = bzx(i, j, k) + bzy(i, j, k).
-        YeeGrid * grid = fieldSolver->grid;
-        OMP_FOR()
-        for (int idx = 0; idx < numCells; ++idx)
-        {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+        YeeGrid* grid = fieldSolver->grid;
+        const int numPmlIndicesB = this->bIndex.size();
+        const FP cdt = constants::c * this->fieldSolver->dt;
+        const FP threshold = std::numeric_limits<FP>::epsilon();
+        const FP dx = grid->steps.x, dy = grid->steps.y, dz = grid->steps.z;
 
-            byx[idx] = coeffBa[idx].x * byx[idx] + coeffBb[idx].x *
+        OMP_FOR()
+        for (int idx = 0; idx < numPmlIndicesB; ++idx)
+        {
+            int i = bIndex[idx].x, j = bIndex[idx].y, k = bIndex[idx].z;
+            FP sigma = 0, coeff1 = 0, coeff2 = 0;
+
+            // Yee Grid indices: By(i, ..., ...), Bz(i, ..., ...) -> sigmaX(i)
+            sigma = this->computeSigma(grid->ByPosition(i, j, k).x, CoordinateEnum::x);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = -(coeff1 - (FP)1) / (sigma * dx);
+            else coeff2 = cdt / dx;
+
+            byx[idx] = coeff1 * byx[idx] + coeff2 *
                 (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k));
-            bzx[idx] = coeffBa[idx].x * bzx[idx] - coeffBb[idx].x *
+            bzx[idx] = coeff1 * bzx[idx] - coeff2 *
                 (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
 
-            bxy[idx] = coeffBa[idx].y * bxy[idx] - coeffBb[idx].y *
+            // Yee Grid indices: Bx(..., j, ...), Bz(..., j, ...) -> sigmaY(j)
+            sigma = this->computeSigma(grid->BzPosition(i, j, k).y, CoordinateEnum::y);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = -(coeff1 - (FP)1) / (sigma * dy);
+            else coeff2 = cdt / dy;
+
+            bxy[idx] = coeff1 * bxy[idx] - coeff2 *
                 (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
-            bzy[idx] = coeffBa[idx].y * bzy[idx] + coeffBb[idx].y *
+            bzy[idx] = coeff1 * bzy[idx] + coeff2 *
                 (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k));
 
-            bxz[idx] = coeffBa[idx].z * bxz[idx] + coeffBb[idx].z *
+            // Yee Grid indices: Bx(..., ..., k), By(..., ..., k) -> sigmaZ(k)
+            sigma = this->computeSigma(grid->BxPosition(i, j, k).z, CoordinateEnum::z);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = -(coeff1 - (FP)1) / (sigma * dz);
+            else coeff2 = cdt / dz;
+
+            bxz[idx] = coeff1 * bxz[idx] + coeff2 *
                 (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1));
-            byz[idx] = coeffBa[idx].z * byz[idx] - coeffBb[idx].z *
+            byz[idx] = coeff1 * byz[idx] - coeff2 *
                 (grid->Ex(i, j, k) - grid->Ex(i, j, k - 1));
 
             grid->Bx(i, j, k) = bxy[idx] + bxz[idx];
@@ -89,64 +100,111 @@ namespace pfc {
         }
     }
 
-
     inline void PmlFdtd::updateB2D()
     {
-        YeeGrid * grid = fieldSolver->grid;
-        OMP_FOR()
-        for (int idx = 0; idx < numCells; ++idx)
-        {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+        YeeGrid* grid = fieldSolver->grid;
+        const int numPmlIndicesB = this->bIndex.size();
+        const FP cdt = constants::c * this->fieldSolver->dt;
+        const FP threshold = std::numeric_limits<FP>::epsilon();
+        const FP dx = grid->steps.x, dy = grid->steps.y, dz = grid->steps.z;
 
-            byx[idx] = coeffBa[idx].x * byx[idx] + coeffBb[idx].x *
+        OMP_FOR()
+        for (int idx = 0; idx < numPmlIndicesB; ++idx)
+        {
+            int i = bIndex[idx].x, j = bIndex[idx].y, k = bIndex[idx].z;
+            FP sigma = 0, coeff1 = 0, coeff2 = 0;
+
+            // Yee Grid indices: By(i, ..., ...), Bz(i, ..., ...) -> sigmaX(i)
+            sigma = this->computeSigma(grid->ByPosition(i, j, k).x, CoordinateEnum::x);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = -(coeff1 - (FP)1) / (sigma * dx);
+            else coeff2 = cdt / dx;
+
+            byx[idx] = coeff1 * byx[idx] + coeff2 *
                 (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k));
-            bzx[idx] = coeffBa[idx].x * bzx[idx] - coeffBb[idx].x *
+            bzx[idx] = coeff1 * bzx[idx] - coeff2 *
                 (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
 
-            bxy[idx] = coeffBa[idx].y * bxy[idx] - coeffBb[idx].y *
+            // Yee Grid indices: Bx(..., j, ...), Bz(..., j, ...) -> sigmaY(j)
+            sigma = this->computeSigma(grid->BzPosition(i, j, k).y, CoordinateEnum::y);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = -(coeff1 - (FP)1) / (sigma * dy);
+            else coeff2 = cdt / dy;
+
+            bxy[idx] = coeff1 * bxy[idx] - coeff2 *
                 (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
-            bzy[idx] = coeffBa[idx].y * bzy[idx] + coeffBb[idx].y *
+            bzy[idx] = coeff1 * bzy[idx] + coeff2 *
                 (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k));
 
-            bxz[idx] = coeffBa[idx].z * bxz[idx];
-            byz[idx] = coeffBa[idx].z * byz[idx];
+            // Yee Grid indices: Bx(..., ..., k), By(..., ..., k) -> sigmaZ(k)
+            sigma = this->computeSigma(grid->BxPosition(i, j, k).z, CoordinateEnum::z);
+
+            coeff1 = exp(-sigma * cdt);
+
+            bxz[idx] = coeff1 * bxz[idx];
+            byz[idx] = coeff1 * byz[idx];
 
             grid->Bx(i, j, k) = bxy[idx] + bxz[idx];
             grid->By(i, j, k) = byx[idx] + byz[idx];
             grid->Bz(i, j, k) = bzx[idx] + bzy[idx];
         }
     }
-
 
     inline void PmlFdtd::updateB1D()
     {
-        YeeGrid * grid = fieldSolver->grid;
-        OMP_FOR()
-        for (int idx = 0; idx < numCells; ++idx)
-        {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+        YeeGrid* grid = fieldSolver->grid;
+        const int numPmlIndicesB = this->bIndex.size();
+        const FP cdt = constants::c * this->fieldSolver->dt;
+        const FP threshold = std::numeric_limits<FP>::epsilon();
+        const FP dx = grid->steps.x, dy = grid->steps.y, dz = grid->steps.z;
 
-            byx[idx] = coeffBa[idx].x * byx[idx] + coeffBb[idx].x *
+        OMP_FOR()
+        for (int idx = 0; idx < numPmlIndicesB; ++idx)
+        {
+            int i = bIndex[idx].x, j = bIndex[idx].y, k = bIndex[idx].z;
+            FP sigma = 0, coeff1 = 0, coeff2 = 0;
+
+            // Yee Grid indices: By(i, ..., ...), Bz(i, ..., ...) -> sigmaX(i)
+            sigma = this->computeSigma(grid->ByPosition(i, j, k).x, CoordinateEnum::x);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = -(coeff1 - (FP)1) / (sigma * dx);
+            else coeff2 = cdt / dx;
+
+            byx[idx] = coeff1 * byx[idx] + coeff2 *
                 (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k));
-            bzx[idx] = coeffBa[idx].x * bzx[idx] - coeffBb[idx].x *
+            bzx[idx] = coeff1 * bzx[idx] - coeff2 *
                 (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
 
-            bxy[idx] = coeffBa[idx].y * bxy[idx];
-            bzy[idx] = coeffBa[idx].y * bzy[idx];
+            // Yee Grid indices: Bx(..., j, ...), Bz(..., j, ...) -> sigmaY(j)
+            sigma = this->computeSigma(grid->BzPosition(i, j, k).y, CoordinateEnum::y);
 
-            bxz[idx] = coeffBa[idx].z * bxz[idx];
-            byz[idx] = coeffBa[idx].z * byz[idx];
+            coeff1 = exp(-sigma * cdt);
+
+            bxy[idx] = coeff1 * bxy[idx];
+            bzy[idx] = coeff1 * bzy[idx];
+
+            // Yee Grid indices: Bx(..., ..., k), By(..., ..., k) -> sigmaZ(k)
+            sigma = this->computeSigma(grid->BxPosition(i, j, k).z, CoordinateEnum::z);
+
+            coeff1 = exp(-sigma * cdt);
+
+            bxz[idx] = coeff1 * bxz[idx];
+            byz[idx] = coeff1 * byz[idx];
 
             grid->Bx(i, j, k) = bxy[idx] + bxz[idx];
             grid->By(i, j, k) = byx[idx] + byz[idx];
             grid->Bz(i, j, k) = bzx[idx] + bzy[idx];
         }
     }
-
 
     inline void PmlFdtd::updateE()
     {
@@ -158,99 +216,117 @@ namespace pfc {
             updateE1D();
     }
 
-
     inline void PmlFdtd::updateE3D()
     {
-        // For all nodes (i, j, k) in PML use following computational scheme
-        // with precomputed coefficients coeffEa, coeffEb:
-        //
-        // eyx(i, j, k) = coeffEa.x(i, j, k) * eyx(i, j, k) +
-        //     coeffEb.x(i, j, k) * (b.z(i + 1, j, k) - b.z(i, j, k)),
-        // ezx(i, j, k) = coeffEa.x(i, j, k) * ezx(i, j, k) -
-        //     coeffEb.x(i, j, k) * (b.y(i + 1, j, k) - b.y(i, j, k));
-        //
-        // exy(i, j, k) = coeffEa.y(i, j, k) * exy(i, j, k) -
-        //     coeffEb.y(i, j, k) * (b.z(i, j + 1, k) - b.z(i, j, k)),
-        // ezy(i, j, k) = coeffEa.y(i, j, k) * ezy(i, j, k) +
-        //     coeffEb.y(i, j, k) * (b.x(i, j + 1, k) - b.x(i, j, k));
-        //
-        // exz(i, j, k) = coeffEa.z(i, j, k) * exz(i, j, k) +
-        //     coeffEb.z(i, j, k) * (b.y(i, j, k + 1) - b.y(i, j, k)),
-        // eyz(i, j, k) = coeffEa.z(i, j, k) * eyz(i, j, k) -
-        //     coeffEb.z(i, j, k) * (b.x(i, j, k + 1) - b.x(i, j, k));
-        //
-        // e.x(i, j, k) = exy(i, j, k) + exz(i, j, k),
-        // e.y(i, j, k) = eyx(i, j, k) + eyz(i, j, k),
-        // e.z(i, j, k) = ezx(i, j, k) + ezy(i, j, k).
-        YeeGrid * grid = fieldSolver->grid;
-        Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
+        YeeGrid* grid = fieldSolver->grid;
+        const int numPmlIndicesE = this->eIndex.size();
+        const FP cdt = constants::c * this->fieldSolver->dt;
+        const FP threshold = std::numeric_limits<FP>::epsilon();
+        const FP dx = grid->steps.x, dy = grid->steps.y, dz = grid->steps.z;
+
         OMP_FOR()
-        for (int idx = 0; idx < numNodes; ++idx)
+        for (int idx = 0; idx < numPmlIndicesE; ++idx)
         {
-            int i = nodeIndex[idx].x;
-            int j = nodeIndex[idx].y;
-            int k = nodeIndex[idx].z;
+            int i = eIndex[idx].x, j = eIndex[idx].y, k = eIndex[idx].z;
+            FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
-            if (i != edgeIdx.x)
-            {
-                eyx[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].x * eyx[idx] +
-                    coeffEb[idx].x * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                ezx[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].x * ezx[idx] -
-                    coeffEb[idx].x * (grid->By(i + 1, j, k) - grid->By(i, j, k));
-            }
+            // Yee Grid indices: Ey(i+1/2, ..., ...), Ez(i+1/2, ..., ...) -> sigmaX(i+1/2)
+            sigma = this->computeSigma(grid->EyPosition(i, j, k).x, CoordinateEnum::x);
 
-            if (j != edgeIdx.y)
-            {
-                exy[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].y * exy[idx] -
-                    coeffEb[idx].y * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k));
-                ezy[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].y * ezy[idx] +
-                    coeffEb[idx].y * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
-            }
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = (coeff1 - (FP)1) / (sigma * dx);
+            else coeff2 = -cdt / dx;
 
-            if (k != edgeIdx.z)
-            {
-                exz[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].z * exz[idx] +
-                    coeffEb[idx].z * (grid->By(i, j, k + 1) - grid->By(i, j, k));
-                eyz[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].z * eyz[idx] -
-                    coeffEb[idx].z * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k));
-            }
+            eyx[idx] = coeff1 * eyx[idx] + coeff2 *
+                (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
+            ezx[idx] = coeff1 * ezx[idx] - coeff2 *
+                (grid->By(i + 1, j, k) - grid->By(i, j, k));
+
+            // Yee Grid indices: Ex(..., j+1/2, ...), Ez(..., j+1/2, ...)-> sigmaY(j+1/2)
+            sigma = this->computeSigma(grid->EzPosition(i, j, k).y, CoordinateEnum::y);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = (coeff1 - (FP)1) / (sigma * dy);
+            else coeff2 = -cdt / dy;
+
+            exy[idx] = coeff1 * exy[idx] - coeff2 *
+                (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k));
+            ezy[idx] = coeff1 * ezy[idx] + coeff2 *
+                (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
+
+            // Yee Grid indices: Ex(..., ..., k+1/2), Ey(..., ..., k+1/2)-> sigmaZ(k+1/2)
+            sigma = this->computeSigma(grid->ExPosition(i, j, k).z, CoordinateEnum::z);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = (coeff1 - (FP)1) / (sigma * dz);
+            else coeff2 = -cdt / dz;
+
+            exz[idx] = coeff1 * exz[idx] + coeff2 *
+                (grid->By(i, j, k + 1) - grid->By(i, j, k));
+            eyz[idx] = coeff1 * eyz[idx] - coeff2 *
+                (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k));
 
             grid->Ex(i, j, k) = exy[idx] + exz[idx];
             grid->Ey(i, j, k) = eyx[idx] + eyz[idx];
             grid->Ez(i, j, k) = ezx[idx] + ezy[idx];
         }
     }
-
 
     inline void PmlFdtd::updateE2D()
     {
-        YeeGrid * grid = fieldSolver->grid;
-        Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
+        YeeGrid* grid = fieldSolver->grid;
+        const int numPmlIndicesE = this->eIndex.size();
+        const FP cdt = constants::c * this->fieldSolver->dt;
+        const FP threshold = std::numeric_limits<FP>::epsilon();
+        const FP dx = grid->steps.x, dy = grid->steps.y, dz = grid->steps.z;
+
         OMP_FOR()
-        for (int idx = 0; idx < numNodes; ++idx)
+        for (int idx = 0; idx < numPmlIndicesE; ++idx)
         {
-            int i = nodeIndex[idx].x;
-            int j = nodeIndex[idx].y;
-            int k = nodeIndex[idx].z;
+            int i = eIndex[idx].x, j = eIndex[idx].y, k = eIndex[idx].z;
+            FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
-            if (i != edgeIdx.x)
-            {
-                eyx[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].x * eyx[idx] +
-                    coeffEb[idx].x * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                ezx[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].x * ezx[idx] -
-                    coeffEb[idx].x * (grid->By(i + 1, j, k) - grid->By(i, j, k));
-            }
+            // Yee Grid indices: Ey(i+1/2, ..., ...), Ez(i+1/2, ..., ...) -> sigmaX(i+1/2)
+            sigma = this->computeSigma(grid->EyPosition(i, j, k).x, CoordinateEnum::x);
 
-            if (j != edgeIdx.y)
-            {
-                exy[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].y * exy[idx] -
-                    coeffEb[idx].y * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k));
-                ezy[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].y * ezy[idx] +
-                    coeffEb[idx].y * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
-            }
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = (coeff1 - (FP)1) / (sigma * dx);
+            else coeff2 = -cdt / dx;
 
-            exz[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].z * exz[idx];
-            eyz[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].z * eyz[idx];
+            eyx[idx] = coeff1 * eyx[idx] + coeff2 *
+                (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
+            ezx[idx] = coeff1 * ezx[idx] + coeff2 *
+                (grid->By(i + 1, j, k) - grid->By(i, j, k));
+
+            // Yee Grid indices: Ex(..., j+1/2, ...), Ez(..., j+1/2, ...)-> sigmaY(j+1/2)
+            sigma = this->computeSigma(grid->EzPosition(i, j, k).y, CoordinateEnum::y);
+
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = (coeff1 - (FP)1) / (sigma * dy);
+            else coeff2 = -cdt / dy;
+
+            exy[idx] = coeff1 * exy[idx] + coeff2 *
+                (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k));
+            ezy[idx] = coeff1 * ezy[idx] + coeff2 *
+                (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
+
+            // Yee Grid indices: Ex(..., ..., k+1/2), Ey(..., ..., k+1/2)-> sigmaZ(k+1/2)
+            sigma = this->computeSigma(grid->ExPosition(i, j, k).z, CoordinateEnum::z);
+
+            coeff1 = exp(-sigma * cdt);
+
+            exz[idx] = coeff1 * exz[idx];
+            eyz[idx] = coeff1 * eyz[idx];
 
             grid->Ex(i, j, k) = exy[idx] + exz[idx];
             grid->Ey(i, j, k) = eyx[idx] + eyz[idx];
@@ -258,31 +334,51 @@ namespace pfc {
         }
     }
 
-
     inline void PmlFdtd::updateE1D()
     {
-        YeeGrid * grid = fieldSolver->grid;
-        Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
+        YeeGrid* grid = fieldSolver->grid;
+        const int numPmlIndicesE = this->eIndex.size();
+        const FP cdt = constants::c * this->fieldSolver->dt;
+        const FP threshold = std::numeric_limits<FP>::epsilon();
+        const FP dx = grid->steps.x, dy = grid->steps.y, dz = grid->steps.z;
+
+        //std::cout << "E" << std::endl;
+
         OMP_FOR()
-        for (int idx = 0; idx < numNodes; ++idx)
+        for (int idx = 0; idx < numPmlIndicesE; ++idx)
         {
-            int i = nodeIndex[idx].x;
-            int j = nodeIndex[idx].y;
-            int k = nodeIndex[idx].z;
+            int i = eIndex[idx].x, j = eIndex[idx].y, k = eIndex[idx].z;
+            FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
-            if (i != edgeIdx.x)
-            {
-                eyx[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].x * eyx[idx] +
-                    coeffEb[idx].x * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                ezx[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].x * ezx[idx] -
-                    coeffEb[idx].x * (grid->By(i + 1, j, k) - grid->By(i, j, k));
-            }
+            // Yee Grid indices: Ey(i+1/2, ..., ...), Ez(i+1/2, ..., ...) -> sigmaX(i+1/2)
+            sigma = this->computeSigma(grid->EyPosition(i, j, k).x, CoordinateEnum::x);
 
-            exy[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].y * exy[idx];
-            ezy[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].y * ezy[idx];
+            coeff1 = exp(-sigma * cdt);
+            coeff2 = 0;
+            if (sigma >= threshold)
+                coeff2 = (coeff1 - (FP)1) / (sigma * dx);
+            else coeff2 = -cdt / dx;
 
-            exz[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].z * exz[idx];
-            eyz[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].z * eyz[idx];
+            eyx[idx] = coeff1 * eyx[idx] + coeff2 *
+                (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
+            ezx[idx] = coeff1 * ezx[idx] + coeff2 *
+                (grid->By(i + 1, j, k) - grid->By(i, j, k));
+
+            // Yee Grid indices: Ex(..., j+1/2, ...), Ez(..., j+1/2, ...)-> sigmaY(j+1/2)
+            sigma = this->computeSigma(grid->EzPosition(i, j, k).y, CoordinateEnum::y);
+
+            coeff1 = exp(-sigma * cdt);
+
+            exy[idx] = coeff1 * exy[idx];
+            ezy[idx] = coeff1 * ezy[idx];
+
+            // Yee Grid indices: Ex(..., ..., k+1/2), Ey(..., ..., k+1/2)-> sigmaZ(k+1/2)
+            sigma = this->computeSigma(grid->ExPosition(i, j, k).z, CoordinateEnum::z);
+
+            coeff1 = exp(-sigma * cdt);
+
+            exz[idx] = coeff1 * exz[idx];
+            eyz[idx] = coeff1 * eyz[idx];
 
             grid->Ex(i, j, k) = exy[idx] + exz[idx];
             grid->Ey(i, j, k) = eyx[idx] + eyz[idx];

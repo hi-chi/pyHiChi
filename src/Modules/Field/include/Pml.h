@@ -14,122 +14,117 @@ namespace pfc {
     template<GridTypes gridTypes>
     class SpectralFieldSolver;
 
-
-    // Data for PML.
-    //
-    // leftDims and rightDims are number of cells, i.e. layers of b. There is one
-    // layer of e on "left" outer PML boundary for which corresponding b values are
-    // not used (but stored). Values of e on (all) outer PML boundary are filled
-    // with zeroes, values of e in PML-internal area boundaries are copy of internal
-    // area boundary e values.
-
     template<GridTypes gridTypes>
     class Pml
     {
     public:
-        Pml(FieldSolver<gridTypes>* _fieldSolver, Int3 _sizePML);
+        Pml(FieldSolver<gridTypes>* _fieldSolver, Int3 _sizePml,
+            FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8);
 
-        // only for real solvers
         virtual void updateB() {};
         virtual void updateE() {};
 
-        Int3 sizePML;
-        Int3 leftDims, rightDims;
+        Int3 sizePml;
+        Int3 leftPmlBorder, rightPmlBorder;
         std::vector<FP> exy, exz, eyx, eyz, ezx, ezy; // split electric field
         std::vector<FP> bxy, bxz, byx, byz, bzx, bzy; // split magnetic field
 
-        FP3 computeSigma(const FP3& coords);
+        std::vector<Int3> eIndex, bIndex; // natural 3d indexes of nodes in PML
+
+        forceinline FP computeSigma(FP coord, CoordinateEnum axis) const;
 
     protected:
 
-        FieldSolver<gridTypes> *fieldSolver;
+        FieldSolver<gridTypes>* fieldSolver;
 
-        Int3 globalLeftDims, globalRightDims;
+        // absorbing function parameters
         FP3 maxSigma;
-        Int3 leftDists, rightDists;
         FP n;
+
+        void initializePmlParams(FP _n, FP _r0, const FP3& gridStep);
 
         void initializeSplitFieldsE(int sizeE);
         void initializeSplitFieldsB(int sizeB);
 
+        void fillPmlIndices();
+
+        void checkGridAndPmlSize(const Int3& globalGridDims) {
+            if (2 * sizePml > globalGridDims) {
+                std::string exc = "ERROR: grid size should be larger than 2x pml size";
+                std::cout << exc << std::endl;
+                throw std::exception(exc.c_str());
+            }
+        }
+
     };
 
     template<GridTypes gridTypes>
-    inline Pml<gridTypes>::Pml(FieldSolver<gridTypes>* _fieldSolver, Int3 _sizePML) :
-        sizePML(_sizePML), fieldSolver(_fieldSolver)
-    {
-        Grid<FP, gridTypes>* grid = fieldSolver->grid;
-        globalLeftDims = _sizePML;
+    void Pml<gridTypes>::initializePmlParams(FP _n, FP _r0, const FP3& gridStep) {
+        this->n = _n;
 
-        for (int d = 0; d < 3; d++)
-        {
-            //printf("%x %x ", fieldSolver->grid, fieldSolver->grid->globalGridDims);
-            //printf("%d, %d\n",globalLeftDims[d] * 2 , grid->globalGridDims[d]);
-            if (globalLeftDims[d] * 2 > grid->globalGridDims[d])
-            {
-                printf("Error PML");
-                globalLeftDims[d] = 0;
-            }
+        for (int d = 0; d < 3; d++) {
+            if (sizePml[d])
+                this->maxSigma[d] = -log(_r0) * (_n + 1) / (2 * sizePml[d] * gridStep[d]);
+            else this->maxSigma[d] = 0;
         }
-        globalRightDims = globalLeftDims;
-        for (int d = 0; d < 3; ++d)
-        {
-            int pmlLeftBorder = globalLeftDims[d];
-
-            leftDims[d] = pmlLeftBorder;
-
-            if (leftDims[d])
-                leftDims[d] += grid->getNumExternalLeftCells()[d];
-
-            int pmlRightBorder = grid->numInternalCells[d] - globalRightDims[d];
-            rightDims[d] = globalRightDims[d] -
-                (grid->globalGridDims[d] - grid->numInternalCells[d]);
-            if (rightDims[d])
-                rightDims[d] += grid->getNumExternalRightCells()[d];
-        }
-
-        leftDists = Int3(0, 0, 0);
-        rightDists = grid->globalGridDims - grid->numInternalCells;
-        n = 4;
-        const FP r0 = 1e-8;
-        for (int d = 0; d < 3; d++)
-            if (globalLeftDims[d])
-                maxSigma[d] = -log(r0) * (n + 1) * constants::c / // constants::c is necessary because different cgs are used
-                (2 * globalLeftDims[d] * grid->steps[d]);
-            else
-                maxSigma[d] = 0;
     }
 
     template<GridTypes gridTypes>
-    FP3 Pml<gridTypes>::computeSigma(const FP3& coords)
+    inline Pml<gridTypes>::Pml(FieldSolver<gridTypes>* _fieldSolver, Int3 _sizePml,
+        FP nPmlParam, FP r0PmlParam) :
+        sizePml(_sizePml), fieldSolver(_fieldSolver)
     {
         Grid<FP, gridTypes>* grid = fieldSolver->grid;
-        FP3 globalLeftBorder = grid->origin - grid->steps * (leftDists);
-        FP3 pmlLeftBorder = globalLeftBorder + grid->steps * (globalLeftDims + grid->getNumExternalLeftCells());
-        FP3 globalRightBorder = globalLeftBorder + grid->steps *
-            (leftDists + rightDists + grid->numCells);
-        FP3 pmlRightBorder = globalRightBorder - grid->steps * (globalRightDims + grid->getNumExternalRightCells());
 
-        // for each dimension coeff is coefficient of linear interpolation between 0
-        // and 1 with 0 on PML-internal area boundary and 1 on outer PML boundary,
-        // sigma = maxSigma * coeff^n
-        FP3 sigma;
-        for (int d = 0; d < 3; ++d)
-            if (coords[d] < pmlLeftBorder[d])
-            {
-                FP coeff = (pmlLeftBorder[d] - coords[d]) /
-                    (pmlLeftBorder[d] - globalLeftBorder[d]);
-                sigma[d] = maxSigma[d] * pow(coeff, n);
-            }
-            else
-                if (coords[d] > pmlRightBorder[d])
+        checkGridAndPmlSize(grid->globalGridDims);
+
+        // TODO: consider that pml is only in edge domains
+        leftPmlBorder = sizePml + grid->getNumExternalLeftCells();
+        rightPmlBorder = leftPmlBorder + (grid->numInternalCells - 2 * sizePml);
+
+        initializePmlParams(nPmlParam, r0PmlParam, grid->steps);
+        fillPmlIndices();
+    }
+
+    template<GridTypes gridTypes>
+    void Pml<gridTypes>::fillPmlIndices()
+    {
+        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
+
+        Int3 begin = this->fieldSolver->updateEAreaBegin;
+        Int3 end = this->fieldSolver->updateEAreaEnd;
+
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
                 {
-                    FP coeff = (coords[d] - pmlRightBorder[d]) /
-                        (globalRightBorder[d] - pmlRightBorder[d]);
-                    sigma[d] = maxSigma[d] * pow(coeff, n);
+                    bool xBoundaryPml = (i < this->leftPmlBorder.x) || (i >= this->rightPmlBorder.x);
+                    bool yBoundaryPml = (j < this->leftPmlBorder.y) || (j >= this->rightPmlBorder.y);
+                    bool zBoundaryPml = (k < this->leftPmlBorder.z) || (k >= this->rightPmlBorder.z);
+                    if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
+                    {
+                        eIndex.push_back(Int3(i, j, k));
+                    }
                 }
-        // else sigma[d] = 0 as it is already
-        return sigma;
+
+        begin = this->fieldSolver->updateBAreaBegin;
+        end = this->fieldSolver->updateBAreaEnd;
+
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
+                {
+                    bool xBoundaryPml = (i < this->leftPmlBorder.x) || (i >= this->rightPmlBorder.x);
+                    bool yBoundaryPml = (j < this->leftPmlBorder.y) || (j >= this->rightPmlBorder.y);
+                    bool zBoundaryPml = (k < this->leftPmlBorder.z) || (k >= this->rightPmlBorder.z);
+                    if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
+                    {
+                        bIndex.push_back(Int3(i, j, k));
+                    }
+                }
+
+        this->initializeSplitFieldsE(eIndex.size());
+        this->initializeSplitFieldsB(bIndex.size());
     }
 
     template<GridTypes gridTypes>
@@ -152,179 +147,51 @@ namespace pfc {
         bzy.resize(sizeB, 0);
     }
 
+    template<GridTypes gridTypes>
+    FP Pml<gridTypes>::computeSigma(FP coord, CoordinateEnum axis) const
+    {
+        Grid<FP, gridTypes>* grid = fieldSolver->grid;
+        int d = (int)axis;
+
+        FP globalLeftBorderCoord = grid->origin[d];
+        FP globalRightBorderCoord = grid->origin[d] + grid->steps[d] * grid->numCells[d];
+        FP leftPmlBorderCoord = grid->origin[d] + grid->steps[d] * leftPmlBorder[d];
+        FP rightPmlBorderCoord = grid->origin[d] + grid->steps[d] * rightPmlBorder[d];
+
+        FP distance;
+        if (coord < leftPmlBorderCoord)
+            distance = (leftPmlBorderCoord - coord) / (leftPmlBorderCoord - globalLeftBorderCoord);
+        else if (coord >= rightPmlBorderCoord)
+            distance = (coord - rightPmlBorderCoord) / (globalRightBorderCoord - rightPmlBorderCoord);
+        else distance = 0;
+
+        return this->maxSigma[d] * pow(distance, (FP)n);
+    }
+
 
     template<GridTypes gridTypes>
     class PmlReal : public Pml<gridTypes>
     {
     public:
 
-        PmlReal(RealFieldSolver<gridTypes>* fieldSolver, Int3 sizePML);
+        PmlReal(RealFieldSolver<gridTypes>* fieldSolver, Int3 sizePml,
+            FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+            Pml<gridTypes>(static_cast<FieldSolver<gridTypes>*>(fieldSolver),
+                sizePml, nPmlParam, r0PmlParam)
+        {}
 
-        void computeCoeffs();
-        void updateDims();
-
-        virtual void updateB() {};
-        virtual void updateE() {};
-
-        int numNodes, numCells; // total number of PML nodes / cells
-        std::vector<Int3> nodeIndex, cellIndex; // natural 3d indexes of nodes in PML
-        std::vector<int> spaceIndexToPmlCell, spaceIndexToPmlNode;
-        std::vector<FP3> coeffEa, coeffEb, coeffBa, coeffBb; // coeffs for FDTD in PML
-        std::vector<FP> coeffJ;
     };
-
-    template<GridTypes gridTypes>
-    PmlReal<gridTypes>::PmlReal(RealFieldSolver<gridTypes>* _fieldSolver, Int3 _sizePML) :
-        Pml<gridTypes>((FieldSolver<gridTypes>*) _fieldSolver, _sizePML)
-    {
-        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-
-        int totalStored = grid->numCells.x * grid->numCells.y * grid->numCells.z;
-        spaceIndexToPmlNode = std::vector<int>(totalStored, -1);
-        spaceIndexToPmlCell = std::vector<int>(totalStored, -1);
-
-        // Fill data of PML values of electric field
-        const Int3 leftPmlEnd = this->leftDims;
-        const Int3 rightPmlBegin = grid->numCells - this->rightDims;
-        const int maxSize = grid->numCells.volume() -
-            (grid->numCells - this->leftDims - this->rightDims).volume();
-        Int3 begin = this->fieldSolver->updateEAreaBegin;
-        Int3 end = this->fieldSolver->updateEAreaEnd + Int3(1, 1, 1); // + 1 for edge values of E
-        for (int i = grid->dimensionality; i < 3; i++)
-            end[i]--;
-        for (int i = begin.x; i < end.x; i++)
-            for (int j = begin.y; j < end.y; j++)
-                for (int k = begin.z; k < end.z; k++)
-                {
-                    bool xBoundaryPml = (i < leftPmlEnd.x) || (i >= rightPmlBegin.x);
-                    bool yBoundaryPml = (j < leftPmlEnd.y) || (j >= rightPmlBegin.y);
-                    bool zBoundaryPml = (k < leftPmlEnd.z) || (k >= rightPmlBegin.z);
-                    if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
-                    {
-                        nodeIndex.push_back(Int3(i, j, k));
-                        int index = k + (j + i * grid->numCells.y) * grid->numCells.z;
-                        spaceIndexToPmlNode[index] = (int)nodeIndex.size() - 1;
-                    }
-                }
-
-        numNodes = (int)nodeIndex.size();
-        this->initializeSplitFieldsE(numNodes);
-
-        // Fill data of PML values of magnetic field
-        begin = this->fieldSolver->updateBAreaBegin;
-        end = this->fieldSolver->updateBAreaEnd;
-        for (int i = begin.x; i < end.x; i++)
-            for (int j = begin.y; j < end.y; j++)
-                for (int k = begin.z; k < end.z; k++)
-                {
-                    bool xBoundaryPml = (i < leftPmlEnd.x) || (i >= rightPmlBegin.x);
-                    bool yBoundaryPml = (j < leftPmlEnd.y) || (j >= rightPmlBegin.y);
-                    bool zBoundaryPml = (k < leftPmlEnd.z) || (k >= rightPmlBegin.z);
-                    if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
-                    {
-                        cellIndex.push_back(Int3(i, j, k));
-                        int index = k + (j + i * grid->numCells.y) * grid->numCells.z;
-                        spaceIndexToPmlCell[index] = (int)cellIndex.size() - 1;
-                    }
-                }
-        numCells = (int)cellIndex.size();
-        this->initializeSplitFieldsB(numCells);
-
-        coeffEa.resize(numNodes);
-        coeffEb.resize(numNodes);
-        coeffBa.resize(numCells);
-        coeffBb.resize(numCells);
-        coeffJ.resize(numNodes);
-        computeCoeffs();
-    }
-
-    template<GridTypes gridTypes>
-    void PmlReal<gridTypes>::computeCoeffs()
-    {
-        Grid<FP, gridTypes> * grid = this->fieldSolver->grid;
-        FP cdt = constants::c * this->fieldSolver->dt;
-        const FP threshold = (FP)1e-8;
-        coeffEa.resize(numNodes);
-        coeffEb.resize(numNodes);
-        coeffBa.resize(numCells);
-        coeffBb.resize(numCells);
-        coeffJ.resize(numNodes);
-
-        for (int idx = 0; idx < numNodes; ++idx)
-        {
-            int i = nodeIndex[idx].x;
-            int j = nodeIndex[idx].y;
-            int k = nodeIndex[idx].z;
-            FP3 eCoords[] = { grid->EyPosition(i, j, k), grid->ExPosition(i, j, k),
-                grid->ExPosition(i, j, k) };
-            for (int d = 0; d < 3; d++)
-            {
-                FP3 sigma = this->computeSigma(eCoords[d]);
-                int axis1 = (d + 1) % 3, axis2 = (d + 2) % 3;
-                if (d == 1)
-                {
-                    axis1 = 0;
-                    axis2 = 2;
-                }
-                if (sigma[d] > threshold)
-                {
-                    FP expCoeff = exp(-sigma[d] * cdt);
-                    coeffEa[idx][d] = expCoeff;
-                    coeffEb[idx][d] = (expCoeff - 1) / (sigma[d] * grid->steps[d]);
-                }
-                else
-                {
-                    coeffEa[idx][d] = 1;
-                    coeffEb[idx][d] = -cdt / (grid->steps[d]);
-                }
-            }
-            coeffJ[idx] = (FP)1;
-            for (int d = 0; d < 3; d++)
-                if (coeffEa[idx][d] < coeffJ[idx])
-                    coeffJ[idx] = coeffEa[idx][d];
-            coeffJ[idx] *= -(FP)4 * constants::pi * this->fieldSolver->dt / (FP)2;
-            // divide over 2 because of half fields
-        }
-
-        for (int idx = 0; idx < numCells; ++idx)
-        {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
-            FP3 bCoords[] = { grid->ByPosition(i, j, k), grid->BxPosition(i, j, k),
-                grid->BxPosition(i, j, k) };
-            for (int d = 0; d < 3; d++)
-            {
-                FP3 sigma = this->computeSigma(bCoords[d]);
-                int axis1 = (d + 1) % 3, axis2 = (d + 2) % 3;
-                if (d == 1)
-                {
-                    axis1 = 0;
-                    axis2 = 2;
-                }
-                if (sigma[d] > threshold)
-                {
-                    FP expCoeff = exp(-sigma[d] * cdt);
-                    coeffBa[idx][d] = expCoeff;
-                    coeffBb[idx][d] = -(expCoeff - 1) / (sigma[d] * grid->steps[d]);
-                }
-                else
-                {
-                    coeffBa[idx][d] = 1;
-                    coeffBb[idx][d] = cdt / (grid->steps[d]);
-                }
-            }
-        }
-    }
 
     template<GridTypes gridTypes>
     class PmlSpectral : public Pml<gridTypes>
     {
     public:
 
-        PmlSpectral(SpectralFieldSolver<gridTypes>* fieldSolver, Int3 sizePML);
-
-        void computeCoeffs();
+        PmlSpectral(SpectralFieldSolver<gridTypes>* fieldSolver, Int3 sizePml,
+            FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+            Pml<gridTypes>(static_cast<FieldSolver<gridTypes>*>(fieldSolver),
+                sizePml, nPmlParam, r0PmlParam)
+        {}
 
         // first step of spectral pml: updating of split components
         virtual void updateExSplit() {};
@@ -337,88 +204,31 @@ namespace pfc {
         virtual void updateBSplit();
         virtual void updateESplit();
 
-        // first step of spectral pml: updating of split components
-        virtual void doFirstStep();
-
         // multiplication by exp(-sigma*dt)
         void multBySigmaE();
         void multBySigmaB();
-        void multBySigma();
 
         // summation of split components
-        void sumField(ScalarField<FP>& field, std::vector<FP>& splitField1,
-            std::vector<FP>& splitField2);
+        void sumFieldEx();
+        void sumFieldEy();
+        void sumFieldEz();
+        void sumFieldBx();
+        void sumFieldBy();
+        void sumFieldBz();
+
         void sumFieldE();
         void sumFieldB();
-        void sumFields();
 
         // second step of spectral pml: multiplication by exp(-sigma*dt) and summation of split components
-        void doSecondStep();
-        
-        int numCells; // total number of PML cells
-        std::vector<Int3> cellIndex; // natural 3d indexes of cells in PML
-        std::vector<int> spaceIndexToPmlCell;
-        std::vector<FP3> coeff;
+        virtual void updateB();
+        virtual void updateE();
 
+    protected:
+
+        void sumFieldComponent(ScalarField<FP>& field, const std::vector<Int3>& index,
+            std::vector<FP>& splitField1, std::vector<FP>& splitField2);
     };
 
-    template<GridTypes gridTypes>
-    inline PmlSpectral<gridTypes>::PmlSpectral(SpectralFieldSolver<gridTypes>* _fieldSolver, Int3 _sizePML) :
-        Pml<gridTypes>((FieldSolver<gridTypes>*) _fieldSolver, _sizePML)
-    {
-        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-
-        spaceIndexToPmlCell = std::vector<int>(grid->numCells.volume(), -1);
-
-        const Int3 leftPmlEnd = this->leftDims;
-        const Int3 rightPmlBegin = grid->numCells - this->rightDims;
-        const int maxSize = grid->numCells.volume() -
-            (grid->numCells - this->leftDims - this->rightDims).volume();
-
-        Int3 begin = this->fieldSolver->updateEAreaBegin; // num nodes B = num nodes E
-        Int3 end = this->fieldSolver->updateEAreaEnd;
-        for (int i = begin.x; i < end.x; i++)
-            for (int j = begin.y; j < end.y; j++)
-                for (int k = begin.z; k < end.z; k++)
-                {
-                    bool xBoundaryPml = (i < leftPmlEnd.x) || (i >= rightPmlBegin.x);
-                    bool yBoundaryPml = (j < leftPmlEnd.y) || (j >= rightPmlBegin.y);
-                    bool zBoundaryPml = (k < leftPmlEnd.z) || (k >= rightPmlBegin.z);
-                    if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
-                    {
-                        cellIndex.push_back(Int3(i, j, k));
-                        int index = k + (j + i * grid->numCells.y) * grid->numCells.z;
-                        spaceIndexToPmlCell[index] = (int)cellIndex.size() - 1;
-                    }
-                }
-
-        numCells = (int)cellIndex.size();
-        this->initializeSplitFieldsE(numCells);
-        this->initializeSplitFieldsB(numCells);
-
-        computeCoeffs();
-    }
-
-    template<GridTypes gridTypes>
-    inline void PmlSpectral<gridTypes>::computeCoeffs()
-    {
-        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-        coeff.resize(numCells);
-        for (int idx = 0; idx < numCells; ++idx)
-        {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
-
-            FP3 coords = grid->ExPosition(i, j, k);
-            FP3 sigma = this->computeSigma(coords);
-
-            coeff[idx].x = exp(-sigma.x * this->fieldSolver->dt);
-            coeff[idx].y = exp(-sigma.y * this->fieldSolver->dt);
-            coeff[idx].z = exp(-sigma.z * this->fieldSolver->dt);
-        }
-    }
-    
     template<GridTypes gridTypes>
     inline void PmlSpectral<gridTypes>::updateBSplit()
     {
@@ -436,98 +246,142 @@ namespace pfc {
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectral<gridTypes>::doFirstStep()
-    {
-        updateBSplit();
-        updateESplit();
-    }
-
-    template<GridTypes gridTypes>
     inline void PmlSpectral<gridTypes>::multBySigmaE()
     {
-        for (int idx = 0; idx < numCells; ++idx)
-        {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
+        const int size = this->eIndex.size();
+        const FP ñdt = constants::c * this->fieldSolver->dt;
 
-            this->eyx[idx] *= coeff[idx].y;
-            this->ezx[idx] *= coeff[idx].z;
-            this->ezy[idx] *= coeff[idx].z;
-            this->exy[idx] *= coeff[idx].x;
-            this->exz[idx] *= coeff[idx].x;
-            this->eyz[idx] *= coeff[idx].y;
-        }
+        OMP_FOR()
+            for (int idx = 0; idx < size; ++idx)
+            {
+                int i = eIndex[idx].x, j = eIndex[idx].y, k = eIndex[idx].z;
+
+                FP sigmaX = this->computeSigma(grid->EyPosition(i, j, k).x, CoordinateEnum::x);
+                FP sigmaY = this->computeSigma(grid->EzPosition(i, j, k).y, CoordinateEnum::y);
+                FP sigmaZ = this->computeSigma(grid->ExPosition(i, j, k).z, CoordinateEnum::z);
+                FP coeffX = exp(-sigmaX * ñdt), coeffY = exp(-sigmaY * ñdt), coeffZ = exp(-sigmaZ * ñdt);
+
+                this->eyx[idx] *= coeffY;
+                this->ezx[idx] *= coeffZ;
+                this->ezy[idx] *= coeffZ;
+                this->exy[idx] *= coeffX;
+                this->exz[idx] *= coeffX;
+                this->eyz[idx] *= coeffY;
+            }
     }
 
     template<GridTypes gridTypes>
     inline void PmlSpectral<gridTypes>::multBySigmaB()
     {
-        for (int idx = 0; idx < numCells; ++idx)
-        {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
+        const int size = this->bIndex.size();
+        const FP ñdt = constants::c * this->fieldSolver->dt;
 
-            this->byx[idx] *= coeff[idx].y;
-            this->bzx[idx] *= coeff[idx].z;
-            this->bzy[idx] *= coeff[idx].z;
-            this->bxy[idx] *= coeff[idx].x;
-            this->bxz[idx] *= coeff[idx].x;
-            this->byz[idx] *= coeff[idx].y;
-        }
+        OMP_FOR()
+            for (int idx = 0; idx < size; ++idx)
+            {
+                int i = bIndex[idx].x, j = bIndex[idx].y, k = bIndex[idx].z;
+
+                FP sigmaX = this->computeSigma(grid->ByPosition(i, j, k).x, CoordinateEnum::x);
+                FP sigmaY = this->computeSigma(grid->BzPosition(i, j, k).y, CoordinateEnum::y);
+                FP sigmaZ = this->computeSigma(grid->BxPosition(i, j, k).z, CoordinateEnum::z);
+                FP coeffX = exp(-sigmaX * ñdt), coeffY = exp(-sigmaY * ñdt), coeffZ = exp(-sigmaZ * ñdt);
+
+                this->byx[idx] *= coeffY;
+                this->bzx[idx] *= coeffZ;
+                this->bzy[idx] *= coeffZ;
+                this->bxy[idx] *= coeffX;
+                this->bxz[idx] *= coeffX;
+                this->byz[idx] *= coeffY;
+            }
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectral<gridTypes>::multBySigma()
+    inline void PmlSpectral<gridTypes>::sumFieldEx()
     {
-        multBySigmaE();
-        multBySigmaB();
+        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
+        sumFieldComponent(grid->Ex, this->eIndex, this->eyx, this->ezx);
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectral<gridTypes>::sumField(ScalarField<FP>& field, std::vector<FP>& splitField1,
-        std::vector<FP>& splitField2)
+    inline void PmlSpectral<gridTypes>::sumFieldEy()
     {
-        for (int idx = 0; idx < numCells; ++idx)
-        {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
+        sumFieldComponent(grid->Ey, this->eIndex, this->ezy, this->exy);
+    }
 
-           field(i, j, k) = splitField1[idx] + splitField2[idx];
-        }
+    template<GridTypes gridTypes>
+    inline void PmlSpectral<gridTypes>::sumFieldEz()
+    {
+        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
+        sumFieldComponent(grid->Ez, this->eIndex, this->exz, this->eyz);
     }
 
     template<GridTypes gridTypes>
     inline void PmlSpectral<gridTypes>::sumFieldE()
     {
+        this->sumFieldEx();
+        this->sumFieldEy();
+        this->sumFieldEz();
+    }
+
+    template<GridTypes gridTypes>
+    inline void PmlSpectral<gridTypes>::sumFieldBx()
+    {
         Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-        sumField(grid->Ex, this->eyx, this->ezx);
-        sumField(grid->Ey, this->ezy, this->exy);
-        sumField(grid->Ez, this->exz, this->eyz);
+        sumFieldComponent(grid->Bx, this->bIndex, this->byx, this->bzx);
+    }
+
+    template<GridTypes gridTypes>
+    inline void PmlSpectral<gridTypes>::sumFieldBy()
+    {
+        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
+        sumFieldComponent(grid->By, this->bIndex, this->bzy, this->bxy);
+    }
+
+    template<GridTypes gridTypes>
+    inline void PmlSpectral<gridTypes>::sumFieldBz()
+    {
+        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
+        sumFieldComponent(grid->Bz, this->bIndex, this->bxz, this->byz);
     }
 
     template<GridTypes gridTypes>
     inline void PmlSpectral<gridTypes>::sumFieldB()
     {
-        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-        sumField(grid->Bx, this->byx, this->bzx);
-        sumField(grid->By, this->bzy, this->bxy);
-        sumField(grid->Bz, this->bxz, this->byz);
+        this->sumFieldBx();
+        this->sumFieldBy();
+        this->sumFieldBz();
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectral<gridTypes>::sumFields()
+    inline void PmlSpectral<gridTypes>::updateB()
     {
-        sumFieldE();
+        multBySigmaB();
         sumFieldB();
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectral<gridTypes>::doSecondStep()
+    inline void PmlSpectral<gridTypes>::updateE()
     {
-        multBySigma();
-        sumFields();
+        multBySigmaE();
+        sumFieldE();
+    }
+
+    template<GridTypes gridTypes>
+    inline void PmlSpectral<gridTypes>::sumFieldComponent(ScalarField<FP>& field,
+        const std::vector<Int3>& index,
+        std::vector<FP>& splitField1, std::vector<FP>& splitField2)
+    {
+        const int size = index.size();
+
+        OMP_FOR()
+            for (int idx = 0; idx < size; ++idx)
+            {
+                int i = index[idx].x, j = index[idx].y, k = index[idx].z;
+
+                field(i, j, k) = splitField1[idx] + splitField2[idx];
+            }
     }
 }

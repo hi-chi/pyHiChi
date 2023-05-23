@@ -94,7 +94,7 @@ namespace pfc {
             this->dt = dt;
             this->timeShiftB = 0.5 * dt;
             this->timeShiftJ = 0.5 * dt;
-            if (pml) pml.reset(new PmlType(this, pml->sizePML));
+            if (pml) pml.reset(new PmlType(this, pml->sizePml));
             if (generator) generator.reset(generator->createInstance(this));
         }
         else {

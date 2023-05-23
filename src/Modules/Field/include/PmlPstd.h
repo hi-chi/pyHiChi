@@ -9,25 +9,27 @@ namespace pfc {
     class PmlPstd : public PmlSpectralTimeStraggered<GridTypes::PSTDGridType>
     {
     public:
-        PmlPstd(SpectralFieldSolver<GridTypes::PSTDGridType>* solver, Int3 sizePML) :
-            PmlSpectralTimeStraggered((SpectralFieldSolver<GridTypes::PSTDGridType>*)solver, sizePML) {}
+        PmlPstd(SpectralFieldSolver<GridTypes::PSTDGridType>* solver, Int3 sizePml) :
+            PmlSpectralTimeStraggered(static_cast<SpectralFieldSolver<GridTypes::PSTDGridType>*>(solver), sizePml) {}
 
         virtual void computeTmpField(MemberOfFP3 coordK,
-            SpectralScalarField<FP, complexFP>& field, double dt);
+            SpectralScalarField<FP, complexFP>& field, double dt, double sign);
     };
 
     inline void PmlPstd::computeTmpField(MemberOfFP3 coordK,
-        SpectralScalarField<FP, complexFP>& field, double dt)
+        SpectralScalarField<FP, complexFP>& field, double dt, double sign)
     {
         SpectralFieldSolver<GridTypes::PSTDGridType>* fs = getFieldSolver();
-        Int3 begin = fs->updateComplexBAreaBegin;
-        Int3 end = fs->updateComplexBAreaEnd;
-        OMP_FOR()
-        for (int i = begin.x; i < end.x; i++)
-            for (int j = begin.y; j < end.y; j++)
-                for (int k = begin.z; k < end.z; k++)
-                    tmpFieldComplex(i, j, k) = constants::c * dt * complexFP::i() *
-                    (complexFP)(fs->getWaveVector(Int3(i, j, k)).*coordK) * field(i, j, k);
+        const Int3 begin = fs->updateComplexBAreaBegin;
+        const Int3 end = fs->updateComplexBAreaEnd;
+
+        OMP_FOR_COLLAPSE()
+            for (int i = begin.x; i < end.x; i++)
+                for (int j = begin.y; j < end.y; j++)
+                    for (int k = begin.z; k < end.z; k++)
+                        tmpFieldComplex(i, j, k) = sign * constants::c * dt * complexFP::i() *
+                        (complexFP)(fs->getWaveVector(Int3(i, j, k)).*coordK) * field(i, j, k);
+
         fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
     }
 

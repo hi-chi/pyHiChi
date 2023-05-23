@@ -68,7 +68,7 @@ namespace pfc {
     {
         this->dt = dt;
         this->timeShiftJ = 0.5 * dt;
-        if (pml) pml.reset(new PmlType(this, pml->sizePML));
+        if (pml) pml.reset(new PmlType(this, pml->sizePml));
         if (generator) generator.reset(generator->createInstance(this));
     }
 
@@ -76,15 +76,16 @@ namespace pfc {
     inline void PSATDT<ifPoisson>::updateFields() {
         doFourierTransform(fourier_transform::Direction::RtoC);
 
-        if (pml.get()) getPml()->updateBSplit();
+        if (pml) getPml()->updateBSplit();
         updateEB();
-        if (pml.get()) getPml()->updateESplit();
+        if (pml) getPml()->updateESplit();
         updateEB();
-        if (pml.get()) getPml()->updateBSplit();
+        if (pml) getPml()->updateBSplit();
 
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml.get()) getPml()->doSecondStep();
+        if (pml) getPml()->updateB();
+        if (pml) getPml()->updateE();
 
         globalTime += dt;
     }

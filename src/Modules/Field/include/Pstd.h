@@ -75,7 +75,7 @@ namespace pfc {
             this->dt = dt;
             this->timeShiftB = 0.5 * dt;
             this->timeShiftJ = 0.5 * dt;
-            if (pml) pml.reset(new PmlType(this, pml->sizePML));
+            if (pml) pml.reset(new PmlType(this, pml->sizePml));
             if (generator) generator.reset(generator->createInstance(this));
         }
         else {
@@ -89,18 +89,19 @@ namespace pfc {
     {
         doFourierTransform(fourier_transform::Direction::RtoC);
 
-        if (pml.get()) getPml()->updateBSplit();
+        if (pml) getPml()->updateBSplit();
         updateHalfB();
 
-        if (pml.get()) getPml()->updateESplit();
+        if (pml) getPml()->updateESplit();
         updateE();
 
-        if (pml.get()) getPml()->updateBSplit();
+        if (pml) getPml()->updateBSplit();
         updateHalfB();
 
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml.get()) getPml()->doSecondStep();
+        if (pml) getPml()->updateB();
+        if (pml) getPml()->updateE();
 
         globalTime += dt;
     }
