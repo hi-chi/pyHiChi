@@ -189,6 +189,8 @@ namespace pfc {
                         ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
                         ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k)),
                             prevJ(tmpJx(i, j, k), tmpJy(i, j, k), tmpJz(i, j, k));
+                        J = complexFP(4 * constants::pi) * J;
+                        prevJ = complexFP(4 * constants::pi) * prevJ;
                         ComplexFP3 crossKE = cross((ComplexFP3)K, E);
                         ComplexFP3 crossKJ = cross((ComplexFP3)K, J - prevJ);
 
@@ -213,19 +215,21 @@ namespace pfc {
                 {
                     //#pragma omp simd
                     for (int k = begin.z; k < end.z; k++)
-                    {
+                    { 
+                        ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
+                        J = complexFP(4 * constants::pi) * J;
+                        
                         FP3 K = getWaveVector(Int3(i, j, k));
                         FP normK = K.norm();
                         if (normK == 0) {
-                            complexGrid->Ex(i, j, k) += dt * complexGrid->Jx(i, j, k);
-                            complexGrid->Ey(i, j, k) += dt * complexGrid->Jy(i, j, k);
-                            complexGrid->Ez(i, j, k) += dt * complexGrid->Jz(i, j, k);
+                            complexGrid->Ex(i, j, k) += -J.x * dt;
+                            complexGrid->Ey(i, j, k) += -J.y * dt;
+                            complexGrid->Ez(i, j, k) += -J.z * dt;
                             continue;
                         }
                         K = K / normK;
 
                         ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
-                        ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
                         ComplexFP3 crossKB = cross((ComplexFP3)K, B);
                         ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J);
 
@@ -253,19 +257,21 @@ namespace pfc {
                     //#pragma omp simd
                     for (int k = begin.z; k < end.z; k++)
                     {
+                        ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
+                        J = complexFP(4 * constants::pi) * J;
+
                         FP3 K = getWaveVector(Int3(i, j, k));
                         FP normK = K.norm();
                         if (normK == 0) {
-                            complexGrid->Ex(i, j, k) += dt * complexGrid->Jx(i, j, k);
-                            complexGrid->Ey(i, j, k) += dt * complexGrid->Jy(i, j, k);
-                            complexGrid->Ez(i, j, k) += dt * complexGrid->Jz(i, j, k);
+                            complexGrid->Ex(i, j, k) += -J.x * dt;
+                            complexGrid->Ey(i, j, k) += -J.y * dt;
+                            complexGrid->Ez(i, j, k) += -J.z * dt;
                             continue;
                         }
                         K = K / normK;
 
                         ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
                         ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
-                        ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
                         ComplexFP3 crossKB = cross((ComplexFP3)K, B);
                         ComplexFP3 El = (ComplexFP3)K * dot((ComplexFP3)K, E);
                         ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J);
@@ -403,9 +409,9 @@ namespace pfc {
                         J = complexFP(4 * constants::pi) * J;
 
                         if (normK == 0) {
-                            complexGrid->Ex(i, j, k) += -J.x;
-                            complexGrid->Ey(i, j, k) += -J.y;
-                            complexGrid->Ez(i, j, k) += -J.z;
+                            complexGrid->Ex(i, j, k) += -J.x * dt;
+                            complexGrid->Ey(i, j, k) += -J.y * dt;
+                            complexGrid->Ez(i, j, k) += -J.z * dt;
                             continue;
                         }
 
@@ -456,9 +462,9 @@ namespace pfc {
                         J = complexFP(4 * constants::pi) * J;
 
                         if (normK == 0) {
-                            complexGrid->Ex(i, j, k) += -J.x;
-                            complexGrid->Ey(i, j, k) += -J.y;
-                            complexGrid->Ez(i, j, k) += -J.z;
+                            complexGrid->Ex(i, j, k) += -J.x * dt;
+                            complexGrid->Ey(i, j, k) += -J.y * dt;
+                            complexGrid->Ez(i, j, k) += -J.z * dt;
                             continue;
                         }
 
