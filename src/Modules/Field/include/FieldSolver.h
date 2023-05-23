@@ -1,5 +1,6 @@
 #pragma once
 #include "Grid.h"
+#include "SpectralGrid.h"
 #include "FieldGenerator.h"
 #include "Vectors.h"
 #include "FourierTransform.h"
@@ -20,7 +21,7 @@ namespace pfc {
     public:
 
         FieldSolver(Grid<FP, gridType>* _grid, FP dt,
-            FP timeShiftE, FP timeShiftB, FP timeShiftJ):
+            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
             dt(dt),
             timeShiftE(timeShiftE),
             timeShiftB(timeShiftB),
@@ -31,7 +32,7 @@ namespace pfc {
             this->generator.reset(nullptr);
         }
 
-        Grid<FP, gridType> * grid;
+        Grid<FP, gridType>* grid;
 
         std::unique_ptr<Pml<gridType>> pml;
         std::unique_ptr<FieldGenerator<gridType>> generator;
@@ -46,12 +47,34 @@ namespace pfc {
         void updateDims();
         void updateInternalDims();
 
+        virtual void save(std::ostream& ostr);
+        virtual void load(std::istream& istr);
+
         FP globalTime;
         FP dt;
         // difference between E and B
         FP timeShiftE, timeShiftB, timeShiftJ;
     };
-    
+
+    template<GridTypes gridType>
+    inline void FieldSolver<gridType>::save(std::ostream& ostr)
+    {
+        ostr.write((char*)&globalTime, sizeof(globalTime));
+        // if (pml.get()) pml->save(ostr);  // virtual
+        // if (generator.get()) generator->save(ostr);  // virtual
+    }
+
+    template<GridTypes gridType>
+    inline void FieldSolver<gridType>::load(std::istream& istr)
+    {
+        // dt is not loaded, we get it with FieldSolver constructor
+        // timeShiftE, timeShiftB, timeShiftJ are got with FieldSolver constructor too
+        istr.read((char*)&globalTime, sizeof(globalTime));
+        // all the next modules have already created in FieldSolver constructor
+        // we need to load them only
+        // if (pml.get()) pml->load(istr);  // virtual
+        // if (generator.get()) generator->load(istr);  // virtual
+    }
 
     template<GridTypes gridType>
     inline void FieldSolver<gridType>::updateDims()
@@ -97,14 +120,14 @@ namespace pfc {
     {
     public:
         RealFieldSolver(Grid<FP, gridType>* _grid, FP dt,
-            FP timeShiftE, FP timeShiftB, FP timeShiftJ):
+            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
             FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
         {}
 
     private:
         // Copy and assignment are disallowed.
-        RealFieldSolver(const RealFieldSolver &);
-        RealFieldSolver & operator =(const RealFieldSolver &);
+        RealFieldSolver(const RealFieldSolver&);
+        RealFieldSolver& operator =(const RealFieldSolver&);
     };
 
 
@@ -116,13 +139,10 @@ namespace pfc {
             FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
             FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
         {
-            complexGrid = new Grid<complexFP, gridType>(fourier_transform::getSizeOfComplexArray(_grid->numCells),
-                fourier_transform::getSizeOfComplexArray(_grid->globalGridDims), _grid);
-            fourierTransform.initialize<gridType>(_grid, complexGrid);
-        }
-
-        ~SpectralFieldSolver() {
-            delete complexGrid;
+            complexGrid.reset(new SpectralGrid<FP, complexFP>(
+                fourier_transform::getSizeOfComplexArray(_grid->numCells),
+                _grid->globalGridDims, _grid));
+            fourierTransform.initialize<gridType>(_grid, complexGrid.get());
         }
 
         void doFourierTransformB(fourier_transform::Direction direction);
@@ -130,11 +150,11 @@ namespace pfc {
         void doFourierTransformJ(fourier_transform::Direction direction);
         void doFourierTransform(fourier_transform::Direction direction);
 
-        FP3 getWaveVector(const Int3 & ind);
+        FP3 getWaveVector(const Int3& ind);
 
         void updateDims();
 
-        Grid<complexFP, gridType> * complexGrid;
+        std::unique_ptr<SpectralGrid<FP, complexFP>> complexGrid;
 
         Int3 updateComplexEAreaBegin, updateComplexEAreaEnd;
         Int3 updateComplexBAreaBegin, updateComplexBAreaEnd;
@@ -143,8 +163,8 @@ namespace pfc {
 
     private:
         // Copy and assignment are disallowed.
-        SpectralFieldSolver(const SpectralFieldSolver &);
-        SpectralFieldSolver & operator=(const SpectralFieldSolver &);
+        SpectralFieldSolver(const SpectralFieldSolver&);
+        SpectralFieldSolver& operator=(const SpectralFieldSolver&);
     };
 
     template<GridTypes gridType>
@@ -180,13 +200,13 @@ namespace pfc {
     }
 
     template<GridTypes gridType>
-    inline FP3 SpectralFieldSolver<gridType>::getWaveVector(const Int3 & ind)
+    inline FP3 SpectralFieldSolver<gridType>::getWaveVector(const Int3& ind)
     {
-        FP kx = (2 * constants::pi*((ind.x <= this->grid->numCells.x / 2) ? ind.x : ind.x - this->grid->numCells.x)) /
+        FP kx = (2 * constants::pi * ((ind.x <= this->grid->numCells.x / 2) ? ind.x : ind.x - this->grid->numCells.x)) /
             (this->grid->steps.x * this->grid->numCells.x);
-        FP ky = (2 * constants::pi*((ind.y <= this->grid->numCells.y / 2) ? ind.y : ind.y - this->grid->numCells.y)) /
+        FP ky = (2 * constants::pi * ((ind.y <= this->grid->numCells.y / 2) ? ind.y : ind.y - this->grid->numCells.y)) /
             (this->grid->steps.y * this->grid->numCells.y);
-        FP kz = (2 * constants::pi*((ind.z <= this->grid->numCells.z / 2) ? ind.z : ind.z - this->grid->numCells.z)) /
+        FP kz = (2 * constants::pi * ((ind.z <= this->grid->numCells.z / 2) ? ind.z : ind.z - this->grid->numCells.z)) /
             (this->grid->steps.z * this->grid->numCells.z);
         return FP3(kx, ky, kz);
     }
