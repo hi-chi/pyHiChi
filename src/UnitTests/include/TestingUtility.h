@@ -116,9 +116,11 @@ public:
     {
         BaseFixture::SetUp();
 
-        ParticleInfo::typesVector = { {constants::electronMass, constants::electronCharge},
-                                    {constants::electronMass, -constants::electronCharge},
-                                    {constants::protonMass, -constants::electronCharge} };
+        ParticleInfo::typesVector = { {constants::electronMass, constants::electronCharge},//electron
+                                    {constants::electronMass, -constants::electronCharge},//positron
+                                    {constants::protonMass, -constants::electronCharge},//proton
+                                    {constants::electronMass, 0.0}//photon
+                                    };
         ParticleInfo::types = &ParticleInfo::typesVector[0];
         ParticleInfo::numTypes = sizeParticleTypes;
     }

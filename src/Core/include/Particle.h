@@ -128,6 +128,14 @@ namespace pfc {
         TypeIndexType getType() const { return typeIndex; }
         void setType(TypeIndexType newType) { typeIndex = newType; }
 
+        void save(std::ostream& os)
+        {
+            os.write((char*)this, sizeof(Particle<dimension>));
+        }
+        void load(std::istream& is)
+        {
+            is.read((char*)this, sizeof(Particle<dimension>));
+        }
     private:
 
         PositionType position;

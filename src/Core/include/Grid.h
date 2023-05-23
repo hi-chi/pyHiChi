@@ -24,17 +24,13 @@ namespace pfc {
     public:
 
         static const GridTypes gridType = gridType_;
+        static const bool isComplex = std::is_same<complexFP, Data>::value;
 
-        Grid(const Int3 & _numInternalCells,
-            const FP3 & minCoords, const FP3 & _steps,
-            const Int3 & globalGridDims);
-        Grid(const Int3 & _numAllCells,
-            const Int3 & globalGridDims);  // for complex grids only
-        Grid(const Int3 & _numAllCells, const Int3 & globalGridDims, 
-            Grid<FP, gridType_>* grid);  // 'grid' and 'this' will have common memory
-
-        // copy constructor, can make shallow copies
-        Grid(const Grid& grid, bool ifShallowCopy = false);
+        Grid() {}
+        Grid(const Int3& _numInternalCells,
+            const FP3& minCoords, const FP3& _steps,
+            const Int3& globalGridDims) {}
+        Grid(const Grid<Data, gridType_>& grid);
 
         // copy values from *this to *grid
         template <class TGrid>
@@ -77,25 +73,25 @@ namespace pfc {
             return baseCoords(x, y, z) + shiftEJz;
         }
 
-        void getFieldsXYZ(FP x, FP y, FP z, FP3 & e, FP3 & b) const
+        void getFieldsXYZ(FP x, FP y, FP z, FP3& e, FP3& b) const
         {
             FP3 coords(x, y, z);
             getFields(coords, e, b);
         }
-        void getFields(const FP3& coords, FP3 & e, FP3 & b) const
+        void getFields(const FP3& coords, FP3& e, FP3& b) const
         {
             (this->*interpolationFields)(coords, e, b);
         }
-        
+
         virtual FP3 getJ(const FP3& coords) const;
         virtual FP3 getE(const FP3& coords) const;
         virtual FP3 getB(const FP3& coords) const;
 
-        void getFieldsCIC(const FP3& coords, FP3 & e, FP3 & b) const;
-        void getFieldsTSC(const FP3& coords, FP3 & e, FP3 & b) const;
-        void getFieldsSecondOrder(const FP3& coords, FP3 & e, FP3 & b) const;
-        void getFieldsFourthOrder(const FP3& coords, FP3 & e, FP3 & b) const;
-        void getFieldsPCS(const FP3& coords, FP3 & e, FP3 & b) const;
+        void getFieldsCIC(const FP3& coords, FP3& e, FP3& b) const;
+        void getFieldsTSC(const FP3& coords, FP3& e, FP3& b) const;
+        void getFieldsSecondOrder(const FP3& coords, FP3& e, FP3& b) const;
+        void getFieldsFourthOrder(const FP3& coords, FP3& e, FP3& b) const;
+        void getFieldsPCS(const FP3& coords, FP3& e, FP3& b) const;
 
         FP getEx(const FP3& coords) const
         {
@@ -298,26 +294,29 @@ namespace pfc {
         void setInterpolationType(InterpolationType type);
         InterpolationType getInterpolationType() const;
 
-        const Int3 globalGridDims;  // important to initialize it first
-        const FP3 steps;
-        const Int3 numInternalCells;
-        const Int3 numCells;
-        const Int3 sizeStorage;  // sometimes can be larger than numCells
-        const FP3 origin;
-        const int dimensionality;
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
+        Int3 globalGridDims;  // important to initialize it first
+        FP3 steps;
+        Int3 numInternalCells;
+        Int3 numCells;
+        Int3 sizeStorage;  // = numCells, sometimes can be larger
+        FP3 origin;
+        int dimensionality;
 
         ScalarField<Data> Ex, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz;
-        
+
     private:
 
         // 3d shifts of the field in the cell
-        const FP3 shiftEJx, shiftEJy, shiftEJz,
+        FP3 shiftEJx, shiftEJy, shiftEJz,
             shiftBx, shiftBy, shiftBz;
 
         /* Get grid index and normalized internal coords in [0, 0, 0]..(1, 1, 1) for
         given physical coords and shift. */
-        void getGridCoords(const FP3 & coords, const FP3 & shift, Int3 & idx,
-            FP3 & internalCoords) const
+        void getGridCoords(const FP3& coords, const FP3& shift, Int3& idx,
+            FP3& internalCoords) const
         {
             idx.x = (int)((coords.x - origin.x - shift.x) / steps.x);
             idx.y = (int)((coords.y - origin.y - shift.y) / steps.y);
@@ -325,8 +324,8 @@ namespace pfc {
             internalCoords = (coords - baseCoords(idx.x, idx.y, idx.z) - shift) / steps;
         }
 
-        void getClosestGridCoords(const FP3 & coords, const FP3 & shift, Int3 & idx,
-            FP3 & internalCoords) const
+        void getClosestGridCoords(const FP3& coords, const FP3& shift, Int3& idx,
+            FP3& internalCoords) const
         {
             idx.x = (int)((coords.x - origin.x - shift.x) / steps.x + 0.5);
             idx.y = (int)((coords.y - origin.y - shift.y) / steps.y + 0.5);
@@ -342,30 +341,30 @@ namespace pfc {
         }
 
         // if coords is inside of the area that grid defines
-        forceinline bool isInside(const FP3 & coords, const FP3 & shift) const
+        forceinline bool isInside(const FP3& coords, const FP3& shift) const
         {
             FP3 minCoords = origin + shift * steps;
             FP3 maxCoords = minCoords + (numCells - Int3(1, 1, 1)) * steps;
             return coords >= minCoords && coords <= maxCoords;
         }
 
-        FP getFieldCIC(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const;
-        FP getFieldTSC(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const;
-        FP getFieldSecondOrder(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const;
-        FP getFieldFourthOrder(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const;
-        FP getFieldPCS(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const;
+        FP getFieldCIC(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const;
+        FP getFieldTSC(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const;
+        FP getFieldSecondOrder(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const;
+        FP getFieldFourthOrder(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const;
+        FP getFieldPCS(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const;
 
         InterpolationType interpolationType;
-        void (Grid::*interpolationFields)(const FP3&, FP3&, FP3&) const;
-        FP (Grid::*interpolationEx)(const FP3&) const;
-        FP(Grid::*interpolationEy)(const FP3&) const;
-        FP(Grid::*interpolationEz)(const FP3&) const;
-        FP(Grid::*interpolationBx)(const FP3&) const;
-        FP(Grid::*interpolationBy)(const FP3&) const;
-        FP(Grid::*interpolationBz)(const FP3&) const;
-        FP(Grid::*interpolationJx)(const FP3&) const;
-        FP(Grid::*interpolationJy)(const FP3&) const;
-        FP(Grid::*interpolationJz)(const FP3&) const;
+        void (Grid::* interpolationFields)(const FP3&, FP3&, FP3&) const;
+        FP(Grid::* interpolationEx)(const FP3&) const;
+        FP(Grid::* interpolationEy)(const FP3&) const;
+        FP(Grid::* interpolationEz)(const FP3&) const;
+        FP(Grid::* interpolationBx)(const FP3&) const;
+        FP(Grid::* interpolationBy)(const FP3&) const;
+        FP(Grid::* interpolationBz)(const FP3&) const;
+        FP(Grid::* interpolationJx)(const FP3&) const;
+        FP(Grid::* interpolationJy)(const FP3&) const;
+        FP(Grid::* interpolationJz)(const FP3&) const;
     };
 
     typedef Grid<FP, GridTypes::YeeGridType> YeeGrid;
@@ -374,9 +373,8 @@ namespace pfc {
     typedef Grid<FP, GridTypes::PSATDGridType> PSATDGrid;
     typedef Grid<FP, GridTypes::PSATDTimeStraggeredGridType> PSATDTimeStraggeredGrid;
 
-    // create deep or shallow copy
     template<typename Data, GridTypes gridType_>
-    inline Grid<Data, gridType_>::Grid(const Grid<Data, gridType_>& grid, bool ifShallowCopy) :
+    inline Grid<Data, gridType_>::Grid(const Grid<Data, gridType_>& grid) :
         globalGridDims(grid.globalGridDims),
         steps(grid.steps),
         numInternalCells(grid.numInternalCells),
@@ -386,22 +384,16 @@ namespace pfc {
         shiftBx(grid.shiftBx), shiftBy(grid.shiftBy), shiftBz(grid.shiftBz),
         origin(grid.origin),
         dimensionality(grid.dimensionality),
-        Ex(grid.Ex, ifShallowCopy),
-        Ey(grid.Ey, ifShallowCopy),
-        Ez(grid.Ez, ifShallowCopy),
-        Bx(grid.Bx, ifShallowCopy),
-        By(grid.By, ifShallowCopy),
-        Bz(grid.Bz, ifShallowCopy),
-        Jx(grid.Jx, ifShallowCopy),
-        Jy(grid.Jy, ifShallowCopy),
-        Jz(grid.Jz, ifShallowCopy)
+        Ex(grid.Ex), Ey(grid.Ey), Ez(grid.Ez),
+        Bx(grid.Bx), By(grid.By), Bz(grid.Bz),
+        Jx(grid.Jx), Jy(grid.Jy), Jz(grid.Jz)
     {
         setInterpolationType(grid.interpolationType);
     }
 
     template <>
-    inline Grid<FP, GridTypes::YeeGridType>::Grid(const Int3 & _numCells, const FP3 & minCoords,
-        const FP3 & _steps, const Int3 & _globalGridDims) :
+    inline Grid<FP, GridTypes::YeeGridType>::Grid(const Int3& _numCells, const FP3& minCoords,
+        const FP3& _steps, const Int3& _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         numInternalCells(_numCells),
@@ -410,12 +402,12 @@ namespace pfc {
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
-        shiftEJx(FP3(0, 0.5, 0.5) * steps),
-        shiftEJy(FP3(0.5, 0, 0.5) * steps),
-        shiftEJz(FP3(0.5, 0.5, 0) * steps),
-        shiftBx(FP3(0.5, 0, 0) * steps),
-        shiftBy(FP3(0, 0.5, 0) * steps),
-        shiftBz(FP3(0, 0, 0.5) * steps),
+        shiftEJx(FP3(0, 0.5, 0.5)* steps),
+        shiftEJy(FP3(0.5, 0, 0.5)* steps),
+        shiftEJz(FP3(0.5, 0.5, 0)* steps),
+        shiftBx(FP3(0.5, 0, 0)* steps),
+        shiftBy(FP3(0, 0.5, 0)* steps),
+        shiftBz(FP3(0, 0, 0.5)* steps),
         origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
             minCoords.y - steps.y * getNumExternalLeftCells().y,
             minCoords.z - steps.z * getNumExternalLeftCells().z),
@@ -426,8 +418,8 @@ namespace pfc {
     }
 
     template<>
-    inline Grid<FP, GridTypes::StraightGridType>::Grid(const Int3 & _numInternalCells, 
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
+    inline Grid<FP, GridTypes::StraightGridType>::Grid(const Int3& _numInternalCells,
+        const FP3& minCoords, const FP3& _steps, const Int3& _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         numInternalCells(_numInternalCells),
@@ -436,12 +428,12 @@ namespace pfc {
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
+        shiftEJx(FP3(0, 0, 0)* steps),
+        shiftEJy(FP3(0, 0, 0)* steps),
+        shiftEJz(FP3(0, 0, 0)* steps),
+        shiftBx(FP3(0, 0, 0)* steps),
+        shiftBy(FP3(0, 0, 0)* steps),
+        shiftBz(FP3(0, 0, 0)* steps),
         origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
             minCoords.y - steps.y * getNumExternalLeftCells().y,
             minCoords.z - steps.z * getNumExternalLeftCells().z),
@@ -451,61 +443,9 @@ namespace pfc {
     }
 
 
-    // SPECTRAL GRIDS
-
-    // PSTD
-
     template<>
-    inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells,
-        const Int3 & _globalGridDims) :
-        globalGridDims(_globalGridDims),
-        numInternalCells(_numInternalCells),
-        numCells(numInternalCells),
-        sizeStorage(numCells),
-        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
-        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
-        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
-    {
-        setInterpolationType(Interpolation_CIC);
-    }
-
-    template<>
-    inline Grid<complexFP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells,
-        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSTDGridType>* grid) :
-        globalGridDims(_globalGridDims),
-        numInternalCells(_numInternalCells),
-        numCells(numInternalCells),
-        sizeStorage(numCells),
-        Ex(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage),
-        Ey(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage),
-        Ez(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage),
-        Bx(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage),
-        By(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage),
-        Bz(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage),
-        Jx(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage),
-        Jy(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage),
-        Jz(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
-    {
-        setInterpolationType(Interpolation_CIC);
-    }
-
-    template<>
-    inline Grid<FP, GridTypes::PSTDGridType>::Grid(const Int3 & _numInternalCells,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
+    inline Grid<FP, GridTypes::PSTDGridType>::Grid(const Int3& _numInternalCells,
+        const FP3& minCoords, const FP3& _steps, const Int3& _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         numInternalCells(_numInternalCells),
@@ -514,71 +454,21 @@ namespace pfc {
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
+        shiftEJx(FP3(0, 0, 0)* steps),
+        shiftEJy(FP3(0, 0, 0)* steps),
+        shiftEJz(FP3(0, 0, 0)* steps),
+        shiftBx(FP3(0, 0, 0)* steps),
+        shiftBy(FP3(0, 0, 0)* steps),
+        shiftBz(FP3(0, 0, 0)* steps),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
     }
 
-    // PSATD
-
     template<>
-    inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells,
-        const Int3 & _globalGridDims) :
-        globalGridDims(_globalGridDims),
-        numInternalCells(_numInternalCells),
-        numCells(numInternalCells),
-        sizeStorage(numCells),
-        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
-        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
-        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
-    {
-        setInterpolationType(Interpolation_CIC);
-    }
-
-    template<>
-    inline Grid<complexFP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells,
-        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSATDGridType>* grid) :
-        globalGridDims(_globalGridDims),
-        numInternalCells(_numInternalCells),
-        numCells(numInternalCells),
-        sizeStorage(numCells),
-        Ex(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage),
-        Ey(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage),
-        Ez(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage),
-        Bx(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage),
-        By(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage),
-        Bz(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage),
-        Jx(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage),
-        Jy(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage),
-        Jz(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
-    {
-        setInterpolationType(Interpolation_CIC);
-    }
-
-    template<>
-    inline Grid<FP, GridTypes::PSATDGridType>::Grid(const Int3 & _numInternalCells,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
+    inline Grid<FP, GridTypes::PSATDGridType>::Grid(const Int3& _numInternalCells,
+        const FP3& minCoords, const FP3& _steps, const Int3& _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         numInternalCells(_numInternalCells),
@@ -587,73 +477,21 @@ namespace pfc {
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
+        shiftEJx(FP3(0, 0, 0)* steps),
+        shiftEJy(FP3(0, 0, 0)* steps),
+        shiftEJz(FP3(0, 0, 0)* steps),
+        shiftBx(FP3(0, 0, 0)* steps),
+        shiftBy(FP3(0, 0, 0)* steps),
+        shiftBz(FP3(0, 0, 0)* steps),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
     }
 
-    // PSATDTimeStraggered
-
     template<>
-    inline Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells,
-        const Int3 & _globalGridDims) :
-        globalGridDims(_globalGridDims),
-        numInternalCells(_numInternalCells),
-        numCells(numInternalCells),
-        sizeStorage(numCells),
-        Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
-        Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
-        Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
-    {
-        setInterpolationType(Interpolation_CIC);       
-    }
-
-    // PSATDTimeStraggered
-
-    template<>
-    inline Grid<complexFP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells,
-        const Int3 & _globalGridDims, Grid<FP, GridTypes::PSATDTimeStraggeredGridType>* grid) :
-        globalGridDims(_globalGridDims),
-        numInternalCells(_numInternalCells),
-        numCells(numInternalCells),
-        sizeStorage(numCells),
-        Ex(reinterpret_cast<complexFP*>(grid->Ex.getData()), sizeStorage),
-        Ey(reinterpret_cast<complexFP*>(grid->Ey.getData()), sizeStorage),
-        Ez(reinterpret_cast<complexFP*>(grid->Ez.getData()), sizeStorage),
-        Bx(reinterpret_cast<complexFP*>(grid->Bx.getData()), sizeStorage),
-        By(reinterpret_cast<complexFP*>(grid->By.getData()), sizeStorage),
-        Bz(reinterpret_cast<complexFP*>(grid->Bz.getData()), sizeStorage),
-        Jx(reinterpret_cast<complexFP*>(grid->Jx.getData()), sizeStorage),
-        Jy(reinterpret_cast<complexFP*>(grid->Jy.getData()), sizeStorage),
-        Jz(reinterpret_cast<complexFP*>(grid->Jz.getData()), sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
-    {
-        setInterpolationType(Interpolation_CIC);
-    }
-
-    template<>
-    inline Grid<FP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3 & _numInternalCells,
-        const FP3 & minCoords, const FP3 & _steps, const Int3 & _globalGridDims) :
+    inline Grid<FP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3& _numInternalCells,
+        const FP3& minCoords, const FP3& _steps, const Int3& _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),
         numInternalCells(_numInternalCells),
@@ -662,20 +500,17 @@ namespace pfc {
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
-        shiftEJx(FP3(0, 0, 0) * steps),
-        shiftEJy(FP3(0, 0, 0) * steps),
-        shiftEJz(FP3(0, 0, 0) * steps),
-        shiftBx(FP3(0, 0, 0) * steps),
-        shiftBy(FP3(0, 0, 0) * steps),
-        shiftBz(FP3(0, 0, 0) * steps),
+        shiftEJx(FP3(0, 0, 0)* steps),
+        shiftEJy(FP3(0, 0, 0)* steps),
+        shiftEJz(FP3(0, 0, 0)* steps),
+        shiftBx(FP3(0, 0, 0)* steps),
+        shiftBy(FP3(0, 0, 0)* steps),
+        shiftBz(FP3(0, 0, 0)* steps),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
         setInterpolationType(Interpolation_CIC);
     }
-
-
-    // end SPECTRAL GRIDS
 
     template <typename Data, GridTypes gT>
     template <class TGrid>
@@ -701,9 +536,8 @@ namespace pfc {
                 }
     }
 
-    
     template< typename Data, GridTypes gT>
-    inline FP Grid<Data, gT>::getFieldCIC(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const
+    inline FP Grid<Data, gT>::getFieldCIC(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -712,7 +546,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline FP Grid<Data, gT>::getFieldTSC(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const
+    inline FP Grid<Data, gT>::getFieldTSC(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -721,7 +555,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline FP Grid<Data, gT>::getFieldSecondOrder(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const
+    inline FP Grid<Data, gT>::getFieldSecondOrder(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -730,7 +564,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline FP Grid<Data, gT>::getFieldFourthOrder(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const
+    inline FP Grid<Data, gT>::getFieldFourthOrder(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -739,7 +573,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline FP Grid<Data, gT>::getFieldPCS(const FP3& coords, const ScalarField<Data>& field, const FP3 & shift) const
+    inline FP Grid<Data, gT>::getFieldPCS(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -748,7 +582,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline void Grid<Data, gT>::getFieldsCIC(const FP3& coords, FP3 & e, FP3 & b) const
+    inline void Grid<Data, gT>::getFieldsCIC(const FP3& coords, FP3& e, FP3& b) const
     {
         /* For each component of E and B get grid index and internal coords,
         use it as base index and coefficients of interpolation. */
@@ -771,7 +605,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline void Grid<Data, gT>::getFieldsTSC(const FP3& coords, FP3 & e, FP3 & b) const
+    inline void Grid<Data, gT>::getFieldsTSC(const FP3& coords, FP3& e, FP3& b) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -792,7 +626,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline void Grid<Data, gT>::getFieldsSecondOrder(const FP3& coords, FP3 & e, FP3 & b) const
+    inline void Grid<Data, gT>::getFieldsSecondOrder(const FP3& coords, FP3& e, FP3& b) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -813,7 +647,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline void Grid<Data, gT>::getFieldsFourthOrder(const FP3& coords, FP3 & e, FP3 & b) const
+    inline void Grid<Data, gT>::getFieldsFourthOrder(const FP3& coords, FP3& e, FP3& b) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -834,7 +668,7 @@ namespace pfc {
     }
 
     template< typename Data, GridTypes gT>
-    inline void Grid<Data, gT>::getFieldsPCS(const FP3& coords, FP3 & e, FP3 & b) const
+    inline void Grid<Data, gT>::getFieldsPCS(const FP3& coords, FP3& e, FP3& b) const
     {
         Int3 idx;
         FP3 internalCoords;
@@ -922,7 +756,7 @@ namespace pfc {
 
         return b;
     }
-    
+
     template< typename Data, GridTypes gT>
     inline void Grid<Data, gT>::zeroizeJ()
     {
@@ -1001,6 +835,72 @@ namespace pfc {
         return interpolationType;
     }
 
+    template<typename Data, GridTypes gridType_>
+    inline void Grid<Data, gridType_>::save(std::ostream& ostr)
+    {
+        int savedGridType = (int)this->gridType;
+        ostr.write((char*)&savedGridType, sizeof(savedGridType));
+
+        ostr.write((char*)&globalGridDims, sizeof(globalGridDims));
+        ostr.write((char*)&steps, sizeof(steps));
+        ostr.write((char*)&numInternalCells, sizeof(numInternalCells));
+        ostr.write((char*)&numCells, sizeof(numCells));
+        ostr.write((char*)&sizeStorage, sizeof(sizeStorage));
+        ostr.write((char*)&origin, sizeof(origin));
+        ostr.write((char*)&dimensionality, sizeof(dimensionality));
+
+        ostr.write((char*)&shiftEJx, sizeof(shiftEJx));
+        ostr.write((char*)&shiftEJy, sizeof(shiftEJy));
+        ostr.write((char*)&shiftEJz, sizeof(shiftEJz));
+        ostr.write((char*)&shiftBx, sizeof(shiftBx));
+        ostr.write((char*)&shiftBy, sizeof(shiftBy));
+        ostr.write((char*)&shiftBz, sizeof(shiftBz));
+
+        Ex.save(ostr);
+        Ey.save(ostr);
+        Ez.save(ostr);
+        Bx.save(ostr);
+        By.save(ostr);
+        Bz.save(ostr);
+        Jx.save(ostr);
+        Jy.save(ostr);
+        Jz.save(ostr);
+    }
+
+    template<typename Data, GridTypes gridType_>
+    inline void Grid<Data, gridType_>::load(std::istream& istr)
+    {
+        int loadedGridType = -1;
+        istr.read((char*)&loadedGridType, sizeof(loadedGridType));
+        if (loadedGridType != (int)this->gridType)
+            throw "ERROR: types of loaded grids do not match";
+
+        istr.read((char*)&globalGridDims, sizeof(globalGridDims));
+        istr.read((char*)&steps, sizeof(steps));
+        istr.read((char*)&numInternalCells, sizeof(numInternalCells));
+        istr.read((char*)&numCells, sizeof(numCells));
+        istr.read((char*)&sizeStorage, sizeof(sizeStorage));
+        istr.read((char*)&origin, sizeof(origin));
+        istr.read((char*)&dimensionality, sizeof(dimensionality));
+
+        istr.read((char*)&shiftEJx, sizeof(shiftEJx));
+        istr.read((char*)&shiftEJy, sizeof(shiftEJy));
+        istr.read((char*)&shiftEJz, sizeof(shiftEJz));
+        istr.read((char*)&shiftBx, sizeof(shiftBx));
+        istr.read((char*)&shiftBy, sizeof(shiftBy));
+        istr.read((char*)&shiftBz, sizeof(shiftBz));
+
+        Ex.load(istr);
+        Ey.load(istr);
+        Ez.load(istr);
+        Bx.load(istr);
+        By.load(istr);
+        Bz.load(istr);
+        Jx.load(istr);
+        Jy.load(istr);
+        Jz.load(istr);
+    }
+
     /*template<>
     inline void Grid<FP, YeeGridType>::dumpB(FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx)
     {
@@ -1070,7 +970,7 @@ namespace pfc {
                     Ez(nodeIdx) = e[idx].z;
                 }
     }
-    
+
     template<>
     inline void Grid<FP, YeeGridType>::loadB(const FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx)
     {
