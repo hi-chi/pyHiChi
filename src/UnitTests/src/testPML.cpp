@@ -28,7 +28,7 @@ public:
     const int dimension = TTypeDefinitionsPMLTest::dimension;
     const CoordinateEnum axis = TTypeDefinitionsPMLTest::axis;
 
-    const int gridSize1d = 32;
+    const int gridSize1d = 16;
     const int pmlSize1d = 4;
 
     FP3 pmlLeftEnd;
