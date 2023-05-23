@@ -151,69 +151,67 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::convertFieldsPoissonEquation() {
         doFourierTransform(fourier_transform::Direction::RtoC);
+
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = this->dt * 0.5;
+
         OMP_FOR_COLLAPSE()
-            for (int i = begin.x; i < end.x; i++)
-                for (int j = begin.y; j < end.y; j++)
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
                 {
-                    //#pragma omp simd
-                    for (int k = begin.z; k < end.z; k++)
-                    {
-                        FP3 K = getWaveVector(Int3(i, j, k));
-                        FP normK = K.norm();
+                    FP3 K = getWaveVector(Int3(i, j, k));
+                    FP normK = K.norm();
 
-                        if (normK == 0) {
-                            continue;
-                        }
-
-                        K = K / normK;
-
-                        ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
-                        ComplexFP3 El = (ComplexFP3)K * dot((ComplexFP3)K, E);
-
-                        complexGrid->Ex(i, j, k) -= El.x;
-                        complexGrid->Ey(i, j, k) -= El.y;
-                        complexGrid->Ez(i, j, k) -= El.z;
+                    if (normK == 0) {
+                        continue;
                     }
+
+                    K = K / normK;
+
+                    ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
+                    ComplexFP3 El = (ComplexFP3)K * dot((ComplexFP3)K, E);
+
+                    complexGrid->Ex(i, j, k) -= El.x;
+                    complexGrid->Ey(i, j, k) -= El.y;
+                    complexGrid->Ez(i, j, k) -= El.z;
                 }
+
         doFourierTransform(fourier_transform::Direction::CtoR);
     }
 
     template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::updateHalfB()
     {
+        double dt = 0.5 * this->dt;
+
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
+
         OMP_FOR_COLLAPSE()
-            for (int i = begin.x; i < end.x; i++)
-                for (int j = begin.y; j < end.y; j++)
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
                 {
-                    //#pragma omp simd
-                    for (int k = begin.z; k < end.z; k++)
-                    {
-                        FP3 K = getWaveVector(Int3(i, j, k));
-                        FP normK = K.norm();
-                        if (normK == 0) {
-                            continue;
-                        }
-                        K = K / normK;
-
-                        ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
-                        ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k)),
-                            prevJ(tmpJx(i, j, k), tmpJy(i, j, k), tmpJz(i, j, k));
-                        ComplexFP3 crossKE = cross((ComplexFP3)K, E);
-                        ComplexFP3 crossKJ = cross((ComplexFP3)K, J - prevJ);
-
-                        FP S = sin(normK * constants::c * dt * 0.5), C = cos(normK * constants::c * dt * 0.5);
-                        complexFP coeff1 = 2 * complexFP::i() * S, coeff2 = complexFP::i() * ((1 - C) / (normK * constants::c));
-
-                        complexGrid->Bx(i, j, k) += -coeff1 * crossKE.x + coeff2 * crossKJ.x;
-                        complexGrid->By(i, j, k) += -coeff1 * crossKE.y + coeff2 * crossKJ.y;
-                        complexGrid->Bz(i, j, k) += -coeff1 * crossKE.z + coeff2 * crossKJ.z;
+                    FP3 K = getWaveVector(Int3(i, j, k));
+                    FP normK = K.norm();
+                    if (normK == 0) {
+                        continue;
                     }
+                    K = K / normK;
+
+                    ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
+                    ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k)),
+                        prevJ(tmpJx(i, j, k), tmpJy(i, j, k), tmpJz(i, j, k));
+                    ComplexFP3 crossKE = cross((ComplexFP3)K, E);
+                    ComplexFP3 crossKJ = cross((ComplexFP3)K, J - prevJ);
+
+                    FP S = sin(normK * constants::c * dt * 0.5), C = cos(normK * constants::c * dt * 0.5);
+                    complexFP coeff1 = 2 * complexFP::i() * S, coeff2 = complexFP::i() * ((1 - C) / (normK * constants::c));
+
+                    complexGrid->Bx(i, j, k) += -coeff1 * crossKE.x + coeff2 * crossKJ.x;
+                    complexGrid->By(i, j, k) += -coeff1 * crossKE.y + coeff2 * crossKJ.y;
+                    complexGrid->Bz(i, j, k) += -coeff1 * crossKE.z + coeff2 * crossKJ.z;
                 }
     }
 
@@ -222,36 +220,34 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
+
         OMP_FOR_COLLAPSE()
-            for (int i = begin.x; i < end.x; i++)
-                for (int j = begin.y; j < end.y; j++)
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
                 {
-                    //#pragma omp simd
-                    for (int k = begin.z; k < end.z; k++)
-                    {
-                        FP3 K = getWaveVector(Int3(i, j, k));
-                        FP normK = K.norm();
-                        if (normK == 0) {
-                            complexGrid->Ex(i, j, k) += dt * complexGrid->Jx(i, j, k);
-                            complexGrid->Ey(i, j, k) += dt * complexGrid->Jy(i, j, k);
-                            complexGrid->Ez(i, j, k) += dt * complexGrid->Jz(i, j, k);
-                            continue;
-                        }
-                        K = K / normK;
-
-                        ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
-                        ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
-                        ComplexFP3 crossKB = cross((ComplexFP3)K, B);
-                        ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J);
-
-                        FP S = sin(normK * constants::c * dt * 0.5);
-                        complexFP coeff1 = 2 * complexFP::i() * S, coeff2 = 2 * S / (normK * constants::c),
-                            coeff3 = coeff2 - dt;
-
-                        complexGrid->Ex(i, j, k) += coeff1 * crossKB.x - coeff2 * J.x + coeff3 * Jl.x;
-                        complexGrid->Ey(i, j, k) += coeff1 * crossKB.y - coeff2 * J.y + coeff3 * Jl.y;
-                        complexGrid->Ez(i, j, k) += coeff1 * crossKB.z - coeff2 * J.z + coeff3 * Jl.z;
+                    FP3 K = getWaveVector(Int3(i, j, k));
+                    FP normK = K.norm();
+                    if (normK == 0) {
+                        complexGrid->Ex(i, j, k) += dt * complexGrid->Jx(i, j, k);
+                        complexGrid->Ey(i, j, k) += dt * complexGrid->Jy(i, j, k);
+                        complexGrid->Ez(i, j, k) += dt * complexGrid->Jz(i, j, k);
+                        continue;
                     }
+                    K = K / normK;
+
+                    ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
+                    ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
+                    ComplexFP3 crossKB = cross((ComplexFP3)K, B);
+                    ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J);
+
+                    FP S = sin(normK * constants::c * dt * 0.5);
+                    complexFP coeff1 = 2 * complexFP::i() * S, coeff2 = 2 * S / (normK * constants::c),
+                        coeff3 = coeff2 - dt;
+
+                    complexGrid->Ex(i, j, k) += coeff1 * crossKB.x - coeff2 * J.x + coeff3 * Jl.x;
+                    complexGrid->Ey(i, j, k) += coeff1 * crossKB.y - coeff2 * J.y + coeff3 * Jl.y;
+                    complexGrid->Ez(i, j, k) += coeff1 * crossKB.z - coeff2 * J.z + coeff3 * Jl.z;
                 }
     }
 
@@ -262,36 +258,33 @@ namespace pfc {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
         OMP_FOR_COLLAPSE()
-            for (int i = begin.x; i < end.x; i++)
-                for (int j = begin.y; j < end.y; j++)
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
                 {
-                    //#pragma omp simd
-                    for (int k = begin.z; k < end.z; k++)
-                    {
-                        FP3 K = getWaveVector(Int3(i, j, k));
-                        FP normK = K.norm();
-                        if (normK == 0) {
-                            complexGrid->Ex(i, j, k) += dt * complexGrid->Jx(i, j, k);
-                            complexGrid->Ey(i, j, k) += dt * complexGrid->Jy(i, j, k);
-                            complexGrid->Ez(i, j, k) += dt * complexGrid->Jz(i, j, k);
-                            continue;
-                        }
-                        K = K / normK;
-
-                        ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
-                        ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
-                        ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
-                        ComplexFP3 crossKB = cross((ComplexFP3)K, B);
-                        ComplexFP3 El = (ComplexFP3)K * dot((ComplexFP3)K, E);
-                        ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J);
-
-                        FP S = sin(normK * constants::c * dt * 0.5);
-                        complexFP coeff1 = 2 * complexFP::i() * S, coeff2 = 2 * S / (normK * constants::c),
-                            coeff3 = coeff2 - dt;
-                        complexGrid->Ex(i, j, k) += -El.x + coeff1 * crossKB.x - coeff2 * (J.x - Jl.x);
-                        complexGrid->Ey(i, j, k) += -El.y + coeff1 * crossKB.y - coeff2 * (J.y - Jl.y);
-                        complexGrid->Ez(i, j, k) += -El.z + coeff1 * crossKB.z - coeff2 * (J.z - Jl.z);
+                    FP3 K = getWaveVector(Int3(i, j, k));
+                    FP normK = K.norm();
+                    if (normK == 0) {
+                        complexGrid->Ex(i, j, k) += dt * complexGrid->Jx(i, j, k);
+                        complexGrid->Ey(i, j, k) += dt * complexGrid->Jy(i, j, k);
+                        complexGrid->Ez(i, j, k) += dt * complexGrid->Jz(i, j, k);
+                        continue;
                     }
+                    K = K / normK;
+
+                    ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
+                    ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
+                    ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
+                    ComplexFP3 crossKB = cross((ComplexFP3)K, B);
+                    ComplexFP3 El = (ComplexFP3)K * dot((ComplexFP3)K, E);
+                    ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J);
+
+                    FP S = sin(normK * constants::c * dt * 0.5);
+                    complexFP coeff1 = 2 * complexFP::i() * S, coeff2 = 2 * S / (normK * constants::c),
+                        coeff3 = coeff2 - dt;
+                    complexGrid->Ex(i, j, k) += -El.x + coeff1 * crossKB.x - coeff2 * (J.x - Jl.x);
+                    complexGrid->Ey(i, j, k) += -El.y + coeff1 * crossKB.y - coeff2 * (J.y - Jl.y);
+                    complexGrid->Ez(i, j, k) += -El.z + coeff1 * crossKB.z - coeff2 * (J.z - Jl.z);
                 }
     }
 

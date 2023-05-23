@@ -108,14 +108,14 @@ namespace pfc {
 
     inline void PSTD::updateHalfB()
     {
+        double dt = 0.5 * this->dt;
+
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
-            {
-//#pragma omp simd
                 for (int k = begin.z; k < end.z; k++)
                 {
                     ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
@@ -126,18 +126,16 @@ namespace pfc {
                     complexGrid->By(i, j, k) += coeff * crossKE.y;
                     complexGrid->Bz(i, j, k) += coeff * crossKE.z;
                 }
-            }
     }
 
     inline void PSTD::updateE()
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
-            {
-//#pragma omp simd
                 for (int k = begin.z; k < end.z; k++)
                 {
                     ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
@@ -149,7 +147,6 @@ namespace pfc {
                     complexGrid->Ey(i, j, k) += coeff * crossKB.y - 4 * constants::pi * dt * J.y;
                     complexGrid->Ez(i, j, k) += coeff * crossKB.z - 4 * constants::pi * dt * J.z;
                 }
-            }
     }
 
 }
