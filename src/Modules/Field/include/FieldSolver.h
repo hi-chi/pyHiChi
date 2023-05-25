@@ -20,12 +20,8 @@ namespace pfc {
 
     public:
 
-        FieldSolver(Grid<FP, gridType>* _grid, FP dt,
-            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
-            dt(dt),
-            timeShiftE(timeShiftE),
-            timeShiftB(timeShiftB),
-            timeShiftJ(timeShiftJ)
+        FieldSolver(Grid<FP, gridType>* _grid, FP dt) :
+            dt(dt)
         {
             this->grid = _grid;
             this->globalTime = (FP)0.0;
@@ -52,8 +48,6 @@ namespace pfc {
 
         FP globalTime;
         FP dt;
-        // difference between E and B
-        FP timeShiftE, timeShiftB, timeShiftJ;
     };
 
     template<GridTypes gridType>
@@ -88,23 +82,23 @@ namespace pfc {
     template<GridTypes gridType>
     inline void FieldSolver<gridType>::updateInternalDims()
     {
-        //if (pml.get())
-        //{
-        //    for (int d = 0; d < 3; ++d)
-        //    {
-        //        internalBAreaBegin[d] = std::max(updateBAreaBegin[d], pml->leftPmlBorder[d]);
-        //        internalBAreaEnd[d] = std::min(updateBAreaEnd[d], pml->rightPmlBorder[d]);
-        //        internalEAreaBegin[d] = std::max(updateEAreaBegin[d], pml->leftPmlBorder[d]);
-        //        internalEAreaEnd[d] = std::min(updateEAreaEnd[d], pml->rightPmlBorder[d]);
-        //    }
-        //}
-        //else
-        //{
-        internalBAreaBegin = updateBAreaBegin;
-        internalBAreaEnd = updateBAreaEnd;
-        internalEAreaBegin = updateEAreaBegin;
-        internalEAreaEnd = updateEAreaEnd;
-        //}
+        if (pml)
+        {
+            for (int d = 0; d < 3; ++d)
+            {
+                internalBAreaBegin[d] = std::max(updateBAreaBegin[d], pml->leftPmlBorder[d]);
+                internalBAreaEnd[d] = std::min(updateBAreaEnd[d], pml->rightPmlBorder[d]);
+                internalEAreaBegin[d] = std::max(updateEAreaBegin[d], pml->leftPmlBorder[d]);
+                internalEAreaEnd[d] = std::min(updateEAreaEnd[d], pml->rightPmlBorder[d]);
+            }
+        }
+        else
+        {
+            internalBAreaBegin = updateBAreaBegin;
+            internalBAreaEnd = updateBAreaEnd;
+            internalEAreaBegin = updateEAreaBegin;
+            internalEAreaEnd = updateEAreaEnd;
+        }
     }
 
 
@@ -112,9 +106,8 @@ namespace pfc {
     class RealFieldSolver : public FieldSolver<gridType>
     {
     public:
-        RealFieldSolver(Grid<FP, gridType>* _grid, FP dt,
-            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
-            FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
+        RealFieldSolver(Grid<FP, gridType>* _grid, FP dt) :
+            FieldSolver<gridType>(_grid, dt)
         {}
 
     private:
@@ -128,9 +121,8 @@ namespace pfc {
     class SpectralFieldSolver : public FieldSolver<gridType>
     {
     public:
-        SpectralFieldSolver(Grid<FP, gridType>* _grid, FP dt,
-            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
-            FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
+        SpectralFieldSolver(Grid<FP, gridType>* _grid, FP dt) :
+            FieldSolver<gridType>(_grid, dt)
         {
             complexGrid.reset(new SpectralGrid<FP, complexFP>(
                 fourier_transform::getSizeOfComplexArray(_grid->numCells),

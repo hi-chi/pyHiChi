@@ -64,7 +64,7 @@ namespace pfc {
     };
 
     inline FDTD::FDTD(FDTD::GridType* grid, FP dt) :
-        RealFieldSolver(grid, dt, 0.0, 0.5 * dt, 0.5 * dt)
+        RealFieldSolver(grid, dt)
     {
         if (!ifCourantConditionSatisfied(dt)) {
             std::cout
@@ -92,8 +92,6 @@ namespace pfc {
     {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            this->timeShiftB = 0.5 * dt;
-            this->timeShiftJ = 0.5 * dt;
             if (pml) pml.reset(new PmlType(this, pml->sizePml));
             if (generator) generator.reset(generator->createInstance(this));
         }

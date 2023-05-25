@@ -44,7 +44,7 @@ namespace pfc {
 
     template <bool ifPoisson>
     inline PSATDT<ifPoisson>::PSATDT(PSATDT<ifPoisson>::GridType* grid, FP dt) :
-        SpectralFieldSolver(grid, dt, 0.0, 0.0, 0.5 * dt)
+        SpectralFieldSolver(grid, dt)
     {
         updateDims();
         updateInternalDims();
@@ -67,7 +67,6 @@ namespace pfc {
     inline void PSATDT<ifPoisson>::setTimeStep(FP dt)
     {
         this->dt = dt;
-        this->timeShiftJ = 0.5 * dt;
         if (pml) pml.reset(new PmlType(this, pml->sizePml));
         if (generator) generator.reset(generator->createInstance(this));
     }

@@ -303,7 +303,7 @@ namespace pfc {
 
             eyx[idx] = coeff1 * eyx[idx] + coeff2 *
                 (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-            ezx[idx] = coeff1 * ezx[idx] + coeff2 *
+            ezx[idx] = coeff1 * ezx[idx] - coeff2 *
                 (grid->By(i + 1, j, k) - grid->By(i, j, k));
 
             // Yee Grid indices: Ex(..., j+1/2, ...), Ez(..., j+1/2, ...)-> sigmaY(j+1/2)
@@ -315,7 +315,7 @@ namespace pfc {
                 coeff2 = (coeff1 - (FP)1) / (sigma * dy);
             else coeff2 = -cdt / dy;
 
-            exy[idx] = coeff1 * exy[idx] + coeff2 *
+            exy[idx] = coeff1 * exy[idx] - coeff2 *
                 (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k));
             ezy[idx] = coeff1 * ezy[idx] + coeff2 *
                 (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));

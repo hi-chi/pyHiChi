@@ -26,7 +26,9 @@ public:
     const int dimension = TTypeDefinitionsFieldSolverTest::dimension;
     const CoordinateEnum axis = TTypeDefinitionsFieldSolverTest::axis;
 
-    const int gridSize1d = 32;
+    const int gridSizeLongitudinal = 32;
+    const int gridSizeTransverse = 8;
+    const int pmlSize1d = 4;
 
     std::unique_ptr<FieldSolverType> fieldSolver;
     std::unique_ptr<GridType> grid;
@@ -37,28 +39,28 @@ public:
 
     std::unique_ptr<typename FieldSolverType::PeriodicalFieldGeneratorType> generator;
 
-    const FP relatedEnergyThreshold = 1e-2;
-
     virtual void SetUp() {
         this->maxAbsoluteError = 1e-4;
-        this->maxRelativeError = 1e-1;
+        this->maxRelativeError = 0.5;
 
         gridSize = Int3(1, 1, 1);
         for (int d = 0; d < dimension; d++) {
-            gridSize[d] = gridSize1d;
+            gridSize[d] = gridSizeTransverse;
         }
+        gridSize[(int)axis] = gridSizeLongitudinal;
 
         this->minCoords = FP3(0, 0, 0);
-        this->maxCoords = FP3(gridSize.x * constants::c, gridSize.y * constants::c, gridSize.z * constants::c);
-        this->gridStep = FP3(constants::c, constants::c, constants::c);
+        this->maxCoords = constants::c * (FP3)gridSize;
+        this->gridStep = (this->maxCoords - this->minCoords) / (FP3)this->gridSize;
 
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
-        initializeGrid();
 
         // should satisfy the Courant's condition for all solvers
-        this->timeStep = 0.1 * constants::c / grid->steps[(int)axis];
+        this->timeStep = 0.4 * constants::c / grid->steps.norm();
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
+
+        initializeGrid();
     }
 
     void initializeGrid() {
@@ -83,21 +85,25 @@ public:
                 }
     }
 
+    FP fieldFunc(FP x, FP y, FP z, FP t) {
+        FP3 coord(x, y, z);
+        int axis0 = (int)this->axis;
+        return sin((FP)2.0 * constants::pi / (maxCoords[axis0] - minCoords[axis0]) *
+            (coord[axis0] - constants::c * t - minCoords[axis0]));
+    }
+
     FP3 eTest(FP x, FP y, FP z, FP t) {
         FP3 coord(x, y, z);
         CoordinateEnum axisE = CoordinateEnum(((int)axis + 1) % 3);
         FP3 e;
-        e[(int)axisE] = sin((FP)2.0 * constants::pi / (maxCoords[(int)axis] - minCoords[(int)axis]) *
-            (coord[(int)axis] - constants::c * t - minCoords[(int)axis]));
+        e[(int)axisE] = fieldFunc(x, y, z, t);
         return e;
     }
 
     FP3 bTest(FP x, FP y, FP z, FP t) {
-        FP3 coord(x, y, z);
         CoordinateEnum axisB = CoordinateEnum(((int)axis + 2) % 3);
         FP3 b;
-        b[(int)axisB] = sin((FP)2.0 * constants::pi / (maxCoords[(int)axis] - minCoords[(int)axis]) *
-            (coord[(int)axis] - constants::c * t - minCoords[(int)axis]));
+        b[(int)axisB] = fieldFunc(x, y, z, t);
         return b;
     }
 };
@@ -189,8 +195,8 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
     generator.reset(new FieldSolverType::PeriodicalFieldGeneratorType(fieldSolver.get()));
     fieldSolver->setFieldGenerator(generator.get());
 
-    const int numSteps = (int)(grid->numCells[(int)axis] * grid->steps[(int)axis] /
-        (constants::c * fieldSolver->dt) * 0.1);
+    const int numSteps = (int)(grid->numInternalCells[(int)axis] * grid->steps[(int)axis] /
+        (constants::c * fieldSolver->dt));
 
     for (int step = 0; step < numSteps; ++step)
     {

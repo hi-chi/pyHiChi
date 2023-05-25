@@ -71,7 +71,7 @@ namespace pfc {
 
     template <bool ifPoisson>
     inline PSATDTimeStraggeredT<ifPoisson>::PSATDTimeStraggeredT(PSATDTimeStraggeredT<ifPoisson>::GridType* grid, FP dt) :
-        SpectralFieldSolver(grid, dt, 0.0, 0.5 * dt, 0.5 * dt),
+        SpectralFieldSolver(grid, dt),
         tmpJx(complexGrid->sizeStorage),
         tmpJy(complexGrid->sizeStorage),
         tmpJz(complexGrid->sizeStorage)
@@ -98,8 +98,6 @@ namespace pfc {
     inline void PSATDTimeStraggeredT<ifPoisson>::setTimeStep(FP dt)
     {
         this->dt = dt;
-        this->timeShiftB = 0.5 * dt;
-        this->timeShiftJ = 0.5 * dt;
         if (pml) pml.reset(new PmlType(this, pml->sizePml));
         if (generator) generator.reset(generator->createInstance(this));
     }
