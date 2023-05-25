@@ -3,6 +3,7 @@
 #include "FieldSolver.h"
 #include "Grid.h"
 #include "PmlFdtd.h"
+#include "BoundaryConditionFdtd.h"
 #include "Vectors.h"
 
 #include <algorithm>
@@ -15,14 +16,16 @@ namespace pfc {
 
         using GridType = YeeGrid;
         using PmlType = PmlFdtd;
-        using PeriodicalFieldGeneratorType = PeriodicalFieldGeneratorYee;
+        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionFdtd;
+        using ReflectBoundaryConditionType = ReflectBoundaryConditionFdtd;
 
         FDTD(GridType* grid, FP dt);
 
         void updateFields();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setFieldGenerator(PeriodicalFieldGeneratorType* _generator);
+        void setBoundaryCondition(
+            FieldBoundaryCondition<GridTypes::YeeGridType>* _boundaryCondition);
 
         void updateHalfB();
         void updateE();
@@ -83,9 +86,10 @@ namespace pfc {
         updateInternalDims();
     }
 
-    inline void FDTD::setFieldGenerator(FDTD::PeriodicalFieldGeneratorType* _generator)
+    inline void FDTD::setBoundaryCondition(
+        FieldBoundaryCondition<GridTypes::YeeGridType>* _boundaryCondition)
     {
-        generator.reset(_generator->createInstance(this));
+        boundaryCondition.reset(_boundaryCondition->createInstance(this));
     }
 
     inline void FDTD::setTimeStep(FP dt)
@@ -93,7 +97,7 @@ namespace pfc {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
             if (pml) pml.reset(new PmlType(this, pml->sizePml));
-            if (generator) generator.reset(generator->createInstance(this));
+            if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
         }
         else {
             std::cout
@@ -144,10 +148,10 @@ namespace pfc {
     {
         updateHalfB();
         if (pml) pml->updateB();
-        if (generator) generator->generateB();
+        if (boundaryCondition) boundaryCondition->generateB();
         updateE();
         if (pml) pml->updateE();
-        if (generator) generator->generateE();
+        if (boundaryCondition) boundaryCondition->generateE();
         updateHalfB();
         globalTime += dt;
     }

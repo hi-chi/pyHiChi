@@ -45,7 +45,7 @@ namespace pfc
     typedef FieldGenerator<GridTypes::YeeGridType> FieldGeneratorYee;
 
     template<GridTypes gridTypes>
-    FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* _fieldSolver)
+    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* _fieldSolver)
     {
         fieldSolver = _fieldSolver;
         leftCoeff = FP3(0, 0, 0);
@@ -79,7 +79,7 @@ namespace pfc
     }
 
     template<GridTypes gridTypes>
-    void FieldGenerator<gridTypes>::generateB()
+    inline void FieldGenerator<gridTypes>::generateB()
     {
         Grid<FP, gridTypes>* grid = fieldSolver->grid;
         const FP time = fieldSolver->globalTime +
@@ -136,7 +136,7 @@ namespace pfc
     }
 
     template<GridTypes gridTypes>
-    void FieldGenerator<gridTypes>::generateE()
+    inline void FieldGenerator<gridTypes>::generateE()
     {
         Grid<FP, gridTypes> * grid = fieldSolver->grid;
         const FP time = fieldSolver->globalTime;
@@ -190,241 +190,4 @@ namespace pfc
                 }
         }
     }
-
-    
-    template<GridTypes gridTypes>
-    class BoundaryFieldGenerator : public FieldGenerator<gridTypes>
-    {
-    public:
-
-        BoundaryFieldGenerator(FieldSolver<gridTypes>* fieldSolver = 0,
-            bool isXAxisEnabled = true, bool isYAxisEnabled = true, bool isZAxisEnabled = true):
-            FieldGenerator<gridTypes>(fieldSolver),
-            enabledAxis({ isXAxisEnabled, isYAxisEnabled, isZAxisEnabled }) {
-        }
-
-        BoundaryFieldGenerator(const BoundaryFieldGenerator& gen, FieldSolver<gridTypes>* fieldSolver = 0) :
-            FieldGenerator<gridTypes>(gen, fieldSolver), enabledAxis(gen.enabledAxis) {
-        }
-
-        std::array<bool, 3> enabledAxis;
-    };
-
-
-    template<GridTypes gridTypes>
-    class PeriodicalFieldGenerator : public BoundaryFieldGenerator<gridTypes>
-    {
-    public:
-        PeriodicalFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0,
-            bool isXAxisEnabled = true, bool isYAxisEnabled = true, bool isZAxisEnabled = true) :
-            BoundaryFieldGenerator<gridTypes>(fieldSolver, isXAxisEnabled, isYAxisEnabled, isZAxisEnabled) {
-        }
-
-        // copy constructor, other fieldSolver is possible
-        PeriodicalFieldGenerator(const PeriodicalFieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0) :
-            BoundaryFieldGenerator<gridTypes>(gen, fieldSolver) {
-        }
-
-        void generateB() override;
-        void generateE() override;
-
-        FieldGenerator<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver) override {
-            return new PeriodicalFieldGenerator(*this, static_cast<RealFieldSolver<gridTypes>*>(fieldSolver));
-        }
-    };
-
-    typedef PeriodicalFieldGenerator<GridTypes::YeeGridType> PeriodicalFieldGeneratorYee;
-
-    template<GridTypes gridTypes>
-    void PeriodicalFieldGenerator<gridTypes>::generateB()
-    {
-        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-        for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
-        {
-            if (!enabledAxis[dim0]) continue;
-
-            int dim1 = (dim0 + 1) % 3;
-            int dim2 = (dim0 + 2) % 3;
-            int begin1 = 0;
-            int begin2 = 0;
-            int end1 = grid->numCells[dim1];
-            int end2 = grid->numCells[dim2];
-            //OMP_FOR_COLLAPSE()
-            for (int j = begin1; j < end1; j++)
-                for (int k = begin2; k < end2; k++)
-                {
-                    Int3 indexL, indexR;
-                    indexL[dim0] = 0;
-                    indexL[dim1] = j;
-                    indexL[dim2] = k;
-                    indexR[dim0] = indexL[dim0] + grid->numInternalCells[dim0];
-                    indexR[dim1] = j;
-                    indexR[dim2] = k;
-
-                    grid->Bx(indexL) = grid->Bx(indexR);
-                    grid->By(indexL) = grid->By(indexR);
-                    grid->Bz(indexL) = grid->Bz(indexR);
-                }
-        }
-    }
-
-    template<GridTypes gridTypes>
-    void PeriodicalFieldGenerator<gridTypes>::generateE()
-    {
-        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-        for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
-        {
-            if (!enabledAxis[dim0]) continue;
-
-            int dim1 = (dim0 + 1) % 3;
-            int dim2 = (dim0 + 2) % 3;
-            int begin1 = 0;
-            int begin2 = 0;
-            int end1 = grid->numCells[dim1];
-            int end2 = grid->numCells[dim2];
-            //OMP_FOR_COLLAPSE()
-            for (int j = begin1; j < end1; j++)
-                for (int k = begin2; k < end2; k++)
-                {
-                    Int3 indexL, indexR;
-                    indexR[dim0] = grid->numCells[dim0] - 1;
-                    indexR[dim1] = j;
-                    indexR[dim2] = k;
-                    indexL[dim0] = indexR[dim0] - grid->numInternalCells[dim0];
-                    indexL[dim1] = j;
-                    indexL[dim2] = k;
-
-                    grid->Ex(indexR) = grid->Ex(indexL);
-                    grid->Ey(indexR) = grid->Ey(indexL);
-                    grid->Ez(indexR) = grid->Ez(indexL);
-                }
-        }
-    }
-
-
-    template<GridTypes gridTypes>
-    class ReflectFieldGenerator : public BoundaryFieldGenerator<gridTypes>
-    {
-    public:
-        ReflectFieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0,
-            bool isXAxisEnabled = true, bool isYAxisEnabled = true, bool isZAxisEnabled = true) :
-            BoundaryFieldGenerator<gridTypes>(fieldSolver, isXAxisEnabled, isYAxisEnabled, isZAxisEnabled) {
-        }
-
-        // copy constructor, other fieldSolver is possible
-        ReflectFieldGenerator(const ReflectFieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0) :
-            BoundaryFieldGenerator<gridTypes>(gen, fieldSolver) {
-        }
-
-        void generateB() override;
-        void generateE() override;
-
-        FieldGenerator<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver) override {
-            return new ReflectFieldGenerator(*this, static_cast<RealFieldSolver<gridTypes>*>(fieldSolver));
-        }
-    };
-
-    typedef ReflectFieldGenerator<GridTypes::YeeGridType> ReflectFieldGeneratorYee;
-
-    template<GridTypes gridTypes>
-    void ReflectFieldGenerator<gridTypes>::generateB()
-    {
-        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-        for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
-        {
-            if (!enabledAxis[dim0]) continue;
-
-            int dim1 = (dim0 + 1) % 3;
-            int dim2 = (dim0 + 2) % 3;
-            int begin1 = this->fieldSolver->internalBAreaBegin[dim1];
-            int begin2 = this->fieldSolver->internalBAreaBegin[dim2];
-            int end1 = this->fieldSolver->internalBAreaEnd[dim1];
-            int end2 = this->fieldSolver->internalBAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
-            for (int j = begin1; j < end1; j++)
-                for (int k = begin2; k < end2; k++)
-                {
-                    // Adjust indexes for symmetry of generation coordinates
-                    Int3 indexL, indexR;
-                    indexL[dim0] = this->fieldSolver->internalBAreaBegin[dim0];
-                    indexL[dim1] = j;
-                    indexL[dim2] = k;
-                    indexR[dim0] = this->fieldSolver->internalBAreaEnd[dim0] - 1;
-                    indexR[dim1] = j;
-                    indexR[dim2] = k;
-
-                    grid->Bx(indexR) = (FP)0.0;
-                    grid->By(indexR) = (FP)0.0;
-                    grid->Bz(indexR) = (FP)0.0;
-                    grid->Bx(indexL) = (FP)0.0;
-                    grid->By(indexL) = (FP)0.0;
-                    grid->Bz(indexL) = (FP)0.0;
-                }
-        }
-    }
-
-    template<GridTypes gridTypes>
-    void ReflectFieldGenerator<gridTypes>::generateE()
-    {
-        Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
-        for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
-        {
-            if (!enabledAxis[dim0]) continue;
-
-            int dim1 = (dim0 + 1) % 3;
-            int dim2 = (dim0 + 2) % 3;
-            int begin1 = this->fieldSolver->internalEAreaBegin[dim1];
-            int begin2 = this->fieldSolver->internalEAreaBegin[dim2];
-            int end1 = this->fieldSolver->internalEAreaEnd[dim1];
-            int end2 = this->fieldSolver->internalEAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
-            for (int j = begin1; j < end1; j++)
-                for (int k = begin2; k < end2; k++)
-                {
-                    // Adjust indexes for symmetry of generation coordinates
-                    Int3 indexL, indexR;
-                    indexL[dim0] = this->fieldSolver->internalEAreaBegin[dim0];
-                    indexL[dim1] = j;
-                    indexL[dim2] = k;
-                    indexR[dim0] = this->fieldSolver->internalEAreaEnd[dim0] - 1;
-                    indexR[dim1] = j;
-                    indexR[dim2] = k;
-
-                    grid->Ex(indexL) = (FP)0.0;
-                    grid->Ey(indexL) = (FP)0.0;
-                    grid->Ez(indexL) = (FP)0.0;
-                    grid->Ex(indexR) = (FP)0.0;
-                    grid->Ey(indexR) = (FP)0.0;
-                    grid->Ez(indexR) = (FP)0.0;
-                }
-        }
-    }
-
-
-    template <GridTypes gridTypes>
-    class SpectralPeriodicalFieldGenerator : public BoundaryFieldGenerator<gridTypes> {
-    public:
-
-        // for spectral solvers periodical boundaries are default because of FFT
-        // so isXAxisEnabled, isYAxisEnabled, isZAxisEnabled are ignored
-        SpectralPeriodicalFieldGenerator(SpectralFieldSolver<gridTypes>* fieldSolver = 0,
-            bool isXAxisEnabled = true, bool isYAxisEnabled = true, bool isZAxisEnabled = true):
-            BoundaryFieldGenerator<gridTypes>(fieldSolver, true, true, true) {
-        }
-
-        // copy constructor, other fieldSolver is possible
-        SpectralPeriodicalFieldGenerator(const SpectralPeriodicalFieldGenerator& gen,
-            SpectralFieldSolver<gridTypes>* fieldSolver = 0):
-            BoundaryFieldGenerator<gridTypes>(gen, fieldSolver) {}
-
-        FieldGenerator<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver = 0) override {
-            return new SpectralPeriodicalFieldGenerator(*this,
-                static_cast<SpectralFieldSolver<gridTypes>*>(fieldSolver));
-        }
-
-    };
-
-    typedef SpectralPeriodicalFieldGenerator<GridTypes::PSTDGridType> PeriodicalFieldGeneratorPstd;
-    typedef SpectralPeriodicalFieldGenerator<GridTypes::PSATDGridType> PeriodicalFieldGeneratorPsatd;
-    typedef SpectralPeriodicalFieldGenerator<GridTypes::PSATDTimeStraggeredGridType> PeriodicalFieldGeneratorPsatdTimeStraggered;
 }

@@ -1,16 +1,19 @@
 #pragma once
-#include "Grid.h"
-#include "SpectralGrid.h"
-#include "FieldGenerator.h"
-#include "Vectors.h"
-#include "FourierTransform.h"
-
 #include <algorithm>
 #include <memory>
+
+#include "Grid.h"
+#include "SpectralGrid.h"
+#include "Vectors.h"
+#include "FourierTransform.h"
 
 namespace pfc {
     template<GridTypes gridType>
     class Pml;
+    template<GridTypes gridType>
+    class FieldBoundaryCondition;
+    template<GridTypes gridType>
+    class FieldGenerator;
 
     // Base class for field solvers on Grid.
     // The main method doStep uses template method pattern.
@@ -25,7 +28,6 @@ namespace pfc {
         {
             this->grid = _grid;
             this->globalTime = (FP)0.0;
-            this->generator.reset(nullptr);
         }
 
         void updateDims();
@@ -37,7 +39,7 @@ namespace pfc {
         Grid<FP, gridType>* grid;
 
         std::unique_ptr<Pml<gridType>> pml;
-        std::unique_ptr<FieldGenerator<gridType>> generator;
+        std::unique_ptr<FieldBoundaryCondition<gridType>> boundaryCondition;
 
         // Index space being updated in form [begin, end).
         Int3 updateBAreaBegin, updateBAreaEnd;
@@ -55,7 +57,7 @@ namespace pfc {
     {
         ostr.write((char*)&globalTime, sizeof(globalTime));
         // if (pml.get()) pml->save(ostr);  // virtual
-        // if (generator.get()) generator->save(ostr);  // virtual
+        // if (boundaryCondition.get()) boundaryCondition->save(ostr);  // virtual
     }
 
     template<GridTypes gridType>
@@ -67,7 +69,7 @@ namespace pfc {
         // all the next modules have already created in FieldSolver constructor
         // we need to load them only
         // if (pml.get()) pml->load(istr);  // virtual
-        // if (generator.get()) generator->load(istr);  // virtual
+        // if (boundaryCondition.get()) boundaryCondition->load(istr);  // virtual
     }
 
     template<GridTypes gridType>

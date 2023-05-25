@@ -37,7 +37,7 @@ public:
     FP timeStep = 0;
     FP3 minCoords, maxCoords;
 
-    std::unique_ptr<typename FieldSolverType::PeriodicalFieldGeneratorType> generator;
+    std::unique_ptr<typename FieldSolverType::PeriodicalBoundaryConditionType> boundaryCondition;
 
     virtual void SetUp() {
         this->maxAbsoluteError = 1e-4;
@@ -192,8 +192,8 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
     SUCCEED();
 #else
 
-    generator.reset(new FieldSolverType::PeriodicalFieldGeneratorType(fieldSolver.get()));
-    fieldSolver->setFieldGenerator(generator.get());
+    boundaryCondition.reset(new FieldSolverType::PeriodicalBoundaryConditionType(fieldSolver.get()));
+    fieldSolver->setBoundaryCondition(boundaryCondition.get());
 
     const int numSteps = (int)(grid->numInternalCells[(int)axis] * grid->steps[(int)axis] /
         (constants::c * fieldSolver->dt));

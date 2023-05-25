@@ -4,6 +4,7 @@
 #include "Grid.h"
 #include "Vectors.h"
 #include "PmlPstd.h"
+#include "BoundaryConditionSpectral.h"
 
 namespace pfc {
     class PSTD : public SpectralFieldSolver<PSTDGridType>
@@ -12,7 +13,7 @@ namespace pfc {
 
         using GridType = PSTDGrid;
         using PmlType = PmlPstd;
-        using PeriodicalFieldGeneratorType = PeriodicalFieldGeneratorPstd;
+        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionPstd;
 
         PSTD(GridType* grid, double dt);
 
@@ -22,7 +23,8 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setFieldGenerator(PeriodicalFieldGeneratorType* _generator);
+        void setBoundaryCondition(
+            FieldBoundaryCondition<GridTypes::PSTDGridType>* _boundaryCondition);
 
         void setTimeStep(FP dt);
 
@@ -64,9 +66,10 @@ namespace pfc {
         updateInternalDims();
     }
 
-    inline void PSTD::setFieldGenerator(PSTD::PeriodicalFieldGeneratorType* _generator)
+    inline void PSTD::setBoundaryCondition(
+        FieldBoundaryCondition<GridTypes::PSTDGridType>* _boundaryCondition)
     {
-        generator.reset(_generator->createInstance(this));
+        boundaryCondition.reset(_boundaryCondition->createInstance(this));
     }
 
     inline void PSTD::setTimeStep(FP dt)
@@ -74,7 +77,7 @@ namespace pfc {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
             if (pml) pml.reset(new PmlType(this, pml->sizePml));
-            if (generator) generator.reset(generator->createInstance(this));
+            if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
         }
         else {
             std::cout
@@ -89,12 +92,15 @@ namespace pfc {
 
         if (pml) getPml()->updateBSplit();
         updateHalfB();
+        if (boundaryCondition) boundaryCondition->generateB();
 
         if (pml) getPml()->updateESplit();
         updateE();
+        if (boundaryCondition) boundaryCondition->generateE();
 
         if (pml) getPml()->updateBSplit();
         updateHalfB();
+        if (boundaryCondition) boundaryCondition->generateB();
 
         doFourierTransform(fourier_transform::Direction::CtoR);
 

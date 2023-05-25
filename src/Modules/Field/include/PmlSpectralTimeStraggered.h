@@ -11,7 +11,7 @@ namespace pfc {
     {
     public:
         PmlSpectralTimeStraggered(SpectralFieldSolver<gridTypes>* solver, Int3 sizePml) :
-            PmlSpectral<gridTypes>(static_cast<SpectralFieldSolver<gridTypes>*>(solver), sizePml),
+            PmlSpectral<gridTypes>(solver, sizePml),
             tmpFieldReal(solver->grid->sizeStorage),
             tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(solver->grid->numCells))
         {

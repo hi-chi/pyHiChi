@@ -11,7 +11,7 @@ namespace pfc {
     {
     public:
         PmlPsatdBase(SpectralFieldSolver<TPSATDGridType>* solver, Int3 sizePml) :
-            PmlSpectralTimeStraggered<TPSATDGridType>(static_cast<SpectralFieldSolver<TPSATDGridType>*>(solver), sizePml) {}
+            PmlSpectralTimeStraggered<TPSATDGridType>(solver, sizePml) {}
 
         void computeTmpField(MemberOfFP3 coordK,
             SpectralScalarField<FP, complexFP>& field, double dt, double sign);
@@ -47,8 +47,7 @@ namespace pfc {
     {
     public:
         PmlPsatdTimeStraggered(SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>* solver, Int3 sizePml) :
-            PmlPsatdBase<GridTypes::PSATDTimeStraggeredGridType>(
-                static_cast<SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>*>(solver), sizePml) {}
+            PmlPsatdBase<GridTypes::PSATDTimeStraggeredGridType>(solver, sizePml) {}
 
         virtual void computeTmpField(MemberOfFP3 coordK,
             SpectralScalarField<FP, complexFP>& field, double dt, double sign) {
@@ -61,7 +60,7 @@ namespace pfc {
     {
     public:
         PmlPsatd(SpectralFieldSolver<GridTypes::PSATDGridType>* solver, Int3 sizePml) :
-            PmlPsatdBase<GridTypes::PSATDGridType>(static_cast<SpectralFieldSolver<GridTypes::PSATDGridType>*>(solver), sizePml) {}
+            PmlPsatdBase<GridTypes::PSATDGridType>(solver, sizePml) {}
 
         virtual void computeTmpField(MemberOfFP3 coordK,
             SpectralScalarField<FP, complexFP>& field, double dt, double sign) {

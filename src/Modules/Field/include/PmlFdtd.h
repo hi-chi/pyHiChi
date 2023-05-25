@@ -3,17 +3,15 @@
 
 #include "Grid.h"
 #include "FieldSolver.h"
-#include "Fdtd.h"
 #include "Pml.h"
 
 namespace pfc {
-    class FDTD;
 
     class PmlFdtd : public PmlReal<YeeGridType>
     {
     public:
-        PmlFdtd(FDTD* solver, Int3 sizePml) :
-            PmlReal((RealFieldSolver<YeeGridType>*)solver, sizePml) {}
+        PmlFdtd(FieldSolver<GridTypes::YeeGridType>* solver, Int3 sizePml) :
+            PmlReal(static_cast<RealFieldSolver<GridTypes::YeeGridType>*>(solver), sizePml) {}
 
         void updateB();
         void updateE();

@@ -10,10 +10,13 @@ add_library(fieldModules_interface INTERFACE)
 set(FIELDMODULES_INCLUDE_DIR include)	
 set(FIELDMODULES_HEADER_DIR ${FIELDMODULES_INCLUDE_DIR})
 set(fieldModules_headers
+    ${FIELDMODULES_HEADER_DIR}/BoundaryConditionFdtd.h
+    ${FIELDMODULES_HEADER_DIR}/BoundaryConditionSpectral.h
     ${FIELDMODULES_HEADER_DIR}/Mapping.h
     ${FIELDMODULES_HEADER_DIR}/Field.h
     ${FIELDMODULES_HEADER_DIR}/FieldConfiguration.h
     ${FIELDMODULES_HEADER_DIR}/Fdtd.h
+    ${FIELDMODULES_HEADER_DIR}/FieldBoundaryCondition.h
     ${FIELDMODULES_HEADER_DIR}/FieldGenerator.h
     ${FIELDMODULES_HEADER_DIR}/FieldSolver.h
     ${FIELDMODULES_HEADER_DIR}/Pml.h

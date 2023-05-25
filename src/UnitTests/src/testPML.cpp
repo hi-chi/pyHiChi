@@ -23,7 +23,7 @@ public:
 
     using FieldSolverType = typename TTypeDefinitionsPMLTest::FieldSolverType;
     using GridType = typename TTypeDefinitionsPMLTest::GridType;
-    using PeriodicalFieldGeneratorType = typename FieldSolverType::PeriodicalFieldGeneratorType;
+    using PeriodicalBoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
 
     const int dimension = TTypeDefinitionsPMLTest::dimension;
     const CoordinateEnum axis = TTypeDefinitionsPMLTest::axis;
@@ -37,7 +37,7 @@ public:
 
     std::unique_ptr<FieldSolverType> fieldSolver;
     std::unique_ptr<GridType> grid;
-    std::unique_ptr<PeriodicalFieldGeneratorType> generator;
+    std::unique_ptr<PeriodicalBoundaryConditionType> boundaryCondition;
 
     Int3 gridSize;
     Int3 pmlSize;
@@ -227,10 +227,10 @@ public:
         bool periodicAxis[3] = { true, true, true };
         periodicAxis[(int)axis] = false;
 
-        generator.reset(new PeriodicalFieldGeneratorType(fieldSolver.get(),
-            periodicAxis[0], periodicAxis[1], periodicAxis[2]));
+        boundaryCondition.reset(new PeriodicalBoundaryConditionType(
+            fieldSolver.get(), periodicAxis[0], periodicAxis[1], periodicAxis[2]));
 
-        fieldSolver->setFieldGenerator(generator.get());
+        fieldSolver->setBoundaryCondition(boundaryCondition.get());
     }
 
 };

@@ -1,10 +1,9 @@
 #pragma once
-
-#include "FieldSolver.h"
-#include "Grid.h"
-#include "Vectors.h"
-
 #include <vector>
+
+#include "Grid.h"
+#include "FieldSolver.h"
+#include "Vectors.h"
 
 namespace pfc {
     template<GridTypes gridTypes>
@@ -26,10 +25,10 @@ namespace pfc {
 
         Int3 sizePml;
         Int3 leftPmlBorder, rightPmlBorder;
-        std::vector<FP> exy, exz, eyx, eyz, ezx, ezy; // split electric field
-        std::vector<FP> bxy, bxz, byx, byz, bzx, bzy; // split magnetic field
+        std::vector<FP> exy, exz, eyx, eyz, ezx, ezy;  // split electric field
+        std::vector<FP> bxy, bxz, byx, byz, bzx, bzy;  // split magnetic field
 
-        std::vector<Int3> eIndex, bIndex; // natural 3d indexes of nodes in PML
+        std::vector<Int3> eIndex, bIndex;  // natural 3d indexes of nodes in PML
 
         forceinline FP computeSigma(FP coord, CoordinateEnum axis) const;
 
@@ -181,6 +180,7 @@ namespace pfc {
         {}
 
     };
+
 
     template<GridTypes gridTypes>
     class PmlSpectral : public Pml<gridTypes>
