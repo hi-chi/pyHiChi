@@ -3,6 +3,7 @@
 #include "Constants.h"
 #include "Enums.h"
 #include <functional>
+#include <array>
 
 namespace pfc {
 
@@ -10,14 +11,31 @@ namespace pfc {
 
     public:
 
+        // coordinate transformations
+        // inverse transform
         virtual FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) {
             setOkStatus(status);
             return coords;
         }
-
+        // direct transform
         virtual FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) {
             setOkStatus(status);
             return coords;
+        }
+
+        // sometimes we need to transform field too, for example, when rotating fields
+        virtual bool isRequireFieldTransform() {
+            return false;
+        }
+        // inverse transform
+        virtual FP3 getDirectFields(const FP3& fields, FP time = 0.0, bool status = true) {
+            if (status) return fields;
+            return FP3(0.0, 0.0, 0.0);
+        }
+        // direct transform
+        virtual FP3 getInverseFields(const FP3& fields, FP time = 0.0, bool status = true) {
+            if (status) return fields;
+            return FP3(0.0, 0.0, 0.0);
         }
 
         virtual Mapping* createInstance() = 0;
@@ -97,50 +115,77 @@ namespace pfc {
 
     public:
 
-        // rotation occurs around the axis according to the rule of the right hand
-        RotationMapping(CoordinateEnum axis, double angle): axis(axis), angle(angle) {
-            CoordinateEnum axis1 = CoordinateEnum(((int)axis + 1) % 3),
-                axis2 = CoordinateEnum(((int)axis + 2) % 3);
-            rotationMatrix[(int)axis1][(int)axis1] = cos(angle);
-            rotationMatrix[(int)axis1][(int)axis2] = -sin(angle);
-            rotationMatrix[(int)axis2][(int)axis1] = sin(angle);
-            rotationMatrix[(int)axis2][(int)axis2] = cos(angle);
-            rotationMatrix[(int)axis][(int)axis] = 1.0;
+        static const int dim = 3;
+        using TRotMatrix = std::array<std::array<FP, (size_t)dim>, (size_t)dim>;
+
+        // rotation around the axis according to the rule of the right hand
+        RotationMapping(CoordinateEnum axis, FP angle) {
+            createRotationMatrix(rotationMatrix, (int)axis, angle);
+        }
+
+        // rotation around the axis + change of polarization vector
+        RotationMapping(CoordinateEnum axis, FP angle, CoordinateEnum propDir, FP polarizationAngle) {
+            TRotMatrix polarizationMatrix = { 0.0 }, coordRotMatrix = { 0.0 };
+            createRotationMatrix(polarizationMatrix, (int)propDir, polarizationAngle);
+            createRotationMatrix(coordRotMatrix, (int)axis, angle);
+            mulMatrices(coordRotMatrix, polarizationMatrix, this->rotationMatrix);
         }
 
         FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
-            FP3 directCoords;
-            directCoords.x =
-                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::x] * coords.x +
-                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::y] * coords.y +
-                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::z] * coords.z;
-            directCoords.y =
-                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::x] * coords.x +
-                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::y] * coords.y +
-                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::z] * coords.z;
-            directCoords.z =
-                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::x] * coords.x +
-                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::y] * coords.y +
-                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::z] * coords.z;
-            return directCoords;
+            return mulRotationMatrix(coords);
         }
 
         FP3 getInverseCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             setOkStatus(status);
+            return mulInverseRotationMatrix(coords);
+        }
+
+        virtual bool isRequireFieldTransform() {
+            return true;
+        }
+
+        FP3 getDirectFields(const FP3& fields, FP time = 0.0, bool status = true) override {
+            if (status) return mulInverseRotationMatrix(fields);
+            return FP3(0.0, 0.0, 0.0);
+        }
+
+        FP3 getInverseFields(const FP3& fields, FP time = 0.0, bool status = true) override {
+            if (status) return mulRotationMatrix(fields);
+            return FP3(0.0, 0.0, 0.0);
+        }
+
+        FP3 mulRotationMatrix(const FP3& coords) {
+            FP3 directCoords;
+            directCoords.x =
+                rotationMatrix[0][0] * coords.x +
+                rotationMatrix[0][1] * coords.y +
+                rotationMatrix[0][2] * coords.z;
+            directCoords.y =
+                rotationMatrix[1][0] * coords.x +
+                rotationMatrix[1][1] * coords.y +
+                rotationMatrix[1][2] * coords.z;
+            directCoords.z =
+                rotationMatrix[2][0] * coords.x +
+                rotationMatrix[2][1] * coords.y +
+                rotationMatrix[2][2] * coords.z;
+            return directCoords;
+        }
+
+        FP3 mulInverseRotationMatrix(const FP3& coords) {
             FP3 inverseCoords;
             inverseCoords.x =
-                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::x] * coords.x +
-                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::x] * coords.y +
-                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::x] * coords.z;
+                rotationMatrix[0][0] * coords.x +
+                rotationMatrix[1][0] * coords.y +
+                rotationMatrix[2][0] * coords.z;
             inverseCoords.y =
-                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::y] * coords.x +
-                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::y] * coords.y +
-                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::y] * coords.z;
+                rotationMatrix[0][1] * coords.x +
+                rotationMatrix[1][1] * coords.y +
+                rotationMatrix[2][1] * coords.z;
             inverseCoords.z =
-                rotationMatrix[(int)CoordinateEnum::x][(int)CoordinateEnum::z] * coords.x +
-                rotationMatrix[(int)CoordinateEnum::y][(int)CoordinateEnum::z] * coords.y +
-                rotationMatrix[(int)CoordinateEnum::z][(int)CoordinateEnum::z] * coords.z;
+                rotationMatrix[0][2] * coords.x +
+                rotationMatrix[1][2] * coords.y +
+                rotationMatrix[2][2] * coords.z;
             return inverseCoords;
         }
 
@@ -148,10 +193,29 @@ namespace pfc {
             return new RotationMapping(*this);
         }
 
-        CoordinateEnum axis;
-        FP angle;  // in radians
-        // mapping from inverse to direct coords
-        FP rotationMatrix[3][3] = { {0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0} };
+        TRotMatrix rotationMatrix = { 0.0 };
+
+    protected:
+
+        void createRotationMatrix(TRotMatrix& matr, int axis, FP angle)
+        {
+            int axis1 = (axis + 1) % dim, axis2 = (axis + 2) % dim;
+            matr[axis1][axis1] = cos(angle);
+            matr[axis1][axis2] = -sin(angle);
+            matr[axis2][axis1] = sin(angle);
+            matr[axis2][axis2] = cos(angle);
+            matr[axis][axis] = (FP)1.0;
+        }
+
+        void mulMatrices(const TRotMatrix& a, const TRotMatrix& b, TRotMatrix& res) {
+            for (int i = 0; i < dim; i++)
+                for (int j = 0; j < dim; j++) {
+                    FP sum = 0.0;
+                    for (int k = 0; k < dim; k++)
+                        sum += a[i][k] * b[k][j];
+                    res[i][j] = sum;
+                }
+        }
 
     };
 
