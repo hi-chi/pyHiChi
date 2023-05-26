@@ -18,6 +18,7 @@ set(fieldModules_headers
     ${FIELDMODULES_HEADER_DIR}/Fdtd.h
     ${FIELDMODULES_HEADER_DIR}/FieldBoundaryCondition.h
     ${FIELDMODULES_HEADER_DIR}/FieldGenerator.h
+    ${FIELDMODULES_HEADER_DIR}/FieldGeneratorFdtd.h
     ${FIELDMODULES_HEADER_DIR}/FieldSolver.h
     ${FIELDMODULES_HEADER_DIR}/Pml.h
     ${FIELDMODULES_HEADER_DIR}/PmlFdtd.h

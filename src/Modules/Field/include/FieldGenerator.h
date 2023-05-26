@@ -4,78 +4,81 @@
 #include "FieldSolver.h"
 #include "Grid.h"
 #include "Vectors.h"
+#include "Enums.h"
 
 namespace pfc
 {
     template<GridTypes gridTypes>
     class FieldSolver;
-    template<GridTypes gridTypes>
-    class RealFieldSolver;
-    template<GridTypes gridTypes>
-    class SpectralFieldSolver;
+
+    namespace field_generator {
+        inline FP defaultFieldFunction(FP x, FP y, FP z, FP t) {
+            return (FP)0.0;
+        }
+    }
 
     template<GridTypes gridTypes>
     class FieldGenerator
     {
     public:
 
-        FieldGenerator(FieldSolver<gridTypes>* fieldSolver = 0);
+        typedef FP(*TFunc)(FP, FP, FP, FP);  // f(x, y, z, t)
 
-        // copy constructor, other fieldSolver is possible
-        FieldGenerator(const FieldGenerator& gen, FieldSolver<gridTypes>* fieldSolver = 0);
+        FieldGenerator(FieldSolver<gridTypes>* fieldSolver);
 
-        virtual void generateB();
-        virtual void generateE();
+        void setFunction(FieldEnum field, CoordinateEnum edge, SideEnum side,
+            CoordinateEnum fieldComponent, TFunc func);
+
+        virtual void generateB() = 0;
+        virtual void generateE() = 0;
 
         FieldSolver<gridTypes>* fieldSolver;
 
-        virtual FieldGenerator<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver) = 0;
+    protected:
 
-    private:
+        // the first index is left/right
+        // the second index is an index of edge
+        // the third index is the index of component
+        std::array<std::array<std::array<TFunc, 3>, 3>, 2> eFunc, bFunc;
 
-        // major index is index of edge, minor index is index of component
-        std::function<FP(FP, FP, FP, FP)> eLeft[3][3];
-        std::function<FP(FP, FP, FP, FP)> eRight[3][3];
-        std::function<FP(FP, FP, FP, FP)> bLeft[3][3];
-        std::function<FP(FP, FP, FP, FP)> bRight[3][3];
-        FP3 leftCoeff;
-        FP3 rightCoeff;
+        // sets enabled borders
+        std::array<std::array<bool, 3>, 2> isBorderEnabled;
+        std::array<std::array<int, 3>, 2> generatorGridIndex;
     };
 
-    typedef FieldGenerator<GridTypes::YeeGridType> FieldGeneratorYee;
-
     template<GridTypes gridTypes>
-    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* _fieldSolver)
+    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* fieldSolver) :
+        fieldSolver(fieldSolver)
     {
-        fieldSolver = _fieldSolver;
-        leftCoeff = FP3(0, 0, 0);
-        rightCoeff = FP3(0, 0, 0);
-        for (int d = 0; d < 3; ++d)
-        {
-            //in seq if fieldGeneration in area
-            leftCoeff[d] = 1;
-            rightCoeff[d] = 1;
-        }
+        for (int size = 0; side < 2; side++)
+            for (int edge = 0; edge < 3; edge++) {
+                for (int comp = 0; comp < 3; comp++) {
+                    eFunc[side][edge][comp] = field_generator::defaultFieldFunction;
+                    bFunc[side][edge][comp] = field_generator::defaultFieldFunction;
+                }
+                isBorderEnabled[side][edge] = false;
+                generatorGridIndex[side][edge] = -1;
+            }
     }
 
     template<GridTypes gridTypes>
-    inline FieldGenerator<gridTypes>::FieldGenerator(const FieldGenerator & gen,
-        FieldSolver<gridTypes>* fieldSolver)
+    inline void FieldGenerator<gridTypes>::setFunction(
+        FieldEnum field, CoordinateEnum edge, SideEnum side,
+        CoordinateEnum fieldComponent, FieldGenerator<gridTypes>::TFunc func)
     {
-        if (fieldSolver)
-            this->fieldSolver = fieldSolver;
-        else this->fieldSolver = gen.fieldSolver;
-
-        leftCoeff = gen.leftCoeff;
-        rightCoeff = gen.rightCoeff;
-
-        for (int f = 0; f < 3; ++f)
-            for (int d = 0; d < 3; ++d) {
-                eLeft[f][d] = gen.eLeft[f][d];
-                eRight[f][d] = gen.eRight[f][d];
-                bLeft[f][d] = gen.bLeft[f][d];
-                bRight[f][d] = gen.bRight[f][d];
-            }
+        switch (field) {
+        case FieldEnum::B:
+            bFunc[(int)side][(int)edge][(int)fieldComponent] = func;
+            isBorderEnabled[(int)side][(int)edge] = true;
+            break;
+        case FieldEnum::E:
+            eFunc[(int)side][(int)edge][(int)fieldComponent] = func;
+            isBorderEnabled[(int)side][(int)edge] = true;
+            break;
+        case FieldEnum::J:
+            std::cout << "WARNING: function for J is ignored in field generator" << std::endl;
+            break;
+        }
     }
 
     template<GridTypes gridTypes>
@@ -190,4 +193,6 @@ namespace pfc
                 }
         }
     }
+
+    typedef FieldGenerator<GridTypes::YeeGridType> FieldGeneratorYee;
 }

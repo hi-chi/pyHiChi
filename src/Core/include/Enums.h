@@ -10,4 +10,8 @@ namespace pfc
     enum class FieldEnum {
         E, B, J
     };
+
+    enum class SideEnum {
+        LEFT, RIGHT
+    };
 }
