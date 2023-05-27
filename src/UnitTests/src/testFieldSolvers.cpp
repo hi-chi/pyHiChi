@@ -1,7 +1,5 @@
 #include "TestingUtility.h"
 
-#include "Enums.h"
-
 #include "Fdtd.h"
 #include "Pstd.h"
 #include "Psatd.h"

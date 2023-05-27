@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Constants.h"
+#include "Enums.h"
 #include "Grid.h"
 #include "Particle.h"
 #include "ParticleTraits.h"
@@ -317,4 +318,15 @@ protected:
     {
         delete(grid);
     }
+};
+
+// necessary to run test with different fields and dimensions (1d, 2d, 3d)
+// wave proparates along VAxis (x, y, z)
+template <class TFieldSolver, class TGrid, int VDimension, CoordinateEnum VAxis>
+struct TypeDefinitionsFieldTest
+{
+    using FieldSolverType = TFieldSolver;
+    using GridType = TGrid;
+    static const int dimension = VDimension;
+    static const CoordinateEnum axis = VAxis;
 };

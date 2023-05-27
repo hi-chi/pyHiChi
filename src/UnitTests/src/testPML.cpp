@@ -1,32 +1,20 @@
 #include "TestingUtility.h"
 
-#include "Enums.h"
-
 #include "Fdtd.h"
 #include "Pstd.h"
 #include "Psatd.h"
 #include "PsatdTimeStraggered.h"
 
-
-template <class TFieldSolver, class TGrid, int VDimension, CoordinateEnum VAxis>
-struct TypeDefinitionsPMLTest
-{
-    using FieldSolverType = TFieldSolver;
-    using GridType = TGrid;
-    static const int dimension = VDimension;
-    static const CoordinateEnum axis = VAxis;
-};
-
-template <class TTypeDefinitionsPMLTest>
+template <class TTypeDefinitionsFieldTest>
 class PMLTest : public BaseFixture {
 public:
 
-    using FieldSolverType = typename TTypeDefinitionsPMLTest::FieldSolverType;
-    using GridType = typename TTypeDefinitionsPMLTest::GridType;
+    using FieldSolverType = typename TTypeDefinitionsFieldTest::FieldSolverType;
+    using GridType = typename TTypeDefinitionsFieldTest::GridType;
     using PeriodicalBoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
 
-    const int dimension = TTypeDefinitionsPMLTest::dimension;
-    const CoordinateEnum axis = TTypeDefinitionsPMLTest::axis;
+    const int dimension = TTypeDefinitionsFieldTest::dimension;
+    const CoordinateEnum axis = TTypeDefinitionsFieldTest::axis;
 
     const int gridSizeLongitudinal = 32;
     const int gridSizeTransverse = 8;
@@ -134,33 +122,33 @@ public:
 };
 
 typedef ::testing::Types <
-    TypeDefinitionsPMLTest<FDTD, YeeGrid, 1, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<FDTD, YeeGrid, 2, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<FDTD, YeeGrid, 2, CoordinateEnum::y>,
-    TypeDefinitionsPMLTest<FDTD, YeeGrid, 3, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<FDTD, YeeGrid, 3, CoordinateEnum::y>,
-    TypeDefinitionsPMLTest<FDTD, YeeGrid, 3, CoordinateEnum::z>,
+    TypeDefinitionsFieldTest<FDTD, YeeGrid, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, YeeGrid, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, YeeGrid, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, YeeGrid, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, YeeGrid, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, YeeGrid, 3, CoordinateEnum::z>,
     
-    TypeDefinitionsPMLTest<PSTD, PSTDGrid, 1, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSTD, PSTDGrid, 2, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSTD, PSTDGrid, 2, CoordinateEnum::y>,
-    TypeDefinitionsPMLTest<PSTD, PSTDGrid, 3, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSTD, PSTDGrid, 3, CoordinateEnum::y>,
-    TypeDefinitionsPMLTest<PSTD, PSTDGrid, 3, CoordinateEnum::z>,
+    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 3, CoordinateEnum::z>,
     
-    TypeDefinitionsPMLTest<PSATD, PSATDGrid, 1, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSATD, PSATDGrid, 2, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSATD, PSATDGrid, 2, CoordinateEnum::y>,
-    TypeDefinitionsPMLTest<PSATD, PSATDGrid, 3, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSATD, PSATDGrid, 3, CoordinateEnum::y>,
-    TypeDefinitionsPMLTest<PSATD, PSATDGrid, 3, CoordinateEnum::z>,
+    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 3, CoordinateEnum::z>,
     
-    TypeDefinitionsPMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 1, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 2, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 2, CoordinateEnum::y>,
-    TypeDefinitionsPMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::x>,
-    TypeDefinitionsPMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::y>,
-    TypeDefinitionsPMLTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::z>
+    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::z>
 > types;
 
 
