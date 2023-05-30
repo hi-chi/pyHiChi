@@ -10,6 +10,7 @@ add_executable(tests
     src/testConstants.cpp
     src/testDimension.cpp
     src/testEnsemble.cpp
+    src/testFieldGenerator.cpp
     src/testFieldSolvers.cpp
     src/testFourierTransform.cpp
     src/testFP.cpp

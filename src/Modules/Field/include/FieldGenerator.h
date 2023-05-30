@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <functional>
 
 #include "FieldSolver.h"
 #include "Grid.h"
@@ -11,7 +12,8 @@ namespace pfc
     template<GridTypes gridTypes>
     class FieldSolver;
 
-    namespace field_generator {
+    namespace field_generator
+    {
         inline FP defaultFieldFunction(FP x, FP y, FP z, FP t) {
             return (FP)0.0;
         }
@@ -22,177 +24,180 @@ namespace pfc
     {
     public:
 
-        typedef FP(*TFunc)(FP, FP, FP, FP);  // f(x, y, z, t)
+        using FunctionType = std::function<FP(FP, FP, FP, FP)>;  // f(x, y, z, t)
 
-        FieldGenerator(FieldSolver<gridTypes>* fieldSolver);
+        FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
-        void setFunction(FieldEnum field, CoordinateEnum edge, SideEnum side,
-            CoordinateEnum fieldComponent, TFunc func);
+        FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
+            FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
+
+        FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            /* first index is index of edge (x, y, z),
+            second index is index of field component (ex, ey, ez or bx, by, bz) */
+            const std::array<std::array<FunctionType, 3>, 3>& leftBFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& rightBFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& leftEFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
+
+        virtual ~FieldGenerator() {}
 
         virtual void generateB() = 0;
         virtual void generateE() = 0;
 
-        FieldSolver<gridTypes>* fieldSolver;
+        // sets one function for all borders
+        void setFunction(FieldEnum field, CoordinateEnum fieldComponent, FunctionType func);
+        // sets different functions for each border
+        void setFunction(FieldEnum field, CoordinateEnum fieldComponent,
+            CoordinateEnum edge, SideEnum side, FunctionType func);
 
-    protected:
+        FieldSolver<gridTypes>* fieldSolver;
 
         // the first index is left/right
         // the second index is an index of edge
-        // the third index is the index of component
-        std::array<std::array<std::array<TFunc, 3>, 3>, 2> eFunc, bFunc;
+        // the third index is the index of field component
+        std::array<std::array<std::array<FunctionType, 3>, 3>, 2> eFunc, bFunc;
 
         // sets enabled borders
-        std::array<std::array<bool, 3>, 2> isBorderEnabled;
-        std::array<std::array<int, 3>, 2> generatorGridIndex;
+        Int3 isLeftBorderEnabled, isRightBorderEnabled;
+        Int3 leftGeneratorIndex, rightGeneratorIndex;
     };
 
     template<GridTypes gridTypes>
-    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* fieldSolver) :
+    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
         fieldSolver(fieldSolver)
     {
-        for (int size = 0; side < 2; side++)
+        Int3 numExtLeftCells = fieldSolver->grid->getNumExternalLeftCells();
+
+        this->isLeftBorderEnabled = isLeftBorderEnabled;
+        this->isRightBorderEnabled = isRightBorderEnabled;
+        this->leftGeneratorIndex = leftGenIndex + numExtLeftCells;
+        this->rightGeneratorIndex = rightGenIndex + numExtLeftCells;
+
+        for (int side = 0; side < 2; side++)
             for (int edge = 0; edge < 3; edge++) {
                 for (int comp = 0; comp < 3; comp++) {
                     eFunc[side][edge][comp] = field_generator::defaultFieldFunction;
                     bFunc[side][edge][comp] = field_generator::defaultFieldFunction;
                 }
-                isBorderEnabled[side][edge] = false;
-                generatorGridIndex[side][edge] = -1;
             }
     }
 
     template<GridTypes gridTypes>
+    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
+        FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
+        FieldGenerator<gridTypes>(fieldSolver, leftGenIndex, rightGenIndex,
+            isLeftBorderEnabled, isRightBorderEnabled)
+    {
+        setFunction(FieldEnum::B, CoordinateEnum::x, bxFunc);
+        setFunction(FieldEnum::B, CoordinateEnum::y, byFunc);
+        setFunction(FieldEnum::B, CoordinateEnum::z, bzFunc);
+        setFunction(FieldEnum::E, CoordinateEnum::x, exFunc);
+        setFunction(FieldEnum::E, CoordinateEnum::y, eyFunc);
+        setFunction(FieldEnum::E, CoordinateEnum::z, ezFunc);
+    }
+
+    template<GridTypes gridTypes>
+    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        const std::array<std::array<FunctionType, 3>, 3>& leftBFunc,
+        const std::array<std::array<FunctionType, 3>, 3>& rightBFunc,
+        const std::array<std::array<FunctionType, 3>, 3>& leftEFunc,
+        const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
+        FieldGenerator<gridTypes>(fieldSolver, leftGenIndex, rightGenIndex,
+            isLeftBorderEnabled, isRightBorderEnabled)
+    {
+        for (int edge = 0; edge < 3; edge++)
+            for (int comp = 0; comp < 3; comp++) {
+                setFunction(FieldEnum::B, (CoordinateEnum)comp,
+                    (CoordinateEnum)edge, SideEnum::LEFT, leftBFunc[edge][comp]);
+                setFunction(FieldEnum::B, (CoordinateEnum)comp,
+                    (CoordinateEnum)edge, SideEnum::RIGHT, rightBFunc[edge][comp]);
+                setFunction(FieldEnum::E, (CoordinateEnum)comp,
+                    (CoordinateEnum)edge, SideEnum::LEFT, leftEFunc[edge][comp]);
+                setFunction(FieldEnum::E, (CoordinateEnum)comp,
+                    (CoordinateEnum)edge, SideEnum::RIGHT, rightEFunc[edge][comp]);
+        }
+    }
+
+    template<GridTypes gridTypes>
     inline void FieldGenerator<gridTypes>::setFunction(
-        FieldEnum field, CoordinateEnum edge, SideEnum side,
-        CoordinateEnum fieldComponent, FieldGenerator<gridTypes>::TFunc func)
+        FieldEnum field, CoordinateEnum fieldComponent,
+        FieldGenerator<gridTypes>::FunctionType func)
+    {
+        for (int side = 0; side < 2; side++)
+            for (int edge = 0; edge < 3; edge++)
+                setFunction(field, fieldComponent,
+                    (CoordinateEnum)edge, (SideEnum)side, func);
+    }
+
+    template<GridTypes gridTypes>
+    inline void FieldGenerator<gridTypes>::setFunction(
+        FieldEnum field, CoordinateEnum fieldComponent,
+        CoordinateEnum edge, SideEnum side, FieldGenerator<gridTypes>::FunctionType func)
     {
         switch (field) {
         case FieldEnum::B:
             bFunc[(int)side][(int)edge][(int)fieldComponent] = func;
-            isBorderEnabled[(int)side][(int)edge] = true;
             break;
         case FieldEnum::E:
             eFunc[(int)side][(int)edge][(int)fieldComponent] = func;
-            isBorderEnabled[(int)side][(int)edge] = true;
             break;
-        case FieldEnum::J:
-            std::cout << "WARNING: function for J is ignored in field generator" << std::endl;
+        default:
             break;
         }
     }
 
-    template<GridTypes gridTypes>
-    inline void FieldGenerator<gridTypes>::generateB()
-    {
-        Grid<FP, gridTypes>* grid = fieldSolver->grid;
-        const FP time = fieldSolver->globalTime +
-            (grid->ifFieldsTimeStraggered ? fieldSolver->dt * 0.5 : 0.0);
-        const FP cdt = constants::c * fieldSolver->dt;
-        const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / grid->steps;
-        for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
-        {
-            int dim1 = (dim0 + 1) % 3;
-            int dim2 = (dim0 + 2) % 3;
-            int begin1 = fieldSolver->internalBAreaBegin[dim1];
-            int begin2 = fieldSolver->internalBAreaBegin[dim2];
-            int end1 = fieldSolver->internalBAreaEnd[dim1];
-            int end2 = fieldSolver->internalBAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
-            for (int j = begin1; j < end1; j++)
-                for (int k = begin2; k < end2; k++)
-                {
-                    // Adjust indexes for symmetry of generation coordinates
-                    Int3 index;
-                    index[dim0] = fieldSolver->internalBAreaBegin[dim0] + 1;
-                    index[dim1] = j;
-                    index[dim2] = k;
-                    Int3 indexes[3] = { index, index, index };
-                    indexes[dim1][dim0]++;
-                    indexes[dim2][dim0]++;
-                    FP3 bxCoords = grid->BxPosition(indexes[0].x, indexes[0].y,
-                        indexes[0].z);
-                    FP3 byCoords = grid->ByPosition(indexes[1].x, indexes[1].y,
-                        indexes[1].z);
-                    FP3 bzCoords = grid->BzPosition(indexes[2].x, indexes[2].y,
-                        indexes[2].z);
-                    FP coeff = leftCoeff[dim0] * norm_coeffs[dim0];
-                    grid->Bx(indexes[0]) += coeff * bLeft[dim0][0](
-                        bxCoords.x, bxCoords.y, bxCoords.z, time);
-                    grid->By(indexes[1]) += coeff * bLeft[dim0][1](
-                        byCoords.x, byCoords.y, byCoords.z, time);
-                    grid->Bz(indexes[2]) += coeff * bLeft[dim0][2](
-                        bzCoords.x, bzCoords.y, bzCoords.z, time);
-
-                    index[dim0] = fieldSolver->internalBAreaEnd[dim0] - 2;
-                    bxCoords = grid->BxPosition(index.x, index.y, index.z);
-                    byCoords = grid->ByPosition(index.x, index.y, index.z);
-                    bzCoords = grid->BzPosition(index.x, index.y, index.z);
-                    coeff = rightCoeff[dim0] * norm_coeffs[dim0];
-                    grid->Bx(index) += coeff * bRight[dim0][0](
-                        bxCoords.x, bxCoords.y, bxCoords.z, time);
-                    grid->By(index) += coeff * bRight[dim0][1](
-                        byCoords.x, byCoords.y, byCoords.z, time);
-                    grid->Bz(index) += coeff * bRight[dim0][2](
-                        bzCoords.x, bzCoords.y, bzCoords.z, time);
-                }
-        }
-    }
 
     template<GridTypes gridTypes>
-    inline void FieldGenerator<gridTypes>::generateE()
+    class SpectralFieldSolver;
+
+    // temporary empty implementation of field generator for spectral field solvers
+    template<GridTypes gridTypes>
+    class SpectralFieldGenerator : public FieldGenerator<gridTypes>
     {
-        Grid<FP, gridTypes> * grid = fieldSolver->grid;
-        const FP time = fieldSolver->globalTime;
-        const FP cdt = constants::c * fieldSolver->dt;
-        const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / grid->steps;
-        for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
-        {
-            int dim1 = (dim0 + 1) % 3;
-            int dim2 = (dim0 + 2) % 3;
-            int begin1 = fieldSolver->internalEAreaBegin[dim1];
-            int begin2 = fieldSolver->internalEAreaBegin[dim2];
-            int end1 = fieldSolver->internalEAreaEnd[dim1];
-            int end2 = fieldSolver->internalEAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
-            for (int j = begin1; j < end1; j++)
-                for (int k = begin2; k < end2; k++)
-                {
-                    // Adjust indexes for symmetry of generation coordinates, use B indexes for consistency
-                    /// Видимо, не нужно добавлять здесь 1, а ниже вычитать 1 вместо 2
-                    Int3 index;
-                    index[dim0] = fieldSolver->internalBAreaBegin[dim0] + 1;
-                    index[dim1] = j;
-                    index[dim2] = k;
-                    Int3 indexes[3] = { index, index, index };
-                    indexes[dim0][dim0]++;
-                    FP3 exCoords = grid->ExPosition(indexes[0].x, indexes[0].y,
-                        indexes[0].z);
-                    FP3 eyCoords = grid->EyPosition(indexes[1].x, indexes[1].y,
-                        indexes[1].z);
-                    FP3 ezCoords = grid->EzPosition(indexes[2].x, indexes[2].y,
-                        indexes[2].z);
-                    FP coeff = leftCoeff[dim0] * norm_coeffs[dim0];
-                    grid->Ex(indexes[0]) += coeff * eLeft[dim0][0](
-                        exCoords.x, exCoords.y, exCoords.z, time);
-                    grid->Ey(indexes[1]) += coeff * eLeft[dim0][1](
-                        eyCoords.x, eyCoords.y, eyCoords.z, time);
-                    grid->Ez(indexes[2]) += coeff * eLeft[dim0][2](
-                        ezCoords.x, ezCoords.y, ezCoords.z, time);
+    public:
 
-                    index[dim0] = fieldSolver->internalBAreaEnd[dim0] - 2;
-                    exCoords = grid->ExPosition(index.x, index.y, index.z);
-                    eyCoords = grid->EyPosition(index.x, index.y, index.z);
-                    ezCoords = grid->EzPosition(index.x, index.y, index.z);
-                    coeff = rightCoeff[dim0] * norm_coeffs[dim0];
-                    grid->Ex(index) += coeff * eRight[dim0][0](
-                        exCoords.x, exCoords.y, exCoords.z, time);
-                    grid->Ey(index) += coeff * eRight[dim0][1](
-                        eyCoords.x, eyCoords.y, eyCoords.z, time);
-                    grid->Ez(index) += coeff * eRight[dim0][2](
-                        ezCoords.x, ezCoords.y, ezCoords.z, time);
-                }
-        }
-    }
+        SpectralFieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
+            FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
+            FieldGenerator(fieldSolver, leftGenIndex, rightGenIndex,
+                bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+                isLeftBorderEnabled, isRightBorderEnabled) {}
 
-    typedef FieldGenerator<GridTypes::YeeGridType> FieldGeneratorYee;
+        SpectralFieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            /* first index is index of edge (x, y, z),
+            second index is index of field component (ex, ey, ez or bx, by, bz) */
+            const std::array<std::array<FunctionType, 3>, 3>& leftBFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& rightBFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& leftEFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
+            FieldGenerator(fieldSolver, leftGenIndex, rightGenIndex,
+                leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+                isLeftBorderEnabled, isRightBorderEnabled) {}
+
+        void generateB() override {};
+        void generateE() override {};
+    };
 }

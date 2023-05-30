@@ -30,6 +30,8 @@ namespace pfc {
             this->globalTime = (FP)0.0;
         }
 
+        virtual ~FieldSolver() {}
+
         void updateDims();
         void updateInternalDims();
 
@@ -40,6 +42,7 @@ namespace pfc {
 
         std::unique_ptr<Pml<gridType>> pml;
         std::unique_ptr<FieldBoundaryCondition<gridType>> boundaryCondition;
+        std::unique_ptr<FieldGenerator<gridType>> fieldGenerator;
 
         // Index space being updated in form [begin, end).
         Int3 updateBAreaBegin, updateBAreaEnd;

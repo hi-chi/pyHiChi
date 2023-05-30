@@ -5,6 +5,7 @@
 #include "Vectors.h"
 #include "PmlPstd.h"
 #include "BoundaryConditionSpectral.h"
+#include "FieldGenerator.h"
 
 namespace pfc {
     class PSTD : public SpectralFieldSolver<PSTDGridType>
@@ -13,6 +14,7 @@ namespace pfc {
 
         using GridType = PSTDGrid;
         using PmlType = PmlPstd;
+        using FieldGeneratorType = SpectralFieldGenerator<PSTDGridType>;
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionPstd;
 
         PSTD(GridType* grid, double dt);
@@ -25,6 +27,24 @@ namespace pfc {
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
         void setBoundaryCondition(
             FieldBoundaryCondition<GridTypes::PSTDGridType>* _boundaryCondition);
+
+        void setFieldGenerator(
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
+            FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
+            FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
+        void setFieldGenerator(
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            /* first index is index of edge (x, y, z),
+            second index is index of field component (ex, ey, ez or bx, by, bz) */
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
         void setTimeStep(FP dt);
 
@@ -70,6 +90,35 @@ namespace pfc {
         FieldBoundaryCondition<GridTypes::PSTDGridType>* _boundaryCondition)
     {
         boundaryCondition.reset(_boundaryCondition->createInstance(this));
+    }
+
+    inline void PSTD::setFieldGenerator(
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
+        FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
+        FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
+    {
+        fieldGenerator.reset(new PSTD::FieldGeneratorType(
+            this, leftGenIndex, rightGenIndex,
+            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+        );
+    }
+
+    inline void PSTD::setFieldGenerator(
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
+    {
+        fieldGenerator.reset(new PSTD::FieldGeneratorType(
+            this, leftGenIndex, rightGenIndex,
+            leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+        );
     }
 
     inline void PSTD::setTimeStep(FP dt)

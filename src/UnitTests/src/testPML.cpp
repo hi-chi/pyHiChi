@@ -116,7 +116,7 @@ public:
                 for (int k = 0; k < grid->numCells.z; k++)
                     energy += pow(grid->Ex(i, j, k), 2) + pow(grid->Ey(i, j, k), 2) + pow(grid->Ez(i, j, k), 2) +
                     pow(grid->Bx(i, j, k), 2) + pow(grid->By(i, j, k), 2) + pow(grid->Bz(i, j, k), 2);
-        return energy * gridStep.volume();
+        return energy;
     }
 
 };

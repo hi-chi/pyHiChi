@@ -29,6 +29,8 @@ namespace pfc
             fieldSolver(gen.fieldSolver), enabledAxis(gen.enabledAxis) {
         }
 
+        virtual ~FieldBoundaryCondition() {}
+
         virtual void generateB() = 0;
         virtual void generateE() = 0;
 

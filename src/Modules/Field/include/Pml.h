@@ -20,6 +20,8 @@ namespace pfc {
         Pml(FieldSolver<gridTypes>* _fieldSolver, Int3 _sizePml,
             FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8);
 
+        virtual ~Pml() {}
+
         virtual void updateB() {};
         virtual void updateE() {};
 

@@ -7,8 +7,29 @@ namespace pfc
     {
     public:
 
-        FieldGeneratorFdtd(FieldSolver<GridTypes::YeeGridType>* fieldSolver) :
-            FieldGenerator(fieldSolver) {}
+        FieldGeneratorFdtd(FieldSolver<GridTypes::YeeGridType>* fieldSolver,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
+            FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1)):
+            FieldGenerator(fieldSolver, leftGenIndex, rightGenIndex, 
+                bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+                isLeftBorderEnabled, isRightBorderEnabled) {}
+
+        FieldGeneratorFdtd(FieldSolver<GridTypes::YeeGridType>* fieldSolver,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            /* first index is index of edge (x, y, z),
+            second index is index of field component (ex, ey, ez or bx, by, bz) */
+            const std::array<std::array<FunctionType, 3>, 3>& leftBFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& rightBFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& leftEFunc,
+            const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
+            FieldGenerator(fieldSolver, leftGenIndex, rightGenIndex,
+                leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+                isLeftBorderEnabled, isRightBorderEnabled) {}
 
         void generateB() override;
         void generateE() override;
@@ -42,19 +63,21 @@ namespace pfc
             int dim2 = (dim0 + 2) % 3;
 
             // TODO: compute local index inside a domain
-            int generatorIndex[2] = {
-                generatorGridIndex[(int)SideEnum::LEFT][dim0],
-                generatorGridIndex[(int)SideEnum::RIGHT][dim0]
+            int genIndexDim0[2] = {
+                leftGeneratorIndex[dim0],
+                rightGeneratorIndex[dim0]
             };
 
-            int begin1 = isBorderEnabled[(int)SideEnum::LEFT][dim1] ?
-                generatorGridIndex[(int)SideEnum::LEFT][dim1] : fieldSolver->internalBAreaBegin[dim1];
-            int begin2 = isBorderEnabled[(int)SideEnum::LEFT][dim2] ?
-                generatorGridIndex[(int)SideEnum::LEFT][dim2] : fieldSolver->internalBAreaBegin[dim2];
-            int end1 = isBorderEnabled[(int)SideEnum::RIGHT][dim1] ?
-                generatorGridIndex[(int)SideEnum::RIGHT][dim1] : fieldSolver->internalBAreaEnd[dim1];
-            int end2 = isBorderEnabled[(int)SideEnum::RIGHT][dim2] ?
-                generatorGridIndex[(int)SideEnum::RIGHT][dim2] : fieldSolver->internalBAreaEnd[dim2];
+            int begin1 = isLeftBorderEnabled[dim1] ?
+                leftGeneratorIndex[dim1] : fieldSolver->internalBAreaBegin[dim1];
+            int begin2 = isLeftBorderEnabled[dim2] ?
+                leftGeneratorIndex[dim2] : fieldSolver->internalBAreaBegin[dim2];
+            int end1 = isRightBorderEnabled[dim1] ?
+                rightGeneratorIndex[dim1] : fieldSolver->internalBAreaEnd[dim1];
+            int end2 = isRightBorderEnabled[dim2] ?
+                rightGeneratorIndex[dim2] : fieldSolver->internalBAreaEnd[dim2];
+
+            Int3 isBorderEnabled[2] = { isLeftBorderEnabled, isRightBorderEnabled };
 
             for (int side = 0; side < 2; side++) {
                 if (!isBorderEnabled[side][dim0]) continue;
@@ -63,8 +86,8 @@ namespace pfc
                 for (int j = begin1; j < end1; j++)
                     for (int k = begin2; k < end2; k++)
                     {
-                        std::vector<Int3> eIndices = getEGridIndices(generatorIndex[side], j, k, dim0, dim1, dim2);
-                        std::vector<Int3> bIndices = getBGridIndices(generatorIndex[side], j, k, dim0, dim1, dim2);
+                        std::vector<Int3> eIndices = getEGridIndices(genIndexDim0[side], j, k, dim0, dim1, dim2);
+                        std::vector<Int3> bIndices = getBGridIndices(genIndexDim0[side], j, k, dim0, dim1, dim2);
 
                         FP3 exCoords = grid->ExPosition(eIndices[0].x, eIndices[0].y, eIndices[0].z);
                         FP3 eyCoords = grid->EyPosition(eIndices[1].x, eIndices[1].y, eIndices[1].z);
@@ -96,19 +119,21 @@ namespace pfc
             int dim2 = (dim0 + 2) % 3;
 
             // TODO: compute local index inside a domain
-            int generatorIndex[2] = {
-                generatorGridIndex[(int)SideEnum::LEFT][dim0],
-                generatorGridIndex[(int)SideEnum::RIGHT][dim0]
+            int genIndexDim0[2] = {
+                leftGeneratorIndex[dim0],
+                rightGeneratorIndex[dim0]
             };
 
-            int begin1 = isBorderEnabled[(int)SideEnum::LEFT][dim1] ?
-                generatorGridIndex[(int)SideEnum::LEFT][dim1] : fieldSolver->internalEAreaBegin[dim1];
-            int begin2 = isBorderEnabled[(int)SideEnum::LEFT][dim2] ?
-                generatorGridIndex[(int)SideEnum::LEFT][dim2] : fieldSolver->internalEAreaBegin[dim2];
-            int end1 = isBorderEnabled[(int)SideEnum::RIGHT][dim1] ?
-                generatorGridIndex[(int)SideEnum::RIGHT][dim1] : fieldSolver->internalEAreaEnd[dim1];
-            int end2 = isBorderEnabled[(int)SideEnum::RIGHT][dim2] ?
-                generatorGridIndex[(int)SideEnum::RIGHT][dim2] : fieldSolver->internalEAreaEnd[dim2];
+            int begin1 = isLeftBorderEnabled[dim1] ?
+                leftGeneratorIndex[dim1] : fieldSolver->internalEAreaBegin[dim1];
+            int begin2 = isLeftBorderEnabled[dim2] ?
+                leftGeneratorIndex[dim2] : fieldSolver->internalEAreaBegin[dim2];
+            int end1 = isRightBorderEnabled[dim1] ?
+                rightGeneratorIndex[dim1] : fieldSolver->internalEAreaEnd[dim1];
+            int end2 = isRightBorderEnabled[dim2] ?
+                rightGeneratorIndex[dim2] : fieldSolver->internalEAreaEnd[dim2];
+
+            Int3 isBorderEnabled[2] = { isLeftBorderEnabled, isRightBorderEnabled };
 
             for (int side = 0; side < 2; side++) {
                 if (!isBorderEnabled[side][dim0]) continue;
@@ -117,8 +142,8 @@ namespace pfc
                 for (int j = begin1; j < end1; j++)
                     for (int k = begin2; k < end2; k++)
                     {
-                        std::vector<Int3> eIndices = getEGridIndices(generatorIndex[side], j, k, dim0, dim1, dim2);
-                        std::vector<Int3> bIndices = getBGridIndices(generatorIndex[side], j, k, dim0, dim1, dim2);
+                        std::vector<Int3> eIndices = getEGridIndices(genIndexDim0[side], j, k, dim0, dim1, dim2);
+                        std::vector<Int3> bIndices = getBGridIndices(genIndexDim0[side], j, k, dim0, dim1, dim2);
 
                         FP3 bxCoords = grid->BxPosition(bIndices[0].x, bIndices[0].y, bIndices[0].z);
                         FP3 byCoords = grid->ByPosition(bIndices[1].x, bIndices[1].y, bIndices[1].z);

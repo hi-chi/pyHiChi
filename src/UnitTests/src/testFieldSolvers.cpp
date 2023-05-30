@@ -91,7 +91,6 @@ public:
     }
 
     FP3 eTest(FP x, FP y, FP z, FP t) {
-        FP3 coord(x, y, z);
         CoordinateEnum axisE = CoordinateEnum(((int)axis + 1) % 3);
         FP3 e;
         e[(int)axisE] = fieldFunc(x, y, z, t);
