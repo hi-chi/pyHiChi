@@ -30,6 +30,9 @@ public:
     FP relatedAmpThreshold = 0.03;
 
     virtual void SetUp() {
+        this->maxAbsoluteError = 1e-4;
+        this->maxRelativeError = 0.5;
+
         gridSize = Int3(1, 1, 1);
         for (int d = 0; d < dimension; d++) {
             gridSize[d] = gridSizeTransverse;
@@ -44,7 +47,7 @@ public:
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
         // should satisfy the Courant's condition for all solvers
-        this->timeStep = 0.4 * constants::c / grid->steps.norm();
+        this->timeStep = 0.4 * grid->steps.norm() / constants::c;
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
 

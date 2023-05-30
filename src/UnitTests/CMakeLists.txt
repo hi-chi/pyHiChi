@@ -8,6 +8,7 @@ include_directories(
 
 add_executable(tests
     src/testConstants.cpp
+    src/testBoundaryConditions.cpp
     src/testDimension.cpp
     src/testEnsemble.cpp
     src/testFieldGenerator.cpp

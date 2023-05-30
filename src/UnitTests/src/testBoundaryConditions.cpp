@@ -1,12 +1,9 @@
 #include "TestingUtility.h"
 
 #include "Fdtd.h"
-#include "Pstd.h"
-#include "Psatd.h"
-#include "PsatdTimeStraggered.h"
 
 template <class TTypeDefinitionsFieldTest>
-class FieldSolverTest : public BaseFixture {
+class BoundaryConditionTest : public BaseFixture {
 public:
     using FieldSolverType = typename TTypeDefinitionsFieldTest::FieldSolverType;
     using GridType = typename TTypeDefinitionsFieldTest::GridType;
@@ -23,25 +20,27 @@ public:
     FP3 gridStep;
     FP timeStep = 0;
     FP3 minCoords, maxCoords;
+    int numSteps = 0;
 
-    virtual void SetUp() {
-        this->maxAbsoluteError = 1e-4;
-        this->maxRelativeError = 0.5;
+    const FP maxError = 0.2;
 
+    BoundaryConditionTest() {
         gridSize = Int3(1, 1, 1);
         for (int d = 0; d < dimension; d++) {
             gridSize[d] = gridSizeTransverse;
         }
         gridSize[(int)axis] = gridSizeLongitudinal;
 
+        FP d = constants::c;
         this->minCoords = FP3(0, 0, 0);
-        this->maxCoords = constants::c * (FP3)gridSize;
-        this->gridStep = (this->maxCoords - this->minCoords) / (FP3)this->gridSize;
+        this->maxCoords = d * (FP3)gridSize;
+        this->gridStep = FP3(d, d, d);
 
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
         // should satisfy the Courant's condition for all solvers
-        this->timeStep = 0.4 * grid->steps.norm() / constants::c;
+        this->timeStep = 0.4;  // = 0.4 * d / constants::c
+        this->numSteps = gridSize[(int)axis] * 10 / 4;  // to cross the entire area exactly
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
 
@@ -71,10 +70,14 @@ public:
     }
 
     FP fieldFunc(FP x, FP y, FP z, FP t) {
-        FP3 coord(x, y, z);
         int axis0 = (int)this->axis;
-        return sin((FP)2.0 * constants::pi / (maxCoords[axis0] - minCoords[axis0]) *
-            (coord[axis0] - constants::c * t - minCoords[axis0]));
+        FP L = (maxCoords - minCoords)[axis0];
+        FP coord = (FP3(x, y, z)[axis0] - constants::c * t) / L;
+        if (coord < 0.0 || coord >= 1.0) coord = 0.0;
+        const FP pi2 = 2.0 * constants::pi;
+        // H = harris function
+        FP H = 0.03125 * (10.0 - 15.0 * cos(pi2 * coord) + 6.0 * cos(2.0 * pi2 * coord) - cos(3.0 * pi2 * coord));
+        return H;
     }
 
     FP3 eTest(FP x, FP y, FP z, FP t) {
@@ -92,40 +95,60 @@ public:
     }
 };
 
-typedef ::testing::Types<
+typedef ::testing::Types <
     TypeDefinitionsFieldTest<FDTD, YeeGrid, 1, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<FDTD, YeeGrid, 2, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<FDTD, YeeGrid, 2, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<FDTD, YeeGrid, 3, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<FDTD, YeeGrid, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<FDTD, YeeGrid, 3, CoordinateEnum::z>,
-
-    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 1, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 2, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 3, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSTD, PSTDGrid, 3, CoordinateEnum::z>,
-
-    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 1, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 2, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 3, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATD, PSATDGrid, 3, CoordinateEnum::z>,
-
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 1, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 2, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, PSATDTimeStraggeredGrid, 3, CoordinateEnum::z>
+    TypeDefinitionsFieldTest<FDTD, YeeGrid, 3, CoordinateEnum::z>
 > types;
-TYPED_TEST_CASE(FieldSolverTest, types);
 
 
-TYPED_TEST(FieldSolverTest, GridInitializationTest)
+template <class TTypeDefinitionsFieldTest>
+class PeriodicBoundaryConditionTest : public BoundaryConditionTest<TTypeDefinitionsFieldTest> {
+public:
+
+    using BoundaryConditionType =
+        typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::PeriodicalBoundaryConditionType;
+    std::unique_ptr<BoundaryConditionType> boundaryCondition;
+
+    PeriodicBoundaryConditionTest() {
+        boundaryCondition.reset(new BoundaryConditionType(fieldSolver.get()));
+        fieldSolver->setBoundaryCondition(boundaryCondition.get());
+    }
+
+};
+TYPED_TEST_CASE(PeriodicBoundaryConditionTest, types);
+#include <fstream>
+TYPED_TEST(PeriodicBoundaryConditionTest, PeriodicBoundaryConditionTest)
 {
+    // to disable testing of spectral solvers without enabled fftw
+#ifndef __USE_FFT__
+    SUCCEED();
+#else
+    std::cout << numSteps << std::endl;
+    for (int step = 0; step < numSteps; ++step)
+    {
+        //std::ofstream fout(std::to_string(step) + ".csv");
+        //for (int i = 0; i < grid->numCells.x; i++) {
+        //    int j = grid->numCells.y;
+        //    int k = grid->numCells.z;
+        //    fout << grid->Bz(i, j, k) << std::endl;
+        //}
+
+        this->fieldSolver->updateFields();
+    }
+    {
+        //std::ofstream fout(std::to_string(numSteps) + ".csv");
+        //for (int i = 0; i < grid->numCells.x; i++) {
+        //    int j = grid->numCells.y;
+        //    int k = grid->numCells.z;
+        //    fout << grid->Bz(i, j, k) << std::endl;
+        //}
+    }
+
+    // signal should be the same as at the beginning
     FP startT = 0;
 
     Int3 begin = this->fieldSolver->updateEAreaBegin;
@@ -145,7 +168,7 @@ TYPED_TEST(FieldSolverTest, GridInitializationTest)
                 actualE.x = this->grid->Ex(i, j, k);
                 actualE.y = this->grid->Ey(i, j, k);
                 actualE.z = this->grid->Ez(i, j, k);
-                ASSERT_NEAR_FP3(expectedE, actualE);
+                ASSERT_NEAR(expectedE.norm(), actualE.norm(), maxError);
             }
 
     begin = this->fieldSolver->updateBAreaBegin;
@@ -165,32 +188,65 @@ TYPED_TEST(FieldSolverTest, GridInitializationTest)
                 actualB.x = this->grid->Bx(i, j, k);
                 actualB.y = this->grid->By(i, j, k);
                 actualB.z = this->grid->Bz(i, j, k);
-                ASSERT_NEAR_FP3(expectedB, actualB);
+                ASSERT_NEAR(expectedB.norm(), actualB.norm(), maxError);
             }
+
+#endif
+
 }
 
-TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
+
+template <class TTypeDefinitionsFieldTest>
+class ReflectBoundaryConditionTest : public BoundaryConditionTest<TTypeDefinitionsFieldTest> {
+public:
+
+    using BoundaryConditionType =
+        typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::ReflectBoundaryConditionType;
+    std::unique_ptr<BoundaryConditionType> boundaryCondition;
+
+    ReflectBoundaryConditionTest() {
+        boundaryCondition.reset(new BoundaryConditionType(fieldSolver.get()));
+        fieldSolver->setBoundaryCondition(boundaryCondition.get());
+    }
+
+};
+TYPED_TEST_CASE(ReflectBoundaryConditionTest, types);
+
+TYPED_TEST(ReflectBoundaryConditionTest, PeriodicBoundaryConditionTest)
 {
     // to disable testing of spectral solvers without enabled fftw
 #ifndef __USE_FFT__
     SUCCEED();
 #else
 
-    using BoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
-    std::unique_ptr<BoundaryConditionType> boundaryCondition;
-
-    boundaryCondition.reset(new BoundaryConditionType(fieldSolver.get()));
-    fieldSolver->setBoundaryCondition(boundaryCondition.get());
-
-    const int numSteps = (int)(grid->numInternalCells[(int)axis] * grid->steps[(int)axis] /
-        (constants::c * fieldSolver->dt));
+    //for (int step = 0; step < numSteps; ++step)
+    //{
+    //    this->fieldSolver->updateFields();
+    //}
 
     for (int step = 0; step < numSteps; ++step)
     {
+        std::ofstream fout(std::to_string(step) + ".csv");
+        for (int i = 0; i < grid->numCells.x; i++) {
+            int j = grid->numCells.y;
+            int k = grid->numCells.z;
+            fout << grid->Bz(i, j, k) << std::endl;
+        }
+
         this->fieldSolver->updateFields();
     }
+    {
+        std::ofstream fout(std::to_string(numSteps) + ".csv");
+        for (int i = 0; i < grid->numCells.x; i++) {
+            int j = grid->numCells.y;
+            int k = grid->numCells.z;
+            fout << grid->Bz(i, j, k) << std::endl;
+        }
+    }
 
-    FP finalT = this->fieldSolver->dt * numSteps;
+    // signal should be the same as at the beginning
+    // because signal is symmetric
+    FP startT = 0;
 
     Int3 begin = this->fieldSolver->updateEAreaBegin;
     Int3 end = this->fieldSolver->updateEAreaEnd;
@@ -201,15 +257,15 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
             {
                 FP3 expectedE, actualE;
                 FP3 coords = this->grid->ExPosition(i, j, k);
-                expectedE.x = this->eTest(coords.x, coords.y, coords.z, finalT).x;
+                expectedE.x = this->eTest(coords.x, coords.y, coords.z, startT).x;
                 coords = this->grid->EyPosition(i, j, k);
-                expectedE.y = this->eTest(coords.x, coords.y, coords.z, finalT).y;
+                expectedE.y = this->eTest(coords.x, coords.y, coords.z, startT).y;
                 coords = this->grid->EzPosition(i, j, k);
-                expectedE.z = this->eTest(coords.x, coords.y, coords.z, finalT).z;
+                expectedE.z = this->eTest(coords.x, coords.y, coords.z, startT).z;
                 actualE.x = this->grid->Ex(i, j, k);
                 actualE.y = this->grid->Ey(i, j, k);
                 actualE.z = this->grid->Ez(i, j, k);
-                ASSERT_NEAR_FP3(expectedE, actualE);
+                ASSERT_NEAR(expectedE.norm(), actualE.norm(), maxError);
             }
 
     begin = this->fieldSolver->updateBAreaBegin;
@@ -221,17 +277,17 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
             {
                 FP3 expectedB, actualB;
                 FP3 coords = this->grid->BxPosition(i, j, k);
-                expectedB.x = this->bTest(coords.x, coords.y, coords.z, finalT).x;
+                expectedB.x = this->bTest(coords.x, coords.y, coords.z, startT).x;
                 coords = this->grid->ByPosition(i, j, k);
-                expectedB.y = this->bTest(coords.x, coords.y, coords.z, finalT).y;
+                expectedB.y = this->bTest(coords.x, coords.y, coords.z, startT).y;
                 coords = this->grid->BzPosition(i, j, k);
-                expectedB.z = this->bTest(coords.x, coords.y, coords.z, finalT).z;
+                expectedB.z = this->bTest(coords.x, coords.y, coords.z, startT).z;
                 actualB.x = this->grid->Bx(i, j, k);
                 actualB.y = this->grid->By(i, j, k);
                 actualB.z = this->grid->Bz(i, j, k);
-                ASSERT_NEAR_FP3(expectedB, actualB);
+                ASSERT_NEAR(expectedB.norm(), actualB.norm(), maxError);
             }
 
 #endif
-    
+
 }
