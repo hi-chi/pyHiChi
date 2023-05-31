@@ -1,46 +1,20 @@
 #include "TestingUtility.h"
 
+#include "Grid.h"
+
 template <class gridType>
 class GridTest : public BaseGridFixture<gridType> {
+public:
+    // excludes border cells for spectral solvers
+    FP3 internalPoint() {
+        if (grid->numExternalCells > 0)
+            return urandFP3(minCoords, maxCoords);
+        return urandFP3(minCoords + grid->steps, maxCoords - grid->steps);
+    }
 };
 
-typedef ::testing::Types<YeeGrid, SimpleGrid> types;
+typedef ::testing::Types<YeeGrid, SimpleGrid, PSTDGrid, PSATDGrid, PSATDTimeStraggeredGrid> types;
 TYPED_TEST_CASE(GridTest, types);
-
-/*TYPED_TEST(GridTest, LoadDumpE)
-{
-    int numCells = grid->numCells.volume();
-    FP3 minValue(0.135, -124.234, -3.1234);
-    FP3 maxValue(1835.623023, -54.2135, 2.641);
-    std::vector<FP3> expectedE = randomVectors(numCells, minValue, maxValue);
-    Int3 minIndex(0, 0, 0);
-    Int3 maxIndex = grid->numCells;
-    grid->loadE(expectedE.data(), &minIndex, &maxIndex);
-    std::vector<FP3> actualE(numCells);
-    grid->dumpE(actualE.data(), &minIndex, &maxIndex);
-    for (int idx = 0; idx < numCells; ++idx)
-    {
-        ASSERT_EQ_FP3(actualE[idx], expectedE[idx]);
-    }
-}
-
-
-TYPED_TEST(GridTest, LoadDumpB)
-{
-    int numCells = grid->numCells.volume();
-    FP3 minValue(-12.324, 84.3872, 23.12378);
-    FP3 maxValue(-8.9724, 223.97234, 125.453);
-    std::vector<FP3> expectedB = randomVectors(numCells, minValue, maxValue);
-    Int3 minIndex(0, 0, 0);
-    Int3 maxIndex = grid->numCells;
-    grid->loadB(expectedB.data(), &minIndex, &maxIndex);
-    std::vector<FP3> actualB(numCells);
-    grid->dumpB(actualB.data(), &minIndex, &maxIndex);
-    for (int idx = 0; idx < numCells; ++idx)
-    {
-        ASSERT_EQ_FP3(actualB[idx], expectedB[idx]);
-    }
-}*/
 
 
 TYPED_TEST(GridTest, InterpolateB)
@@ -108,3 +82,64 @@ TYPED_TEST(GridTest, InterpolateJ)
     }
 }
 
+
+TYPED_TEST(GridTest, GridInitialization)
+{
+    auto fieldFunc = [](FP3 coords) {
+        return coords.x + coords.y + coords.z;
+    };
+
+    Int3 begin = Int3(0, 0, 0);
+    Int3 end = grid->numCells;
+
+    for (int i = begin.x; i < end.x; i++)
+        for (int j = begin.y; j < end.y; j++)
+            for (int k = begin.z; k < end.z; k++) {
+                FP3 coords = grid->ExPosition(i, j, k);
+                grid->Ex(i, j, k) = fieldFunc(coords);
+                coords = grid->EyPosition(i, j, k);
+                grid->Ey(i, j, k) = fieldFunc(coords);
+                coords = grid->EzPosition(i, j, k);
+                grid->Ez(i, j, k) = fieldFunc(coords);
+                coords = grid->BxPosition(i, j, k);
+                grid->Bx(i, j, k) = fieldFunc(coords);
+                coords = grid->ByPosition(i, j, k);
+                grid->By(i, j, k) = fieldFunc(coords);
+                coords = grid->BzPosition(i, j, k);
+                grid->Bz(i, j, k) = fieldFunc(coords);
+            }
+
+    for (int i = begin.x; i < end.x; ++i)
+        for (int j = begin.y; j < end.y; ++j)
+            for (int k = begin.z; k < end.z; ++k)
+            {
+                FP3 expectedE, actualE;
+                FP3 coords = this->grid->ExPosition(i, j, k);
+                expectedE.x = fieldFunc(coords);
+                coords = this->grid->EyPosition(i, j, k);
+                expectedE.y = fieldFunc(coords);
+                coords = this->grid->EzPosition(i, j, k);
+                expectedE.z = fieldFunc(coords);
+                actualE.x = this->grid->Ex(i, j, k);
+                actualE.y = this->grid->Ey(i, j, k);
+                actualE.z = this->grid->Ez(i, j, k);
+                ASSERT_NEAR_FP3(expectedE, actualE);
+            }
+
+    for (int i = begin.x; i < end.x; ++i)
+        for (int j = begin.y; j < end.y; ++j)
+            for (int k = begin.z; k < end.z; ++k)
+            {
+                FP3 expectedB, actualB;
+                FP3 coords = this->grid->BxPosition(i, j, k);
+                expectedB.x = fieldFunc(coords);
+                coords = this->grid->ByPosition(i, j, k);
+                expectedB.y = fieldFunc(coords);
+                coords = this->grid->BzPosition(i, j, k);
+                expectedB.z = fieldFunc(coords);
+                actualB.x = this->grid->Bx(i, j, k);
+                actualB.y = this->grid->By(i, j, k);
+                actualB.z = this->grid->Bz(i, j, k);
+                ASSERT_NEAR_FP3(expectedB, actualB);
+            }
+}
