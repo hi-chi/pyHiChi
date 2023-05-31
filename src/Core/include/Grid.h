@@ -18,7 +18,9 @@ namespace pfc {
     class Grid :
         // next labels define some properties of grid
         public LabelFieldsSpatialStraggered<gridType_>,
-        public LabelFieldsTimeStraggered<gridType_>
+        public LabelFieldsTimeStraggered<gridType_>,
+        /* defines 'numExternalCells' constant depending on method */
+        public LabelMethodRequiredNumberOfExternalCells<gridType_>
     {
 
     public:
@@ -32,10 +34,15 @@ namespace pfc {
             const Int3& globalGridDims) {}
         Grid(const Grid<Data, gridType_>& grid);
 
-        // copy values from *this to *grid
+        /* copy values from *this to *grid */
         template <class TGrid>
         void copyValues(TGrid* grid) const;
 
+        /* returns coords by index */
+        forceinline const FP3 getBaseCoords(int x, int y, int z) const
+        {
+            return baseCoords(x, y, z);
+        }
         forceinline const FP3 BxPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftBx;
@@ -71,6 +78,117 @@ namespace pfc {
         forceinline const FP3 JzPosition(int x, int y, int z) const
         {
             return baseCoords(x, y, z) + shiftEJz;
+        }
+
+        /* returns the closest left grid index for given physical coords */
+        forceinline Int3 getBaseIndex(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getGridCoords(coords, FP3(0.0, 0.0, 0.0), idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getIndexEJx(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getGridCoords(coords, shiftEJx, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getIndexEJy(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getGridCoords(coords, shiftEJy, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getIndexEJz(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getGridCoords(coords, shiftEJz, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getIndexBx(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getGridCoords(coords, shiftBx, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getIndexBy(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getGridCoords(coords, shiftBy, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getIndexBz(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getGridCoords(coords, shiftBz, idx, internalCoords);
+            return idx;
+        }
+
+        /* returns the closest (left or right) grid index for given physical coords */
+        forceinline Int3 getClosestBaseIndex(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getClosestGridCoords(coords, FP3(0.0, 0.0, 0.0), idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getClosestIndexEJx(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getClosestGridCoords(coords, shiftEJx, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getClosestIndexEJy(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getClosestGridCoords(coords, shiftEJy, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getClosestIndexEJz(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getClosestGridCoords(coords, shiftEJz, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getClosestIndexBx(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getClosestGridCoords(coords, shiftBx, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getClosestIndexBy(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getClosestGridCoords(coords, shiftBy, idx, internalCoords);
+            return idx;
+        }
+        forceinline Int3 getClosestIndexBz(const FP3& coords) const {
+            FP3& internalCoords;
+            Int3 idx;
+            getClosestGridCoords(coords, shiftBz, idx, internalCoords);
+            return idx;
+        }
+
+        /* returns true if coords is inside of the area that grid defines (without external cells)*/
+        forceinline bool isInsideBaseCoords(const FP3& coords) const {
+            return isInside(coords, FP3(0.0, 0.0, 0.0));
+        }
+        forceinline bool isInsideEJxCoords(const FP3& coords) const {
+            return isInside(coords, shiftEJx);
+        }
+        forceinline bool isInsideEJyCoords(const FP3& coords) const {
+            return isInside(coords, shiftEJy);
+        }
+        forceinline bool isInsideEJzCoords(const FP3& coords) const {
+            return isInside(coords, shiftEJz);
+        }
+        forceinline bool isInsideBxCoords(const FP3& coords) const {
+            return isInside(coords, shiftBx);
+        }
+        forceinline bool isInsideByCoords(const FP3& coords) const {
+            return isInside(coords, shiftBy);
+        }
+        forceinline bool isInsideBzCoords(const FP3& coords) const {
+            return isInside(coords, shiftBz);
         }
 
         void getFieldsXYZ(FP x, FP y, FP z, FP3& e, FP3& b) const
@@ -266,24 +384,22 @@ namespace pfc {
             return getFieldPCS(coords, Jz, shiftEJz);
         }
 
-        /*void dumpE(FP3 * e, const Int3 * minCellIdx, const Int3 * maxCellIdx);
-        void dumpB(FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx);
-        void dumpCurrents(FP3 * currents, const Int3 * minCellIdx, const Int3 * maxCellIdx);
-
-        void loadE(const FP3 * e, const Int3 * minCellIdx, const Int3 * maxCellIdx);
-        void loadB(const FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx);
-        void loadCurrents(const FP3 * currents, const Int3 * minCellIdx, const Int3 * maxCellIdx);*/
-
         /* Make all current density values zero. */
         void zeroizeJ();
 
-        const Int3 getNumExternalLeftCells() const
-        {
-            Int3 result(2, 2, 2);
+        /* Returns numCells with zeros where globalGridDims == 1 */
+        const Int3 correctNumCellsAccordingToDim(const Int3& numCells) const {
+            Int3 result = numCells;
             for (int d = 0; d < 3; d++)
                 if (globalGridDims[d] == 1)
                     result[d] = 0;
             return result;
+        }
+
+        const Int3 getNumExternalLeftCells() const
+        {
+            Int3 result(numExternalCells, numExternalCells, numExternalCells);
+            return correctNumCellsAccordingToDim(result);
         }
 
         const Int3 getNumExternalRightCells() const
@@ -297,23 +413,23 @@ namespace pfc {
         void save(std::ostream& ostr);
         void load(std::istream& istr);
 
-        Int3 globalGridDims;  // important to initialize it first
+        Int3 globalGridDims;  // global grid size, important to initialize it first
         FP3 steps;
         Int3 numInternalCells;
         Int3 numCells;
-        Int3 sizeStorage;  // = numCells, sometimes can be larger
+        Int3 sizeStorage;  // sometimes can be larger than numCells
         FP3 origin;
-        int dimensionality;
+        int dimensionality = 0;
 
         ScalarField<Data> Ex, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz;
-
-    private:
 
         // 3d shifts of the field in the cell
         FP3 shiftEJx, shiftEJy, shiftEJz,
             shiftBx, shiftBy, shiftBz;
 
-        /* Get grid index and normalized internal coords in [0, 0, 0]..(1, 1, 1) for
+    private:
+
+        /* returns grid index and normalized internal coords in [0, 0, 0]..(1, 1, 1) for
         given physical coords and shift. */
         void getGridCoords(const FP3& coords, const FP3& shift, Int3& idx,
             FP3& internalCoords) const
@@ -333,19 +449,27 @@ namespace pfc {
             internalCoords = (coords - baseCoords(idx.x, idx.y, idx.z) - shift) / steps;
         }
 
-        /* Get base coords of element (i, j, k) so that its real coords are
+        /* returns base coords of element (i, j, k) so that its real coords are
         base coords + corresponding shift. */
         forceinline const FP3 baseCoords(int i, int j, int k) const
         {
             return origin + FP3(i, j, k) * steps;
         }
 
-        // if coords is inside of the area that grid defines
+        /* returns true if coords is inside of the area that grid defines (without external cells)*/
         forceinline bool isInside(const FP3& coords, const FP3& shift) const
         {
             FP3 minCoords = origin + shift * steps;
             FP3 maxCoords = minCoords + (numCells - Int3(1, 1, 1)) * steps;
-            return coords >= minCoords && coords <= maxCoords;
+            return coords >= minCoords && coords < maxCoords;
+        }
+
+        void checkGridSizeAndOverlaps() {
+            if (this->numInternalCells < this->getNumExternalLeftCells() + this->getNumExternalRightCells()) {
+                std::string exc = "ERROR: grid size should be larger than both overlaps";
+                std::cout << exc << std::endl;
+                throw std::exception(exc.c_str());
+            }
         }
 
         FP getFieldCIC(const FP3& coords, const ScalarField<Data>& field, const FP3& shift) const;
@@ -388,6 +512,7 @@ namespace pfc {
         Bx(grid.Bx), By(grid.By), Bz(grid.Bz),
         Jx(grid.Jx), Jy(grid.Jy), Jz(grid.Jz)
     {
+        checkGridSizeAndOverlaps();
         setInterpolationType(grid.interpolationType);
     }
 
@@ -413,7 +538,7 @@ namespace pfc {
             minCoords.z - steps.z * getNumExternalLeftCells().z),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
-        setInterpolationType(Interpolation_CIC);
+        checkGridSizeAndOverlaps();
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -439,6 +564,7 @@ namespace pfc {
             minCoords.z - steps.z * getNumExternalLeftCells().z),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
+        checkGridSizeAndOverlaps();
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -463,6 +589,7 @@ namespace pfc {
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
+        checkGridSizeAndOverlaps();
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -486,6 +613,7 @@ namespace pfc {
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
+        checkGridSizeAndOverlaps();
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -509,6 +637,7 @@ namespace pfc {
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
+        checkGridSizeAndOverlaps();
         setInterpolationType(Interpolation_CIC);
     }
 
@@ -525,11 +654,11 @@ namespace pfc {
                     grid->Ex(i, j, k) = this->getEx(grid->ExPosition(i, j, k));
                     grid->Ey(i, j, k) = this->getEy(grid->EyPosition(i, j, k));
                     grid->Ez(i, j, k) = this->getEz(grid->EzPosition(i, j, k));
-                    
+
                     grid->Bx(i, j, k) = this->getBx(grid->BxPosition(i, j, k));
                     grid->By(i, j, k) = this->getBy(grid->ByPosition(i, j, k));
                     grid->Bz(i, j, k) = this->getBz(grid->BzPosition(i, j, k));
-                    
+
                     grid->Jx(i, j, k) = this->getJx(grid->JxPosition(i, j, k));
                     grid->Jy(i, j, k) = this->getJy(grid->JyPosition(i, j, k));
                     grid->Jz(i, j, k) = this->getJz(grid->JzPosition(i, j, k));
@@ -900,108 +1029,4 @@ namespace pfc {
         Jy.load(istr);
         Jz.load(istr);
     }
-
-    /*template<>
-    inline void Grid<FP, YeeGridType>::dumpB(FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx)
-    {
-        Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
-        for (int i = 0; i < numCells.x; ++i)
-            for (int j = 0; j < numCells.y; ++j)
-                for (int k = 0; k < numCells.z; ++k)
-                {
-                    int idx = numCells.y * numCells.z * i + numCells.z * j + k;
-                    Int3 nodeIdx = *minCellIdx + Int3(i, j, k);
-                    b[idx].x = Bx(nodeIdx);
-                    b[idx].y = By(nodeIdx);
-                    b[idx].z = Bz(nodeIdx);
-                }
-    }
-
-    template<>
-    inline void Grid<FP, YeeGridType>::dumpE(FP3 * e, const Int3 * minCellIdx, const Int3 * maxCellIdx)
-    {
-        Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
-        for (int i = 0; i < numCells.x; ++i)
-            for (int j = 0; j < numCells.y; ++j)
-                for (int k = 0; k < numCells.z; ++k)
-                {
-                    int idx = numCells.y * numCells.z * i + numCells.z * j + k;
-                    Int3 nodeIdx = *minCellIdx + Int3(i, j, k);
-                    e[idx].x = Ex(nodeIdx);
-                    e[idx].y = Ey(nodeIdx);
-                    e[idx].z = Ez(nodeIdx);
-                }
-    }
-
-    template<>
-    inline void Grid<FP, YeeGridType>::dumpCurrents(FP3 * currents, const Int3 * minCellIdx,
-        const Int3 * maxCellIdx)
-    {
-        Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
-        for (int i = 0; i < numCells.x; ++i)
-            for (int j = 0; j < numCells.y; ++j)
-                for (int k = 0; k < numCells.z; ++k)
-                {
-                    int idx = numCells.y * numCells.z * i + numCells.z * j + k;
-                    Int3 nodeIdx = *minCellIdx + Int3(i, j, k);
-                    currents[idx].x = Jx(nodeIdx);
-                    currents[idx].y = Jy(nodeIdx);
-                    currents[idx].z = Jz(nodeIdx);
-                    idx++;
-                }
-    }
-
-    template<>
-    inline void Grid<FP, YeeGridType>::loadE(const FP3 * e, const Int3 * minCellIdx, const Int3 * maxCellIdx)
-    {
-        Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
-        for (int i = 0; i < numCells.x; i++)
-            for (int j = 0; j < numCells.y; j++)
-                for (int k = 0; k < numCells.z; k++)
-                {
-                    int idx = numCells.y * numCells.z * i + numCells.z * j + k;
-                    Int3 nodeIdx = *minCellIdx + Int3(i, j, k);
-                    Ex(nodeIdx) = e[idx].x;
-                    Ey(nodeIdx) = e[idx].y;
-                    Ez(nodeIdx) = e[idx].z;
-                }
-    }
-
-    template<>
-    inline void Grid<FP, YeeGridType>::loadB(const FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx)
-    {
-        Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
-        for (int i = 0; i < numCells.x; ++i)
-            for (int j = 0; j < numCells.y; ++j)
-                for (int k = 0; k < numCells.z; ++k)
-                {
-                    int idx = numCells.y * numCells.z * i + numCells.z * j + k;
-                    Int3 nodeIdx = *minCellIdx + Int3(i, j, k);
-                    Bx(nodeIdx) = b[idx].x;
-                    By(nodeIdx) = b[idx].y;
-                    Bz(nodeIdx) = b[idx].z;
-                }
-    }
-
-    template<>
-    inline void Grid<FP, YeeGridType>::loadCurrents(const FP3 * currents, const Int3 * minCellIdx, const Int3 * maxCellIdx)
-    {
-        Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
-        for (int i = 0; i < numCells.x; i++)
-            for (int j = 0; j < numCells.y; j++)
-                for (int k = 0; k < numCells.z; k++)
-                {
-                    int idx = numCells.y * numCells.z * i + numCells.z * j + k;
-                    Int3 nodeIdx = *minCellIdx + Int3(i, j, k);
-                    Jx(nodeIdx) = currents[idx].x;
-                    Jy(nodeIdx) = currents[idx].y;
-                    Jz(nodeIdx) = currents[idx].z;
-                }
-    }*/
 }
