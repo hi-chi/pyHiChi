@@ -86,29 +86,22 @@ namespace pfc {
     template<GridTypes gridType>
     inline void FieldSolver<gridType>::updateInternalDims()
     {
-        if (pml.get())
+        if (pml)
         {
             for (int d = 0; d < 3; ++d)
             {
-                internalBAreaBegin[d] = std::max(updateBAreaBegin[d], pml->leftDims[d]);
-                internalBAreaEnd[d] = std::min(updateBAreaEnd[d],
-                    grid->numCells[d] - pml->rightDims[d]);
-                internalEAreaBegin[d] = std::max(updateEAreaBegin[d], pml->leftDims[d]);
-                internalEAreaEnd[d] = std::min(updateEAreaEnd[d],
-                    grid->numCells[d] - pml->rightDims[d]);
+                internalBAreaBegin[d] = std::max(updateBAreaBegin[d], pml->leftPmlBorder[d]);
+                internalBAreaEnd[d] = std::min(updateBAreaEnd[d], pml->rightPmlBorder[d]);
+                internalEAreaBegin[d] = std::max(updateEAreaBegin[d], pml->leftPmlBorder[d]);
+                internalEAreaEnd[d] = std::min(updateEAreaEnd[d], pml->rightPmlBorder[d]);
             }
         }
         else
         {
-            for (int d = 0; d < 3; ++d)
-            {
-                internalBAreaBegin[d] = updateBAreaBegin[d];
-                internalBAreaEnd[d] = std::min(updateBAreaEnd[d],
-                    grid->numCells[d]);
-                internalEAreaBegin[d] = updateEAreaBegin[d];
-                internalEAreaEnd[d] = std::min(updateEAreaEnd[d],
-                    grid->numCells[d]);
-            }
+            internalBAreaBegin = updateBAreaBegin;
+            internalBAreaEnd = updateBAreaEnd;
+            internalEAreaBegin = updateEAreaBegin;
+            internalEAreaEnd = updateEAreaEnd;
         }
     }
 

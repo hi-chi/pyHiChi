@@ -194,7 +194,8 @@ namespace pfc {
         saveJ();
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml) getPml()->doSecondStep();
+        if (pml) getPml()->updateB();
+        if (pml) getPml()->updateE();
 
         globalTime += dt;
     }

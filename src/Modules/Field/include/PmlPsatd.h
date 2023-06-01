@@ -3,6 +3,7 @@
 #include "FieldSolver.h"
 #include "PmlSpectralTimeStraggered.h"
 #include "Constants.h"
+#include "macros.h"
 
 namespace pfc {
 
@@ -24,7 +25,8 @@ namespace pfc {
         SpectralFieldSolver<TPSATDGridType>* fs = PmlSpectralTimeStraggered<TPSATDGridType>::getFieldSolver();
         Int3 begin = fs->updateComplexBAreaBegin;
         Int3 end = fs->updateComplexBAreaEnd;
-#pragma omp parallel for
+
+        OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
                 for (int k = begin.z; k < end.z; k++) {
