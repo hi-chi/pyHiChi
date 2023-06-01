@@ -4,12 +4,19 @@
 #include "Grid.h"
 #include "Vectors.h"
 #include "PmlPstd.h"
+#include "FieldBoundaryConditionSpectral.h"
+//#include "FieldGenerator.h"
 
 namespace pfc {
     class PSTD : public SpectralFieldSolver<PSTDGridType>
     {
-
     public:
+
+        using GridType = PSTDGrid;
+        using PmlType = PmlPstd;
+        //using FieldGeneratorType = SpectralFieldGenerator<PSTDGridType>;
+        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionPstd;
+
         PSTD(PSTDGrid * grid, double dt);
 
         void updateFields();
@@ -18,6 +25,8 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setBoundaryCondition(
+            FieldBoundaryCondition<GridTypes::PSTDGridType>* _boundaryCondition);
 
         void setTimeStep(FP dt);
 
@@ -59,13 +68,21 @@ namespace pfc {
         updateInternalDims();
     }
 
+    inline void PSTD::setBoundaryCondition(
+        FieldBoundaryCondition<GridTypes::PSTDGridType>* _boundaryCondition)
+    {
+        boundaryCondition.reset(_boundaryCondition->createInstance(this));
+    }
+
     inline void PSTD::setTimeStep(FP dt)
     {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
             this->timeShiftB = 0.5*dt;
             this->timeShiftJ = 0.5*dt;
-            if (pml.get()) pml.reset(new PmlPstd(this, pml->sizePML));
+            if (pml) pml.reset(new PSTD::PmlType(this, pml->sizePML));
+            if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
+            //if (generator) generator.reset(generator->createInstance(this));
         }
         else {
             std::cout
@@ -78,18 +95,18 @@ namespace pfc {
     {
         doFourierTransform(fourier_transform::Direction::RtoC);
 
-        if (pml.get()) getPml()->updateBSplit();
+        if (pml) getPml()->updateBSplit();
         updateHalfB();
 
-        if (pml.get()) getPml()->updateESplit();
+        if (pml) getPml()->updateESplit();
         updateE();
 
-        if (pml.get()) getPml()->updateBSplit();
+        if (pml) getPml()->updateBSplit();
         updateHalfB();
 
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml.get()) getPml()->doSecondStep();
+        if (pml) getPml()->doSecondStep();
 
         globalTime += dt;
     }
@@ -102,8 +119,6 @@ namespace pfc {
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
-            {
-//#pragma omp simd
                 for (int k = begin.z; k < end.z; k++)
                 {
                     ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
@@ -114,7 +129,6 @@ namespace pfc {
                     complexGrid->By(i, j, k) += coeff * crossKE.y;
                     complexGrid->Bz(i, j, k) += coeff * crossKE.z;
                 }
-            }
     }
 
     inline void PSTD::updateE()
@@ -124,8 +138,6 @@ namespace pfc {
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
-            {
-//#pragma omp simd
                 for (int k = begin.z; k < end.z; k++)
                 {
                     ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
@@ -137,7 +149,6 @@ namespace pfc {
                     complexGrid->Ey(i, j, k) += coeff * crossKB.y - 4 * constants::pi * dt * J.y;
                     complexGrid->Ez(i, j, k) += coeff * crossKB.z - 4 * constants::pi * dt * J.z;
                 }
-            }
     }
 
 }

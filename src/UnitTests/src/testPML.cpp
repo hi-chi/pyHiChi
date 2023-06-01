@@ -2,6 +2,7 @@
 
 #include "Pstd.h"
 #include "Psatd.h"
+#include "PsatdTimeStaggered.h"
 
 template <class FieldSolverType, class GridType>
 class PMLTest : public BaseGridFixture<GridType> {

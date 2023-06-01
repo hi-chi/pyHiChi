@@ -2,6 +2,7 @@
 #include "Grid.h"
 #include "SpectralGrid.h"
 #include "FieldGenerator.h"
+#include "FieldBoundaryCondition.h"
 #include "Vectors.h"
 #include "FourierTransform.h"
 
@@ -35,6 +36,7 @@ namespace pfc {
         Grid<FP, gridType>* grid;
 
         std::unique_ptr<Pml<gridType>> pml;
+        std::unique_ptr<FieldBoundaryCondition<gridType>> boundaryCondition;
         std::unique_ptr<FieldGenerator<gridType>> generator;
 
         // Index space being updated in form [begin, end).

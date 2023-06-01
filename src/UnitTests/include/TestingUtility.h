@@ -7,10 +7,12 @@
 #include "ParticleTypes.h"
 #include "Vectors.h"
 #include "VectorsProxy.h"
+#include "Enums.h"
 
 #include "gtest/gtest.h"
 
 #include <vector>
+#include <fstream>
 
 using namespace pfc;
 
@@ -317,4 +319,14 @@ protected:
     {
         delete(grid);
     }
+};
+
+// necessary to run test with different fields and dimensions (1d, 2d, 3d)
+// wave proparates along VAxis (x, y, z)
+template <class TFieldSolver, int VDimension, CoordinateEnum VAxis>
+struct TypeDefinitionsFieldTest
+{
+    using FieldSolverType = TFieldSolver;
+    static const int dimension = VDimension;
+    static const CoordinateEnum axis = VAxis;
 };
