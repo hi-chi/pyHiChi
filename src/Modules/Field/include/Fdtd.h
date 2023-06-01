@@ -63,6 +63,15 @@ namespace pfc {
             return dt < getCourantCondition();
         }
 
+        void updateDims() {
+            this->updateEAreaBegin = Int3(0, 0, 0);
+            this->updateEAreaEnd = grid->numCells -
+                grid->correctNumCellsAccordingToDim(Int3(1, 1, 1));
+            this->updateBAreaBegin =
+                grid->correctNumCellsAccordingToDim(Int3(1, 1, 1));
+            this->updateBAreaEnd = grid->numCells;
+        }
+
     private:
 
         void updateHalfB3D();
@@ -201,7 +210,6 @@ namespace pfc {
         globalTime += dt;
     }
 
-    // Update grid values of magnetic field in FDTD.
     inline void FDTD::updateHalfB()
     {
         if (grid->dimensionality == 3)
@@ -222,29 +230,23 @@ namespace pfc {
         const FP coeffZX = cdt / (grid->steps.z * anisotropyCoeff.x);
         const FP coeffZY = cdt / (grid->steps.z * anisotropyCoeff.y);
 
-        // In central area use b(i, j, k) += c * dt * -rot(e(i, j, k)), which is:
-        // b.x(i, j, k) += c * dt * ((e.y(i, j, k) - e.y(i, j, k-1)) / eps_z * dz -
-        //     (e.z(i, j, k) - e.z(i, j-1, k)) / eps_y * dy),
-        // b.y(i, j, k) += c * dt * ((e.z(i, j, k) - e.z(i-1, j, k)) / eps_x * dx -
-        //     (e.x(i, j, k) - e.x(i, j, k-1)) / eps_z * dz),
-        // b.z(i, j, k) += c * dt * ((e.x(i, j, k) - e.x(i, j-1, k)) / eps_y * dy -
-        //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
                 OMP_SIMD()
-                for (int k = begin.z; k < end.z; k++)
-                {
-                    grid->Bx(i, j, k) += coeffZX * (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1)) -
-                        coeffYX * (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
-                    grid->By(i, j, k) += coeffXY * (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k)) -
-                        coeffZY * (grid->Ex(i, j, k) - grid->Ex(i, j, k - 1));
-                    grid->Bz(i, j, k) += coeffYZ * (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k)) -
-                        coeffXZ * (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
-                }
+                    for (int k = begin.z; k < end.z; k++)
+                    {
+                        grid->Bx(i, j, k) += coeffZX * (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1)) -
+                            coeffYX * (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
+                        grid->By(i, j, k) += coeffXY * (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k)) -
+                            coeffZY * (grid->Ex(i, j, k) - grid->Ex(i, j, k - 1));
+                        grid->Bz(i, j, k) += coeffYZ * (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k)) -
+                            coeffXZ * (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
+                    }
             }
     }
 
@@ -256,25 +258,19 @@ namespace pfc {
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
         const FP coeffYZ = cdt / (grid->steps.y * anisotropyCoeff.z);
 
-        // In central area use b(i, j, k) += c * dt * -rot(e(i, j, k)), which is:
-        // b.x(i, j, k) += c * dt * ((e.y(i, j, k) - e.y(i, j, k-1)) / eps_z * dz -
-        //     (e.z(i, j, k) - e.z(i, j-1, k)) / eps_y * dy),
-        // b.y(i, j, k) += c * dt * ((e.z(i, j, k) - e.z(i-1, j, k)) / eps_x * dx -
-        //     (e.x(i, j, k) - e.x(i, j, k-1)) / eps_z * dz),
-        // b.z(i, j, k) += c * dt * ((e.x(i, j, k) - e.x(i, j-1, k)) / eps_y * dy -
-        //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
-        OMP_SIMD()
-            for (int j = begin.y; j < end.y; j++)
-            {
-                grid->Bx(i, j, 0) += -coeffYX * (grid->Ez(i, j, 0) - grid->Ez(i, j - 1, 0));
-                grid->By(i, j, 0) += coeffXY * (grid->Ez(i, j, 0) - grid->Ez(i - 1, j, 0));
-                grid->Bz(i, j, 0) += coeffYZ * (grid->Ex(i, j, 0) - grid->Ex(i, j - 1, 0)) -
-                    coeffXZ * (grid->Ey(i, j, 0) - grid->Ey(i - 1, j, 0));
-            }
+            OMP_SIMD()
+                for (int j = begin.y; j < end.y; j++)
+                {
+                    grid->Bx(i, j, 0) += -coeffYX * (grid->Ez(i, j, 0) - grid->Ez(i, j - 1, 0));
+                    grid->By(i, j, 0) += coeffXY * (grid->Ez(i, j, 0) - grid->Ez(i - 1, j, 0));
+                    grid->Bz(i, j, 0) += coeffYZ * (grid->Ex(i, j, 0) - grid->Ex(i, j - 1, 0)) -
+                        coeffXZ * (grid->Ey(i, j, 0) - grid->Ey(i - 1, j, 0));
+                }
         }
     }
 
@@ -284,15 +280,9 @@ namespace pfc {
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
-        // In central area use b(i, j, k) += c * dt * -rot(e(i, j, k)), which is:
-        // b.x(i, j, k) += c * dt * ((e.y(i, j, k) - e.y(i, j, k-1)) / eps_z * dz -
-        //     (e.z(i, j, k) - e.z(i, j-1, k)) / eps_y * dy),
-        // b.y(i, j, k) += c * dt * ((e.z(i, j, k) - e.z(i-1, j, k)) / eps_x * dx -
-        //     (e.x(i, j, k) - e.x(i, j, k-1)) / eps_z * dz),
-        // b.z(i, j, k) += c * dt * ((e.x(i, j, k) - e.x(i, j-1, k)) / eps_y * dy -
-        //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
         const Int3 begin = internalBAreaBegin;
         const Int3 end = internalBAreaEnd;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             grid->By(i, 0, 0) += coeffXY * (grid->Ez(i, 0, 0) - grid->Ez(i - 1, 0, 0));
@@ -300,7 +290,6 @@ namespace pfc {
         }
     }
 
-    // Update grid values of electric field in FDTD.
     inline void FDTD::updateE()
     {
         if (grid->dimensionality == 3)
@@ -322,65 +311,27 @@ namespace pfc {
         const FP coeffZX = cdt / (grid->steps.z * anisotropyCoeff.x);
         const FP coeffZY = cdt / (grid->steps.z * anisotropyCoeff.y);
 
-        // In internal area use:
-        // e.x(i, j, k) += dt * -4pi * j.x(i, j, k) + c * dt * ((b.z(i, j+1, k) -
-        //     b.z(i, j, k)) / eps_y * dy - (b.y(i, j, k+1) - b.y(i, j, k)) / eps_z * dz),
-        // e.y(i, j, k) += dt * -4pi * j.y(i, j, k) + c * dt * ((b.x(i, j, k+1) -
-        //     b.x(i, j, k)) / eps_z * dz - (b.z(i+1, j, k) - b.z(i, j, k)) / eps_x * dx),
-        // e.z(i, j, k) += dt * -4pi * j.z(i, j, k) + c * dt * ((b.y(i+1, j, k) -
-        //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
                 OMP_SIMD()
-                for (int k = begin.z; k < end.z; k++)
-                {
-                    grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
-                        coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
-                        coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
-                    grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
-                        coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
-                        coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                    grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
-                        coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
-                        coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
-                }
+                    for (int k = begin.z; k < end.z; k++)
+                    {
+                        grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
+                            coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
+                            coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
+                        grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
+                            coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
+                            coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
+                        grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
+                            coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
+                            coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
+                    }
             }
-
-        // Process edge values
-        if (updateEAreaEnd.x == grid->numCells.x - 1)
-        {
-            int i = updateEAreaEnd.x;
-            OMP_FOR()
-            for (int j = begin.y; j < end.y; j++)
-                for (int k = begin.z; k < end.z; k++)
-                    grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
-                    coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
-                    coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
-        }
-        if (updateEAreaEnd.y == grid->numCells.y - 1)
-        {
-            int j = updateEAreaEnd.y;
-            OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                for (int k = begin.z; k < end.z; k++)
-                    grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
-                    coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
-                    coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-        }
-        if (updateEAreaEnd.z == grid->numCells.z - 1)
-        {
-            int k = updateEAreaEnd.z;
-            OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                for (int j = begin.y; j < end.y; j++)
-                    grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
-                    coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
-                    coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
-        }
     }
 
     inline void FDTD::updateE2D()
@@ -392,45 +343,21 @@ namespace pfc {
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
         const FP coeffYZ = cdt / (grid->steps.y * anisotropyCoeff.z);
 
-        // In internal area use:
-        // e.x(i, j, k) += dt * -4pi * j.x(i, j, k) + c * dt * ((b.z(i, j+1, k) -
-        //     b.z(i, j, k)) / eps_y * dy - (b.y(i, j, k+1) - b.y(i, j, k)) / eps_z * dz),
-        // e.y(i, j, k) += dt * -4pi * j.y(i, j, k) + c * dt * ((b.x(i, j, k+1) -
-        //     b.x(i, j, k)) / eps_z * dz - (b.z(i+1, j, k) - b.z(i, j, k)) / eps_x * dx),
-        // e.z(i, j, k) += dt * -4pi * j.z(i, j, k) + c * dt * ((b.y(i+1, j, k) -
-        //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             OMP_SIMD()
-            for (int j = begin.y; j < end.y; j++) {
-                grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
-                    coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
-                grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
-                    coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
-                grid->Ez(i, j, 0) += coeffCurrent * grid->Jz(i, j, 0) +
-                    coeffXZ * (grid->By(i + 1, j, 0) - grid->By(i, j, 0)) -
-                    coeffYZ * (grid->Bx(i, j + 1, 0) - grid->Bx(i, j, 0));
-            }
-        }
-
-        // Process edge values
-        if (updateEAreaEnd.x == grid->numCells.x - 1)
-        {
-            int i = updateEAreaEnd.x;
-            OMP_FOR()
-            for (int j = begin.y; j < end.y; j++)
-                grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
-                coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
-        }
-        if (updateEAreaEnd.y == grid->numCells.y - 1)
-        {
-            int j = updateEAreaEnd.y;
-            OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
-                coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
+                for (int j = begin.y; j < end.y; j++) {
+                    grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
+                        coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
+                    grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
+                        coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
+                    grid->Ez(i, j, 0) += coeffCurrent * grid->Jz(i, j, 0) +
+                        coeffXZ * (grid->By(i + 1, j, 0) - grid->By(i, j, 0)) -
+                        coeffYZ * (grid->Bx(i, j + 1, 0) - grid->Bx(i, j, 0));
+                }
         }
     }
 
@@ -441,15 +368,9 @@ namespace pfc {
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
-        // In internal area use:
-        // e.x(i, j, k) += dt * -4pi * j.x(i, j, k) + c * dt * ((b.z(i, j+1, k) -
-        //     b.z(i, j, k)) / eps_y * dy - (b.y(i, j, k+1) - b.y(i, j, k)) / eps_z * dz),
-        // e.y(i, j, k) += dt * -4pi * j.y(i, j, k) + c * dt * ((b.x(i, j, k+1) -
-        //     b.x(i, j, k)) / eps_z * dz - (b.z(i+1, j, k) - b.z(i, j, k)) / eps_x * dx),
-        // e.z(i, j, k) += dt * -4pi * j.z(i, j, k) + c * dt * ((b.y(i+1, j, k) -
-        //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
         const Int3 begin = internalEAreaBegin;
         const Int3 end = internalEAreaEnd;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             grid->Ex(i, 0, 0) += coeffCurrent * grid->Jx(i, 0, 0);
