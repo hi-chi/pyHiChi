@@ -1,8 +1,6 @@
 #pragma once
 #include "Grid.h"
 #include "SpectralGrid.h"
-#include "FieldGenerator.h"
-#include "FieldBoundaryCondition.h"
 #include "Vectors.h"
 #include "FourierTransform.h"
 
@@ -12,26 +10,32 @@
 namespace pfc {
     template<GridTypes gridType>
     class Pml;
+    template<GridTypes gridType>
+    class FieldBoundaryCondition;
+    template<GridTypes gridType>
+    class FieldGenerator;
 
-    // Base class for field solvers on Grid.
-    // The main method doStep uses template method pattern.
+    // Base class for field solvers on Grid
     template<GridTypes gridType>
     class FieldSolver
     {
 
     public:
 
-        FieldSolver(Grid<FP, gridType>* _grid, FP dt,
-            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
-            dt(dt),
-            timeShiftE(timeShiftE),
-            timeShiftB(timeShiftB),
-            timeShiftJ(timeShiftJ)
+        FieldSolver(Grid<FP, gridType>* _grid, FP dt) : dt(dt)
         {
             this->grid = _grid;
             this->globalTime = (FP)0.0;
             this->generator.reset(nullptr);
         }
+
+        virtual ~FieldSolver() {}
+        
+        void updateDims();
+        void updateInternalDims();
+
+        virtual void save(std::ostream& ostr);
+        virtual void load(std::istream& istr);
 
         Grid<FP, gridType>* grid;
 
@@ -46,16 +50,8 @@ namespace pfc {
         Int3 internalBAreaBegin, internalBAreaEnd;
         Int3 internalEAreaBegin, internalEAreaEnd;
 
-        void updateDims();
-        void updateInternalDims();
-
-        virtual void save(std::ostream& ostr);
-        virtual void load(std::istream& istr);
-
         FP globalTime;
         FP dt;
-        // difference between E and B
-        FP timeShiftE, timeShiftB, timeShiftJ;
     };
 
     template<GridTypes gridType>
@@ -82,9 +78,9 @@ namespace pfc {
     inline void FieldSolver<gridType>::updateDims()
     {
         updateEAreaBegin = Int3(0, 0, 0);
-        updateEAreaEnd = grid->numCells - grid->getNumExternalRightCells() / 2;
-        updateBAreaBegin = grid->getNumExternalLeftCells();
-        updateBAreaEnd = grid->numCells - updateBAreaBegin;
+        updateEAreaEnd = grid->numCells;
+        updateBAreaBegin = Int3(0, 0, 0);
+        updateBAreaEnd = grid->numCells;
     }
 
     template<GridTypes gridType>
@@ -121,9 +117,8 @@ namespace pfc {
     class RealFieldSolver : public FieldSolver<gridType>
     {
     public:
-        RealFieldSolver(Grid<FP, gridType>* _grid, FP dt,
-            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
-            FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
+        RealFieldSolver(Grid<FP, gridType>* _grid, FP dt) :
+            FieldSolver<gridType>(_grid, dt)
         {}
 
     private:
@@ -137,9 +132,8 @@ namespace pfc {
     class SpectralFieldSolver : public FieldSolver<gridType>
     {
     public:
-        SpectralFieldSolver(Grid<FP, gridType>* _grid, FP dt,
-            FP timeShiftE, FP timeShiftB, FP timeShiftJ) :
-            FieldSolver<gridType>(_grid, dt, timeShiftE, timeShiftB, timeShiftJ)
+        SpectralFieldSolver(Grid<FP, gridType>* _grid, FP dt) :
+            FieldSolver<gridType>(_grid, dt)
         {
             complexGrid.reset(new SpectralGrid<FP, complexFP>(
                 fourier_transform::getSizeOfComplexArray(_grid->numCells),

@@ -5,6 +5,7 @@
 #include "PmlFdtd.h"
 #include "FieldBoundaryConditionFdtd.h"
 //#include "FieldGeneratorFdtd.h"
+#include "FieldGenerator.h"
 #include "Vectors.h"
 
 #include <algorithm>
@@ -61,7 +62,7 @@ namespace pfc {
     };
 
     inline FDTD::FDTD(YeeGrid* grid, FP dt) :
-        RealFieldSolver(grid, dt, 0.0, 0.5*dt, 0.0)
+        RealFieldSolver(grid, dt)
     {
         if (!ifCourantConditionSatisfied(dt)) {
             std::cout
@@ -95,7 +96,6 @@ namespace pfc {
     {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            this->timeShiftB = 0.5*dt;
             if (pml) pml.reset(new FDTD::PmlType(this, pml->sizePML));
             if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
             if (generator) generator.reset(generator->createInstance(this));

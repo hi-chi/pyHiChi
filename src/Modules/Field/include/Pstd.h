@@ -50,7 +50,7 @@ namespace pfc {
     };
 
     inline PSTD::PSTD(PSTDGrid* grid, double dt) :
-        SpectralFieldSolver<GridTypes::PSTDGridType>(grid, dt, 0.0, 0.5*dt, 0.5*dt)
+        SpectralFieldSolver<GridTypes::PSTDGridType>(grid, dt)
     {
         if (!ifCourantConditionSatisfied(dt)) {
             std::cout
@@ -78,8 +78,6 @@ namespace pfc {
     {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            this->timeShiftB = 0.5*dt;
-            this->timeShiftJ = 0.5*dt;
             if (pml) pml.reset(new PSTD::PmlType(this, pml->sizePML));
             if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
             //if (generator) generator.reset(generator->createInstance(this));
