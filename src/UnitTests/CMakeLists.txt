@@ -7,6 +7,7 @@ include_directories(
     ${FFT_INCLUDES})
 
 add_executable(tests
+    src/testBoundaryConditions.cpp
     src/testConstants.cpp
     src/testDimension.cpp
     src/testEnsemble.cpp
