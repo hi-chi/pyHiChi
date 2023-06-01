@@ -5,7 +5,7 @@
 #include "Vectors.h"
 #include "PmlPsatd.h"
 #include "FieldBoundaryConditionSpectral.h"
-//#include "FieldGenerator.h"
+#include "FieldGeneratorSpectral.h"
 
 namespace pfc {
 
@@ -16,7 +16,7 @@ namespace pfc {
 
         using GridType = PSATDTimeStraggeredGrid;
         using PmlType = PmlPsatdTimeStraggered;
-        //using FieldGeneratorType = SpectralFieldGenerator<PSATDTimeStraggeredGridType>;
+        using FieldGeneratorType = FieldGeneratorSpectral<PSATDTimeStraggeredGridType>;
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionPsatdTimeStraggered;
 
         PSATDTimeStraggeredT(PSATDTimeStraggeredGrid* grid, FP dt);
@@ -29,6 +29,24 @@ namespace pfc {
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
         void setBoundaryCondition(
             FieldBoundaryCondition<GridTypes::PSATDTimeStraggeredGridType>* _boundaryCondition);
+
+        void setFieldGenerator(
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
+            FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
+            FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
+        void setFieldGenerator(
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            /* first index is index of edge (x, y, z),
+            second index is index of field component (ex, ey, ez or bx, by, bz) */
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
         void setTimeStep(FP dt);
 
@@ -97,12 +115,45 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
+    inline void PSATDTimeStraggeredT<ifPoisson>::setFieldGenerator(
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
+        FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
+        FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
+    {
+        //generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(
+        //    this, leftGenIndex, rightGenIndex,
+        //    bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+        //    isLeftBorderEnabled, isRightBorderEnabled)
+        //);
+        generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(this));
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDTimeStraggeredT<ifPoisson>::setFieldGenerator(
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
+    {
+        //generator.reset(new PSATDTimeStraggeredT<ifPoisson>::::FieldGeneratorType(
+        //    this, leftGenIndex, rightGenIndex,
+        //    leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+        //    isLeftBorderEnabled, isRightBorderEnabled)
+        //);
+        generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(this));
+    }
+
+    template <bool ifPoisson>
     inline void PSATDTimeStraggeredT<ifPoisson>::setTimeStep(FP dt)
     {
         this->dt = dt;
         if (pml) pml.reset(new PSATDTimeStraggeredT<ifPoisson>::PmlType(this, pml->sizePML));
         if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
-        //if (generator) generator.reset(generator->createInstance(this));
+        if (generator) generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(this));  // TODO
     }
 
     template <bool ifPoisson>

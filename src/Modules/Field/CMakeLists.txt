@@ -18,6 +18,8 @@ set(fieldModules_headers
     ${FIELDMODULES_HEADER_DIR}/FieldBoundaryConditionFdtd.h
     ${FIELDMODULES_HEADER_DIR}/FieldBoundaryConditionSpectral.h
     ${FIELDMODULES_HEADER_DIR}/FieldGenerator.h
+    ${FIELDMODULES_HEADER_DIR}/FieldGeneratorFdtd.h
+    ${FIELDMODULES_HEADER_DIR}/FieldGeneratorSpectral.h
     ${FIELDMODULES_HEADER_DIR}/FieldSolver.h
     ${FIELDMODULES_HEADER_DIR}/Pml.h
     ${FIELDMODULES_HEADER_DIR}/PmlFdtd.h

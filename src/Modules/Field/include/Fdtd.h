@@ -4,8 +4,7 @@
 #include "Grid.h"
 #include "PmlFdtd.h"
 #include "FieldBoundaryConditionFdtd.h"
-//#include "FieldGeneratorFdtd.h"
-#include "FieldGenerator.h"
+#include "FieldGeneratorFdtd.h"
 #include "Vectors.h"
 
 #include <algorithm>
@@ -18,7 +17,7 @@ namespace pfc {
 
         using GridType = YeeGrid;
         using PmlType = PmlFdtd;
-        //using FieldGeneratorType = FieldGeneratorFdtd;
+        using FieldGeneratorType = FieldGeneratorFdtd;
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionFdtd;
         using ReflectBoundaryConditionType = ReflectBoundaryConditionFdtd;
 
@@ -32,7 +31,24 @@ namespace pfc {
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
         void setBoundaryCondition(
             FieldBoundaryCondition<GridTypes::YeeGridType>* _boundaryCondition);
-        void setFieldGenerator(FieldGeneratorYee * _generator);
+        
+        void setFieldGenerator(
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
+            FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
+            FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
+        void setFieldGenerator(
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            /* first index is index of edge (x, y, z),
+            second index is index of field component (ex, ey, ez or bx, by, bz) */
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
+            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
         void setTimeStep(FP dt);
 
@@ -87,9 +103,35 @@ namespace pfc {
         boundaryCondition.reset(_boundaryCondition->createInstance(this));
     }
 
-    inline void FDTD::setFieldGenerator(FieldGeneratorYee* _generator)
+    inline void FDTD::setFieldGenerator(
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
+        FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
+        FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        generator.reset(_generator->createInstance(this));
+        //generator.reset(new FDTD::FieldGeneratorType(
+        //    this, leftGenIndex, rightGenIndex,
+        //    bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+        //    isLeftBorderEnabled, isRightBorderEnabled)
+        //);
+        generator.reset(new FDTD::FieldGeneratorType(this));
+    }
+
+    inline void FDTD::setFieldGenerator(
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
+        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
+    {
+        //generator.reset(new FDTD::FieldGeneratorType(
+        //    this, leftGenIndex, rightGenIndex,
+        //    leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+        //    isLeftBorderEnabled, isRightBorderEnabled)
+        //);
+        generator.reset(new FDTD::FieldGeneratorType(this));
     }
 
     inline void FDTD::setTimeStep(FP dt)
@@ -98,7 +140,7 @@ namespace pfc {
             this->dt = dt;
             if (pml) pml.reset(new FDTD::PmlType(this, pml->sizePML));
             if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
-            if (generator) generator.reset(generator->createInstance(this));
+            if (generator) generator.reset(new FDTD::FieldGeneratorType(this));  // TODO
         }
         else {
             std::cout
