@@ -51,7 +51,20 @@ namespace pfc {
 
         void convertFieldsPoissonEquation();
 
-        bool ifCourantConditionSatisfied(FP dt) {
+        static FP getCourantConditionTimeStep(const FP3& gridSteps) {
+            // PSATD is free of the Courant condition
+            // but PIC-code requires the following condition
+            FP tmp = sqrt(1.0 / (gridSteps.x * gridSteps.x) +
+                1.0 / (gridSteps.y * gridSteps.y) +
+                1.0 / (gridSteps.z * gridSteps.z));
+            return 1.0 / (constants::c * tmp);
+        }
+
+        FP getCourantConditionTimeStep() const {
+            return getCourantConditionTimeStep(grid->steps);
+        }
+
+        bool ifCourantConditionSatisfied(FP dt) const {
             return true;
         }
 

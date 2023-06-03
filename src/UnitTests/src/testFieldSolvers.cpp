@@ -40,15 +40,13 @@ public:
 
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
-        // should satisfy the Courant's condition for all solvers
-        this->timeStep = 0.1 * grid->steps.norm() / constants::c;
+        this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
+        this->numSteps = (int)((this->maxCoords - this->minCoords)[(int)axis] /
+            (constants::c * this->timeStep) * 0.2);
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
 
         initializeGrid();
-
-        numSteps = (int)((this->maxCoords - this->minCoords)[(int)axis] /
-                (constants::c * fieldSolver->dt) * 0.2);
     }
 
     void initializeGrid() {

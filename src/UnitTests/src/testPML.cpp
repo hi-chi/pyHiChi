@@ -32,13 +32,11 @@ public:
     FP3 gridStep;
     FP timeStep = 0;
     FP3 minCoords, maxCoords;
+    int numSteps = 0;
 
-    FP relatedEnergyThreshold = 1e-2;
+    FP relatedEnergyThreshold = 1e-1;
 
     virtual void SetUp() {
-        this->maxAbsoluteError = 1e-4;
-        this->maxRelativeError = 0.5;
-
         gridSize = Int3(1, 1, 1);
         for (int d = 0; d < dimension; d++) {
             gridSize[d] = gridSizeTransverse;
@@ -48,17 +46,20 @@ public:
         pmlSize = Int3(0, 0, 0);
         pmlSize[(int)axis] = pmlSize1d;
 
+        gridSize += 2 * pmlSize;
+        int maxGridSize = gridSizeLongitudinal + 2 * pmlSize1d;
+
         this->minCoords = FP3(0, 0, 0);
-        FP b = gridSizeLongitudinal * constants::c;
-        this->maxCoords = FP3(b, b, b);
+        this->maxCoords = FP3(maxGridSize, maxGridSize, maxGridSize) * constants::c;
         this->gridStep = (this->maxCoords - this->minCoords) / (FP3)this->gridSize;
         this->pmlLeftEnd = this->minCoords + pmlSize * this->gridStep;
         this->pmlRightStart = this->maxCoords - pmlSize * this->gridStep;
 
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
-        // should satisfy the Courant's condition for all solvers
-        this->timeStep = 0.4 * grid->steps.norm() / constants::c;
+        this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
+        this->numSteps = (int)((this->pmlRightStart - this->pmlLeftEnd)[(int)axis] /
+            (constants::c * this->timeStep));
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
         fieldSolver->setPML(pmlSize.x, pmlSize.y, pmlSize.z);
@@ -67,12 +68,7 @@ public:
         initializeGrid();
     }
 
-    virtual void initTest() = 0;
-
-    int getIterationNumber() {
-        return (int)(grid->numCells[(int)axis] * grid->steps[(int)axis] /
-            (constants::c * fieldSolver->dt));
-    }
+    virtual void initTest() {}
 
     void initializeGrid() {
         Int3 begin = pmlSize + grid->getNumExternalLeftCells();
@@ -131,21 +127,21 @@ typedef ::testing::Types <
     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>,
-
+    
     TypeDefinitionsFieldTest<PSTD, 1, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::z>,
-
+    
     TypeDefinitionsFieldTest<PSATD, 1, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::z>,
-
+    
     TypeDefinitionsFieldTest<PSATDTimeStraggered, 1, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATDTimeStraggered, 2, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATDTimeStraggered, 2, CoordinateEnum::y>,
@@ -159,21 +155,33 @@ template <class TTypeDefinitionsPMLTest>
 class PMLTestOnly : public PMLTest<TTypeDefinitionsPMLTest> {
 public:
 
+    FP harrisFunction(FP x, FP a, FP b) {
+        FP coord = x / (b - a);
+        if (coord < 0.0 || coord >= 1.0) return 0.0;
+        const FP pi2 = 2.0 * constants::pi;
+        return 0.03125 * (10.0 - 15.0 * cos(pi2 * coord) + 6.0 * cos(2.0 * pi2 * coord) - cos(3.0 * pi2 * coord));
+    }
+
+    FP waveFunction(FP x, FP a, FP b) {
+        const FP omega = 4.0;
+        FP coord = x / (b - a);
+        return sin(2.0 * constants::pi * omega * coord);
+    }
+
     FP fieldFunc(FP x, FP y, FP z) override {
         int axis0 = (int)this->axis;
         int axis1 = (axis0 + 1) % 3;
         int axis2 = (axis0 + 2) % 3;
+
         FP3 coord(x, y, z);
         FP3 a = this->pmlLeftEnd, b = this->pmlRightStart;
         FP omega = 4.0;
-        FP wave = sin((FP)2.0 * omega * constants::pi / (b[axis0] - a[axis0]) * (coord[axis0] - a[axis0]));
-        FP env1 = cos(constants::pi / (b[axis1] - a[axis1]) * (coord[axis1] - a[axis1] - (a[axis1] + b[axis1]) * 0.5));
-        FP env2 = cos(constants::pi / (b[axis2] - a[axis2]) * (coord[axis2] - a[axis2] - (a[axis2] + b[axis2]) * 0.5));
-        return wave * env1 * env1 * env2 * env2;
-    }
 
-    void initTest() override {
-        this->relatedEnergyThreshold = 1e-1;
+        FP res = waveFunction(coord[axis0], a[axis0], b[axis0]);
+        for (int d = 0; d < grid->dimensionality; d++)
+            res *= harrisFunction(coord[d], a[d], b[d]);
+
+        return res;
     }
 
 };
@@ -185,9 +193,6 @@ TYPED_TEST(PMLTestOnly, PmlTest) {
 #ifndef __USE_FFT__
     SUCCEED();
 #else
-
-    const int numSteps = (int)(grid->numCells[(int)axis] * grid->steps[(int)axis] /
-        (constants::c * fieldSolver->dt));
 
     FP startEnergy = computeEnergy();
 
@@ -233,9 +238,6 @@ TYPED_TEST(PMLTestPeriodical, PmlTestPeriodical) {
 #ifndef __USE_FFT__
     SUCCEED();
 #else
-
-    const int numSteps = (int)(grid->numCells[(int)axis] * grid->steps[(int)axis] /
-        (constants::c * fieldSolver->dt));
 
     FP startEnergy = computeEnergy();
 

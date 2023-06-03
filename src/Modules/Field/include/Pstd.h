@@ -48,15 +48,19 @@ namespace pfc {
 
         void setTimeStep(FP dt);
 
-        FP getCourantCondition() const {
-            FP tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
-                1.0 / (grid->steps.y*grid->steps.y) +
-                1.0 / (grid->steps.z*grid->steps.z));
+        static FP getCourantConditionTimeStep(const FP3& gridSteps) {
+            FP tmp = sqrt(1.0 / (gridSteps.x * gridSteps.x) +
+                1.0 / (gridSteps.y * gridSteps.y) +
+                1.0 / (gridSteps.z * gridSteps.z));
             return 2.0 / (constants::pi * constants::c * tmp);
         }
 
+        FP getCourantConditionTimeStep() const {
+            return getCourantConditionTimeStep(grid->steps);
+        }
+
         bool ifCourantConditionSatisfied(FP dt) const {
-            return dt < getCourantCondition();
+            return dt < getCourantConditionTimeStep();
         }
 
     private:
@@ -74,7 +78,7 @@ namespace pfc {
             std::cout
                 << "WARNING: PSTD Courant condition is not satisfied. Another time step was setted up"
                 << std::endl;
-            this->dt = getCourantCondition() * 0.5;
+            this->dt = getCourantConditionTimeStep() * 0.5;
         }
         updateDims();
         updateInternalDims();

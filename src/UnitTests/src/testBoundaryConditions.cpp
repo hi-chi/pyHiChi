@@ -31,16 +31,14 @@ public:
         }
         gridSize[(int)axis] = gridSizeLongitudinal;
 
-        FP d = constants::c;
         this->minCoords = FP3(0, 0, 0);
-        this->maxCoords = d * (FP3)gridSize;
-        this->gridStep = FP3(d, d, d);
+        this->maxCoords = (FP3)gridSize * constants::c;
+        this->gridStep = (this->maxCoords - this->minCoords) / (FP3)gridSize;
 
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
-        // should satisfy the Courant's condition for all solvers
-        this->timeStep = 0.4;  // = 0.4 * d / constants::c
-        this->numSteps = gridSize[(int)axis] * 10 / 4;  // to cross the entire area exactly
+        this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
+        this->numSteps = (int)((this->maxCoords - this->minCoords)[(int)axis] / this->timeStep);
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
 
@@ -69,15 +67,16 @@ public:
                 }
     }
 
+    FP harrisFunction(FP x, FP t, FP a, FP b) {
+        FP coord = (x - constants::c * t) / (b - a);
+        if (coord < 0.0 || coord >= 1.0) return 0.0;
+        const FP pi2 = 2.0 * constants::pi;
+        return 0.03125 * (10.0 - 15.0 * cos(pi2 * coord) + 6.0 * cos(2.0 * pi2 * coord) - cos(3.0 * pi2 * coord));
+    }
+
     FP fieldFunc(FP x, FP y, FP z, FP t) {
         int axis0 = (int)this->axis;
-        FP L = (maxCoords - minCoords)[axis0];
-        FP coord = (FP3(x, y, z)[axis0] - constants::c * t) / L;
-        if (coord < 0.0 || coord >= 1.0) coord = 0.0;
-        const FP pi2 = 2.0 * constants::pi;
-        // H = harris function
-        FP H = 0.03125 * (10.0 - 15.0 * cos(pi2 * coord) + 6.0 * cos(2.0 * pi2 * coord) - cos(3.0 * pi2 * coord));
-        return H;
+        return harrisFunction(FP3(x, y, z)[axis0], t, minCoords[axis0], maxCoords[axis0]);
     }
 
     FP3 eTest(FP x, FP y, FP z, FP t) {
