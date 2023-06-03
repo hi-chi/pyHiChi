@@ -17,7 +17,7 @@ namespace pfc {
         using FieldGeneratorType = FieldGeneratorSpectral<PSTDGridType>;
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionPstd;
 
-        PSTD(PSTDGrid * grid, double dt);
+        PSTD(GridType* grid, FP dt);
 
         void updateFields();
 
@@ -49,7 +49,7 @@ namespace pfc {
         void setTimeStep(FP dt);
 
         FP getCourantCondition() const {
-            double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
+            FP tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
                 1.0 / (grid->steps.y*grid->steps.y) +
                 1.0 / (grid->steps.z*grid->steps.z));
             return 2.0 / (constants::pi * constants::c * tmp);
@@ -67,7 +67,7 @@ namespace pfc {
 
     };
 
-    inline PSTD::PSTD(PSTDGrid* grid, double dt) :
+    inline PSTD::PSTD(PSTD::GridType* grid, FP dt) :
         SpectralFieldSolver<GridTypes::PSTDGridType>(grid, dt)
     {
         if (!ifCourantConditionSatisfied(dt)) {
@@ -163,7 +163,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
+        FP dt = 0.5 * this->dt;
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)

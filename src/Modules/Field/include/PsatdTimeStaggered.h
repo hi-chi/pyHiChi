@@ -184,12 +184,15 @@ namespace pfc {
 
         if (pml) getPml()->updateBSplit();
         updateHalfB();
+        if (boundaryCondition) boundaryCondition->generateB();
 
         if (pml) getPml()->updateESplit();
         updateE();
+        if (boundaryCondition) boundaryCondition->generateE();
 
         if (pml) getPml()->updateBSplit();
         updateHalfB();
+        if (boundaryCondition) boundaryCondition->generateB();
 
         saveJ();
         doFourierTransform(fourier_transform::Direction::CtoR);
@@ -205,7 +208,7 @@ namespace pfc {
         doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = this->dt * 0.5;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -235,7 +238,9 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
+
+        FP dt = 0.5 * this->dt;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -270,6 +275,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -308,6 +314,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)

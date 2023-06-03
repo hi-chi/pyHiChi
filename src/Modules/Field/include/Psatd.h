@@ -19,7 +19,7 @@ namespace pfc {
         using FieldGeneratorType = FieldGeneratorSpectral<PSATDGridType>;
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionPsatd;
 
-        PSATDT(PSATDGrid* grid, FP dt);
+        PSATDT(GridType* grid, FP dt);
 
         void updateFields();
 
@@ -64,7 +64,7 @@ namespace pfc {
     };
 
     template <bool ifPoisson>
-    inline PSATDT<ifPoisson>::PSATDT(PSATDGrid* _grid, FP dt) :
+    inline PSATDT<ifPoisson>::PSATDT(PSATDT<ifPoisson>::GridType* _grid, FP dt) :
         SpectralFieldSolver<GridTypes::PSATDGridType>(_grid, dt)
     {
         updateDims();
@@ -133,8 +133,14 @@ namespace pfc {
 
         if (pml) getPml()->updateBSplit();
         updateEB();
+        if (boundaryCondition) boundaryCondition->generateE();
+        if (boundaryCondition) boundaryCondition->generateB();
+
         if (pml) getPml()->updateESplit();
         updateEB();
+        if (boundaryCondition) boundaryCondition->generateE();
+        if (boundaryCondition) boundaryCondition->generateB();
+
         if (pml) getPml()->updateBSplit();
 
         doFourierTransform(fourier_transform::Direction::CtoR);
@@ -150,7 +156,7 @@ namespace pfc {
         doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = this->dt * 0.5;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -180,7 +186,9 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
+
+        FP dt = 0.5 * this->dt;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -230,7 +238,9 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
+
+        FP dt = 0.5 * this->dt;
+
         OMP_FOR_COLLAPSE()
          for (int i = begin.x; i < end.x; i++)
              for (int j = begin.y; j < end.y; j++)

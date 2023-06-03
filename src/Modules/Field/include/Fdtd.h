@@ -21,7 +21,7 @@ namespace pfc {
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionFdtd;
         using ReflectBoundaryConditionType = ReflectBoundaryConditionFdtd;
 
-        FDTD(YeeGrid* grid, FP dt);
+        FDTD(GridType* grid, FP dt);
 
         void updateFields();
 
@@ -53,7 +53,7 @@ namespace pfc {
         void setTimeStep(FP dt);
 
         FP getCourantCondition() const {
-            double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
+            FP tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
                 1.0 / (grid->steps.y*grid->steps.y) +
                 1.0 / (grid->steps.z*grid->steps.z));
             return 1.0 / (constants::c * tmp);
@@ -86,7 +86,7 @@ namespace pfc {
 
     };
 
-    inline FDTD::FDTD(YeeGrid* grid, FP dt) :
+    inline FDTD::FDTD(FDTD::GridType* grid, FP dt) :
         RealFieldSolver(grid, dt)
     {
         if (!ifCourantConditionSatisfied(dt)) {
@@ -238,15 +238,15 @@ namespace pfc {
             for (int j = begin.y; j < end.y; j++)
             {
                 OMP_SIMD()
-                    for (int k = begin.z; k < end.z; k++)
-                    {
-                        grid->Bx(i, j, k) += coeffZX * (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1)) -
-                            coeffYX * (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
-                        grid->By(i, j, k) += coeffXY * (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k)) -
-                            coeffZY * (grid->Ex(i, j, k) - grid->Ex(i, j, k - 1));
-                        grid->Bz(i, j, k) += coeffYZ * (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k)) -
-                            coeffXZ * (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
-                    }
+                for (int k = begin.z; k < end.z; k++)
+                {
+                    grid->Bx(i, j, k) += coeffZX * (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1)) -
+                        coeffYX * (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
+                    grid->By(i, j, k) += coeffXY * (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k)) -
+                        coeffZY * (grid->Ex(i, j, k) - grid->Ex(i, j, k - 1));
+                    grid->Bz(i, j, k) += coeffYZ * (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k)) -
+                        coeffXZ * (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
+                }
             }
     }
 
@@ -319,18 +319,18 @@ namespace pfc {
             for (int j = begin.y; j < end.y; j++)
             {
                 OMP_SIMD()
-                    for (int k = begin.z; k < end.z; k++)
-                    {
-                        grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
-                            coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
-                            coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
-                        grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
-                            coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
-                            coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                        grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
-                            coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
-                            coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
-                    }
+                for (int k = begin.z; k < end.z; k++)
+                {
+                    grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
+                        coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
+                        coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
+                    grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
+                        coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
+                        coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
+                    grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
+                        coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
+                        coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
+                }
             }
     }
 
@@ -349,15 +349,15 @@ namespace pfc {
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             OMP_SIMD()
-                for (int j = begin.y; j < end.y; j++) {
-                    grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
-                        coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
-                    grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
-                        coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
-                    grid->Ez(i, j, 0) += coeffCurrent * grid->Jz(i, j, 0) +
-                        coeffXZ * (grid->By(i + 1, j, 0) - grid->By(i, j, 0)) -
-                        coeffYZ * (grid->Bx(i, j + 1, 0) - grid->Bx(i, j, 0));
-                }
+            for (int j = begin.y; j < end.y; j++) {
+                grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
+                    coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
+                grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
+                    coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
+                grid->Ez(i, j, 0) += coeffCurrent * grid->Jz(i, j, 0) +
+                    coeffXZ * (grid->By(i + 1, j, 0) - grid->By(i, j, 0)) -
+                    coeffYZ * (grid->Bx(i, j + 1, 0) - grid->Bx(i, j, 0));
+            }
         }
     }
 
