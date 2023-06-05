@@ -29,8 +29,11 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setBoundaryCondition(
-            FieldBoundaryCondition<GridTypes::YeeGridType>* _boundaryCondition);
+
+        template <class TBoundaryCondition>
+        void setBoundaryCondition();
+        template <class TBoundaryCondition>
+        void setBoundaryCondition(CoordinateEnum axis);
         
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
@@ -110,10 +113,22 @@ namespace pfc {
         updateInternalDims();
     }
 
-    inline void FDTD::setBoundaryCondition(
-        FieldBoundaryCondition<GridTypes::YeeGridType>* _boundaryCondition)
+    template <class TBoundaryCondition>
+    inline void FDTD::setBoundaryCondition()
     {
-        boundaryCondition.reset(_boundaryCondition->createInstance(this));
+        for (int d = 0; d < grid->dimensionality; d++)
+            boundaryConditions[d].reset(new TBoundaryCondition((CoordinateEnum)d, this));
+    }
+
+    template <class TBoundaryCondition>
+    inline void FDTD::setBoundaryCondition(CoordinateEnum axis)
+    {
+        if ((int)axis >= grid->dimensionality) {
+            std::cout
+                << "WARNING: an attempt to set boundary conditions for an axis greater than the dimensionality is ignored"
+                << std::endl;
+        }
+        boundaryConditions[(int)axis].reset(new TBoundaryCondition(axis, this));
     }
 
     inline void FDTD::setFieldGenerator(
@@ -152,7 +167,9 @@ namespace pfc {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
             if (pml) pml.reset(new FDTD::PmlType(this, pml->sizePML));
-            if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
+            for (int d = 0; d < 3; d++)
+                if (boundaryConditions[d])
+                    boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
             if (generator) generator.reset(new FDTD::FieldGeneratorType(this));  // TODO
         }
         else {
@@ -204,13 +221,18 @@ namespace pfc {
     {
         updateHalfB();
         if (pml) pml->updateB();
-        if (boundaryCondition) boundaryCondition->generateB();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
         if (generator) generator->generateB();
+
         updateE();
         if (pml) pml->updateE();
-        if (boundaryCondition) boundaryCondition->generateE();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) boundaryConditions[d]->generateE();
         if (generator) generator->generateE();
+
         updateHalfB();
+
         globalTime += dt;
     }
 

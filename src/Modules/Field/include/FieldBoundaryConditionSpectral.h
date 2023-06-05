@@ -10,9 +10,9 @@ namespace pfc
         // periodical boundaries for spectral solvers are default because of FFT
         // this class does nothing
 
-        SpectralPeriodicalBoundaryCondition(SpectralFieldSolver<gridTypes>* fieldSolver = 0,
-            bool isXAxisEnabled = true, bool isYAxisEnabled = true, bool isZAxisEnabled = true) :
-            FieldBoundaryCondition<gridTypes>(fieldSolver, isXAxisEnabled, isYAxisEnabled, isZAxisEnabled) {
+        SpectralPeriodicalBoundaryCondition(CoordinateEnum axis,
+            SpectralFieldSolver<gridTypes>* fieldSolver = 0) :
+            FieldBoundaryCondition<gridTypes>(axis, fieldSolver) {
         }
 
         SpectralPeriodicalBoundaryCondition(const SpectralPeriodicalBoundaryCondition& gen,

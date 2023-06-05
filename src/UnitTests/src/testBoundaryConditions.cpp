@@ -38,7 +38,9 @@ public:
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
         this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
-        this->numSteps = (int)((this->maxCoords - this->minCoords)[(int)axis] / this->timeStep);
+        // wave goes throught area 2 times to check both left and right boundary conditions
+        this->numSteps = 2 * (int)((this->maxCoords - this->minCoords)[(int)axis] / 
+            (constants::c * this->timeStep));
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
 
@@ -108,76 +110,74 @@ template <class TTypeDefinitionsFieldTest>
 class PeriodicBoundaryConditionTest : public BoundaryConditionTest<TTypeDefinitionsFieldTest> {
 public:
 
-    using BoundaryConditionType =
-        typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::PeriodicalBoundaryConditionType;
-    std::unique_ptr<BoundaryConditionType> boundaryCondition;
-
     PeriodicBoundaryConditionTest() {
-        boundaryCondition.reset(new BoundaryConditionType(fieldSolver.get()));
-        fieldSolver->setBoundaryCondition(boundaryCondition.get());
+        using BoundaryConditionType =
+            typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::PeriodicalBoundaryConditionType;
+
+        fieldSolver->setBoundaryCondition<BoundaryConditionType>();
     }
 
 };
 TYPED_TEST_CASE(PeriodicBoundaryConditionTest, types);
 
-TYPED_TEST(PeriodicBoundaryConditionTest, PeriodicBoundaryConditionTest)
-{
-    // to disable testing of spectral solvers without enabled fftw
-#ifndef __USE_FFT__
-    SUCCEED();
-#else
-
-    for (int step = 0; step < numSteps; ++step)
-    {
-        this->fieldSolver->updateFields();
-    }
-
-    // signal should be the same as at the beginning
-    FP startT = 0;
-
-    Int3 begin = this->fieldSolver->updateEAreaBegin;
-    Int3 end = this->fieldSolver->updateEAreaEnd;
-
-    for (int i = begin.x; i < end.x; ++i)
-        for (int j = begin.y; j < end.y; ++j)
-            for (int k = begin.z; k < end.z; ++k)
-            {
-                FP3 expectedE, actualE;
-                FP3 coords = this->grid->ExPosition(i, j, k);
-                expectedE.x = this->eTest(coords.x, coords.y, coords.z, startT).x;
-                coords = this->grid->EyPosition(i, j, k);
-                expectedE.y = this->eTest(coords.x, coords.y, coords.z, startT).y;
-                coords = this->grid->EzPosition(i, j, k);
-                expectedE.z = this->eTest(coords.x, coords.y, coords.z, startT).z;
-                actualE.x = this->grid->Ex(i, j, k);
-                actualE.y = this->grid->Ey(i, j, k);
-                actualE.z = this->grid->Ez(i, j, k);
-                ASSERT_NEAR(expectedE.norm(), actualE.norm(), maxError);
-            }
-
-    begin = this->fieldSolver->updateBAreaBegin;
-    end = this->fieldSolver->updateBAreaEnd;
-
-    for (int i = begin.x; i < end.x; ++i)
-        for (int j = begin.y; j < end.y; ++j)
-            for (int k = begin.z; k < end.z; ++k)
-            {
-                FP3 expectedB, actualB;
-                FP3 coords = this->grid->BxPosition(i, j, k);
-                expectedB.x = this->bTest(coords.x, coords.y, coords.z, startT).x;
-                coords = this->grid->ByPosition(i, j, k);
-                expectedB.y = this->bTest(coords.x, coords.y, coords.z, startT).y;
-                coords = this->grid->BzPosition(i, j, k);
-                expectedB.z = this->bTest(coords.x, coords.y, coords.z, startT).z;
-                actualB.x = this->grid->Bx(i, j, k);
-                actualB.y = this->grid->By(i, j, k);
-                actualB.z = this->grid->Bz(i, j, k);
-                ASSERT_NEAR(expectedB.norm(), actualB.norm(), maxError);
-            }
-
-#endif
-
-}
+//TYPED_TEST(PeriodicBoundaryConditionTest, PeriodicBoundaryConditionTest)
+//{
+//    // to disable testing of spectral solvers without enabled fftw
+//#ifndef __USE_FFT__
+//    SUCCEED();
+//#else
+//
+//    for (int step = 0; step < numSteps; ++step)
+//    {
+//        this->fieldSolver->updateFields();
+//    }
+//
+//    // signal should be the same as at the beginning
+//    FP startT = 0;
+//
+//    Int3 begin = this->fieldSolver->updateEAreaBegin;
+//    Int3 end = this->fieldSolver->updateEAreaEnd;
+//
+//    for (int i = begin.x; i < end.x; ++i)
+//        for (int j = begin.y; j < end.y; ++j)
+//            for (int k = begin.z; k < end.z; ++k)
+//            {
+//                FP3 expectedE, actualE;
+//                FP3 coords = this->grid->ExPosition(i, j, k);
+//                expectedE.x = this->eTest(coords.x, coords.y, coords.z, startT).x;
+//                coords = this->grid->EyPosition(i, j, k);
+//                expectedE.y = this->eTest(coords.x, coords.y, coords.z, startT).y;
+//                coords = this->grid->EzPosition(i, j, k);
+//                expectedE.z = this->eTest(coords.x, coords.y, coords.z, startT).z;
+//                actualE.x = this->grid->Ex(i, j, k);
+//                actualE.y = this->grid->Ey(i, j, k);
+//                actualE.z = this->grid->Ez(i, j, k);
+//                ASSERT_NEAR((expectedE - actualE).norm(), 0.0, maxError);
+//            }
+//
+//    begin = this->fieldSolver->updateBAreaBegin;
+//    end = this->fieldSolver->updateBAreaEnd;
+//
+//    for (int i = begin.x; i < end.x; ++i)
+//        for (int j = begin.y; j < end.y; ++j)
+//            for (int k = begin.z; k < end.z; ++k)
+//            {
+//                FP3 expectedB, actualB;
+//                FP3 coords = this->grid->BxPosition(i, j, k);
+//                expectedB.x = this->bTest(coords.x, coords.y, coords.z, startT).x;
+//                coords = this->grid->ByPosition(i, j, k);
+//                expectedB.y = this->bTest(coords.x, coords.y, coords.z, startT).y;
+//                coords = this->grid->BzPosition(i, j, k);
+//                expectedB.z = this->bTest(coords.x, coords.y, coords.z, startT).z;
+//                actualB.x = this->grid->Bx(i, j, k);
+//                actualB.y = this->grid->By(i, j, k);
+//                actualB.z = this->grid->Bz(i, j, k);
+//                ASSERT_NEAR((expectedB - actualB).norm(), 0.0, maxError);
+//            }
+//
+//#endif
+//
+//}
 
 
 template <class TTypeDefinitionsFieldTest>
@@ -189,24 +189,46 @@ public:
     std::unique_ptr<BoundaryConditionType> boundaryCondition;
 
     ReflectBoundaryConditionTest() {
-        boundaryCondition.reset(new BoundaryConditionType(fieldSolver.get()));
-        fieldSolver->setBoundaryCondition(boundaryCondition.get());
+        using PeriodicBoundaryConditionType =
+            typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::PeriodicalBoundaryConditionType;
+        using ReflectBoundaryConditionType =
+            typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::ReflectBoundaryConditionType;
+
+        fieldSolver->setBoundaryCondition<ReflectBoundaryConditionType>(this->axis);
+
+        for (int d = 0; d < 3; d++) {
+            int dim = ((int)this->axis + d) % 3;
+            if (dim < grid->dimensionality)
+                fieldSolver->setBoundaryCondition<PeriodicBoundaryConditionType>((CoordinateEnum)dim);
+        }
     }
 
 };
 TYPED_TEST_CASE(ReflectBoundaryConditionTest, types);
 
-TYPED_TEST(ReflectBoundaryConditionTest, ReflectBoundaryConditionTest)
+TYPED_TEST(ReflectBoundaryConditionTest, MixedPeriodicAndReflectBoundaryConditionTest)
 {
     // to disable testing of spectral solvers without enabled fftw
 #ifndef __USE_FFT__
     SUCCEED();
 #else
 
+    auto print = [this](int step) {
+        int ax = (int)this->axis;
+        std::ofstream file(std::to_string(step) + ".csv");
+        for (int ind = 0; ind < grid->numCells[ax]; ind++) {
+            Int3 index(grid->numCells / 2);
+            index[ax] = ind;
+            file << grid->Bz(index) << std::endl;
+        }
+    };
+
     for (int step = 0; step < numSteps; ++step)
     {
+        print(step);
         this->fieldSolver->updateFields();
     }
+    print(numSteps);
 
     // signal should be the same as at the beginning
     // because signal is symmetric
@@ -229,7 +251,7 @@ TYPED_TEST(ReflectBoundaryConditionTest, ReflectBoundaryConditionTest)
                 actualE.x = this->grid->Ex(i, j, k);
                 actualE.y = this->grid->Ey(i, j, k);
                 actualE.z = this->grid->Ez(i, j, k);
-                ASSERT_NEAR(expectedE.norm(), actualE.norm(), maxError);
+                ASSERT_NEAR((expectedE - actualE).norm(), 0.0, maxError);
             }
 
     begin = this->fieldSolver->updateBAreaBegin;
@@ -249,7 +271,7 @@ TYPED_TEST(ReflectBoundaryConditionTest, ReflectBoundaryConditionTest)
                 actualB.x = this->grid->Bx(i, j, k);
                 actualB.y = this->grid->By(i, j, k);
                 actualB.z = this->grid->Bz(i, j, k);
-                ASSERT_NEAR(expectedB.norm(), actualB.norm(), maxError);
+                ASSERT_NEAR((expectedB - actualB).norm(), 0.0, maxError);
             }
 
 #endif

@@ -133,10 +133,7 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
 #else
 
     using BoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
-    std::unique_ptr<BoundaryConditionType> boundaryCondition;
-    
-    boundaryCondition.reset(new BoundaryConditionType(fieldSolver.get()));
-    fieldSolver->setBoundaryCondition(boundaryCondition.get());
+    fieldSolver->setBoundaryCondition<BoundaryConditionType>();
 
     for (int step = 0; step < numSteps; ++step)
     {

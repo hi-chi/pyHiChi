@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <array>
 
 namespace pfc {
     template<GridTypes gridType>
@@ -40,7 +41,7 @@ namespace pfc {
         Grid<FP, gridType>* grid;
 
         std::unique_ptr<Pml<gridType>> pml;
-        std::unique_ptr<FieldBoundaryCondition<gridType>> boundaryCondition;
+        std::array<std::unique_ptr<FieldBoundaryCondition<gridType>>, 3> boundaryConditions;
         std::unique_ptr<FieldGenerator<gridType>> generator;
 
         // Index space being updated in form [begin, end).

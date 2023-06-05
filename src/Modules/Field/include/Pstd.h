@@ -25,8 +25,11 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setBoundaryCondition(
-            FieldBoundaryCondition<GridTypes::PSTDGridType>* _boundaryCondition);
+
+        template <class TBoundaryCondition>
+        void setBoundaryCondition();
+        template <class TBoundaryCondition>
+        void setBoundaryCondition(CoordinateEnum axis);
 
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
@@ -90,10 +93,22 @@ namespace pfc {
         updateInternalDims();
     }
 
-    inline void PSTD::setBoundaryCondition(
-        FieldBoundaryCondition<GridTypes::PSTDGridType>* _boundaryCondition)
+    template <class TBoundaryCondition>
+    inline void PSTD::setBoundaryCondition()
     {
-        boundaryCondition.reset(_boundaryCondition->createInstance(this));
+        for (int d = 0; d < grid->dimensionality; d++)
+            boundaryConditions[d].reset(new TBoundaryCondition((CoordinateEnum)d, this));
+    }
+
+    template <class TBoundaryCondition>
+    inline void PSTD::setBoundaryCondition(CoordinateEnum axis)
+    {
+        if ((int)axis >= grid->dimensionality) {
+            std::cout
+                << "WARNING: an attempt to set boundary conditions for an axis greater than the dimensionality is ignored"
+                << std::endl;
+        }
+        boundaryConditions[(int)axis].reset(new TBoundaryCondition(axis, this));
     }
 
     inline void PSTD::setFieldGenerator(
@@ -132,7 +147,9 @@ namespace pfc {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
             if (pml) pml.reset(new PSTD::PmlType(this, pml->sizePML));
-            if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
+            for (int d = 0; d < 3; d++)
+                if (boundaryConditions[d])
+                    boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
             if (generator) generator.reset(new PSTD::FieldGeneratorType(this));  // TODO
         }
         else {
@@ -148,12 +165,18 @@ namespace pfc {
 
         if (pml) getPml()->updateBSplit();
         updateHalfB();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
 
         if (pml) getPml()->updateESplit();
         updateE();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) boundaryConditions[d]->generateE();
 
         if (pml) getPml()->updateBSplit();
         updateHalfB();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
 
         doFourierTransform(fourier_transform::Direction::CtoR);
 

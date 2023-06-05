@@ -26,8 +26,11 @@ namespace pfc {
         virtual void updateEB();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setBoundaryCondition(
-            FieldBoundaryCondition<GridTypes::PSATDGridType>* _boundaryCondition);
+
+        template <class TBoundaryCondition>
+        void setBoundaryCondition();
+        template <class TBoundaryCondition>
+        void setBoundaryCondition(CoordinateEnum axis);
 
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
@@ -92,10 +95,23 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDT<ifPoisson>::setBoundaryCondition(
-        FieldBoundaryCondition<GridTypes::PSATDGridType>* _boundaryCondition)
+    template <class TBoundaryCondition>
+    inline void PSATDT<ifPoisson>::setBoundaryCondition()
     {
-        boundaryCondition.reset(_boundaryCondition->createInstance(this));
+        for (int d = 0; d < grid->dimensionality; d++)
+            boundaryConditions[d].reset(new TBoundaryCondition((CoordinateEnum)d, this));
+    }
+
+    template <bool ifPoisson>
+    template <class TBoundaryCondition>
+    inline void PSATDT<ifPoisson>::setBoundaryCondition(CoordinateEnum axis)
+    {
+        if ((int)axis >= grid->dimensionality) {
+            std::cout
+                << "WARNING: an attempt to set boundary conditions for an axis greater than the dimensionality is ignored"
+                << std::endl;
+        }
+        boundaryConditions[(int)axis].reset(new TBoundaryCondition(axis, this));
     }
 
     template <bool ifPoisson>
@@ -136,7 +152,9 @@ namespace pfc {
     {
         this->dt = dt;
         if (pml) pml.reset(new PSATDT<ifPoisson>::PmlType(this, pml->sizePML));
-        if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
+        for (int d = 0; d < 3; d++)
+            if (boundaryConditions[d])
+                boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
         if (generator) generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(this));  // TODO
     }
 
@@ -146,13 +164,19 @@ namespace pfc {
 
         if (pml) getPml()->updateBSplit();
         updateEB();
-        if (boundaryCondition) boundaryCondition->generateE();
-        if (boundaryCondition) boundaryCondition->generateB();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) {
+                boundaryConditions[d]->generateE();
+                boundaryConditions[d]->generateB();
+            }
 
         if (pml) getPml()->updateESplit();
         updateEB();
-        if (boundaryCondition) boundaryCondition->generateE();
-        if (boundaryCondition) boundaryCondition->generateB();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) {
+                boundaryConditions[d]->generateE();
+                boundaryConditions[d]->generateB();
+            }
 
         if (pml) getPml()->updateBSplit();
 

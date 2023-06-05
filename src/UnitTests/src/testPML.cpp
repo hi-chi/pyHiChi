@@ -25,7 +25,6 @@ public:
 
     std::unique_ptr<FieldSolverType> fieldSolver;
     std::unique_ptr<GridType> grid;
-    std::unique_ptr<PeriodicalBoundaryConditionType> boundaryCondition;
 
     Int3 gridSize;
     Int3 pmlSize;
@@ -220,13 +219,9 @@ public:
     }
 
     void initTest() override {
-        bool periodicAxis[3] = { true, true, true };
-        periodicAxis[(int)axis] = false;
-
-        boundaryCondition.reset(new PeriodicalBoundaryConditionType(
-            fieldSolver.get(), periodicAxis[0], periodicAxis[1], periodicAxis[2]));
-
-        fieldSolver->setBoundaryCondition(boundaryCondition.get());
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (d != (int)this->axis)
+                fieldSolver->setBoundaryCondition<PeriodicalBoundaryConditionType>((CoordinateEnum)d);
     }
 
 };

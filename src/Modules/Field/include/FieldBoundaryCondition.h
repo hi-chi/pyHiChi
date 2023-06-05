@@ -12,16 +12,14 @@ namespace pfc
     {
     public:
 
-        FieldBoundaryCondition(FieldSolver<gridTypes>* fieldSolver = 0,
-            bool isXAxisEnabled = true, bool isYAxisEnabled = true, bool isZAxisEnabled = true) :
-            fieldSolver(fieldSolver),
-            enabledAxis({ isXAxisEnabled, isYAxisEnabled, isZAxisEnabled }) {
+        FieldBoundaryCondition(CoordinateEnum axis, FieldSolver<gridTypes>* fieldSolver = 0) :
+            fieldSolver(fieldSolver), axis(axis) {
         }
 
         // copy constructor, other fieldSolver is possible
         FieldBoundaryCondition(const FieldBoundaryCondition<gridTypes>& gen,
             FieldSolver<gridTypes>* fieldSolver = 0) :
-            fieldSolver(gen.fieldSolver), enabledAxis(gen.enabledAxis) {
+            fieldSolver(gen.fieldSolver), axis(gen.axis) {
         }
 
         virtual ~FieldBoundaryCondition() {}
@@ -32,6 +30,6 @@ namespace pfc
         virtual FieldBoundaryCondition<gridTypes>* createInstance(FieldSolver<gridTypes>* fieldSolver) = 0;
 
         FieldSolver<gridTypes>* fieldSolver;
-        std::array<bool, 3> enabledAxis;
+        CoordinateEnum axis;
     };
 }

@@ -27,8 +27,11 @@ namespace pfc {
         void updateE();
 
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setBoundaryCondition(
-            FieldBoundaryCondition<GridTypes::PSATDTimeStraggeredGridType>* _boundaryCondition);
+
+        template <class TBoundaryCondition>
+        void setBoundaryCondition();
+        template <class TBoundaryCondition>
+        void setBoundaryCondition(CoordinateEnum axis);
 
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
@@ -121,10 +124,23 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::setBoundaryCondition(
-        FieldBoundaryCondition<GridTypes::PSATDTimeStraggeredGridType>* _boundaryCondition)
+    template <class TBoundaryCondition>
+    inline void PSATDTimeStraggeredT<ifPoisson>::setBoundaryCondition()
     {
-        boundaryCondition.reset(_boundaryCondition->createInstance(this));
+        for (int d = 0; d < grid->dimensionality; d++)
+            boundaryConditions[d].reset(new TBoundaryCondition((CoordinateEnum)d, this));
+    }
+
+    template <bool ifPoisson>
+    template <class TBoundaryCondition>
+    inline void PSATDTimeStraggeredT<ifPoisson>::setBoundaryCondition(CoordinateEnum axis)
+    {
+        if ((int)axis >= grid->dimensionality) {
+            std::cout
+                << "WARNING: an attempt to set boundary conditions for an axis greater than the dimensionality is ignored"
+                << std::endl;
+        }
+        boundaryConditions[(int)axis].reset(new TBoundaryCondition(axis, this));
     }
 
     template <bool ifPoisson>
@@ -165,7 +181,9 @@ namespace pfc {
     {
         this->dt = dt;
         if (pml) pml.reset(new PSATDTimeStraggeredT<ifPoisson>::PmlType(this, pml->sizePML));
-        if (boundaryCondition) boundaryCondition.reset(boundaryCondition->createInstance(this));
+        for (int d = 0; d < 3; d++)
+            if (boundaryConditions[d])
+                boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
         if (generator) generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(this));  // TODO
     }
 
@@ -197,15 +215,18 @@ namespace pfc {
 
         if (pml) getPml()->updateBSplit();
         updateHalfB();
-        if (boundaryCondition) boundaryCondition->generateB();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
 
         if (pml) getPml()->updateESplit();
         updateE();
-        if (boundaryCondition) boundaryCondition->generateE();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) boundaryConditions[d]->generateE();
 
         if (pml) getPml()->updateBSplit();
         updateHalfB();
-        if (boundaryCondition) boundaryCondition->generateB();
+        for (int d = 0; d < grid->dimensionality; d++)
+            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
 
         saveJ();
         doFourierTransform(fourier_transform::Direction::CtoR);
