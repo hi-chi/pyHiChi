@@ -68,8 +68,11 @@ namespace pfc {
 
     private:
 
-        PmlSpectral<GridTypes::PSTDGridType>* getPml() {
-            return (PmlSpectral<GridTypes::PSTDGridType>*)pml.get();
+        PmlType* getPml() const {
+            return static_cast<PmlType*>(pml.get());
+        }
+        FieldGeneratorType* getGenerator() const {
+            return static_cast<FieldGeneratorType*>(generator.get());
         }
 
     };
@@ -118,12 +121,11 @@ namespace pfc {
         FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        //generator.reset(new PSTD::FieldGeneratorType(
-        //    this, leftGenIndex, rightGenIndex,
-        //    bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
-        //    isLeftBorderEnabled, isRightBorderEnabled)
-        //);
-        generator.reset(new PSTD::FieldGeneratorType(this));
+        generator.reset(new PSTD::FieldGeneratorType(
+            this, leftGenIndex, rightGenIndex,
+            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+        );
     }
 
     inline void PSTD::setFieldGenerator(
@@ -134,12 +136,11 @@ namespace pfc {
         const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        //generator.reset(new PSTD::FieldGeneratorType(
-        //    this, leftGenIndex, rightGenIndex,
-        //    leftBFunc, rightBFunc, leftEFunc, rightEFunc,
-        //    isLeftBorderEnabled, isRightBorderEnabled)
-        //);
-        generator.reset(new PSTD::FieldGeneratorType(this));
+        generator.reset(new PSTD::FieldGeneratorType(
+            this, leftGenIndex, rightGenIndex,
+            leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+        );
     }
 
     inline void PSTD::setTimeStep(FP dt)
@@ -150,7 +151,7 @@ namespace pfc {
             for (int d = 0; d < 3; d++)
                 if (boundaryConditions[d])
                     boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
-            if (generator) generator.reset(new PSTD::FieldGeneratorType(this));  // TODO
+            if (generator) generator.reset(new PSTD::FieldGeneratorType(*getGenerator()));
         }
         else {
             std::cout

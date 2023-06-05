@@ -16,10 +16,9 @@ namespace pfc
             fieldSolver(fieldSolver), axis(axis) {
         }
 
-        // copy constructor, other fieldSolver is possible
         FieldBoundaryCondition(const FieldBoundaryCondition<gridTypes>& gen,
             FieldSolver<gridTypes>* fieldSolver = 0) :
-            fieldSolver(gen.fieldSolver), axis(gen.axis) {
+            fieldSolver(fieldSolver ? fieldSolver: gen.fieldSolver), axis(gen.axis) {
         }
 
         virtual ~FieldBoundaryCondition() {}

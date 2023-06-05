@@ -73,8 +73,11 @@ namespace pfc {
 
     private:
 
-        PmlSpectralTimeStraggered<GridTypes::PSATDGridType>* getPml() {
-            return (PmlSpectralTimeStraggered<GridTypes::PSATDGridType>*)pml.get();
+        PmlType* getPml() const {
+            return static_cast<PmlType*>(pml.get());
+        }
+        FieldGeneratorType* getGenerator() const {
+            return static_cast<FieldGeneratorType*>(generator.get());
         }
 
     };
@@ -122,12 +125,11 @@ namespace pfc {
         FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        //generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(
-        //    this, leftGenIndex, rightGenIndex,
-        //    bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
-        //    isLeftBorderEnabled, isRightBorderEnabled)
-        //);
-        generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(this));
+        generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(
+            this, leftGenIndex, rightGenIndex,
+            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+        );
     }
 
     template <bool ifPoisson>
@@ -139,12 +141,11 @@ namespace pfc {
         const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        //generator.reset(new PSATDT<ifPoisson>::::FieldGeneratorType(
-        //    this, leftGenIndex, rightGenIndex,
-        //    leftBFunc, rightBFunc, leftEFunc, rightEFunc,
-        //    isLeftBorderEnabled, isRightBorderEnabled)
-        //);
-        generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(this));
+        generator.reset(new PSATDT<ifPoisson>::::FieldGeneratorType(
+            this, leftGenIndex, rightGenIndex,
+            leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+        );
     }
 
     template <bool ifPoisson>
@@ -155,7 +156,7 @@ namespace pfc {
         for (int d = 0; d < 3; d++)
             if (boundaryConditions[d])
                 boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
-        if (generator) generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(this));  // TODO
+        if (generator) generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(*getGenerator()));
     }
 
     template <bool ifPoisson>
@@ -279,46 +280,46 @@ namespace pfc {
         FP dt = 0.5 * this->dt;
 
         OMP_FOR_COLLAPSE()
-         for (int i = begin.x; i < end.x; i++)
-             for (int j = begin.y; j < end.y; j++)
-                 for (int k = begin.z; k < end.z; k++)
-                 {
-                     FP3 K = getWaveVector(Int3(i, j, k));
-                     FP normK = K.norm();
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
+                {
+                    FP3 K = getWaveVector(Int3(i, j, k));
+                    FP normK = K.norm();
 
-                     ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
-                     ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
-                     ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
-                     J = complexFP(4 * constants::pi) * J;
+                    ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
+                    ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
+                    ComplexFP3 J(complexGrid->Jx(i, j, k), complexGrid->Jy(i, j, k), complexGrid->Jz(i, j, k));
+                    J = complexFP(4 * constants::pi) * J;
 
-                     if (normK == 0) {
-                         complexGrid->Ex(i, j, k) += -J.x * dt;
-                         complexGrid->Ey(i, j, k) += -J.y * dt;
-                         complexGrid->Ez(i, j, k) += -J.z * dt;
-                         continue;
-                     }
+                    if (normK == 0) {
+                        complexGrid->Ex(i, j, k) += -J.x * dt;
+                        complexGrid->Ey(i, j, k) += -J.y * dt;
+                        complexGrid->Ez(i, j, k) += -J.z * dt;
+                        continue;
+                    }
 
-                     K = K / normK;
+                    K = K / normK;
 
-                     ComplexFP3 kEcross = cross((ComplexFP3)K, E), kBcross = cross((ComplexFP3)K, B),
-                         kJcross = cross((ComplexFP3)K, J);
-                     ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J), El = (ComplexFP3)K * dot((ComplexFP3)K, E);
+                    ComplexFP3 kEcross = cross((ComplexFP3)K, E), kBcross = cross((ComplexFP3)K, B),
+                        kJcross = cross((ComplexFP3)K, J);
+                    ComplexFP3 Jl = (ComplexFP3)K * dot((ComplexFP3)K, J), El = (ComplexFP3)K * dot((ComplexFP3)K, E);
 
-                     FP S = sin(normK * constants::c * dt), C = cos(normK * constants::c * dt);
+                    FP S = sin(normK * constants::c * dt), C = cos(normK * constants::c * dt);
 
-                     complexFP coef1E = S * complexFP::i(), coef2E = -S / (normK * constants::c),
-                         coef3E = S / (normK * constants::c) - dt;
+                    complexFP coef1E = S * complexFP::i(), coef2E = -S / (normK * constants::c),
+                        coef3E = S / (normK * constants::c) - dt;
 
-                     complexGrid->Ex(i, j, k) = C * (E.x - El.x) + coef1E * kBcross.x + coef2E * (J.x - Jl.x);
-                     complexGrid->Ey(i, j, k) = C * (E.y - El.y) + coef1E * kBcross.y + coef2E * (J.y - Jl.y);
-                     complexGrid->Ez(i, j, k) = C * (E.z - El.z) + coef1E * kBcross.z + coef2E * (J.z - Jl.z);
+                    complexGrid->Ex(i, j, k) = C * (E.x - El.x) + coef1E * kBcross.x + coef2E * (J.x - Jl.x);
+                    complexGrid->Ey(i, j, k) = C * (E.y - El.y) + coef1E * kBcross.y + coef2E * (J.y - Jl.y);
+                    complexGrid->Ez(i, j, k) = C * (E.z - El.z) + coef1E * kBcross.z + coef2E * (J.z - Jl.z);
 
-                     complexFP coef1B = -S * complexFP::i(), coef2B = ((1 - C) / (normK * constants::c)) * complexFP::i();
+                    complexFP coef1B = -S * complexFP::i(), coef2B = ((1 - C) / (normK * constants::c)) * complexFP::i();
 
-                     complexGrid->Bx(i, j, k) = C * B.x + coef1B * kEcross.x + coef2B * kJcross.x;
-                     complexGrid->By(i, j, k) = C * B.y + coef1B * kEcross.y + coef2B * kJcross.y;
-                     complexGrid->Bz(i, j, k) = C * B.z + coef1B * kEcross.z + coef2B * kJcross.z;
-                 }
+                    complexGrid->Bx(i, j, k) = C * B.x + coef1B * kEcross.x + coef2B * kJcross.x;
+                    complexGrid->By(i, j, k) = C * B.y + coef1B * kEcross.y + coef2B * kJcross.y;
+                    complexGrid->Bz(i, j, k) = C * B.z + coef1B * kEcross.z + coef2B * kJcross.z;
+                }
     }
 
     typedef PSATDT<true> PSATDPoisson;

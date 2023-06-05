@@ -79,8 +79,11 @@ namespace pfc {
 
     protected:
 
-        PmlSpectral<GridTypes::PSATDTimeStraggeredGridType>* getPml() {
-            return (PmlSpectral<GridTypes::PSATDTimeStraggeredGridType>*)pml.get();
+        PmlType* getPml() const {
+            return static_cast<PmlType*>(pml.get());
+        }
+        FieldGeneratorType* getGenerator() const {
+            return static_cast<FieldGeneratorType*>(generator.get());
         }
 
         void saveJ();
@@ -151,12 +154,11 @@ namespace pfc {
         FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        //generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(
-        //    this, leftGenIndex, rightGenIndex,
-        //    bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
-        //    isLeftBorderEnabled, isRightBorderEnabled)
-        //);
-        generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(this));
+        generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(
+            this, leftGenIndex, rightGenIndex,
+            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+        );
     }
 
     template <bool ifPoisson>
@@ -168,12 +170,11 @@ namespace pfc {
         const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        //generator.reset(new PSATDTimeStraggeredT<ifPoisson>::::FieldGeneratorType(
-        //    this, leftGenIndex, rightGenIndex,
-        //    leftBFunc, rightBFunc, leftEFunc, rightEFunc,
-        //    isLeftBorderEnabled, isRightBorderEnabled)
-        //);
-        generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(this));
+        generator.reset(new PSATDTimeStraggeredT<ifPoisson>::::FieldGeneratorType(
+            this, leftGenIndex, rightGenIndex,
+            leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+        );
     }
 
     template <bool ifPoisson>
@@ -184,7 +185,7 @@ namespace pfc {
         for (int d = 0; d < 3; d++)
             if (boundaryConditions[d])
                 boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
-        if (generator) generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(this));  // TODO
+        if (generator) generator.reset(new PSATDTimeStraggeredT<ifPoisson>::FieldGeneratorType(*getGenerator()));
     }
 
     template <bool ifPoisson>
