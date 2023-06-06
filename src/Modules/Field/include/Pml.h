@@ -28,9 +28,9 @@ namespace pfc {
 
         forceinline FP computeSigma(FP coord, CoordinateEnum axis) const;
 
-    protected:
-
         FieldSolver<gridTypes>* fieldSolver;
+
+    protected:
 
         // absorbing function parameters
         FP3 maxSigma;

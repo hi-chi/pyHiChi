@@ -10,8 +10,8 @@ namespace pfc {
     class PmlFdtd : public PmlReal<YeeGridType>
     {
     public:
-        PmlFdtd(FieldSolver<GridTypes::YeeGridType>* solver, Int3 sizePML) :
-            PmlReal(static_cast<RealFieldSolver<GridTypes::YeeGridType>*>(solver), sizePML) {}
+        PmlFdtd(RealFieldSolver<GridTypes::YeeGridType>* solver, Int3 sizePML) :
+            PmlReal(solver, sizePML) {}
 
         void updateB();
         void updateE();

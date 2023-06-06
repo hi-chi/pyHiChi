@@ -8,21 +8,17 @@ namespace pfc
     {
     public:
         PeriodicalBoundaryConditionFdtd(CoordinateEnum axis,
-            FieldSolver<GridTypes::YeeGridType>* fieldSolver = 0) :
+            FieldSolver<GridTypes::YeeGridType>* fieldSolver) :
             FieldBoundaryCondition(axis, fieldSolver) {
-        }
-
-        PeriodicalBoundaryConditionFdtd(const PeriodicalBoundaryConditionFdtd& gen,
-            FieldSolver<GridTypes::YeeGridType>* fieldSolver = 0) :
-            FieldBoundaryCondition(gen, fieldSolver) {
         }
 
         void generateB() override;
         void generateE() override;
 
         FieldBoundaryCondition<GridTypes::YeeGridType>* createInstance(
-            FieldSolver<GridTypes::YeeGridType>* fieldSolver) override {
-            return new PeriodicalBoundaryConditionFdtd(*this, fieldSolver);
+            FieldSolver<GridTypes::YeeGridType>* fieldSolver = nullptr) override {
+            return new PeriodicalBoundaryConditionFdtd(this->axis,
+                fieldSolver ? fieldSolver : this->fieldSolver);
         }
     };
 
@@ -89,22 +85,17 @@ namespace pfc
     {
     public:
         ReflectBoundaryConditionFdtd(CoordinateEnum axis,
-            FieldSolver<GridTypes::YeeGridType>* fieldSolver = 0) :
+            FieldSolver<GridTypes::YeeGridType>* fieldSolver) :
             FieldBoundaryCondition(axis, fieldSolver) {
-        }
-
-        // copy constructor, other fieldSolver is possible
-        ReflectBoundaryConditionFdtd(const FieldBoundaryCondition<GridTypes::YeeGridType>& gen,
-            FieldSolver<GridTypes::YeeGridType>* fieldSolver = 0) :
-            FieldBoundaryCondition(gen, fieldSolver) {
         }
 
         void generateB() override;
         void generateE() override;
 
         FieldBoundaryCondition<GridTypes::YeeGridType>* createInstance(
-            FieldSolver<GridTypes::YeeGridType>* fieldSolver) override {
-            return new ReflectBoundaryConditionFdtd(*this, fieldSolver);
+            FieldSolver<GridTypes::YeeGridType>* fieldSolver = nullptr) override {
+            return new ReflectBoundaryConditionFdtd(this->axis,
+                fieldSolver ? fieldSolver : this->fieldSolver);
         }
     };
 

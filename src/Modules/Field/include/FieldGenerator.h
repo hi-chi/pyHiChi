@@ -59,9 +59,9 @@ namespace pfc
 
         FieldSolver<gridTypes>* fieldSolver;
 
-        // the first index is left/right
-        // the second index is an index of edge
-        // the third index is the index of field component
+        // first index is left/right
+        // second index is index of edge
+        // third index is index of field component
         std::array<std::array<std::array<FunctionType, 3>, 3>, 2> eFunc, bFunc;
 
         // sets enabled borders

@@ -184,3 +184,29 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
 
 #endif
 }
+
+TYPED_TEST(FieldSolverTest, SetTimeStepTest) {
+
+    const int pmlSize = 1, genIndex = 2;
+    const FP newTimeStep = this->timeStep * 0.25;
+    const Int3 genLeftIndex3d = grid->correctNumCellsAccordingToDim(Int3(genIndex, genIndex, genIndex));
+    const Int3 genRightIndex3d = this->gridSize - genLeftIndex3d;
+    const Int3 pmlSize3d = grid->correctNumCellsAccordingToDim(Int3(pmlSize, pmlSize, pmlSize));
+
+    using BoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
+    fieldSolver->setBoundaryCondition<BoundaryConditionType>();
+
+    fieldSolver->setPML(pmlSize3d.x, pmlSize3d.y, pmlSize3d.z);
+
+    fieldSolver->setFieldGenerator(genLeftIndex3d, genRightIndex3d,
+        field_generator::defaultFieldFunction, field_generator::defaultFieldFunction,
+        field_generator::defaultFieldFunction, field_generator::defaultFieldFunction,
+        field_generator::defaultFieldFunction, field_generator::defaultFieldFunction);
+
+    fieldSolver->setTimeStep(newTimeStep);
+
+    ASSERT_EQ(newTimeStep, fieldSolver->pml->fieldSolver->dt);
+    for (int d = 0; d < grid->dimensionality; d++)
+        ASSERT_EQ(newTimeStep, fieldSolver->boundaryConditions[d]->fieldSolver->dt);
+    ASSERT_EQ(newTimeStep, fieldSolver->generator->fieldSolver->dt);
+}

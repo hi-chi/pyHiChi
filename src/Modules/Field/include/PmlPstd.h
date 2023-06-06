@@ -10,7 +10,7 @@ namespace pfc {
     {
     public:
         PmlPstd(SpectralFieldSolver<GridTypes::PSTDGridType>* solver, Int3 sizePML) :
-            PmlSpectralTimeStraggered((SpectralFieldSolver<GridTypes::PSTDGridType>*)solver, sizePML) {}
+            PmlSpectralTimeStraggered(solver, sizePML) {}
 
         virtual void computeTmpField(MemberOfFP3 coordK,
             SpectralScalarField<FP, complexFP>& field, double dt);

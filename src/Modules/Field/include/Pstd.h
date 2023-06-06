@@ -15,7 +15,7 @@ namespace pfc {
         using GridType = PSTDGrid;
         using PmlType = PmlPstd;
         using FieldGeneratorType = FieldGeneratorSpectral<PSTDGridType>;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionPstd;
+        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSTDGridType>;
 
         PSTD(GridType* grid, FP dt);
 
@@ -77,8 +77,8 @@ namespace pfc {
 
     };
 
-    inline PSTD::PSTD(PSTD::GridType* grid, FP dt) :
-        SpectralFieldSolver<GridTypes::PSTDGridType>(grid, dt)
+    inline PSTD::PSTD(GridType* grid, FP dt) :
+        SpectralFieldSolver<GridType::gridType>(grid, dt)
     {
         if (!ifCourantConditionSatisfied(dt)) {
             std::cout
@@ -92,7 +92,7 @@ namespace pfc {
 
     inline void PSTD::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPstd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
     }
 
@@ -121,7 +121,7 @@ namespace pfc {
         FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        generator.reset(new PSTD::FieldGeneratorType(
+        generator.reset(new FieldGeneratorType(
             this, leftGenIndex, rightGenIndex,
             bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
             isLeftBorderEnabled, isRightBorderEnabled)
@@ -136,7 +136,7 @@ namespace pfc {
         const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        generator.reset(new PSTD::FieldGeneratorType(
+        generator.reset(new FieldGeneratorType(
             this, leftGenIndex, rightGenIndex,
             leftBFunc, rightBFunc, leftEFunc, rightEFunc,
             isLeftBorderEnabled, isRightBorderEnabled)
@@ -147,11 +147,11 @@ namespace pfc {
     {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            if (pml) pml.reset(new PSTD::PmlType(this, pml->sizePML));
+            if (pml) pml.reset(new PmlType(this, pml->sizePML));
             for (int d = 0; d < 3; d++)
                 if (boundaryConditions[d])
                     boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
-            if (generator) generator.reset(new PSTD::FieldGeneratorType(*getGenerator()));
+            if (generator) generator.reset(new FieldGeneratorType(*getGenerator()));
         }
         else {
             std::cout
@@ -191,7 +191,9 @@ namespace pfc {
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
+
         FP dt = 0.5 * this->dt;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -211,6 +213,7 @@ namespace pfc {
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)

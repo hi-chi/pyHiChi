@@ -8,18 +8,18 @@
 namespace pfc {
 
     template <GridTypes TPSATDGridType>
-    class PmlPsatdBase : public PmlSpectralTimeStraggered<TPSATDGridType>
+    class PmlPsatdTimeStraggered : public PmlSpectralTimeStraggered<TPSATDGridType>
     {
     public:
-        PmlPsatdBase(SpectralFieldSolver<TPSATDGridType>* solver, Int3 sizePML) :
-            PmlSpectralTimeStraggered<TPSATDGridType>((SpectralFieldSolver<TPSATDGridType>*)solver, sizePML) {}
+        PmlPsatdTimeStraggered(SpectralFieldSolver<TPSATDGridType>* solver, Int3 sizePML) :
+            PmlSpectralTimeStraggered<TPSATDGridType>(solver, sizePML) {}
 
         void computeTmpField(MemberOfFP3 coordK,
             SpectralScalarField<FP, complexFP>& field, double dt);
     };
 
     template <GridTypes TPSATDGridType>
-    inline void PmlPsatdBase<TPSATDGridType>::computeTmpField(MemberOfFP3 coordK,
+    inline void PmlPsatdTimeStraggered<TPSATDGridType>::computeTmpField(MemberOfFP3 coordK,
         SpectralScalarField<FP, complexFP>& field, double dt)
     {
         SpectralFieldSolver<TPSATDGridType>* fs = PmlSpectralTimeStraggered<TPSATDGridType>::getFieldSolver();
@@ -41,31 +41,4 @@ namespace pfc {
                 }
         PmlSpectralTimeStraggered<TPSATDGridType>::fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
     }
-
-
-    class PmlPsatdTimeStraggered : public PmlPsatdBase<GridTypes::PSATDTimeStraggeredGridType>
-    {
-    public:
-        PmlPsatdTimeStraggered(SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>* solver, Int3 sizePML) :
-            PmlPsatdBase<GridTypes::PSATDTimeStraggeredGridType>((SpectralFieldSolver<GridTypes::PSATDTimeStraggeredGridType>*)solver, sizePML) {}
-        
-        virtual void computeTmpField(MemberOfFP3 coordK,
-            SpectralScalarField<FP, complexFP>& field, double dt) {
-            PmlPsatdBase<GridTypes::PSATDTimeStraggeredGridType>::computeTmpField(coordK, field, dt);
-        }
-    };
-
-
-    class PmlPsatd : public PmlPsatdBase<GridTypes::PSATDGridType>
-    {
-    public:
-        PmlPsatd(SpectralFieldSolver<GridTypes::PSATDGridType>* solver, Int3 sizePML) :
-            PmlPsatdBase<GridTypes::PSATDGridType>((SpectralFieldSolver<GridTypes::PSATDGridType>*)solver, sizePML) {}
-
-        virtual void computeTmpField(MemberOfFP3 coordK,
-            SpectralScalarField<FP, complexFP>& field, double dt) {
-            PmlPsatdBase<GridTypes::PSATDGridType>::computeTmpField(coordK, field, dt);
-        }
-    };
-
 }

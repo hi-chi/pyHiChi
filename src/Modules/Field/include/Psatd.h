@@ -15,9 +15,9 @@ namespace pfc {
     public:
 
         using GridType = PSATDGrid;
-        using PmlType = PmlPsatd;
+        using PmlType = PmlPsatdTimeStraggered<PSATDGridType>;
         using FieldGeneratorType = FieldGeneratorSpectral<PSATDGridType>;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionPsatd;
+        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDGridType>;
 
         PSATDT(GridType* grid, FP dt);
 
@@ -83,8 +83,8 @@ namespace pfc {
     };
 
     template <bool ifPoisson>
-    inline PSATDT<ifPoisson>::PSATDT(PSATDT<ifPoisson>::GridType* _grid, FP dt) :
-        SpectralFieldSolver<GridTypes::PSATDGridType>(_grid, dt)
+    inline PSATDT<ifPoisson>::PSATDT(GridType* _grid, FP dt) :
+        SpectralFieldSolver<GridType::gridType>(_grid, dt)
     {
         updateDims();
         updateInternalDims();
@@ -93,7 +93,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlPsatd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
     }
 
@@ -125,7 +125,7 @@ namespace pfc {
         FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(
+        generator.reset(new FieldGeneratorType(
             this, leftGenIndex, rightGenIndex,
             bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
             isLeftBorderEnabled, isRightBorderEnabled)
@@ -141,7 +141,7 @@ namespace pfc {
         const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        generator.reset(new PSATDT<ifPoisson>::::FieldGeneratorType(
+        generator.reset(new FieldGeneratorType(
             this, leftGenIndex, rightGenIndex,
             leftBFunc, rightBFunc, leftEFunc, rightEFunc,
             isLeftBorderEnabled, isRightBorderEnabled)
@@ -152,11 +152,11 @@ namespace pfc {
     inline void PSATDT<ifPoisson>::setTimeStep(FP dt)
     {
         this->dt = dt;
-        if (pml) pml.reset(new PSATDT<ifPoisson>::PmlType(this, pml->sizePML));
+        if (pml) pml.reset(new PmlType(this, pml->sizePML));
         for (int d = 0; d < 3; d++)
             if (boundaryConditions[d])
                 boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
-        if (generator) generator.reset(new PSATDT<ifPoisson>::FieldGeneratorType(*getGenerator()));
+        if (generator) generator.reset(new FieldGeneratorType(*getGenerator()));
     }
 
     template <bool ifPoisson>

@@ -100,8 +100,8 @@ namespace pfc {
 
     };
 
-    inline FDTD::FDTD(FDTD::GridType* grid, FP dt) :
-        RealFieldSolver(grid, dt)
+    inline FDTD::FDTD(GridType* grid, FP dt) :
+        RealFieldSolver<GridType::gridType>(grid, dt)
     {
         if (!ifCourantConditionSatisfied(dt)) {
             std::cout
@@ -116,7 +116,7 @@ namespace pfc {
 
     inline void FDTD::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
-        pml.reset(new PmlFdtd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
     }
 
@@ -145,7 +145,7 @@ namespace pfc {
         FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        generator.reset(new FDTD::FieldGeneratorType(
+        generator.reset(new FieldGeneratorType(
             this, leftGenIndex, rightGenIndex,
             bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
             isLeftBorderEnabled, isRightBorderEnabled)
@@ -160,7 +160,7 @@ namespace pfc {
         const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        generator.reset(new FDTD::FieldGeneratorType(
+        generator.reset(new FieldGeneratorType(
             this, leftGenIndex, rightGenIndex,
             leftBFunc, rightBFunc, leftEFunc, rightEFunc,
             isLeftBorderEnabled, isRightBorderEnabled)
@@ -171,11 +171,11 @@ namespace pfc {
     {
         if (ifCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            if (pml) pml.reset(new FDTD::PmlType(this, pml->sizePML));
+            if (pml) pml.reset(new PmlType(this, pml->sizePML));
             for (int d = 0; d < 3; d++)
                 if (boundaryConditions[d])
                     boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
-            if (generator) generator.reset(new FDTD::FieldGeneratorType(*getGenerator()));
+            if (generator) generator.reset(new FieldGeneratorType(*getGenerator()));
         }
         else {
             std::cout
@@ -295,13 +295,13 @@ namespace pfc {
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             OMP_SIMD()
-                for (int j = begin.y; j < end.y; j++)
-                {
-                    grid->Bx(i, j, 0) += -coeffYX * (grid->Ez(i, j, 0) - grid->Ez(i, j - 1, 0));
-                    grid->By(i, j, 0) += coeffXY * (grid->Ez(i, j, 0) - grid->Ez(i - 1, j, 0));
-                    grid->Bz(i, j, 0) += coeffYZ * (grid->Ex(i, j, 0) - grid->Ex(i, j - 1, 0)) -
-                        coeffXZ * (grid->Ey(i, j, 0) - grid->Ey(i - 1, j, 0));
-                }
+            for (int j = begin.y; j < end.y; j++)
+            {
+                grid->Bx(i, j, 0) += -coeffYX * (grid->Ez(i, j, 0) - grid->Ez(i, j - 1, 0));
+                grid->By(i, j, 0) += coeffXY * (grid->Ez(i, j, 0) - grid->Ez(i - 1, j, 0));
+                grid->Bz(i, j, 0) += coeffYZ * (grid->Ex(i, j, 0) - grid->Ex(i, j - 1, 0)) -
+                    coeffXZ * (grid->Ey(i, j, 0) - grid->Ey(i - 1, j, 0));
+            }
         }
     }
 

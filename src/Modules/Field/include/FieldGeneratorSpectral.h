@@ -16,7 +16,7 @@ namespace pfc
             FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(fieldSolver, leftGenIndex, rightGenIndex,
+            FieldGenerator<gridTypes>(fieldSolver, leftGenIndex, rightGenIndex,
                 bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
@@ -30,11 +30,15 @@ namespace pfc
             const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(fieldSolver, leftGenIndex, rightGenIndex,
+            FieldGenerator<gridTypes>(fieldSolver, leftGenIndex, rightGenIndex,
                 leftBFunc, rightBFunc, leftEFunc, rightEFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
         void generateB() override {};
         void generateE() override {};
     };
+
+    typedef FieldGeneratorSpectral<GridTypes::PSTDGridType> FieldGeneratorPstd;
+    typedef FieldGeneratorSpectral<GridTypes::PSATDGridType> FieldGeneratorPsatd;
+    typedef FieldGeneratorSpectral<GridTypes::PSATDTimeStraggeredGridType> FieldGeneratorPsatdTimeStraggered;
 }
