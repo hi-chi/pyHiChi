@@ -60,8 +60,8 @@ public:
         this->numSteps = (int)((this->pmlRightStart - this->pmlLeftEnd)[(int)axis] /
             (constants::c * this->timeStep));
 
-        fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
-        fieldSolver->setPML(pmlSize.x, pmlSize.y, pmlSize.z);
+        this->fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
+        this->fieldSolver->setPML(pmlSize.x, pmlSize.y, pmlSize.z);
 
         initTest();
         initializeGrid();
@@ -177,7 +177,7 @@ public:
         FP omega = 4.0;
 
         FP res = waveFunction(coord[axis0], a[axis0], b[axis0]);
-        for (int d = 0; d < grid->dimensionality; d++)
+        for (int d = 0; d < this->grid->dimensionality; d++)
             res *= harrisFunction(coord[d], a[d], b[d]);
 
         return res;
@@ -193,15 +193,15 @@ TYPED_TEST(PMLTestOnly, PmlTest) {
     SUCCEED();
 #else
 
-    FP startEnergy = computeEnergy();
+    FP startEnergy = this->computeEnergy();
 
-    for (int step = 0; step < numSteps; ++step) {
-        fieldSolver->updateFields();
+    for (int step = 0; step < this->numSteps; ++step) {
+        this->fieldSolver->updateFields();
     }
 
-    FP finalEnergy = computeEnergy();
+    FP finalEnergy = this->computeEnergy();
 
-    ASSERT_NEAR(finalEnergy / startEnergy, 0, relatedEnergyThreshold);
+    ASSERT_NEAR(finalEnergy / startEnergy, 0, this->relatedEnergyThreshold);
 
 #endif
 }
@@ -219,9 +219,12 @@ public:
     }
 
     void initTest() override {
-        for (int d = 0; d < grid->dimensionality; d++)
+        using PeriodicalBoundaryConditionType =
+            typename PMLTest<TTypeDefinitionsPMLTest>::FieldSolverType::PeriodicalBoundaryConditionType;
+        
+        for (int d = 0; d < this->grid->dimensionality; d++)
             if (d != (int)this->axis)
-                fieldSolver->setBoundaryCondition<PeriodicalBoundaryConditionType>((CoordinateEnum)d);
+                this->fieldSolver->template setBoundaryCondition<PeriodicalBoundaryConditionType>((CoordinateEnum)d);
     }
 
 };
@@ -234,15 +237,15 @@ TYPED_TEST(PMLTestPeriodical, PmlTestPeriodical) {
     SUCCEED();
 #else
 
-    FP startEnergy = computeEnergy();
+    FP startEnergy = this->computeEnergy();
 
-    for (int step = 0; step < numSteps; ++step) {
-        fieldSolver->updateFields();
+    for (int step = 0; step < this->numSteps; ++step) {
+        this->fieldSolver->updateFields();
     }
 
-    FP finalEnergy = computeEnergy();
+    FP finalEnergy = this->computeEnergy();
 
-    ASSERT_NEAR(finalEnergy / startEnergy, 0, relatedEnergyThreshold);
+    ASSERT_NEAR(finalEnergy / startEnergy, 0, this->relatedEnergyThreshold);
 
 #endif
 }

@@ -7,6 +7,8 @@
 #include "Vectors.h"
 #include "Constants.h"
 
+#include <exception>
+
 namespace pfc {
 
     enum InterpolationType {
@@ -398,8 +400,8 @@ namespace pfc {
 
         const Int3 getNumExternalLeftCells() const
         {
-            Int3 result(numExternalCells, numExternalCells, numExternalCells);
-            return correctNumCellsAccordingToDim(result);
+            const int nCells = LabelMethodRequiredNumberOfExternalCells<gridType_>::numExternalCells;
+            return correctNumCellsAccordingToDim(Int3(nCells, nCells, nCells));
         }
 
         const Int3 getNumExternalRightCells() const
@@ -468,7 +470,7 @@ namespace pfc {
             if (this->numInternalCells < this->getNumExternalLeftCells() + this->getNumExternalRightCells()) {
                 std::string exc = "ERROR: grid size should be larger than both overlaps";
                 std::cout << exc << std::endl;
-                throw std::exception(exc.c_str());
+                throw std::logic_error(exc);
             }
         }
 

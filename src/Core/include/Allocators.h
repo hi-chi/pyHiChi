@@ -24,7 +24,7 @@ namespace pfc {
         {
             const size_t size_vt = sizeof(value_type);
             const size_t len = num * size_vt;
-            const size_t num_threads = omp_get_max_threads();
+            const size_t num_threads = OMP_GET_MAX_THREADS();
             if (num_threads > num) {
                 char * p = reinterpret_cast<char*>(std::malloc(len));
                 std::memset(p, 0, len);
@@ -33,7 +33,7 @@ namespace pfc {
             const size_t block_size = (num / num_threads) * size_vt;
             const size_t block_size_rem = len - block_size * (num_threads - 1);
             char * p = reinterpret_cast<char*>(std::malloc(len));
-#pragma omp parallel for
+            OMP_FOR()
             for (int thr = 0; thr < num_threads; thr++) {
                 const size_t cur_block_size = thr == num_threads - 1 ? block_size_rem : block_size;
                 std::memset(p + thr * block_size, 0, cur_block_size);

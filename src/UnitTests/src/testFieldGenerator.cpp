@@ -23,6 +23,7 @@ public:
     FP timeStep = 0;
     FP3 minCoords, maxCoords;
     Int3 generatorStartIndex, generatorEndIndex;
+    int numSteps = 0;
 
     FP relatedAmpThreshold = 0.03;
 
@@ -45,7 +46,10 @@ public:
         this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
-        fieldSolver->setBoundaryCondition<BoundaryConditionType>();
+        fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
+           
+        this->numSteps = 2 * (int)((this->maxCoords - this->minCoords)[(int)axis] /
+            (constants::c * fieldSolver->dt));
 
         initializeGenerator();
     }
@@ -128,17 +132,13 @@ TYPED_TEST(FieldGeneratorTest, FieldGeneratorTestPlaneWave) {
     SUCCEED();
 #else
 
-    const int numSteps = 2 * (int)((this->maxCoords - this->minCoords)[(int)axis] /
-        (constants::c * fieldSolver->dt));
-
-    for (int step = 0; step < numSteps; ++step) {
-        fieldSolver->updateFields();
+    for (int step = 0; step < this->numSteps; ++step) {
+        this->fieldSolver->updateFields();
     }
 
-    FP finalAmp = computeAmp();
+    FP finalAmp = this->computeAmp();
 
-    ASSERT_NEAR(finalAmp, 0, relatedAmpThreshold);
+    ASSERT_NEAR(finalAmp, 0, this->relatedAmpThreshold);
 
 #endif
 }
-

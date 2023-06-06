@@ -27,7 +27,7 @@ namespace pfc {
         std::vector<Int3> eIndex, bIndex;  // natural 3d indexes of nodes in PML
 
         forceinline FP computeSigma(FP coord, CoordinateEnum axis) const;
-
+        
         FieldSolver<gridTypes>* fieldSolver;
 
     protected:
@@ -47,7 +47,7 @@ namespace pfc {
             if (2 * sizePML > globalGridDims) {
                 std::string exc = "ERROR: grid size should be larger than 2x pml size";
                 std::cout << exc << std::endl;
-                throw std::exception(exc.c_str());
+                throw std::logic_error(exc);
             }
         }
 
@@ -246,17 +246,17 @@ namespace pfc {
     {
         Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
         const int size = this->eIndex.size();
-        const FP ñdt = constants::c * this->fieldSolver->dt;
+        const FP cdt = constants::c * this->fieldSolver->dt;
 
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
         {
-            int i = eIndex[idx].x, j = eIndex[idx].y, k = eIndex[idx].z;
+            int i = this->eIndex[idx].x, j = this->eIndex[idx].y, k = this->eIndex[idx].z;
 
             FP sigmaX = this->computeSigma(grid->EyPosition(i, j, k).x, CoordinateEnum::x);
             FP sigmaY = this->computeSigma(grid->EzPosition(i, j, k).y, CoordinateEnum::y);
             FP sigmaZ = this->computeSigma(grid->ExPosition(i, j, k).z, CoordinateEnum::z);
-            FP coeffX = exp(-sigmaX * ñdt), coeffY = exp(-sigmaY * ñdt), coeffZ = exp(-sigmaZ * ñdt);
+            FP coeffX = exp(-sigmaX * cdt), coeffY = exp(-sigmaY * cdt), coeffZ = exp(-sigmaZ * cdt);
 
             this->eyx[idx] *= coeffY;
             this->ezx[idx] *= coeffZ;
@@ -272,17 +272,17 @@ namespace pfc {
     {
         Grid<FP, gridTypes>* grid = this->fieldSolver->grid;
         const int size = this->bIndex.size();
-        const FP ñdt = constants::c * this->fieldSolver->dt;
+        const FP cdt = constants::c * this->fieldSolver->dt;
 
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
         {
-            int i = bIndex[idx].x, j = bIndex[idx].y, k = bIndex[idx].z;
+            int i = this->bIndex[idx].x, j = this->bIndex[idx].y, k = this->bIndex[idx].z;
 
             FP sigmaX = this->computeSigma(grid->ByPosition(i, j, k).x, CoordinateEnum::x);
             FP sigmaY = this->computeSigma(grid->BzPosition(i, j, k).y, CoordinateEnum::y);
             FP sigmaZ = this->computeSigma(grid->BxPosition(i, j, k).z, CoordinateEnum::z);
-            FP coeffX = exp(-sigmaX * ñdt), coeffY = exp(-sigmaY * ñdt), coeffZ = exp(-sigmaZ * ñdt);
+            FP coeffX = exp(-sigmaX * cdt), coeffY = exp(-sigmaY * cdt), coeffZ = exp(-sigmaZ * cdt);
 
             this->byx[idx] *= coeffY;
             this->bzx[idx] *= coeffZ;

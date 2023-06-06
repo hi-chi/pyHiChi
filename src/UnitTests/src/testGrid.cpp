@@ -7,9 +7,9 @@ class GridTest : public BaseGridFixture<gridType> {
 public:
     // excludes border cells for spectral solvers
     FP3 internalPoint() {
-        if (grid->numExternalCells > 0)
-            return urandFP3(minCoords, maxCoords);
-        return urandFP3(minCoords + grid->steps, maxCoords - grid->steps);
+        if (this->grid->numExternalCells > 0)
+            return this->urandFP3(this->minCoords, this->maxCoords);
+        return this->urandFP3(this->minCoords + this->grid->steps, this->maxCoords - this->grid->steps);
     }
 };
 
@@ -85,12 +85,14 @@ TYPED_TEST(GridTest, InterpolateJ)
 
 TYPED_TEST(GridTest, GridInitialization)
 {
+    auto grid = this->grid;
+    
     auto fieldFunc = [](FP3 coords) {
         return coords.x + coords.y + coords.z;
     };
 
     Int3 begin = Int3(0, 0, 0);
-    Int3 end = grid->numCells;
+    Int3 end = this->grid->numCells;
 
     for (int i = begin.x; i < end.x; i++)
         for (int j = begin.y; j < end.y; j++)

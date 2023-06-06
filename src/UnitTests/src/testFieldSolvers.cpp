@@ -132,15 +132,15 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
     SUCCEED();
 #else
 
-    using BoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
-    fieldSolver->setBoundaryCondition<BoundaryConditionType>();
+    using BoundaryConditionType = typename FieldSolverTest<TypeParam>::FieldSolverType::PeriodicalBoundaryConditionType;
+    this->fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
 
-    for (int step = 0; step < numSteps; ++step)
+    for (int step = 0; step < this->numSteps; ++step)
     {
         this->fieldSolver->updateFields();
     }
 
-    FP finalT = this->fieldSolver->dt * numSteps;
+    FP finalT = this->fieldSolver->dt * this->numSteps;
 
     Int3 begin = this->fieldSolver->updateEAreaBegin;
     Int3 end = this->fieldSolver->updateEAreaEnd;
@@ -159,7 +159,7 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
                 actualE.x = this->grid->Ex(i, j, k);
                 actualE.y = this->grid->Ey(i, j, k);
                 actualE.z = this->grid->Ez(i, j, k);
-                ASSERT_NEAR(expectedE.norm(), actualE.norm(), maxError);
+                ASSERT_NEAR(expectedE.norm(), actualE.norm(), this->maxError);
             }
 
     begin = this->fieldSolver->updateBAreaBegin;
@@ -179,7 +179,7 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
                 actualB.x = this->grid->Bx(i, j, k);
                 actualB.y = this->grid->By(i, j, k);
                 actualB.z = this->grid->Bz(i, j, k);
-                ASSERT_NEAR(expectedB.norm(), actualB.norm(), maxError);
+                ASSERT_NEAR(expectedB.norm(), actualB.norm(), this->maxError);
             }
 
 #endif
@@ -189,24 +189,25 @@ TYPED_TEST(FieldSolverTest, SetTimeStepTest) {
 
     const int pmlSize = 1, genIndex = 2;
     const FP newTimeStep = this->timeStep * 0.25;
-    const Int3 genLeftIndex3d = grid->correctNumCellsAccordingToDim(Int3(genIndex, genIndex, genIndex));
+    const Int3 genLeftIndex3d = this->grid->correctNumCellsAccordingToDim(Int3(genIndex, genIndex, genIndex));
     const Int3 genRightIndex3d = this->gridSize - genLeftIndex3d;
-    const Int3 pmlSize3d = grid->correctNumCellsAccordingToDim(Int3(pmlSize, pmlSize, pmlSize));
+    const Int3 pmlSize3d = this->grid->correctNumCellsAccordingToDim(Int3(pmlSize, pmlSize, pmlSize));
 
-    using BoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
-    fieldSolver->setBoundaryCondition<BoundaryConditionType>();
+    using BoundaryConditionType =
+        typename FieldSolverTest<TypeParam>::FieldSolverType::PeriodicalBoundaryConditionType;
+    this->fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
 
-    fieldSolver->setPML(pmlSize3d.x, pmlSize3d.y, pmlSize3d.z);
+    this->fieldSolver->setPML(pmlSize3d.x, pmlSize3d.y, pmlSize3d.z);
 
-    fieldSolver->setFieldGenerator(genLeftIndex3d, genRightIndex3d,
+    this->fieldSolver->setFieldGenerator(genLeftIndex3d, genRightIndex3d,
         field_generator::defaultFieldFunction, field_generator::defaultFieldFunction,
         field_generator::defaultFieldFunction, field_generator::defaultFieldFunction,
         field_generator::defaultFieldFunction, field_generator::defaultFieldFunction);
 
-    fieldSolver->setTimeStep(newTimeStep);
+    this->fieldSolver->setTimeStep(newTimeStep);
 
-    ASSERT_EQ(newTimeStep, fieldSolver->pml->fieldSolver->dt);
-    for (int d = 0; d < grid->dimensionality; d++)
-        ASSERT_EQ(newTimeStep, fieldSolver->boundaryConditions[d]->fieldSolver->dt);
-    ASSERT_EQ(newTimeStep, fieldSolver->generator->fieldSolver->dt);
+    ASSERT_EQ(newTimeStep, this->fieldSolver->pml->fieldSolver->dt);
+    for (int d = 0; d < this->grid->dimensionality; d++)
+        ASSERT_EQ(newTimeStep, this->fieldSolver->boundaryConditions[d]->fieldSolver->dt);
+    ASSERT_EQ(newTimeStep, this->fieldSolver->generator->fieldSolver->dt);
 }

@@ -110,11 +110,11 @@ template <class TTypeDefinitionsFieldTest>
 class PeriodicBoundaryConditionTest : public BoundaryConditionTest<TTypeDefinitionsFieldTest> {
 public:
 
-    PeriodicBoundaryConditionTest() {
-        using BoundaryConditionType =
-            typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::PeriodicalBoundaryConditionType;
+    using BoundaryConditionType =
+        typename TTypeDefinitionsFieldTest::FieldSolverType::PeriodicalBoundaryConditionType;
 
-        fieldSolver->setBoundaryCondition<BoundaryConditionType>();
+    PeriodicBoundaryConditionTest() {
+        this->fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
     }
 
 };
@@ -127,7 +127,7 @@ TYPED_TEST(PeriodicBoundaryConditionTest, PeriodicBoundaryConditionTest)
     SUCCEED();
 #else
 
-    for (int step = 0; step < numSteps; ++step)
+    for (int step = 0; step < this->numSteps; ++step)
     {
         this->fieldSolver->updateFields();
     }
@@ -152,7 +152,7 @@ TYPED_TEST(PeriodicBoundaryConditionTest, PeriodicBoundaryConditionTest)
                 actualE.x = this->grid->Ex(i, j, k);
                 actualE.y = this->grid->Ey(i, j, k);
                 actualE.z = this->grid->Ez(i, j, k);
-                ASSERT_NEAR((expectedE - actualE).norm(), 0.0, maxError);
+                ASSERT_NEAR((expectedE - actualE).norm(), 0.0, this->maxError);
             }
 
     begin = this->fieldSolver->updateBAreaBegin;
@@ -172,7 +172,7 @@ TYPED_TEST(PeriodicBoundaryConditionTest, PeriodicBoundaryConditionTest)
                 actualB.x = this->grid->Bx(i, j, k);
                 actualB.y = this->grid->By(i, j, k);
                 actualB.z = this->grid->Bz(i, j, k);
-                ASSERT_NEAR((expectedB - actualB).norm(), 0.0, maxError);
+                ASSERT_NEAR((expectedB - actualB).norm(), 0.0, this->maxError);
             }
 
 #endif
@@ -183,22 +183,18 @@ template <class TTypeDefinitionsFieldTest>
 class ReflectBoundaryConditionTest : public BoundaryConditionTest<TTypeDefinitionsFieldTest> {
 public:
 
-    using BoundaryConditionType =
-        typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::ReflectBoundaryConditionType;
-    std::unique_ptr<BoundaryConditionType> boundaryCondition;
+    using PeriodicBoundaryConditionType =
+            typename TTypeDefinitionsFieldTest::FieldSolverType::PeriodicalBoundaryConditionType;
+    using ReflectBoundaryConditionType =
+            typename TTypeDefinitionsFieldTest::FieldSolverType::ReflectBoundaryConditionType;
 
     ReflectBoundaryConditionTest() {
-        using PeriodicBoundaryConditionType =
-            typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::PeriodicalBoundaryConditionType;
-        using ReflectBoundaryConditionType =
-            typename BoundaryConditionTest<TTypeDefinitionsFieldTest>::FieldSolverType::ReflectBoundaryConditionType;
-
-        fieldSolver->setBoundaryCondition<ReflectBoundaryConditionType>(this->axis);
+        this->fieldSolver->template setBoundaryCondition<ReflectBoundaryConditionType>(this->axis);
 
         for (int d = 0; d < 3; d++) {
             int dim = ((int)this->axis + d) % 3;
-            if (dim < grid->dimensionality)
-                fieldSolver->setBoundaryCondition<PeriodicBoundaryConditionType>((CoordinateEnum)dim);
+            if (dim < this->grid->dimensionality)
+                this->fieldSolver->template setBoundaryCondition<PeriodicBoundaryConditionType>((CoordinateEnum)dim);
         }
     }
 
@@ -212,7 +208,7 @@ TYPED_TEST(ReflectBoundaryConditionTest, MixedPeriodicAndReflectBoundaryConditio
     SUCCEED();
 #else
 
-    for (int step = 0; step < numSteps; ++step)
+    for (int step = 0; step < this->numSteps; ++step)
     {
         this->fieldSolver->updateFields();
     }
@@ -238,7 +234,7 @@ TYPED_TEST(ReflectBoundaryConditionTest, MixedPeriodicAndReflectBoundaryConditio
                 actualE.x = this->grid->Ex(i, j, k);
                 actualE.y = this->grid->Ey(i, j, k);
                 actualE.z = this->grid->Ez(i, j, k);
-                ASSERT_NEAR((expectedE - actualE).norm(), 0.0, maxError);
+                ASSERT_NEAR((expectedE - actualE).norm(), 0.0, this->maxError);
             }
 
     begin = this->fieldSolver->updateBAreaBegin;
@@ -258,7 +254,7 @@ TYPED_TEST(ReflectBoundaryConditionTest, MixedPeriodicAndReflectBoundaryConditio
                 actualB.x = this->grid->Bx(i, j, k);
                 actualB.y = this->grid->By(i, j, k);
                 actualB.z = this->grid->Bz(i, j, k);
-                ASSERT_NEAR((expectedB - actualB).norm(), 0.0, maxError);
+                ASSERT_NEAR((expectedB - actualB).norm(), 0.0, this->maxError);
             }
 
 #endif

@@ -9,6 +9,8 @@ namespace pfc
     class FieldGeneratorSpectral : public FieldGenerator<gridTypes>
     {
     public:
+    
+        using FunctionType = typename FieldGenerator<gridTypes>::FunctionType;
 
         FieldGeneratorSpectral(FieldSolver<gridTypes>* fieldSolver,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
