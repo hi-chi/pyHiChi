@@ -1,6 +1,5 @@
 #pragma once
 
-
 #define SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)                \
     .def("set", &pyFieldType::setFieldConfiguration<NullField>,           \
         py::arg("field_configuration"))                                   \
@@ -179,42 +178,42 @@
         py::arg("is_right_y_border_enabled") = true, py::arg("is_right_z_border_enabled") = true)     \
     .def("set_field_generator", &pyYeeField::setFieldGeneratorAllFunctions,                           \
         py::arg("left_index"), py::arg("right_index"),                                                \
-        py::arg("left_x_bx_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_x_by_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_x_bz_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("right_x_bx_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_x_by_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_x_bz_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("left_y_bx_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_y_by_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_y_bz_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("right_y_bx_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_y_by_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_y_bz_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("left_z_bx_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_z_by_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_z_bz_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("right_z_bx_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_z_by_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_z_bz_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("left_x_ex_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_x_ey_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_x_ez_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("right_x_ex_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_x_ey_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_x_ez_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("left_y_ex_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_y_ey_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_y_ez_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("right_y_ex_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_y_ey_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_y_ez_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("left_z_ex_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_z_ey_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("left_z_ez_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),    \
-        py::arg("right_z_ex_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_z_ey_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
-        py::arg("right_z_ez_func") = std::function<FP(FP, FP, FP, FP)>(field_generator::defaultFieldFunction),   \
+        py::arg("left_x_bx_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_x_by_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_x_bz_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_x_bx_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_x_by_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_x_bz_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_y_bx_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_y_by_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_y_bz_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_y_bx_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_y_by_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_y_bz_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_z_bx_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_z_by_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_z_bz_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_z_bx_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_z_by_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_z_bz_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_x_ex_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_x_ey_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_x_ez_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_x_ex_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_x_ey_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_x_ez_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_y_ex_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_y_ey_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_y_ez_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_y_ex_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_y_ey_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_y_ez_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_z_ex_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_z_ey_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_z_ez_func") = (FunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_z_ex_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_z_ey_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_z_ez_func") = (FunctionPointer)field_generator::defaultFieldFunction,   \
         py::arg("is_left_x_border_enabled") = true, py::arg("is_left_y_border_enabled") = true,       \
         py::arg("is_left_z_border_enabled") = true, py::arg("is_right_x_border_enabled") = true,      \
         py::arg("is_right_y_border_enabled") = true, py::arg("is_right_z_border_enabled") = true)

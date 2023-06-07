@@ -19,6 +19,8 @@ using namespace pybind11::literals;
 
 namespace pfc
 {
+    using FunctionPointer = int64_t;
+
     // Some field solver properties
     template <class TFieldSolver>
     struct isFieldSolverSpatialStaggered {
@@ -181,7 +183,7 @@ namespace pfc
                     }
         }
 
-        void setEMField(int64_t _fValueField)
+        void setEMField(FunctionPointer _fValueField)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -249,7 +251,7 @@ namespace pfc
                     }
         }
 
-        void applyFunction(int64_t _func)
+        void applyFunction(FunctionPointer _func)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -344,7 +346,7 @@ namespace pfc
                     }
         }
 
-        void setExyz(int64_t _fEx, int64_t _fEy, int64_t _fEz)
+        void setExyz(FunctionPointer _fEx, FunctionPointer _fEy, FunctionPointer _fEz)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -367,7 +369,7 @@ namespace pfc
                         }
         }
 
-        void setExyzt(int64_t _fEx, int64_t _fEy, int64_t _fEz, FP t)
+        void setExyzt(FunctionPointer _fEx, FunctionPointer _fEy, FunctionPointer _fEz, FP t)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -390,7 +392,7 @@ namespace pfc
                         }
         }
 
-        void setE(int64_t _fE)
+        void setE(FunctionPointer _fE)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -449,7 +451,7 @@ namespace pfc
                     }
         }
 
-        void setBxyz(int64_t _fBx, int64_t _fBy, int64_t _fBz)
+        void setBxyz(FunctionPointer _fBx, FunctionPointer _fBy, FunctionPointer _fBz)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -472,7 +474,7 @@ namespace pfc
                         }
         }
 
-        void setBxyzt(int64_t _fBx, int64_t _fBy, int64_t _fBz, FP t)
+        void setBxyzt(FunctionPointer _fBx, FunctionPointer _fBy, FunctionPointer _fBz, FP t)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -495,7 +497,7 @@ namespace pfc
                         }
         }
 
-        void setB(int64_t _fB)
+        void setB(FunctionPointer _fB)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -554,7 +556,7 @@ namespace pfc
                     }
         }
 
-        void setJxyz(int64_t _fJx, int64_t _fJy, int64_t _fJz)
+        void setJxyz(FunctionPointer _fJx, FunctionPointer _fJy, FunctionPointer _fJz)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -577,7 +579,7 @@ namespace pfc
                         }
         }
 
-        void setJxyzt(int64_t _fJx, int64_t _fJy, int64_t _fJz, FP t)
+        void setJxyzt(FunctionPointer _fJx, FunctionPointer _fJy, FunctionPointer _fJz, FP t)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -600,7 +602,7 @@ namespace pfc
                         }
         }
 
-        void setJ(int64_t _fJ)
+        void setJ(FunctionPointer _fJ)
         {
             TPyField* derived = static_cast<TPyField*>(this);
             TGrid* grid = derived->getField()->getGrid();
@@ -694,15 +696,16 @@ namespace pfc
         
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
-            FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
+            FunctionPointer bxFunc, FunctionPointer byFunc, FunctionPointer bzFunc,
+            FunctionPointer exFunc, FunctionPointer eyFunc, FunctionPointer ezFunc,
             bool isXLeftBorderEnabled, bool isYLeftBorderEnabled, bool isZLeftBorderEnabled,
             bool isXRightBorderEnabled, bool isYRightBorderEnabled, bool isZRightBorderEnabled
         )
         {
             static_cast<TPyField*>(this)->getField()->getFieldSolver()->setFieldGenerator(
                 leftGenIndex, rightGenIndex,
-                bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+                cppFunc(bxFunc), cppFunc(byFunc), cppFunc(bzFunc),
+                cppFunc(exFunc), cppFunc(eyFunc), cppFunc(ezFunc),
                 Int3(isXLeftBorderEnabled, isYLeftBorderEnabled, isZLeftBorderEnabled),
                 Int3(isXRightBorderEnabled, isYRightBorderEnabled, isZRightBorderEnabled)
             );
@@ -711,43 +714,43 @@ namespace pfc
         void setFieldGeneratorAllFunctions(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
 
-            FunctionType xMinBx, FunctionType xMinBy, FunctionType xMinBz,
-            FunctionType xMaxBx, FunctionType xMaxBy, FunctionType xMaxBz,
-            FunctionType yMinBx, FunctionType yMinBy, FunctionType yMinBz,
-            FunctionType yMaxBx, FunctionType yMaxBy, FunctionType yMaxBz,
-            FunctionType zMinBx, FunctionType zMinBy, FunctionType zMinBz,
-            FunctionType zMaxBx, FunctionType zMaxBy, FunctionType zMaxBz,
+            FunctionPointer xMinBx, FunctionPointer xMinBy, FunctionPointer xMinBz,
+            FunctionPointer xMaxBx, FunctionPointer xMaxBy, FunctionPointer xMaxBz,
+            FunctionPointer yMinBx, FunctionPointer yMinBy, FunctionPointer yMinBz,
+            FunctionPointer yMaxBx, FunctionPointer yMaxBy, FunctionPointer yMaxBz,
+            FunctionPointer zMinBx, FunctionPointer zMinBy, FunctionPointer zMinBz,
+            FunctionPointer zMaxBx, FunctionPointer zMaxBy, FunctionPointer zMaxBz,
 
-            FunctionType xMinEx, FunctionType xMinEy, FunctionType xMinEz,
-            FunctionType xMaxEx, FunctionType xMaxEy, FunctionType xMaxEz,
-            FunctionType yMinEx, FunctionType yMinEy, FunctionType yMinEz,
-            FunctionType yMaxEx, FunctionType yMaxEy, FunctionType yMaxEz,
-            FunctionType zMinEx, FunctionType zMinEy, FunctionType zMinEz,
-            FunctionType zMaxEx, FunctionType zMaxEy, FunctionType zMaxEz,
+            FunctionPointer xMinEx, FunctionPointer xMinEy, FunctionPointer xMinEz,
+            FunctionPointer xMaxEx, FunctionPointer xMaxEy, FunctionPointer xMaxEz,
+            FunctionPointer yMinEx, FunctionPointer yMinEy, FunctionPointer yMinEz,
+            FunctionPointer yMaxEx, FunctionPointer yMaxEy, FunctionPointer yMaxEz,
+            FunctionPointer zMinEx, FunctionPointer zMinEy, FunctionPointer zMinEz,
+            FunctionPointer zMaxEx, FunctionPointer zMaxEy, FunctionPointer zMaxEz,
 
             bool isXLeftBorderEnabled, bool isYLeftBorderEnabled, bool isZLeftBorderEnabled,
             bool isXRightBorderEnabled, bool isYRightBorderEnabled, bool isZRightBorderEnabled
         )
         {
             std::array<std::array<FunctionType, 3>, 3> leftBFunc;
-            leftBFunc[0][0] = xMinBx; leftBFunc[0][1] = xMinBy; leftBFunc[0][2] = xMinBz;
-            leftBFunc[1][0] = yMinBx; leftBFunc[1][1] = yMinBy; leftBFunc[1][2] = yMinBz;
-            leftBFunc[2][0] = zMinBx; leftBFunc[2][1] = zMinBy; leftBFunc[2][2] = zMinBz;
+            leftBFunc[0][0] = cppFunc(xMinBx); leftBFunc[0][1] = cppFunc(xMinBy); leftBFunc[0][2] = cppFunc(xMinBz);
+            leftBFunc[1][0] = cppFunc(yMinBx); leftBFunc[1][1] = cppFunc(yMinBy); leftBFunc[1][2] = cppFunc(yMinBz);
+            leftBFunc[2][0] = cppFunc(zMinBx); leftBFunc[2][1] = cppFunc(zMinBy); leftBFunc[2][2] = cppFunc(zMinBz);
 
             std::array<std::array<FunctionType, 3>, 3> rightBFunc;
-            rightBFunc[0][0] = xMaxBx; rightBFunc[0][1] = xMaxBy; rightBFunc[0][2] = xMaxBz;
-            rightBFunc[1][0] = yMaxBx; rightBFunc[1][1] = yMaxBy; rightBFunc[1][2] = yMaxBz;
-            rightBFunc[2][0] = zMaxBx; rightBFunc[2][1] = zMaxBy; rightBFunc[2][2] = zMaxBz;
+            rightBFunc[0][0] = cppFunc(xMaxBx); rightBFunc[0][1] = cppFunc(xMaxBy); rightBFunc[0][2] = cppFunc(xMaxBz);
+            rightBFunc[1][0] = cppFunc(yMaxBx); rightBFunc[1][1] = cppFunc(yMaxBy); rightBFunc[1][2] = cppFunc(yMaxBz);
+            rightBFunc[2][0] = cppFunc(zMaxBx); rightBFunc[2][1] = cppFunc(zMaxBy); rightBFunc[2][2] = cppFunc(zMaxBz);
 
             std::array<std::array<FunctionType, 3>, 3> leftEFunc;
-            leftEFunc[0][0] = xMinEx; leftEFunc[0][1] = xMinEy; leftEFunc[0][2] = xMinEz;
-            leftEFunc[1][0] = yMinEx; leftEFunc[1][1] = yMinEy; leftEFunc[1][2] = yMinEz;
-            leftEFunc[2][0] = zMinEx; leftEFunc[2][1] = zMinEy; leftEFunc[2][2] = zMinEz;
+            leftEFunc[0][0] = cppFunc(xMinEx); leftEFunc[0][1] = cppFunc(xMinEy); leftEFunc[0][2] = cppFunc(xMinEz);
+            leftEFunc[1][0] = cppFunc(yMinEx); leftEFunc[1][1] = cppFunc(yMinEy); leftEFunc[1][2] = cppFunc(yMinEz);
+            leftEFunc[2][0] = cppFunc(zMinEx); leftEFunc[2][1] = cppFunc(zMinEy); leftEFunc[2][2] = cppFunc(zMinEz);
 
             std::array<std::array<FunctionType, 3>, 3> rightEFunc;
-            rightEFunc[0][0] = xMaxEx; rightEFunc[0][1] = xMaxEy; rightEFunc[0][2] = xMaxEz;
-            rightEFunc[1][0] = yMaxEx; rightEFunc[1][1] = yMaxEy; rightEFunc[1][2] = yMaxEz;
-            rightEFunc[2][0] = zMaxEx; rightEFunc[2][1] = zMaxEy; rightEFunc[2][2] = zMaxEz;
+            rightEFunc[0][0] = cppFunc(xMaxEx); rightEFunc[0][1] = cppFunc(xMaxEy); rightEFunc[0][2] = cppFunc(xMaxEz);
+            rightEFunc[1][0] = cppFunc(yMaxEx); rightEFunc[1][1] = cppFunc(yMaxEy); rightEFunc[1][2] = cppFunc(yMaxEz);
+            rightEFunc[2][0] = cppFunc(zMaxEx); rightEFunc[2][1] = cppFunc(zMaxEy); rightEFunc[2][2] = cppFunc(zMaxEz);
 
             static_cast<TPyField*>(this)->getField()->getFieldSolver()->setFieldGenerator(
                 leftGenIndex, rightGenIndex,
@@ -756,6 +759,12 @@ namespace pfc
                 Int3(isXRightBorderEnabled, isYRightBorderEnabled, isZRightBorderEnabled)
             );
         }
+
+    protected:
+
+        FunctionType cppFunc(FunctionPointer f) {
+            return FunctionType((FP(*)(FP, FP, FP, FP))f);
+        };
 
     };
 
@@ -840,21 +849,21 @@ namespace pfc
     class pyAnalyticalFieldInterface<TFieldSolver, TPyField, true> {
     public:
 
-        void setExyz(int64_t fEx, int64_t fEy, int64_t fEz) {
+        void setExyz(FunctionPointer fEx, FunctionPointer fEy, FunctionPointer fEz) {
             FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEx;
             FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEy;
             FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEz;
             static_cast<const TPyField*>(this)->getField()->getGrid()->setE(fx, fy, fz);
         }
 
-        void setBxyz(int64_t fBx, int64_t fBy, int64_t fBz) {
+        void setBxyz(FunctionPointer fBx, FunctionPointer fBy, FunctionPointer fBz) {
             FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBx;
             FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBy;
             FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBz;
             static_cast<const TPyField*>(this)->getField()->getGrid()->setB(fx, fy, fz);
         }
 
-        void setJxyz(int64_t fJx, int64_t fJy, int64_t fJz) {
+        void setJxyz(FunctionPointer fJx, FunctionPointer fJy, FunctionPointer fJz) {
             FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJx;
             FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJy;
             FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJz;
