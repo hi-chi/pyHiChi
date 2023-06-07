@@ -139,6 +139,7 @@ namespace pfc
         }
     };
 
+
     template<class TFieldSolver>
     class pyMappedField;
 
