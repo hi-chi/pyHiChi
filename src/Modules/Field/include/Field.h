@@ -1,24 +1,45 @@
 #pragma once
 #include "Vectors.h"
-#include "AnalyticalField.h"
+#include "AnalyticalFieldSolver.h"
+
+#include <memory>
 
 
 namespace pfc {
 
     // Field solver + computational grid
-    template <class TGrid, class TFieldSolver>
+    template <class TFieldSolver>
     class Field {
     public:
+
+        using TGrid = typename TFieldSolver::GridType;
 
         Field() {}
         Field(const Int3& numInternalCells,
             const FP3& minCoords, const FP3& steps, FP dt) {
-            grid.reset(new TGrid(Int3(numInternalCells), minCoords, steps, numInternalCells));
-            fieldSolver.reset(new TFieldSolver(grid.get(), dt));
+            this->grid.reset(new TGrid(Int3(numInternalCells), minCoords, steps, numInternalCells));
+            this->fieldSolver.reset(new TFieldSolver(grid.get(), dt));
+            this->refresh();
         }
+
+        void setTimeStep(FP dt) { this->fieldSolver->setTimeStep(dt); }
+        FP getTimeStep() { return this->fieldSolver->dt; }
+
+        void updateFields() { this->fieldSolver->updateFields(); }
+
+        void setTime(FP t) { this->fieldSolver->globalTime = t; }
+        FP getTime() { return this->fieldSolver->globalTime; }
 
         void refresh() {
             this->fieldSolver->globalTime = 0.0;
+        }
+
+        void advance(FP dt) {
+            if (this->fieldSolver->dt != dt) {
+                // all field solver submodules are refreshed
+                this->fieldSolver->setTimeStep(dt);
+            }
+            this->fieldSolver->updateFields();
         }
 
         TGrid* getGrid() {
@@ -35,36 +56,43 @@ namespace pfc {
     };
 
 
-    class NoFieldSolver {};
-    class NoGrid {};
-
     // Specialization for analytical field
     template<>
-    class Field<NoGrid, NoFieldSolver> {
+    class Field<AnalyticalFieldSolver> {
     public:
 
         Field() {}
         Field(FP dt) {
-            field.reset(new AnalyticalField(dt));
+            this->fieldSolver.reset(new AnalyticalFieldSolver(dt));
+            this->refresh();
         }
+
+        void setTimeStep(FP dt) { this->fieldSolver->setTimeStep(dt); }
+        FP getTimeStep() { return this->fieldSolver->dt; }
+
+        void updateFields() { this->fieldSolver->updateFields(); }
+
+        void setTime(FP t) { this->fieldSolver->field->globalTime = t; }
+        FP getTime() { return this->fieldSolver->field->globalTime; }
 
         void refresh() {
-            this->field->globalTime = 0.0;
+            this->fieldSolver->field->globalTime = 0.0;
         }
 
-        AnalyticalField* getAnalyticalField() {
-            return field.get();
+        void advance(FP dt) {
+            this->setTimeStep(dt);
+            this->updateFields();
+        }
+
+        AnalyticalFieldSolver* getFieldSolver() {
+            return this->fieldSolver.get();
         }
 
         AnalyticalField* getGrid() {
-            return field.get();
+            return this->fieldSolver->field.get();
         }
 
-        AnalyticalField* getFieldSolver() {
-            return field.get();
-        }
-
-        std::unique_ptr<AnalyticalField> field;
+        std::unique_ptr<AnalyticalFieldSolver> fieldSolver;
 
     };
 
