@@ -92,7 +92,7 @@ typedef ::testing::Types<
     YeeGrid,
     PSTDGrid,
     PSATDGrid,
-    PSATDTimeStraggeredGrid
+    PSATDTimeStaggeredGrid
 > typesSaveLoadGridTest;
 TYPED_TEST_CASE(SaveLoadGridTest, typesSaveLoadGridTest);
 
@@ -192,9 +192,9 @@ typedef ::testing::Types<
     GridSolverTypes<YeeGrid, FDTD>,
     GridSolverTypes<PSTDGrid, PSTD>,
     GridSolverTypes<PSATDGrid, PSATD>,
-    GridSolverTypes<PSATDTimeStraggeredGrid, PSATDTimeStraggered>,
+    GridSolverTypes<PSATDTimeStaggeredGrid, PSATDTimeStaggered>,
     GridSolverTypes<PSATDGrid, PSATDPoisson>,
-    GridSolverTypes<PSATDTimeStraggeredGrid, PSATDTimeStraggeredPoisson>
+    GridSolverTypes<PSATDTimeStaggeredGrid, PSATDTimeStaggeredPoisson>
 > typesSaveLoadGridSolverTest;
 TYPED_TEST_CASE(SaveLoadGridSolverTest, typesSaveLoadGridSolverTest);
 

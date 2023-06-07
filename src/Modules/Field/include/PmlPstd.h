@@ -1,16 +1,16 @@
 #pragma once
 #include "Grid.h"
 #include "FieldSolver.h"
-#include "PmlSpectralTimeStraggered.h"
+#include "PmlSpectralTimeStaggered.h"
 #include "Constants.h"
 
 namespace pfc {
 
-    class PmlPstd : public PmlSpectralTimeStraggered<GridTypes::PSTDGridType>
+    class PmlPstd : public PmlSpectralTimeStaggered<GridTypes::PSTDGridType>
     {
     public:
         PmlPstd(SpectralFieldSolver<GridTypes::PSTDGridType>* solver, Int3 sizePML) :
-            PmlSpectralTimeStraggered(solver, sizePML) {}
+            PmlSpectralTimeStaggered(solver, sizePML) {}
 
         virtual void computeTmpField(MemberOfFP3 coordK,
             SpectralScalarField<FP, complexFP>& field, double dt);

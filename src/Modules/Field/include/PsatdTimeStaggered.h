@@ -10,16 +10,16 @@
 namespace pfc {
 
     template <bool ifPoisson>
-    class PSATDTimeStraggeredT : public SpectralFieldSolver<PSATDTimeStraggeredGridType>
+    class PSATDTimeStaggeredT : public SpectralFieldSolver<PSATDTimeStaggeredGridType>
     {
     public:
 
-        using GridType = PSATDTimeStraggeredGrid;
-        using PmlType = PmlPsatdTimeStraggered<PSATDTimeStraggeredGridType>;
-        using FieldGeneratorType = FieldGeneratorSpectral<PSATDTimeStraggeredGridType>;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDTimeStraggeredGridType>;
+        using GridType = PSATDTimeStaggeredGrid;
+        using PmlType = PmlPsatdTimeStaggered<PSATDTimeStaggeredGridType>;
+        using FieldGeneratorType = FieldGeneratorSpectral<PSATDTimeStaggeredGridType>;
+        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDTimeStaggeredGridType>;
 
-        PSATDTimeStraggeredT(GridType* grid, FP dt);
+        PSATDTimeStaggeredT(GridType* grid, FP dt);
 
         void updateFields();
 
@@ -97,7 +97,7 @@ namespace pfc {
     };
 
     template<bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::save(std::ostream& ostr)
+    inline void PSATDTimeStaggeredT<ifPoisson>::save(std::ostream& ostr)
     {
         FieldSolver<GridType::gridType>::save(ostr);
         tmpJx.save(ostr);
@@ -106,7 +106,7 @@ namespace pfc {
     }
 
     template<bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::load(std::istream& istr)
+    inline void PSATDTimeStaggeredT<ifPoisson>::load(std::istream& istr)
     {
         FieldSolver<GridType::gridType>::load(istr);
         tmpJx.load(istr);
@@ -115,7 +115,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline PSATDTimeStraggeredT<ifPoisson>::PSATDTimeStraggeredT(GridType* _grid, FP dt) :
+    inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* _grid, FP dt) :
         SpectralFieldSolver<GridType::gridType>(_grid, dt),
         tmpJx(complexGrid->sizeStorage),
         tmpJy(complexGrid->sizeStorage),
@@ -126,7 +126,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
+    inline void PSATDTimeStaggeredT<ifPoisson>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
         pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
         updateInternalDims();
@@ -134,7 +134,7 @@ namespace pfc {
 
     template <bool ifPoisson>
     template <class TBoundaryCondition>
-    inline void PSATDTimeStraggeredT<ifPoisson>::setBoundaryCondition()
+    inline void PSATDTimeStaggeredT<ifPoisson>::setBoundaryCondition()
     {
         for (int d = 0; d < grid->dimensionality; d++)
             boundaryConditions[d].reset(new TBoundaryCondition((CoordinateEnum)d, this));
@@ -142,7 +142,7 @@ namespace pfc {
 
     template <bool ifPoisson>
     template <class TBoundaryCondition>
-    inline void PSATDTimeStraggeredT<ifPoisson>::setBoundaryCondition(CoordinateEnum axis)
+    inline void PSATDTimeStaggeredT<ifPoisson>::setBoundaryCondition(CoordinateEnum axis)
     {
         if ((int)axis >= grid->dimensionality) {
             std::cout
@@ -153,7 +153,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::setFieldGenerator(
+    inline void PSATDTimeStaggeredT<ifPoisson>::setFieldGenerator(
         const Int3& leftGenIndex, const Int3& rightGenIndex,
         FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
         FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
@@ -168,7 +168,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::setFieldGenerator(
+    inline void PSATDTimeStaggeredT<ifPoisson>::setFieldGenerator(
         const Int3& leftGenIndex, const Int3& rightGenIndex,
         const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
         const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
@@ -184,7 +184,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::setTimeStep(FP dt)
+    inline void PSATDTimeStaggeredT<ifPoisson>::setTimeStep(FP dt)
     {
         this->dt = dt;
         if (pml) pml.reset(new PmlType(this, pml->sizePML));
@@ -195,7 +195,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::assignJ(
+    inline void PSATDTimeStaggeredT<ifPoisson>::assignJ(
         SpectralScalarField<FP, complexFP>& J, ScalarField<complexFP>& tmpJ)
     {
         const complexFP* const ptrJ = J.getData();
@@ -208,7 +208,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::saveJ()
+    inline void PSATDTimeStaggeredT<ifPoisson>::saveJ()
     {
         assignJ(complexGrid->Jx, tmpJx);
         assignJ(complexGrid->Jy, tmpJy);
@@ -216,7 +216,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::updateFields()
+    inline void PSATDTimeStaggeredT<ifPoisson>::updateFields()
     {
         doFourierTransform(fourier_transform::Direction::RtoC);
 
@@ -245,7 +245,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::convertFieldsPoissonEquation() {
+    inline void PSATDTimeStaggeredT<ifPoisson>::convertFieldsPoissonEquation() {
         doFourierTransform(fourier_transform::Direction::RtoC);
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
@@ -275,7 +275,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::updateHalfB()
+    inline void PSATDTimeStaggeredT<ifPoisson>::updateHalfB()
     {
         const Int3 begin = updateComplexBAreaBegin;
         const Int3 end = updateComplexBAreaEnd;
@@ -312,7 +312,7 @@ namespace pfc {
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStraggeredT<ifPoisson>::updateE()
+    inline void PSATDTimeStaggeredT<ifPoisson>::updateE()
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
@@ -351,7 +351,7 @@ namespace pfc {
 
     // provides k \cdot E = 0 always (k \cdot J = 0 too)
     template <>
-    inline void PSATDTimeStraggeredT<true>::updateE()
+    inline void PSATDTimeStaggeredT<true>::updateE()
     {
         const Int3 begin = updateComplexEAreaBegin;
         const Int3 end = updateComplexEAreaEnd;
@@ -389,7 +389,7 @@ namespace pfc {
                 }
     }
 
-    typedef PSATDTimeStraggeredT<true> PSATDTimeStraggeredPoisson;
-    typedef PSATDTimeStraggeredT<false> PSATDTimeStraggered;
+    typedef PSATDTimeStaggeredT<true> PSATDTimeStaggeredPoisson;
+    typedef PSATDTimeStaggeredT<false> PSATDTimeStaggered;
 
 }

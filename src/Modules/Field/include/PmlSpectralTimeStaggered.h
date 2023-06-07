@@ -7,10 +7,10 @@
 namespace pfc {
 
     template<GridTypes gridTypes>
-    class PmlSpectralTimeStraggered : public PmlSpectral<gridTypes>
+    class PmlSpectralTimeStaggered : public PmlSpectral<gridTypes>
     {
     public:
-        PmlSpectralTimeStraggered(SpectralFieldSolver<gridTypes>* solver, Int3 sizePml) :
+        PmlSpectralTimeStaggered(SpectralFieldSolver<gridTypes>* solver, Int3 sizePml) :
             PmlSpectral<gridTypes>(solver, sizePml),
             tmpFieldReal(solver->grid->sizeStorage),
             tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(solver->grid->numCells))
@@ -43,7 +43,7 @@ namespace pfc {
     };
 
     template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStraggered<gridTypes>::updateFieldSplit(std::vector<FP>& field,
+    inline void PmlSpectralTimeStaggered<gridTypes>::updateFieldSplit(std::vector<FP>& field,
         const std::vector<Int3>& index)
     {
         const int size = index.size();
@@ -58,7 +58,7 @@ namespace pfc {
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStraggered<gridTypes>::updateBxSplit()
+    inline void PmlSpectralTimeStaggered<gridTypes>::updateBxSplit()
     {
         SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
         computeTmpField(&FP3::y, fs->complexGrid->Ez, fs->dt * 0.5, -1);
@@ -68,7 +68,7 @@ namespace pfc {
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStraggered<gridTypes>::updateBySplit()
+    inline void PmlSpectralTimeStaggered<gridTypes>::updateBySplit()
     {
         SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
         computeTmpField(&FP3::z, fs->complexGrid->Ex, fs->dt * 0.5, -1);
@@ -78,7 +78,7 @@ namespace pfc {
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStraggered<gridTypes>::updateBzSplit()
+    inline void PmlSpectralTimeStaggered<gridTypes>::updateBzSplit()
     {
         SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
         computeTmpField(&FP3::x, fs->complexGrid->Ey, fs->dt * 0.5, -1);
@@ -88,7 +88,7 @@ namespace pfc {
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStraggered<gridTypes>::updateExSplit()
+    inline void PmlSpectralTimeStaggered<gridTypes>::updateExSplit()
     {
         SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
         computeTmpField(&FP3::y, fs->complexGrid->Bz, fs->dt, +1);
@@ -98,7 +98,7 @@ namespace pfc {
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStraggered<gridTypes>::updateEySplit()
+    inline void PmlSpectralTimeStaggered<gridTypes>::updateEySplit()
     {
         SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
         computeTmpField(&FP3::z, fs->complexGrid->Bx, fs->dt, +1);
@@ -108,7 +108,7 @@ namespace pfc {
     }
 
     template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStraggered<gridTypes>::updateEzSplit()
+    inline void PmlSpectralTimeStaggered<gridTypes>::updateEzSplit()
     {
         SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
         computeTmpField(&FP3::x, fs->complexGrid->By, fs->dt, +1);

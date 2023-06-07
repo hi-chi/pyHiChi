@@ -15,7 +15,7 @@ namespace pfc {
     public:
 
         using GridType = PSATDGrid;
-        using PmlType = PmlPsatdTimeStraggered<PSATDGridType>;
+        using PmlType = PmlPsatdTimeStaggered<PSATDGridType>;
         using FieldGeneratorType = FieldGeneratorSpectral<PSATDGridType>;
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDGridType>;
 

@@ -13,7 +13,7 @@ public:
     }
 };
 
-typedef ::testing::Types<YeeGrid, SimpleGrid, PSTDGrid, PSATDGrid, PSATDTimeStraggeredGrid> types;
+typedef ::testing::Types<YeeGrid, SimpleGrid, PSTDGrid, PSATDGrid, PSATDTimeStaggeredGrid> types;
 TYPED_TEST_CASE(GridTest, types);
 
 

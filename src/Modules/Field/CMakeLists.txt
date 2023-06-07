@@ -26,7 +26,7 @@ set(fieldModules_headers
     ${FIELDMODULES_HEADER_DIR}/PmlFdtd.h
     ${FIELDMODULES_HEADER_DIR}/PmlPstd.h
     ${FIELDMODULES_HEADER_DIR}/PmlPsatd.h
-    ${FIELDMODULES_HEADER_DIR}/PmlSpectralTimeStraggered.h
+    ${FIELDMODULES_HEADER_DIR}/PmlSpectralTimeStaggered.h
     ${FIELDMODULES_HEADER_DIR}/Pstd.h
     ${FIELDMODULES_HEADER_DIR}/PsatdTimeStaggered.h
     ${FIELDMODULES_HEADER_DIR}/Psatd.h)

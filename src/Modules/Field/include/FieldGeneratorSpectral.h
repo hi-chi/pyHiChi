@@ -42,5 +42,5 @@ namespace pfc
 
     typedef FieldGeneratorSpectral<GridTypes::PSTDGridType> FieldGeneratorPstd;
     typedef FieldGeneratorSpectral<GridTypes::PSATDGridType> FieldGeneratorPsatd;
-    typedef FieldGeneratorSpectral<GridTypes::PSATDTimeStraggeredGridType> FieldGeneratorPsatdTimeStraggered;
+    typedef FieldGeneratorSpectral<GridTypes::PSATDTimeStaggeredGridType> FieldGeneratorPsatdTimeStaggered;
 }

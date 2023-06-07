@@ -24,7 +24,7 @@ namespace pfc
     // Some field solver properties
     template <class TFieldSolver>
     struct isFieldSolverSpatialStaggered {
-        static const bool value = TFieldSolver::GridType::ifFieldsSpatialStraggered;
+        static const bool value = TFieldSolver::GridType::ifFieldsSpatialStaggered;
     };
 
     template <class TFieldSolver>
@@ -50,9 +50,9 @@ namespace pfc
     template <class TFieldSolver>
     struct isFieldSolverSupportPoissonEquation {
         static const bool value = std::is_same<TFieldSolver, PSATD>::value ||
-            std::is_same<TFieldSolver, PSATDTimeStraggered>::value ||
+            std::is_same<TFieldSolver, PSATDTimeStaggered>::value ||
             std::is_same<TFieldSolver, PSATDPoisson>::value ||
-            std::is_same<TFieldSolver, PSATDTimeStraggeredPoisson>::value;
+            std::is_same<TFieldSolver, PSATDTimeStaggeredPoisson>::value;
     };
 
     template <class TFieldSolver>
@@ -62,12 +62,12 @@ namespace pfc
 
 
     // Interface depending on spatial template (shifted or collocated)
-    template <class TFieldSolver, class TPyField, bool ifSpatialStraggered>
-    class pySpatialStraggeredFieldInterface {};
+    template <class TFieldSolver, class TPyField, bool ifSpatialStaggered>
+    class pySpatialStaggeredFieldInterface {};
 
     // Interface for spatial straggered grids
     template <class TFieldSolver, class TPyField>
-    class pySpatialStraggeredFieldInterface<TFieldSolver, TPyField, true>
+    class pySpatialStaggeredFieldInterface<TFieldSolver, TPyField, true>
     {
     public:
 
@@ -117,7 +117,7 @@ namespace pfc
 
     // Interface for collocated grids
     template <class TFieldSolver, class TPyField>
-    class pySpatialStraggeredFieldInterface<TFieldSolver, TPyField, false>
+    class pySpatialStaggeredFieldInterface<TFieldSolver, TPyField, false>
     {
     public:
 
@@ -302,7 +302,7 @@ namespace pfc
     // Interface for field solvers with computational grid (grid setters and getters)
     template<class TFieldSolver, class TPyField>
     class pyGridFieldSolverInterface :
-        public pySpatialStraggeredFieldInterface<TFieldSolver, TPyField, isFieldSolverSpatialStaggered<TFieldSolver>::value>
+        public pySpatialStaggeredFieldInterface<TFieldSolver, TPyField, isFieldSolverSpatialStaggered<TFieldSolver>::value>
     {
     public:
 

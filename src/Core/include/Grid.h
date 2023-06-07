@@ -19,7 +19,7 @@ namespace pfc {
     template<typename Data, GridTypes gridType_>
     class Grid :
         // next labels define some properties of grid
-        public LabelFieldsSpatialStraggered<gridType_>,
+        public LabelFieldsSpatialStaggered<gridType_>,
         /* defines 'numExternalCells' constant depending on method */
         public LabelMethodRequiredNumberOfExternalCells<gridType_>
     {
@@ -496,7 +496,7 @@ namespace pfc {
     typedef Grid<FP, GridTypes::StraightGridType> SimpleGrid;
     typedef Grid<FP, GridTypes::PSTDGridType> PSTDGrid;
     typedef Grid<FP, GridTypes::PSATDGridType> PSATDGrid;
-    typedef Grid<FP, GridTypes::PSATDTimeStraggeredGridType> PSATDTimeStraggeredGrid;
+    typedef Grid<FP, GridTypes::PSATDTimeStaggeredGridType> PSATDTimeStaggeredGrid;
 
     template<typename Data, GridTypes gridType_>
     inline Grid<Data, gridType_>::Grid(const Grid<Data, gridType_>& grid) :
@@ -619,7 +619,7 @@ namespace pfc {
     }
 
     template<>
-    inline Grid<FP, GridTypes::PSATDTimeStraggeredGridType>::Grid(const Int3& _numInternalCells,
+    inline Grid<FP, GridTypes::PSATDTimeStaggeredGridType>::Grid(const Int3& _numInternalCells,
         const FP3& minCoords, const FP3& _steps, const Int3& _globalGridDims) :
         globalGridDims(_globalGridDims),
         steps(_steps),

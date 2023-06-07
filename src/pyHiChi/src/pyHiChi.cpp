@@ -547,49 +547,49 @@ PYBIND11_MODULE(pyHiChi, object) {
             py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
         ;
 
-    py::class_<pyPSATDTimeStraggeredField, std::shared_ptr<pyPSATDTimeStraggeredField>>(
+    py::class_<pyPSATDTimeStaggeredField, std::shared_ptr<pyPSATDTimeStaggeredField>>(
         object, "PSATDSField", pyClassFieldBase)
         .def(py::init<FP3, FP3, FP3, FP>(), py::arg("grid_size"), py::arg("min_coords"),
             py::arg("spatial_steps"), py::arg("time_step"))
-        SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredField)
-        SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredField)
-        SET_SCALAR_FIELD_METHODS(pyPSATDTimeStraggeredField)
-        SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredField)
-        .def("set_PML", &pyPSATDTimeStraggeredField::setPML,
+        SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStaggeredField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStaggeredField)
+        SET_SCALAR_FIELD_METHODS(pyPSATDTimeStaggeredField)
+        SET_COMMON_FIELD_METHODS(pyPSATDTimeStaggeredField)
+        .def("set_PML", &pyPSATDTimeStaggeredField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
-        .def("set_periodical_BC", (void (pyPSATDTimeStraggeredField::*)())
-            &pyPSATDTimeStraggeredField::setPeriodicalBoundaryCondition)
-        .def("set_periodical_BC", (void (pyPSATDTimeStraggeredField::*)(CoordinateEnum))
-            &pyPSATDTimeStraggeredField::setPeriodicalBoundaryCondition, py::arg("axis"))
-        .def("convert_fields_poisson_equation", &pyPSATDTimeStraggeredField::convertFieldsPoissonEquation)
-        .def("set", &pyPSATDTimeStraggeredField::setEMField, py::arg("func"))
-        .def("set", &pyPSATDTimeStraggeredField::pySetEMField, py::arg("func"))
-        .def("apply_function", &pyPSATDTimeStraggeredField::applyFunction, py::arg("func"))
-        .def("apply_function", &pyPSATDTimeStraggeredField::pyApplyFunction, py::arg("func"))
-        .def("zoom", &pyPSATDTimeStraggeredField::zoom, py::arg("min_coord"), \
+        .def("set_periodical_BC", (void (pyPSATDTimeStaggeredField::*)())
+            &pyPSATDTimeStaggeredField::setPeriodicalBoundaryCondition)
+        .def("set_periodical_BC", (void (pyPSATDTimeStaggeredField::*)(CoordinateEnum))
+            &pyPSATDTimeStaggeredField::setPeriodicalBoundaryCondition, py::arg("axis"))
+        .def("convert_fields_poisson_equation", &pyPSATDTimeStaggeredField::convertFieldsPoissonEquation)
+        .def("set", &pyPSATDTimeStaggeredField::setEMField, py::arg("func"))
+        .def("set", &pyPSATDTimeStaggeredField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyPSATDTimeStaggeredField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyPSATDTimeStaggeredField::pyApplyFunction, py::arg("func"))
+        .def("zoom", &pyPSATDTimeStaggeredField::zoom, py::arg("min_coord"), \
             py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
         ;
 
-    py::class_<pyPSATDTimeStraggeredPoissonField, std::shared_ptr<pyPSATDTimeStraggeredPoissonField>>(
+    py::class_<pyPSATDTimeStaggeredPoissonField, std::shared_ptr<pyPSATDTimeStaggeredPoissonField>>(
         object, "PSATDSPoissonField", pyClassFieldBase)
         .def(py::init<FP3, FP3, FP3, FP>(), py::arg("grid_size"), py::arg("min_coords"),
             py::arg("spatial_steps"), py::arg("time_step"))
-        SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStraggeredPoissonField)
-        SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
-        SET_SCALAR_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
-        SET_COMMON_FIELD_METHODS(pyPSATDTimeStraggeredPoissonField)
-        .def("set_PML", &pyPSATDTimeStraggeredPoissonField::setPML,
+        SET_COMPUTATIONAL_GRID_METHODS(pyPSATDTimeStaggeredPoissonField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
+        SET_SCALAR_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
+        SET_COMMON_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
+        .def("set_PML", &pyPSATDTimeStaggeredPoissonField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
-        .def("set_periodical_BC", (void (pyPSATDTimeStraggeredPoissonField::*)())
-            &pyPSATDTimeStraggeredPoissonField::setPeriodicalBoundaryCondition)
-        .def("set_periodical_BC", (void (pyPSATDTimeStraggeredPoissonField::*)(CoordinateEnum))
-            &pyPSATDTimeStraggeredPoissonField::setPeriodicalBoundaryCondition, py::arg("axis"))
-        .def("convert_fields_poisson_equation", &pyPSATDTimeStraggeredPoissonField::convertFieldsPoissonEquation)
-        .def("set", &pyPSATDTimeStraggeredPoissonField::setEMField, py::arg("func"))
-        .def("set", &pyPSATDTimeStraggeredPoissonField::pySetEMField, py::arg("func"))
-        .def("apply_function", &pyPSATDTimeStraggeredPoissonField::applyFunction, py::arg("func"))
-        .def("apply_function", &pyPSATDTimeStraggeredPoissonField::pyApplyFunction, py::arg("func"))
-        .def("zoom", &pyPSATDTimeStraggeredPoissonField::zoom, py::arg("min_coord"), \
+        .def("set_periodical_BC", (void (pyPSATDTimeStaggeredPoissonField::*)())
+            &pyPSATDTimeStaggeredPoissonField::setPeriodicalBoundaryCondition)
+        .def("set_periodical_BC", (void (pyPSATDTimeStaggeredPoissonField::*)(CoordinateEnum))
+            &pyPSATDTimeStaggeredPoissonField::setPeriodicalBoundaryCondition, py::arg("axis"))
+        .def("convert_fields_poisson_equation", &pyPSATDTimeStaggeredPoissonField::convertFieldsPoissonEquation)
+        .def("set", &pyPSATDTimeStaggeredPoissonField::setEMField, py::arg("func"))
+        .def("set", &pyPSATDTimeStaggeredPoissonField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyPSATDTimeStaggeredPoissonField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyPSATDTimeStaggeredPoissonField::pyApplyFunction, py::arg("func"))
+        .def("zoom", &pyPSATDTimeStaggeredPoissonField::zoom, py::arg("min_coord"), \
             py::arg("zoomed_grid_size"), py::arg("zoomed_grid_step"))
         ;
 
@@ -655,28 +655,28 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("apply_function", &pyMappedPSATDPoissonField::pyApplyFunction, py::arg("func"))
         ;
 
-    py::class_<pyMappedPSATDTimeStraggeredField, std::shared_ptr<pyMappedPSATDTimeStraggeredField>>(
+    py::class_<pyMappedPSATDTimeStaggeredField, std::shared_ptr<pyMappedPSATDTimeStaggeredField>>(
         object, "MappedPSATDSField", pyClassFieldBase)
-        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSATDTimeStraggeredField)
-        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSATDTimeStraggeredField)
-        SET_COMMON_FIELD_METHODS(pyMappedPSATDTimeStraggeredField)
-        .def("convert_fields_poisson_equation", &pyMappedPSATDTimeStraggeredField::convertFieldsPoissonEquation)
-        .def("set", &pyMappedPSATDTimeStraggeredField::setEMField, py::arg("func"))
-        .def("set", &pyMappedPSATDTimeStraggeredField::pySetEMField, py::arg("func"))
-        .def("apply_function", &pyMappedPSATDTimeStraggeredField::applyFunction, py::arg("func"))
-        .def("apply_function", &pyMappedPSATDTimeStraggeredField::pyApplyFunction, py::arg("func"))
+        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSATDTimeStaggeredField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSATDTimeStaggeredField)
+        SET_COMMON_FIELD_METHODS(pyMappedPSATDTimeStaggeredField)
+        .def("convert_fields_poisson_equation", &pyMappedPSATDTimeStaggeredField::convertFieldsPoissonEquation)
+        .def("set", &pyMappedPSATDTimeStaggeredField::setEMField, py::arg("func"))
+        .def("set", &pyMappedPSATDTimeStaggeredField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDTimeStaggeredField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDTimeStaggeredField::pyApplyFunction, py::arg("func"))
         ;
 
-    py::class_<pyMappedPSATDTimeStraggeredPoissonField, std::shared_ptr<pyMappedPSATDTimeStraggeredPoissonField>>(
+    py::class_<pyMappedPSATDTimeStaggeredPoissonField, std::shared_ptr<pyMappedPSATDTimeStaggeredPoissonField>>(
         object, "MappedPSATDSPoissonField", pyClassFieldBase)
-        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSATDTimeStraggeredPoissonField)
-        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSATDTimeStraggeredPoissonField)
-        SET_COMMON_FIELD_METHODS(pyMappedPSATDTimeStraggeredPoissonField)
-        .def("convert_fields_poisson_equation", &pyMappedPSATDTimeStraggeredPoissonField::convertFieldsPoissonEquation)
-        .def("set", &pyMappedPSATDTimeStraggeredPoissonField::setEMField, py::arg("func"))
-        .def("set", &pyMappedPSATDTimeStraggeredPoissonField::pySetEMField, py::arg("func"))
-        .def("apply_function", &pyMappedPSATDTimeStraggeredPoissonField::applyFunction, py::arg("func"))
-        .def("apply_function", &pyMappedPSATDTimeStraggeredPoissonField::pyApplyFunction, py::arg("func"))
+        SET_COMPUTATIONAL_GRID_METHODS(pyMappedPSATDTimeStaggeredPoissonField)
+        SET_SUM_AND_MAP_FIELD_METHODS(pyMappedPSATDTimeStaggeredPoissonField)
+        SET_COMMON_FIELD_METHODS(pyMappedPSATDTimeStaggeredPoissonField)
+        .def("convert_fields_poisson_equation", &pyMappedPSATDTimeStaggeredPoissonField::convertFieldsPoissonEquation)
+        .def("set", &pyMappedPSATDTimeStaggeredPoissonField::setEMField, py::arg("func"))
+        .def("set", &pyMappedPSATDTimeStaggeredPoissonField::pySetEMField, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDTimeStaggeredPoissonField::applyFunction, py::arg("func"))
+        .def("apply_function", &pyMappedPSATDTimeStaggeredPoissonField::pyApplyFunction, py::arg("func"))
         ;
 
     // ------------------- field configurations -------------------

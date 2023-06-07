@@ -115,12 +115,12 @@ typedef ::testing::Types <
     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::z>,
     
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, 1, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, 2, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, 3, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATDTimeStraggered, 3, CoordinateEnum::z>
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::z>
 > types;
 TYPED_TEST_CASE(FieldSolverTest, types);
 

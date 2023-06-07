@@ -279,8 +279,8 @@ namespace pfc
     typedef pyField<PSTD> pyPSTDField;
     typedef pyField<PSATD> pyPSATDField;
     typedef pyField<PSATDPoisson> pyPSATDPoissonField;
-    typedef pyField<PSATDTimeStraggered> pyPSATDTimeStraggeredField;
-    typedef pyField<PSATDTimeStraggeredPoisson> pyPSATDTimeStraggeredPoissonField;
+    typedef pyField<PSATDTimeStaggered> pyPSATDTimeStaggeredField;
+    typedef pyField<PSATDTimeStaggeredPoisson> pyPSATDTimeStaggeredPoissonField;
 
     typedef pyField<AnalyticalFieldSolver> pyAnalyticalField;
 
@@ -434,8 +434,8 @@ namespace pfc
     typedef pyMappedField<PSTD> pyMappedPSTDField;
     typedef pyMappedField<PSATD> pyMappedPSATDField;
     typedef pyMappedField<PSATDPoisson> pyMappedPSATDPoissonField;
-    typedef pyMappedField<PSATDTimeStraggered> pyMappedPSATDTimeStraggeredField;
-    typedef pyMappedField<PSATDTimeStraggeredPoisson> pyMappedPSATDTimeStraggeredPoissonField;
+    typedef pyMappedField<PSATDTimeStaggered> pyMappedPSATDTimeStaggeredField;
+    typedef pyMappedField<PSATDTimeStaggeredPoisson> pyMappedPSATDTimeStaggeredPoissonField;
 
     typedef pyMappedField<AnalyticalFieldSolver> pyMappedAnalyticalField;
 

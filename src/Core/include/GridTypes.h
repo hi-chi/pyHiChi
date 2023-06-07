@@ -6,7 +6,7 @@ namespace pfc {
         StraightGridType = 1,
         PSTDGridType = 2,
         PSATDGridType = 3, 
-        PSATDTimeStraggeredGridType = 4
+        PSATDTimeStaggeredGridType = 4
     };
 
     /* Yee grid for FDTD method. Implementation is based on Computational
@@ -27,8 +27,8 @@ namespace pfc {
     // auxiliary structs to describe some properties of a grid type
 
     template <GridTypes gridTypes>
-    struct LabelFieldsSpatialStraggered {
-        static const bool ifFieldsSpatialStraggered = gridTypes == GridTypes::YeeGridType;
+    struct LabelFieldsSpatialStaggered {
+        static const bool ifFieldsSpatialStaggered = gridTypes == GridTypes::YeeGridType;
     };
 
     template <GridTypes gridTypes>
