@@ -78,7 +78,7 @@ namespace pfc
             CoordinateEnum axis, FP minCoord, FP maxCoord, size_t size,
             FP(pyFieldBase::*getFieldValue)(const FP3&) const)
         {
-            auto ssize = static_cast<pybind11::ssize_t>(size);
+            const pybind11::ssize_t ssize = static_cast<pybind11::ssize_t>(size);
             py::array_t<FP> res({ ssize });
             auto accRes = res.mutable_unchecked<1>();
             FP step = (maxCoord - minCoord) / (FP)ssize;
@@ -99,8 +99,8 @@ namespace pfc
             CoordinateEnum axis2, FP minCoord2, FP maxCoord2, size_t size2,
             FP(pyFieldBase::* getFieldValue)(const FP3&) const)
         {
-            auto ssize1 = static_cast<pybind11::ssize_t>(size1);
-            auto ssize2 = static_cast<pybind11::ssize_t>(size2);
+            const pybind11::ssize_t ssize1 = static_cast<pybind11::ssize_t>(size1);
+            const pybind11::ssize_t ssize2 = static_cast<pybind11::ssize_t>(size2);
             py::array_t<FP> res({ ssize1, ssize2 });
             auto accRes = res.mutable_unchecked<2>();
             FP step1 = (maxCoord1 - minCoord1) / (FP)ssize1,
@@ -123,9 +123,9 @@ namespace pfc
             CoordinateEnum axis3, FP minCoord3, FP maxCoord3, size_t size3,
             FP(pyFieldBase::*getFieldValue)(const FP3&) const)
         {
-            auto ssize1 = static_cast<pybind11::ssize_t>(size1);
-            auto ssize2 = static_cast<pybind11::ssize_t>(size2);
-            auto ssize3 = static_cast<pybind11::ssize_t>(size3);
+            const pybind11::ssize_t ssize1 = static_cast<pybind11::ssize_t>(size1);
+            const pybind11::ssize_t ssize2 = static_cast<pybind11::ssize_t>(size2);
+            const pybind11::ssize_t ssize3 = static_cast<pybind11::ssize_t>(size3);
             py::array_t<FP> res({ ssize1, ssize2, ssize3 });
             auto accRes = res.mutable_unchecked<3>();
             FP step1 = (maxCoord1 - minCoord1) / (FP)ssize1,
