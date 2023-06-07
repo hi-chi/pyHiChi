@@ -83,43 +83,43 @@ namespace pfc {
 
         /* returns the closest left grid index for given physical coords */
         forceinline Int3 getBaseIndex(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getGridCoords(coords, FP3(0.0, 0.0, 0.0), idx, internalCoords);
             return idx;
         }
         forceinline Int3 getIndexEJx(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getGridCoords(coords, shiftEJx, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getIndexEJy(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getGridCoords(coords, shiftEJy, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getIndexEJz(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getGridCoords(coords, shiftEJz, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getIndexBx(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getGridCoords(coords, shiftBx, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getIndexBy(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getGridCoords(coords, shiftBy, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getIndexBz(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getGridCoords(coords, shiftBz, idx, internalCoords);
             return idx;
@@ -127,43 +127,43 @@ namespace pfc {
 
         /* returns the closest (left or right) grid index for given physical coords */
         forceinline Int3 getClosestBaseIndex(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getClosestGridCoords(coords, FP3(0.0, 0.0, 0.0), idx, internalCoords);
             return idx;
         }
         forceinline Int3 getClosestIndexEJx(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getClosestGridCoords(coords, shiftEJx, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getClosestIndexEJy(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getClosestGridCoords(coords, shiftEJy, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getClosestIndexEJz(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getClosestGridCoords(coords, shiftEJz, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getClosestIndexBx(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getClosestGridCoords(coords, shiftBx, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getClosestIndexBy(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getClosestGridCoords(coords, shiftBy, idx, internalCoords);
             return idx;
         }
         forceinline Int3 getClosestIndexBz(const FP3& coords) const {
-            FP3& internalCoords;
+            FP3 internalCoords;
             Int3 idx;
             getClosestGridCoords(coords, shiftBz, idx, internalCoords);
             return idx;
