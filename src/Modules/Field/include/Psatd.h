@@ -62,13 +62,19 @@ namespace pfc {
                 1.0 / (gridSteps.z * gridSteps.z));
             return 1.0 / (constants::c * tmp);
         }
-
         FP getCourantConditionTimeStep() const {
             return getCourantConditionTimeStep(grid->steps);
         }
 
-        bool ifCourantConditionSatisfied(FP dt) const {
+        bool isCourantConditionSatisfied(FP dt) const {
             return true;
+        }
+
+        static bool isSchemeTimeStaggered() {
+            return false;
+        }
+        bool isTimeStaggered() const override {
+            return isSchemeTimeStaggered();
         }
 
     private:

@@ -32,13 +32,6 @@ namespace pfc {
     };
 
     template <GridTypes gridTypes>
-    struct LabelFieldsTimeStraggered {
-        static const bool ifFieldsTimeStraggered = gridTypes == GridTypes::YeeGridType ||
-            gridTypes == GridTypes::PSTDGridType ||
-            gridTypes == GridTypes::PSATDTimeStraggeredGridType;
-    };
-
-    template <GridTypes gridTypes>
     struct LabelMethodRequiredNumberOfExternalCells {
         static const int numExternalCells = (gridTypes == GridTypes::YeeGridType ||
             gridTypes == GridTypes::StraightGridType) ? 1 : 0;

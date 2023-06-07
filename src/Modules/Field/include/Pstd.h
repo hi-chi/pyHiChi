@@ -57,13 +57,19 @@ namespace pfc {
                 1.0 / (gridSteps.z * gridSteps.z));
             return 2.0 / (constants::pi * constants::c * tmp);
         }
-
         FP getCourantConditionTimeStep() const {
             return getCourantConditionTimeStep(grid->steps);
         }
 
-        bool ifCourantConditionSatisfied(FP dt) const {
+        bool isCourantConditionSatisfied(FP dt) const {
             return dt < getCourantConditionTimeStep();
+        }
+
+        static bool isSchemeTimeStaggered() {
+            return true;
+        }
+        bool isTimeStaggered() const override {
+            return isSchemeTimeStaggered();
         }
 
     private:
@@ -80,7 +86,7 @@ namespace pfc {
     inline PSTD::PSTD(GridType* grid, FP dt) :
         SpectralFieldSolver<GridType::gridType>(grid, dt)
     {
-        if (!ifCourantConditionSatisfied(dt)) {
+        if (!isCourantConditionSatisfied(dt)) {
             std::cout
                 << "WARNING: PSTD Courant condition is not satisfied. Another time step was setted up"
                 << std::endl;
@@ -145,7 +151,7 @@ namespace pfc {
 
     inline void PSTD::setTimeStep(FP dt)
     {
-        if (ifCourantConditionSatisfied(dt)) {
+        if (isCourantConditionSatisfied(dt)) {
             this->dt = dt;
             if (pml) pml.reset(new PmlType(this, pml->sizePML));
             for (int d = 0; d < 3; d++)

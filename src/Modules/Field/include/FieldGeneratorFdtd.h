@@ -108,7 +108,7 @@ namespace pfc
         Grid<FP, GridTypes::YeeGridType>* grid = fieldSolver->grid;
 
         const FP time = this->fieldSolver->globalTime +
-            (grid->ifFieldsTimeStraggered ? this->fieldSolver->dt * 0.5 : 0.0);
+            (this->fieldSolver->isTimeStaggered() ? this->fieldSolver->dt * 0.5 : 0.0);
 
         const FP cdt = constants::c * fieldSolver->dt;
         const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / grid->steps;

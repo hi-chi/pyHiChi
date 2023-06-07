@@ -20,7 +20,6 @@ namespace pfc {
     class Grid :
         // next labels define some properties of grid
         public LabelFieldsSpatialStraggered<gridType_>,
-        public LabelFieldsTimeStraggered<gridType_>,
         /* defines 'numExternalCells' constant depending on method */
         public LabelMethodRequiredNumberOfExternalCells<gridType_>
     {

@@ -35,6 +35,8 @@ namespace pfc {
         void updateDims();
         void updateInternalDims();
 
+        virtual bool isTimeStaggered() const = 0;
+
         virtual void save(std::ostream& ostr);
         virtual void load(std::istream& istr);
 
