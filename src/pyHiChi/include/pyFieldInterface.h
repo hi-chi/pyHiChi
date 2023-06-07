@@ -2,11 +2,12 @@
 #include <memory>
 
 #include "Grid.h"
-#include "AnalyticalField.h"
+#include "AnalyticalFieldSolver.h"
 #include "FieldValue.h"
 #include "Mapping.h"
 #include "Fdtd.h"
 #include "Psatd.h"
+#include "PsatdTimeStaggered.h"
 #include "Pstd.h"
 #include "Mapping.h"
 #include "Field.h"
@@ -18,15 +19,57 @@ using namespace pybind11::literals;
 
 namespace pfc
 {
+    // Some field solver properties
+    template <class TFieldSolver>
+    struct isFieldSolverSpatialStaggered {
+        static const bool value = TFieldSolver::GridType::ifFieldsSpatialStraggered;
+    };
 
-    template <class TGrid, class TFieldSolver, class TPyField, bool ifStraggered>
-    class pyStraggeredFieldInterface {};
+    template <class TFieldSolver>
+    struct isFieldSolverSupportPeriodicalBoundaryCondition {
+        static const bool value = true;  // all solvers support periodical boundary conditions
+    };
+
+    template <class TFieldSolver>
+    struct isFieldSolverSupportReflectBoundaryCondition {
+        static const bool value = std::is_same<TFieldSolver, FDTD>::value;
+    };
+
+    template <class TFieldSolver>
+    struct isFieldSolverSupportFieldGenerator {
+        static const bool value = std::is_same<TFieldSolver, FDTD>::value;
+    };
+
+    template <class TFieldSolver>
+    struct isFieldSolverSupportPml {
+        static const bool value = true;  // all solvers support pml
+    };
+
+    template <class TFieldSolver>
+    struct isFieldSolverSupportPoissonEquation {
+        static const bool value = std::is_same<TFieldSolver, PSATD>::value ||
+            std::is_same<TFieldSolver, PSATDTimeStraggered>::value ||
+            std::is_same<TFieldSolver, PSATDPoisson>::value ||
+            std::is_same<TFieldSolver, PSATDTimeStraggeredPoisson>::value;
+    };
+
+    template <class TFieldSolver>
+    struct isFieldAnalytical {
+        static const bool value = std::is_same<TFieldSolver, AnalyticalFieldSolver>::value;
+    };
+
+
+    // Interface depending on spatial template (shifted or collocated)
+    template <class TFieldSolver, class TPyField, bool ifSpatialStraggered>
+    class pySpatialStraggeredFieldInterface {};
 
     // Interface for spatial straggered grids
-    template <class TGrid, class TFieldSolver, class TPyField>
-    class pyStraggeredFieldInterface<TGrid, TFieldSolver, TPyField, true>
+    template <class TFieldSolver, class TPyField>
+    class pySpatialStraggeredFieldInterface<TFieldSolver, TPyField, true>
     {
     public:
+
+        using TGrid = typename TFieldSolver::GridType;
 
         template <class FieldConfigurationType>
         void setFieldConfiguration(const FieldConfigurationType* fieldConf) {
@@ -47,19 +90,13 @@ namespace pfc
                         int kLast = chunk == nChunks ? chunkRem : chunkSize;
                         OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
-                            cEx[k] = derived->convertCoords(grid->ExPosition(i, j, chunk * chunkSize),
-                                fieldSolver->timeShiftE);
-                            cEy[k] = derived->convertCoords(grid->EyPosition(i, j, chunk * chunkSize),
-                                fieldSolver->timeShiftE);
-                            cEz[k] = derived->convertCoords(grid->EzPosition(i, j, chunk * chunkSize),
-                                fieldSolver->timeShiftE);
+                            cEx[k] = derived->convertCoords(grid->ExPosition(i, j, chunk * chunkSize));
+                            cEy[k] = derived->convertCoords(grid->EyPosition(i, j, chunk * chunkSize));
+                            cEz[k] = derived->convertCoords(grid->EzPosition(i, j, chunk * chunkSize));
 
-                            cBx[k] = derived->convertCoords(grid->BxPosition(i, j, chunk * chunkSize),
-                                fieldSolver->timeShiftB);
-                            cBy[k] = derived->convertCoords(grid->ByPosition(i, j, chunk * chunkSize),
-                                fieldSolver->timeShiftB);
-                            cBz[k] = derived->convertCoords(grid->BzPosition(i, j, chunk * chunkSize),
-                                fieldSolver->timeShiftB);
+                            cBx[k] = derived->convertCoords(grid->BxPosition(i, j, chunk * chunkSize));
+                            cBy[k] = derived->convertCoords(grid->ByPosition(i, j, chunk * chunkSize));
+                            cBz[k] = derived->convertCoords(grid->BzPosition(i, j, chunk * chunkSize));
                         }
                         OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
@@ -77,10 +114,12 @@ namespace pfc
     };
 
     // Interface for collocated grids
-    template <class TGrid, class TFieldSolver, class TPyField>
-    class pyStraggeredFieldInterface<TGrid, TFieldSolver, TPyField, false>
+    template <class TFieldSolver, class TPyField>
+    class pySpatialStraggeredFieldInterface<TFieldSolver, TPyField, false>
     {
     public:
+
+        using TGrid = typename TFieldSolver::GridType;
 
         template <class FieldConfigurationType>
         void setFieldConfiguration(const FieldConfigurationType* fieldConf) {
@@ -257,17 +296,15 @@ namespace pfc
         }
     };
 
-
-    template<class TGrid, class TFieldSolver, class TPyField, bool ifAnalyticalField>
-    class pyGridFieldInterface {};
-
-    // Interface for fields with computational grid
-    template<class TGrid, class TFieldSolver, class TPyField>
-    class pyGridFieldInterface<TGrid, TFieldSolver, TPyField, false> :
-        public pyStraggeredFieldInterface<TGrid, TFieldSolver,
-        TPyField, TGrid::ifFieldsSpatialStraggered && TGrid::ifFieldsTimeStraggered>
+    
+    // Interface for field solvers with computational grid (grid setters and getters)
+    template<class TFieldSolver, class TPyField>
+    class pyGridFieldSolverInterface :
+        public pySpatialStraggeredFieldInterface<TFieldSolver, TPyField, isFieldSolverSpatialStaggered<TFieldSolver>::value>
     {
     public:
+
+        using TGrid = typename TFieldSolver::GridType;
 
         void pySetExyz(py::function fEx, py::function fEy, py::function fEz)
         {
@@ -279,9 +316,9 @@ namespace pfc
                     for (int k = 0; k < grid->numCells.z; k++)
                     {
                         FP3 cEx, cEy, cEz;
-                        cEx = derived->convertCoords(grid->ExPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEy = derived->convertCoords(grid->EyPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEz = derived->convertCoords(grid->EzPosition(i, j, k), fieldSolver->timeShiftE);
+                        cEx = derived->convertCoords(grid->ExPosition(i, j, k));
+                        cEy = derived->convertCoords(grid->EyPosition(i, j, k));
+                        cEz = derived->convertCoords(grid->EzPosition(i, j, k));
                         grid->Ex(i, j, k) = fEx("x"_a = cEx.x, "y"_a = cEx.y, "z"_a = cEx.z).template cast<FP>();
                         grid->Ey(i, j, k) = fEy("x"_a = cEy.x, "y"_a = cEy.y, "z"_a = cEy.z).template cast<FP>();
                         grid->Ez(i, j, k) = fEz("x"_a = cEz.x, "y"_a = cEz.y, "z"_a = cEz.z).template cast<FP>();
@@ -298,9 +335,9 @@ namespace pfc
                     for (int k = 0; k < grid->numCells.z; k++)
                     {
                         FP3 cEx, cEy, cEz;
-                        cEx = derived->convertCoords(grid->ExPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEy = derived->convertCoords(grid->EyPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEz = derived->convertCoords(grid->EzPosition(i, j, k), fieldSolver->timeShiftE);
+                        cEx = derived->convertCoords(grid->ExPosition(i, j, k));
+                        cEy = derived->convertCoords(grid->EyPosition(i, j, k));
+                        cEz = derived->convertCoords(grid->EzPosition(i, j, k));
                         grid->Ex(i, j, k) = fE("x"_a = cEx.x, "y"_a = cEx.y, "z"_a = cEx.z).template cast<FP3>().x;
                         grid->Ey(i, j, k) = fE("x"_a = cEy.x, "y"_a = cEy.y, "z"_a = cEy.z).template cast<FP3>().y;
                         grid->Ez(i, j, k) = fE("x"_a = cEz.x, "y"_a = cEz.y, "z"_a = cEz.z).template cast<FP3>().z;
@@ -316,18 +353,18 @@ namespace pfc
             FP(*fEy)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fEy;
             FP(*fEz)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fEz;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cEx, cEy, cEz;
-                        cEx = derived->convertCoords(grid->ExPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEy = derived->convertCoords(grid->EyPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEz = derived->convertCoords(grid->EzPosition(i, j, k), fieldSolver->timeShiftE);
-                        grid->Ex(i, j, k) = fEx(cEx.x, cEx.y, cEx.z);
-                        grid->Ey(i, j, k) = fEy(cEy.x, cEy.y, cEy.z);
-                        grid->Ez(i, j, k) = fEz(cEz.x, cEz.y, cEz.z);
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cEx, cEy, cEz;
+                            cEx = derived->convertCoords(grid->ExPosition(i, j, k));
+                            cEy = derived->convertCoords(grid->EyPosition(i, j, k));
+                            cEz = derived->convertCoords(grid->EzPosition(i, j, k));
+                            grid->Ex(i, j, k) = fEx(cEx.x, cEx.y, cEx.z);
+                            grid->Ey(i, j, k) = fEy(cEy.x, cEy.y, cEy.z);
+                            grid->Ez(i, j, k) = fEz(cEz.x, cEz.y, cEz.z);
+                        }
         }
 
         void setExyzt(int64_t _fEx, int64_t _fEy, int64_t _fEz, FP t)
@@ -339,18 +376,18 @@ namespace pfc
             FP(*fEy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fEy;
             FP(*fEz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fEz;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cEx, cEy, cEz;
-                        cEx = derived->convertCoords(grid->ExPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEy = derived->convertCoords(grid->EyPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEz = derived->convertCoords(grid->EzPosition(i, j, k), fieldSolver->timeShiftE);
-                        grid->Ex(i, j, k) = fEx(cEx.x, cEx.y, cEx.z, t + fieldSolver->timeShiftE);
-                        grid->Ey(i, j, k) = fEy(cEy.x, cEy.y, cEy.z, t + fieldSolver->timeShiftE);
-                        grid->Ez(i, j, k) = fEz(cEz.x, cEz.y, cEz.z, t + fieldSolver->timeShiftE);
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cEx, cEy, cEz;
+                            cEx = derived->convertCoords(grid->ExPosition(i, j, k));
+                            cEy = derived->convertCoords(grid->EyPosition(i, j, k));
+                            cEz = derived->convertCoords(grid->EzPosition(i, j, k));
+                            grid->Ex(i, j, k) = fEx(cEx.x, cEx.y, cEx.z, t);
+                            grid->Ey(i, j, k) = fEy(cEy.x, cEy.y, cEy.z, t);
+                            grid->Ez(i, j, k) = fEz(cEz.x, cEz.y, cEz.z, t);
+                        }
         }
 
         void setE(int64_t _fE)
@@ -360,18 +397,18 @@ namespace pfc
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP3(*fE)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fE;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cEx, cEy, cEz;
-                        cEx = derived->convertCoords(grid->ExPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEy = derived->convertCoords(grid->EyPosition(i, j, k), fieldSolver->timeShiftE);
-                        cEz = derived->convertCoords(grid->EzPosition(i, j, k), fieldSolver->timeShiftE);
-                        grid->Ex(i, j, k) = fE(cEx.x, cEx.y, cEx.z).x;
-                        grid->Ey(i, j, k) = fE(cEy.x, cEy.y, cEy.z).y;
-                        grid->Ez(i, j, k) = fE(cEz.x, cEz.y, cEz.z).z;
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cEx, cEy, cEz;
+                            cEx = derived->convertCoords(grid->ExPosition(i, j, k));
+                            cEy = derived->convertCoords(grid->EyPosition(i, j, k));
+                            cEz = derived->convertCoords(grid->EzPosition(i, j, k));
+                            grid->Ex(i, j, k) = fE(cEx.x, cEx.y, cEx.z).x;
+                            grid->Ey(i, j, k) = fE(cEy.x, cEy.y, cEy.z).y;
+                            grid->Ez(i, j, k) = fE(cEz.x, cEz.y, cEz.z).z;
+                        }
         }
 
         void pySetBxyz(py::function fBx, py::function fBy, py::function fBz)
@@ -384,9 +421,9 @@ namespace pfc
                     for (int k = 0; k < grid->numCells.z; k++)
                     {
                         FP3 cBx, cBy, cBz;
-                        cBx = derived->convertCoords(grid->BxPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBy = derived->convertCoords(grid->ByPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBz = derived->convertCoords(grid->BzPosition(i, j, k), fieldSolver->timeShiftB);
+                        cBx = derived->convertCoords(grid->BxPosition(i, j, k));
+                        cBy = derived->convertCoords(grid->ByPosition(i, j, k));
+                        cBz = derived->convertCoords(grid->BzPosition(i, j, k));
                         grid->Bx(i, j, k) = fBx("x"_a = cBx.x, "y"_a = cBx.y, "z"_a = cBx.z).template cast<FP>();
                         grid->By(i, j, k) = fBy("x"_a = cBy.x, "y"_a = cBy.y, "z"_a = cBy.z).template cast<FP>();
                         grid->Bz(i, j, k) = fBz("x"_a = cBz.x, "y"_a = cBz.y, "z"_a = cBz.z).template cast<FP>();
@@ -403,9 +440,9 @@ namespace pfc
                     for (int k = 0; k < grid->numCells.z; k++)
                     {
                         FP3 cBx, cBy, cBz;
-                        cBx = derived->convertCoords(grid->BxPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBy = derived->convertCoords(grid->ByPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBz = derived->convertCoords(grid->BzPosition(i, j, k), fieldSolver->timeShiftB);
+                        cBx = derived->convertCoords(grid->BxPosition(i, j, k));
+                        cBy = derived->convertCoords(grid->ByPosition(i, j, k));
+                        cBz = derived->convertCoords(grid->BzPosition(i, j, k));
                         grid->Bx(i, j, k) = fB("x"_a = cBx.x, "y"_a = cBx.y, "z"_a = cBx.z).template cast<FP3>().x;
                         grid->By(i, j, k) = fB("x"_a = cBy.x, "y"_a = cBy.y, "z"_a = cBy.z).template cast<FP3>().y;
                         grid->Bz(i, j, k) = fB("x"_a = cBz.x, "y"_a = cBz.y, "z"_a = cBz.z).template cast<FP3>().z;
@@ -421,18 +458,18 @@ namespace pfc
             FP(*fBy)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fBy;
             FP(*fBz)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fBz;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cBx, cBy, cBz;
-                        cBx = derived->convertCoords(grid->BxPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBy = derived->convertCoords(grid->ByPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBz = derived->convertCoords(grid->BzPosition(i, j, k), fieldSolver->timeShiftB);
-                        grid->Bx(i, j, k) = fBx(cBx.x, cBx.y, cBx.z);
-                        grid->By(i, j, k) = fBy(cBy.x, cBy.y, cBy.z);
-                        grid->Bz(i, j, k) = fBz(cBz.x, cBz.y, cBz.z);
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cBx, cBy, cBz;
+                            cBx = derived->convertCoords(grid->BxPosition(i, j, k));
+                            cBy = derived->convertCoords(grid->ByPosition(i, j, k));
+                            cBz = derived->convertCoords(grid->BzPosition(i, j, k));
+                            grid->Bx(i, j, k) = fBx(cBx.x, cBx.y, cBx.z);
+                            grid->By(i, j, k) = fBy(cBy.x, cBy.y, cBy.z);
+                            grid->Bz(i, j, k) = fBz(cBz.x, cBz.y, cBz.z);
+                        }
         }
 
         void setBxyzt(int64_t _fBx, int64_t _fBy, int64_t _fBz, FP t)
@@ -444,18 +481,18 @@ namespace pfc
             FP(*fBy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fBy;
             FP(*fBz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fBz;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cBx, cBy, cBz;
-                        cBx = derived->convertCoords(grid->BxPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBy = derived->convertCoords(grid->ByPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBz = derived->convertCoords(grid->BzPosition(i, j, k), fieldSolver->timeShiftB);
-                        grid->Bx(i, j, k) = fBx(cBx.x, cBx.y, cBx.z, t + fieldSolver->timeShiftB);
-                        grid->By(i, j, k) = fBy(cBy.x, cBy.y, cBy.z, t + fieldSolver->timeShiftB);
-                        grid->Bz(i, j, k) = fBz(cBz.x, cBz.y, cBz.z, t + fieldSolver->timeShiftB);
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cBx, cBy, cBz;
+                            cBx = derived->convertCoords(grid->BxPosition(i, j, k));
+                            cBy = derived->convertCoords(grid->ByPosition(i, j, k));
+                            cBz = derived->convertCoords(grid->BzPosition(i, j, k));
+                            grid->Bx(i, j, k) = fBx(cBx.x, cBx.y, cBx.z, t);
+                            grid->By(i, j, k) = fBy(cBy.x, cBy.y, cBy.z, t);
+                            grid->Bz(i, j, k) = fBz(cBz.x, cBz.y, cBz.z, t);
+                        }
         }
 
         void setB(int64_t _fB)
@@ -465,18 +502,18 @@ namespace pfc
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP3(*fB)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fB;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cBx, cBy, cBz;
-                        cBx = derived->convertCoords(grid->BxPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBy = derived->convertCoords(grid->ByPosition(i, j, k), fieldSolver->timeShiftB);
-                        cBz = derived->convertCoords(grid->BzPosition(i, j, k), fieldSolver->timeShiftB);
-                        grid->Bx(i, j, k) = fB(cBx.x, cBx.y, cBx.z).x;
-                        grid->By(i, j, k) = fB(cBy.x, cBy.y, cBy.z).y;
-                        grid->Bz(i, j, k) = fB(cBz.x, cBz.y, cBz.z).z;
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cBx, cBy, cBz;
+                            cBx = derived->convertCoords(grid->BxPosition(i, j, k));
+                            cBy = derived->convertCoords(grid->ByPosition(i, j, k));
+                            cBz = derived->convertCoords(grid->BzPosition(i, j, k));
+                            grid->Bx(i, j, k) = fB(cBx.x, cBx.y, cBx.z).x;
+                            grid->By(i, j, k) = fB(cBy.x, cBy.y, cBy.z).y;
+                            grid->Bz(i, j, k) = fB(cBz.x, cBz.y, cBz.z).z;
+                        }
         }
 
         void pySetJxyz(py::function fJx, py::function fJy, py::function fJz)
@@ -489,9 +526,9 @@ namespace pfc
                     for (int k = 0; k < grid->numCells.z; k++)
                     {
                         FP3 cJx, cJy, cJz;
-                        cJx = derived->convertCoords(grid->JxPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJy = derived->convertCoords(grid->JyPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJz = derived->convertCoords(grid->JzPosition(i, j, k), fieldSolver->timeShiftJ);
+                        cJx = derived->convertCoords(grid->JxPosition(i, j, k));
+                        cJy = derived->convertCoords(grid->JyPosition(i, j, k));
+                        cJz = derived->convertCoords(grid->JzPosition(i, j, k));
                         grid->Jx(i, j, k) = fJx("x"_a = cJx.x, "y"_a = cJx.y, "z"_a = cJx.z).template cast<FP>();
                         grid->Jy(i, j, k) = fJy("x"_a = cJy.x, "y"_a = cJy.y, "z"_a = cJy.z).template cast<FP>();
                         grid->Jz(i, j, k) = fJz("x"_a = cJz.x, "y"_a = cJz.y, "z"_a = cJz.z).template cast<FP>();
@@ -508,9 +545,9 @@ namespace pfc
                     for (int k = 0; k < grid->numCells.z; k++)
                     {
                         FP3 cJx, cJy, cJz;
-                        cJx = derived->convertCoords(grid->JxPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJy = derived->convertCoords(grid->JyPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJz = derived->convertCoords(grid->JzPosition(i, j, k), fieldSolver->timeShiftJ);
+                        cJx = derived->convertCoords(grid->JxPosition(i, j, k));
+                        cJy = derived->convertCoords(grid->JyPosition(i, j, k));
+                        cJz = derived->convertCoords(grid->JzPosition(i, j, k));
                         grid->Jx(i, j, k) = fJ("x"_a = cJx.x, "y"_a = cJx.y, "z"_a = cJx.z).template cast<FP3>().x;
                         grid->Jy(i, j, k) = fJ("x"_a = cJy.x, "y"_a = cJy.y, "z"_a = cJy.z).template cast<FP3>().y;
                         grid->Jz(i, j, k) = fJ("x"_a = cJz.x, "y"_a = cJz.y, "z"_a = cJz.z).template cast<FP3>().z;
@@ -526,18 +563,18 @@ namespace pfc
             FP(*fJy)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fJy;
             FP(*fJz)(FP, FP, FP) = (FP(*)(FP, FP, FP))_fJz;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cJx, cJy, cJz;
-                        cJx = derived->convertCoords(grid->JxPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJy = derived->convertCoords(grid->JyPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJz = derived->convertCoords(grid->JzPosition(i, j, k), fieldSolver->timeShiftJ);
-                        grid->Jx(i, j, k) = fJx(cJx.x, cJx.y, cJx.z);
-                        grid->Jy(i, j, k) = fJy(cJy.x, cJy.y, cJy.z);
-                        grid->Jz(i, j, k) = fJz(cJz.x, cJz.y, cJz.z);
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cJx, cJy, cJz;
+                            cJx = derived->convertCoords(grid->JxPosition(i, j, k));
+                            cJy = derived->convertCoords(grid->JyPosition(i, j, k));
+                            cJz = derived->convertCoords(grid->JzPosition(i, j, k));
+                            grid->Jx(i, j, k) = fJx(cJx.x, cJx.y, cJx.z);
+                            grid->Jy(i, j, k) = fJy(cJy.x, cJy.y, cJy.z);
+                            grid->Jz(i, j, k) = fJz(cJz.x, cJz.y, cJz.z);
+                        }
         }
 
         void setJxyzt(int64_t _fJx, int64_t _fJy, int64_t _fJz, FP t)
@@ -549,18 +586,18 @@ namespace pfc
             FP(*fJy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fJy;
             FP(*fJz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))_fJz;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cJx, cJy, cJz;
-                        cJx = derived->convertCoords(grid->JxPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJy = derived->convertCoords(grid->JyPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJz = derived->convertCoords(grid->JzPosition(i, j, k), fieldSolver->timeShiftJ);
-                        grid->Jx(i, j, k) = fJx(cJx.x, cJx.y, cJx.z, t + fieldSolver->timeShiftJ);
-                        grid->Jy(i, j, k) = fJy(cJy.x, cJy.y, cJy.z, t + fieldSolver->timeShiftJ);
-                        grid->Jz(i, j, k) = fJz(cJz.x, cJz.y, cJz.z, t + fieldSolver->timeShiftJ);
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cJx, cJy, cJz;
+                            cJx = derived->convertCoords(grid->JxPosition(i, j, k));
+                            cJy = derived->convertCoords(grid->JyPosition(i, j, k));
+                            cJz = derived->convertCoords(grid->JzPosition(i, j, k));
+                            grid->Jx(i, j, k) = fJx(cJx.x, cJx.y, cJx.z, t);
+                            grid->Jy(i, j, k) = fJy(cJy.x, cJy.y, cJy.z, t);
+                            grid->Jz(i, j, k) = fJz(cJz.x, cJz.y, cJz.z, t);
+                        }
         }
 
         void setJ(int64_t _fJ)
@@ -570,18 +607,18 @@ namespace pfc
             TFieldSolver* fieldSolver = derived->getField()->getFieldSolver();
             FP3(*fJ)(FP, FP, FP) = (FP3(*)(FP, FP, FP))_fJ;
             OMP_FOR_COLLAPSE()
-            for (int i = 0; i < grid->numCells.x; i++)
-                for (int j = 0; j < grid->numCells.y; j++)
-                    for (int k = 0; k < grid->numCells.z; k++)
-                    {
-                        FP3 cJx, cJy, cJz;
-                        cJx = derived->convertCoords(grid->JxPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJy = derived->convertCoords(grid->JyPosition(i, j, k), fieldSolver->timeShiftJ);
-                        cJz = derived->convertCoords(grid->JzPosition(i, j, k), fieldSolver->timeShiftJ);
-                        grid->Jx(i, j, k) = fJ(cJx.x, cJx.y, cJx.z).x;
-                        grid->Jy(i, j, k) = fJ(cJy.x, cJy.y, cJy.z).y;
-                        grid->Jz(i, j, k) = fJ(cJz.x, cJz.y, cJz.z).z;
-                    }
+                for (int i = 0; i < grid->numCells.x; i++)
+                    for (int j = 0; j < grid->numCells.y; j++)
+                        for (int k = 0; k < grid->numCells.z; k++)
+                        {
+                            FP3 cJx, cJy, cJz;
+                            cJx = derived->convertCoords(grid->JxPosition(i, j, k));
+                            cJy = derived->convertCoords(grid->JyPosition(i, j, k));
+                            cJz = derived->convertCoords(grid->JzPosition(i, j, k));
+                            grid->Jx(i, j, k) = fJ(cJx.x, cJx.y, cJx.z).x;
+                            grid->Jy(i, j, k) = fJ(cJy.x, cJy.y, cJy.z).y;
+                            grid->Jz(i, j, k) = fJ(cJz.x, cJz.y, cJz.z).z;
+                        }
         }
 
         FP3 getE(const FP3& coords) const {
@@ -630,90 +667,13 @@ namespace pfc
     };
 
 
-    // Interface for analytical fields
-    template<class TGrid, class TFieldSolver, class TPyField>
-    class pyGridFieldInterface<TGrid, TFieldSolver, TPyField, true> {
-    public:
-
-        void setExyz(int64_t fEx, int64_t fEy, int64_t fEz) {
-            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEx;
-            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEy;
-            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEz;
-            static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->setE(fx, fy, fz);
-        }
-
-        void setBxyz(int64_t fBx, int64_t fBy, int64_t fBz) {
-            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBx;
-            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBy;
-            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBz;
-            static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->setB(fx, fy, fz);
-        }
-
-        void setJxyz(int64_t fJx, int64_t fJy, int64_t fJz) {
-            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJx;
-            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJy;
-            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJz;
-            static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->setJ(fx, fy, fz);
-        }
-
-        FP3 getE(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getE(coords);
-        }
-        FP3 getB(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getB(coords);
-        }
-        FP3 getJ(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJ(coords);
-        }
-
-        FP getEx(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getEx(coords);
-        }
-        FP getEy(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getEy(coords);
-        }
-        FP getEz(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getEz(coords);
-        }
-
-        FP getBx(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getBx(coords);
-        }
-        FP getBy(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getBy(coords);
-        }
-        FP getBz(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getBz(coords);
-        }
-
-        FP getJx(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJx(coords);
-        }
-        FP getJy(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJy(coords);
-        }
-        FP getJz(const FP3& coords) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJz(coords);
-        }
-
-        FP3 getEt(FP x, FP y, FP z, FP t) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getE(x, y, z, t);
-        }
-        FP3 getBt(FP x, FP y, FP z, FP t) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getB(x, y, z, t);
-        }
-        FP3 getJt(FP x, FP y, FP z, FP t) const {
-            return static_cast<const TPyField*>(this)->getField()->getAnalyticalField()->getJ(x, y, z, t);
-        }
-    };
-
-
-    template <class TGrid, class TFieldSolver, class TPyField, bool>
+    // Interface for solvers with Poisson's equation or not
+    template <class TFieldSolver, class TPyField, bool>
     class pyPoissonFieldSolverInterface {};
 
     // Interface for solvers that support Poisson's equation
-    template <class TGrid, class TFieldSolver, class TPyField>
-    class pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TPyField, true> {
+    template <class TFieldSolver, class TPyField>
+    class pyPoissonFieldSolverInterface<TFieldSolver, TPyField, true> {
     public:
         void convertFieldsPoissonEquation() {
             static_cast<TPyField*>(this)->getField()->getFieldSolver()->convertFieldsPoissonEquation();
@@ -721,31 +681,138 @@ namespace pfc
     };
 
 
-    template <class TGrid, class TFieldSolver, class TPyField, bool>
+    // Interface for solvers with field generator or not
+    template <class TFieldSolver, class TPyField, bool>
     class pyFieldGeneratorSolverInterface {};
-
+    
     // Interface for solvers that support field generator
-    template <class TGrid, class TFieldSolver, class TPyField>
-    class pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TPyField, true> {
+    template <class TFieldSolver, class TPyField>
+    class pyFieldGeneratorSolverInterface<TFieldSolver, TPyField, true> {
     public:
-        void setPeriodicalFieldGenerator() {
-            PeriodicalFieldGenerator<TGrid::gridType> gen;
-            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setFieldGenerator(&gen);
+
+        using FunctionType = typename TFieldSolver::FieldGeneratorType::FunctionType;
+        
+        void setFieldGenerator(
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
+            FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
+            bool isXLeftBorderEnabled, bool isYLeftBorderEnabled, bool isZLeftBorderEnabled,
+            bool isXRightBorderEnabled, bool isYRightBorderEnabled, bool isZRightBorderEnabled
+        )
+        {
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setFieldGenerator(
+                leftGenIndex, rightGenIndex,
+                bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+                Int3(isXLeftBorderEnabled, isYLeftBorderEnabled, isZLeftBorderEnabled),
+                Int3(isXRightBorderEnabled, isYRightBorderEnabled, isZRightBorderEnabled)
+            );
         }
 
-        void setReflectFieldGenerator() {
-            ReflectFieldGenerator<TGrid::gridType> gen;
-            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setFieldGenerator(&gen);
+        void setFieldGeneratorAllFunctions(
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+
+            FunctionType xMinBx, FunctionType xMinBy, FunctionType xMinBz,
+            FunctionType xMaxBx, FunctionType xMaxBy, FunctionType xMaxBz,
+            FunctionType yMinBx, FunctionType yMinBy, FunctionType yMinBz,
+            FunctionType yMaxBx, FunctionType yMaxBy, FunctionType yMaxBz,
+            FunctionType zMinBx, FunctionType zMinBy, FunctionType zMinBz,
+            FunctionType zMaxBx, FunctionType zMaxBy, FunctionType zMaxBz,
+
+            FunctionType xMinEx, FunctionType xMinEy, FunctionType xMinEz,
+            FunctionType xMaxEx, FunctionType xMaxEy, FunctionType xMaxEz,
+            FunctionType yMinEx, FunctionType yMinEy, FunctionType yMinEz,
+            FunctionType yMaxEx, FunctionType yMaxEy, FunctionType yMaxEz,
+            FunctionType zMinEx, FunctionType zMinEy, FunctionType zMinEz,
+            FunctionType zMaxEx, FunctionType zMaxEy, FunctionType zMaxEz,
+
+            bool isXLeftBorderEnabled, bool isYLeftBorderEnabled, bool isZLeftBorderEnabled,
+            bool isXRightBorderEnabled, bool isYRightBorderEnabled, bool isZRightBorderEnabled
+        )
+        {
+            std::array<std::array<FunctionType, 3>, 3> leftBFunc;
+            leftBFunc[0][0] = xMinBx; leftBFunc[0][1] = xMinBy; leftBFunc[0][2] = xMinBz;
+            leftBFunc[1][0] = yMinBx; leftBFunc[1][1] = yMinBy; leftBFunc[1][2] = yMinBz;
+            leftBFunc[2][0] = zMinBx; leftBFunc[2][1] = zMinBy; leftBFunc[2][2] = zMinBz;
+
+            std::array<std::array<FunctionType, 3>, 3> rightBFunc;
+            rightBFunc[0][0] = xMaxBx; rightBFunc[0][1] = xMaxBy; rightBFunc[0][2] = xMaxBz;
+            rightBFunc[1][0] = yMaxBx; rightBFunc[1][1] = yMaxBy; rightBFunc[1][2] = yMaxBz;
+            rightBFunc[2][0] = zMaxBx; rightBFunc[2][1] = zMaxBy; rightBFunc[2][2] = zMaxBz;
+
+            std::array<std::array<FunctionType, 3>, 3> leftEFunc;
+            leftEFunc[0][0] = xMinEx; leftEFunc[0][1] = xMinEy; leftEFunc[0][2] = xMinEz;
+            leftEFunc[1][0] = yMinEx; leftEFunc[1][1] = yMinEy; leftEFunc[1][2] = yMinEz;
+            leftEFunc[2][0] = zMinEx; leftEFunc[2][1] = zMinEy; leftEFunc[2][2] = zMinEz;
+
+            std::array<std::array<FunctionType, 3>, 3> rightEFunc;
+            rightEFunc[0][0] = xMaxEx; rightEFunc[0][1] = xMaxEy; rightEFunc[0][2] = xMaxEz;
+            rightEFunc[1][0] = yMaxEx; rightEFunc[1][1] = yMaxEy; rightEFunc[1][2] = yMaxEz;
+            rightEFunc[2][0] = zMaxEx; rightEFunc[2][1] = zMaxEy; rightEFunc[2][2] = zMaxEz;
+
+            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setFieldGenerator(
+                leftGenIndex, rightGenIndex,
+                leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+                Int3(isXLeftBorderEnabled, isYLeftBorderEnabled, isZLeftBorderEnabled),
+                Int3(isXRightBorderEnabled, isYRightBorderEnabled, isZRightBorderEnabled)
+            );
+        }
+
+    };
+
+
+    // Interface for solvers with periodical boundary conditions or not
+    template <class TFieldSolver, class TPyField, bool>
+    class pyPeriodicalBoundaryConditionSolverInterface {};
+
+    // Interface for solvers that support periodical boundary conditions
+    template <class TFieldSolver, class TPyField>
+    class pyPeriodicalBoundaryConditionSolverInterface<TFieldSolver, TPyField, true> {
+    public:
+
+        using BoundaryConditionType = typename TFieldSolver::PeriodicalBoundaryConditionType;
+
+        void setPeriodicalBoundaryCondition() {
+            static_cast<TPyField*>(this)->getField()
+                ->getFieldSolver()->template setBoundaryCondition<BoundaryConditionType>();
+        }
+
+        void setPeriodicalBoundaryCondition(CoordinateEnum axis) {
+            static_cast<TPyField*>(this)->getField()
+                ->getFieldSolver()->template setBoundaryCondition<BoundaryConditionType>(axis);
         }
     };
 
 
-    template <class TGrid, class TFieldSolver, class TPyField, bool>
+    // Interface for solvers with reflect boundary conditions or not
+    template <class TFieldSolver, class TPyField, bool>
+    class pyReflectBoundaryConditionSolverInterface {};
+
+    // Interface for solvers that support reflect boundary conditions
+    template <class TFieldSolver, class TPyField>
+    class pyReflectBoundaryConditionSolverInterface<TFieldSolver, TPyField, true> {
+    public:
+
+        using BoundaryConditionType = typename TFieldSolver::ReflectBoundaryConditionType;
+
+        void setReflectBoundaryCondition() {
+            static_cast<TPyField*>(this)->getField()
+                ->getFieldSolver()->template setBoundaryCondition<BoundaryConditionType>();
+        }
+
+        void setReflectBoundaryCondition(CoordinateEnum axis) {
+            static_cast<TPyField*>(this)->getField()
+                ->getFieldSolver()->template setBoundaryCondition<BoundaryConditionType>(axis);
+        }
+    };
+
+
+    // Interface for solvers with pml or not
+    template <class TFieldSolver, class TPyField, bool>
     class pyPMLSolverInterface {};
 
     // Interface for solvers that support PML
-    template <class TGrid, class TFieldSolver, class TPyField>
-    class pyPMLSolverInterface<TGrid, TFieldSolver, TPyField, true> {
+    template <class TFieldSolver, class TPyField>
+    class pyPMLSolverInterface<TFieldSolver, TPyField, true> {
     public:
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz) {
             static_cast<TPyField*>(this)->getField()->getFieldSolver()->setPML(sizePMLx, sizePMLy, sizePMLz);
@@ -753,54 +820,125 @@ namespace pfc
     };
 
 
-    // Common interface for field solvers
-    template<class TGrid, class TFieldSolver, class TPyField>
-    class pyFieldSolverInterface :
-        public pyPoissonFieldSolverInterface<TGrid, TFieldSolver, TPyField,
-        std::is_same<TFieldSolver, PSATD>::value || std::is_same<TFieldSolver, PSATDPoisson>::value ||
-        std::is_same<TFieldSolver, PSATDTimeStraggered>::value ||
-        std::is_same<TFieldSolver, PSATDTimeStraggeredPoisson>::value>,
-        public pyFieldGeneratorSolverInterface<TGrid, TFieldSolver, TPyField,
-        std::is_same<TFieldSolver, FDTD>::value>,
-        public pyPMLSolverInterface<TGrid, TFieldSolver, TPyField,
-        !std::is_same<TFieldSolver, NoFieldSolver>::value>
-    {
+    // Interface for analytical and non-analytical fields
+    template<class TFieldSolver, class TPyField, bool ifAnalyticalField>
+    class pyAnalyticalFieldInterface {};
+
+    // Interface for numerical fields
+    template<class TFieldSolver, class TPyField>
+    class pyAnalyticalFieldInterface<TFieldSolver, TPyField, false> :
+        public pyGridFieldSolverInterface<TFieldSolver, TPyField>,
+        public pyPoissonFieldSolverInterface<TFieldSolver, TPyField, isFieldSolverSupportPoissonEquation<TFieldSolver>::value>,
+        public pyFieldGeneratorSolverInterface<TFieldSolver, TPyField, isFieldSolverSupportFieldGenerator<TFieldSolver>::value>,
+        public pyPeriodicalBoundaryConditionSolverInterface<TFieldSolver, TPyField, isFieldSolverSupportPeriodicalBoundaryCondition<TFieldSolver>::value>,
+        public pyReflectBoundaryConditionSolverInterface<TFieldSolver, TPyField, isFieldSolverSupportReflectBoundaryCondition<TFieldSolver>::value>,
+        public pyPMLSolverInterface<TFieldSolver, TPyField, isFieldSolverSupportPml<TFieldSolver>::value>
+    {};
+    
+    // Interface for analytical fields
+    template<class TFieldSolver, class TPyField>
+    class pyAnalyticalFieldInterface<TFieldSolver, TPyField, true> {
     public:
 
-        void setTime(FP time) {
-            static_cast<TPyField*>(this)->getField()->getFieldSolver()->globalTime = time;
+        void setExyz(int64_t fEx, int64_t fEy, int64_t fEz) {
+            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEx;
+            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEy;
+            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEz;
+            static_cast<const TPyField*>(this)->getField()->getGrid()->setE(fx, fy, fz);
         }
 
-        FP getTime() {
-            return static_cast<TPyField*>(this)->getField()->getFieldSolver()->globalTime;
+        void setBxyz(int64_t fBx, int64_t fBy, int64_t fBz) {
+            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBx;
+            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBy;
+            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBz;
+            static_cast<const TPyField*>(this)->getField()->getGrid()->setB(fx, fy, fz);
         }
 
-        void changeTimeStep(double dt) {
-            static_cast<TPyField*>(this)->getField()->getFieldSolver()->setTimeStep(dt);
+        void setJxyz(int64_t fJx, int64_t fJy, int64_t fJz) {
+            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJx;
+            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJy;
+            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJz;
+            static_cast<const TPyField*>(this)->getField()->getGrid()->setJ(fx, fy, fz);
         }
 
-        void updateFields() {
-            static_cast<TPyField*>(this)->getField()->getFieldSolver()->updateFields();
+        FP3 getE(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getE(coords);
+        }
+        FP3 getB(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getB(coords);
+        }
+        FP3 getJ(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJ(coords);
         }
 
-        void advance(FP dt) {
-            auto fieldSolver = static_cast<TPyField*>(this)->getField()->getFieldSolver();
-            FP oldDt = fieldSolver->dt;
-            fieldSolver->setTimeStep(dt);
-            fieldSolver->updateFields();
-            fieldSolver->setTimeStep(oldDt);
+        FP getEx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getEx(coords);
+        }
+        FP getEy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getEy(coords);
+        }
+        FP getEz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getEz(coords);
+        }
+
+        FP getBx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getBx(coords);
+        }
+        FP getBy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getBy(coords);
+        }
+        FP getBz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getBz(coords);
+        }
+
+        FP getJx(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJx(coords);
+        }
+        FP getJy(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJy(coords);
+        }
+        FP getJz(const FP3& coords) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJz(coords);
+        }
+
+        FP3 getEt(FP x, FP y, FP z, FP t) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getE(x, y, z, t);
+        }
+        FP3 getBt(FP x, FP y, FP z, FP t) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getB(x, y, z, t);
+        }
+        FP3 getJt(FP x, FP y, FP z, FP t) const {
+            return static_cast<const TPyField*>(this)->getField()->getGrid()->getJ(x, y, z, t);
         }
     };
 
 
-    // Common interface for all field
-    template<class TGrid, class TFieldSolver, class TPyField>
+    // Common interface for all fields
+    template<class TFieldSolver, class TPyField>
     class pyFieldInterface :
-        public pyGridFieldInterface<TGrid, TFieldSolver, TPyField,
-        std::is_same<TFieldSolver, NoFieldSolver>::value>,
-        public pyFieldSolverInterface<TGrid, TFieldSolver, TPyField>
+        public pyAnalyticalFieldInterface<TFieldSolver, TPyField, isFieldAnalytical<TFieldSolver>::value>
     {
     public:
+
+        void setTime(FP time) {
+            static_cast<TPyField*>(this)->getField()->setTime(time);
+        }
+
+        FP getTime() {
+            return static_cast<TPyField*>(this)->getField()->getTime();
+        }
+
+        void changeTimeStep(double dt) {
+            static_cast<TPyField*>(this)->getField()->setTimeStep(dt);
+        }
+
+        void updateFields() {
+            static_cast<TPyField*>(this)->getField()->updateFields();
+        }
+
+        void advance(FP dt) {
+            static_cast<TPyField*>(this)->getField()->advance(dt);
+        }
 
         void refresh() {
             static_cast<TPyField*>(this)->getField()->refresh();
