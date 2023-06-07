@@ -78,12 +78,11 @@ namespace pfc
             CoordinateEnum axis, FP minCoord, FP maxCoord, size_t size,
             FP(pyFieldBase::*getFieldValue)(const FP3&) const)
         {
-            const pybind11::ssize_t ssize = static_cast<pybind11::ssize_t>(size);
-            py::array_t<FP> res({ ssize });
+            py::array_t<FP> res({ size });
             auto accRes = res.mutable_unchecked<1>();
-            FP step = (maxCoord - minCoord) / (FP)ssize;
+            FP step = (maxCoord - minCoord) / (FP)size;
             OMP_FOR()
-            for (py::ssize_t i = 0; i < ssize; i++) {
+            for (py::ssize_t i = 0; i < size; i++) {
                 FP3 coords;
                 coords[(int)crossAxis1] = pos1;
                 coords[(int)crossAxis1] = pos2;
@@ -99,15 +98,13 @@ namespace pfc
             CoordinateEnum axis2, FP minCoord2, FP maxCoord2, size_t size2,
             FP(pyFieldBase::* getFieldValue)(const FP3&) const)
         {
-            const pybind11::ssize_t ssize1 = static_cast<pybind11::ssize_t>(size1);
-            const pybind11::ssize_t ssize2 = static_cast<pybind11::ssize_t>(size2);
-            py::array_t<FP> res({ ssize1, ssize2 });
+            py::array_t<FP> res({ size1, size2 });
             auto accRes = res.mutable_unchecked<2>();
-            FP step1 = (maxCoord1 - minCoord1) / (FP)ssize1,
-                step2 = (maxCoord2 - minCoord2) / (FP)ssize2;
+            FP step1 = (maxCoord1 - minCoord1) / (FP)size1,
+                step2 = (maxCoord2 - minCoord2) / (FP)size2;
             OMP_FOR()
-            for (py::ssize_t i = 0; i < ssize1; i++)
-                for (py::ssize_t j = 0; j < ssize2; j++) {
+            for (py::ssize_t i = 0; i < size1; i++)
+                for (py::ssize_t j = 0; j < size2; j++) {
                     FP3 coords;
                     coords[(int)crossAxis] = pos;
                     coords[(int)axis1] = minCoord1 + step1 * i;
@@ -123,18 +120,15 @@ namespace pfc
             CoordinateEnum axis3, FP minCoord3, FP maxCoord3, size_t size3,
             FP(pyFieldBase::*getFieldValue)(const FP3&) const)
         {
-            const pybind11::ssize_t ssize1 = static_cast<pybind11::ssize_t>(size1);
-            const pybind11::ssize_t ssize2 = static_cast<pybind11::ssize_t>(size2);
-            const pybind11::ssize_t ssize3 = static_cast<pybind11::ssize_t>(size3);
-            py::array_t<FP> res({ ssize1, ssize2, ssize3 });
+            py::array_t<FP> res({ size1, size2, size3 });
             auto accRes = res.mutable_unchecked<3>();
-            FP step1 = (maxCoord1 - minCoord1) / (FP)ssize1,
-                step2 = (maxCoord2 - minCoord2) / (FP)ssize2,
-                step3 = (maxCoord3 - minCoord3) / (FP)ssize3;
+            FP step1 = (maxCoord1 - minCoord1) / (FP)size1,
+                step2 = (maxCoord2 - minCoord2) / (FP)size2,
+                step3 = (maxCoord3 - minCoord3) / (FP)size3;
             OMP_FOR()
-            for (py::ssize_t i = 0; i < ssize1; i++)
-                for (py::ssize_t j = 0; j < ssize2; j++)
-                    for (py::ssize_t k = 0; k < ssize3; k++) {
+            for (py::ssize_t i = 0; i < size1; i++)
+                for (py::ssize_t j = 0; j < size2; j++)
+                    for (py::ssize_t k = 0; k < size3; k++) {
                         FP3 coords;
                         coords[(int)axis1] = minCoord1 + step1 * i;
                         coords[(int)axis2] = minCoord2 + step2 * j;
