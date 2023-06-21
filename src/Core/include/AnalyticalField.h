@@ -119,6 +119,15 @@ namespace pfc {
         FP getJy(const FP3& coords) const { return this->funcJy(coords.x, coords.y, coords.z, this->globalTime); }
         FP getJz(const FP3& coords) const { return this->funcJz(coords.x, coords.y, coords.z, this->globalTime); }
 
+        void save(std::ostream& ostr) {
+            ostr.write((char*)&globalTime, sizeof(globalTime));
+            // TODO: save functions
+        }
+        void load(std::istream& istr) {
+            istr.read((char*)&globalTime, sizeof(globalTime));
+            // TODO: load functions
+        }
+
         FP globalTime = 0.0;
 
     private:

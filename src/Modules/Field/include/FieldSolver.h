@@ -23,12 +23,9 @@ namespace pfc {
 
     public:
 
-        FieldSolver(Grid<FP, gridType>* _grid, FP dt) : dt(dt)
-        {
-            this->grid = _grid;
-            this->globalTime = (FP)0.0;
-            this->generator.reset(nullptr);
-        }
+        FieldSolver(Grid<FP, gridType>* grid) : grid(grid) {}  // used when save/load
+        FieldSolver(Grid<FP, gridType>* grid, FP dt) :
+            grid(grid), globalTime(0.0), dt(dt) {}
 
         virtual ~FieldSolver() {}
         
@@ -36,6 +33,12 @@ namespace pfc {
         void updateInternalDims();
 
         virtual bool isTimeStaggered() const = 0;
+
+        void setTimeStep(FP dt) { this->dt = dt; }
+        FP getTimeStep() const { return this->dt; }
+
+        void setTime(FP t) { this->globalTime = t; }
+        FP getTime() const { return this->globalTime; }
 
         virtual void save(std::ostream& ostr);
         virtual void load(std::istream& istr);
@@ -53,28 +56,24 @@ namespace pfc {
         Int3 internalBAreaBegin, internalBAreaEnd;
         Int3 internalEAreaBegin, internalEAreaEnd;
 
-        FP globalTime;
-        FP dt;
+        FP globalTime = 0.0;
+        FP dt = 0.0;
     };
 
     template<GridTypes gridType>
     inline void FieldSolver<gridType>::save(std::ostream& ostr)
     {
         ostr.write((char*)&globalTime, sizeof(globalTime));
-        // if (pml.get()) pml->save(ostr);  // virtual
-        // if (generator.get()) generator->save(ostr);  // virtual
+        ostr.write((char*)&dt, sizeof(dt));
+        // TODO: save modules
     }
 
     template<GridTypes gridType>
     inline void FieldSolver<gridType>::load(std::istream& istr)
     {
-        // dt is not loaded, we get it with FieldSolver constructor
-        // timeShiftE, timeShiftB, timeShiftJ are got with FieldSolver constructor too
         istr.read((char*)&globalTime, sizeof(globalTime));
-        // all the next modules have already created in FieldSolver constructor
-        // we need to load them only
-        // if (pml.get()) pml->load(istr);  // virtual
-        // if (generator.get()) generator->load(istr);  // virtual
+        istr.read((char*)&dt, sizeof(dt));
+        // TODO: load modules
     }
 
     template<GridTypes gridType>

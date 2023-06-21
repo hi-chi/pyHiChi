@@ -9,25 +9,10 @@ namespace pfc {
     {
     public:
 
-        using FunctionType = typename AnalyticalField::FunctionType;
+        using GridType = AnalyticalField;  // AnalyticalField plays a grid role
 
-        AnalyticalFieldSolver(FP dt) : field(new AnalyticalField()), dt(dt) {}
-
-        AnalyticalFieldSolver(FP dt,
-            FunctionType funcEx, FunctionType funcEy, FunctionType funcEz,
-            FunctionType funcBx, FunctionType funcBy, FunctionType funcBz,
-            FunctionType funcJx, FunctionType funcJy, FunctionType funcJz) : dt(dt)
-        {
-            field.reset(new AnalyticalField(funcEx, funcEy, funcEz,
-                funcBx, funcBy, funcBz, funcJx, funcJy, funcJz));
-        }
-
-        AnalyticalFieldSolver(FP dt,
-            FunctionType funcEx, FunctionType funcEy, FunctionType funcEz,
-            FunctionType funcBx, FunctionType funcBy, FunctionType funcBz) : dt(dt)
-        {
-            field.reset(new AnalyticalField(funcEx, funcEy, funcEz, funcBx, funcBy, funcBz));
-        }
+        AnalyticalFieldSolver(AnalyticalField* field) : field(field) {}  // used when save/load
+        AnalyticalFieldSolver(AnalyticalField* field, FP dt) : field(field), dt(dt) {}
 
         void updateFields() {
             this->field->globalTime += this->dt;
@@ -36,8 +21,25 @@ namespace pfc {
         void setTimeStep(FP dt) {
             this->dt = dt;
         }
+        FP getTimeStep() const {
+            return this->dt;
+        }
 
-        std::unique_ptr<AnalyticalField> field;
+        void setTime(FP t) {
+            this->field->globalTime = t;
+        }
+        FP getTime() const {
+            return this->field->globalTime;
+        }
+
+        void save(std::ostream& ostr) {
+            ostr.write((char*)&dt, sizeof(dt));
+        }
+        void load(std::istream& istr) {
+            istr.read((char*)&dt, sizeof(dt));
+        }
+
+        AnalyticalField* field = nullptr;
         FP dt = 0.0;
     };
 }

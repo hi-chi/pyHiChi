@@ -1,6 +1,7 @@
 #pragma once
 #include "pyFieldInterface.h"
 #include "ScalarField.h"
+#include "Mapping.h"
 
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -152,20 +153,26 @@ namespace pfc
     
     public:
     
+        // analytical field constructor
+        pyField(FP dt) :
+            grid(new typename TFieldSolver::GridType()),
+            fieldSolver(new TFieldSolver(grid.get(), dt))
+        {}
+
+        // numerical field constructor
         pyField(const Int3 & numInternalCells,
             const FP3 & minCoords, const FP3 & steps, FP dt) :
-            field(new Field<TFieldSolver>(numInternalCells,
-                minCoords, steps, dt))
+            grid(new typename TFieldSolver::GridType(numInternalCells,
+                minCoords, steps, numInternalCells)),
+            fieldSolver(new TFieldSolver(grid.get(), dt))
         {}
-    
-        pyField(FP dt) :
-            field(new Field<TFieldSolver>(dt))
-        {}
-    
-        inline Field<TFieldSolver>* getField() const {
-            return field.get();
+
+        inline typename TFieldSolver::GridType* getGrid() const {
+            return grid.get();
         }
-    
+        inline TFieldSolver* getFieldSolver() const {
+            return fieldSolver.get();
+        }
         inline FP3 convertCoords(const FP3& coords) const {
             return coords;
         }
@@ -233,45 +240,46 @@ namespace pfc
             std::shared_ptr<pyField<TFieldSolver>> zoomedField;
             zoomedField.reset(new pyField<TFieldSolver>(
                 (Int3)zoomedGridSize, minCoord, zoomedGridStep,
-                this->getField()->getTimeStep())
+                this->getFieldSolver()->getTimeStep())
             );
-            this->getField()->getGrid()->copyValues(zoomedField->getField()->getGrid());
+            this->getGrid()->copyValues(zoomedField->getGrid());
             return zoomedField;
         }
 
         std::shared_ptr<pyScalarField> getExArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Ex));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->Ex));
         }
         std::shared_ptr<pyScalarField> getEyArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Ey));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->Ey));
         }
         std::shared_ptr<pyScalarField> getEzArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Ez));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->Ez));
         }
 
         std::shared_ptr<pyScalarField> getBxArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Bx));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->Bx));
         }
         std::shared_ptr<pyScalarField> getByArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->By));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->By));
         }
         std::shared_ptr<pyScalarField> getBzArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Bz));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->Bz));
         }
 
         std::shared_ptr<pyScalarField> getJxArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Jx));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->Jx));
         }
         std::shared_ptr<pyScalarField> getJyArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Jy));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->Jy));
         }
         std::shared_ptr<pyScalarField> getJzArray() {
-            return std::make_shared<pyScalarField>(&(this->getField()->getGrid()->Jz));
+            return std::make_shared<pyScalarField>(&(this->getGrid()->Jz));
         }
     
     private:
-    
-        std::unique_ptr<Field<TFieldSolver>> field;
+   
+        std::unique_ptr<typename TFieldSolver::GridType> grid;
+        std::unique_ptr<TFieldSolver> fieldSolver;
     
     };
 
@@ -300,21 +308,32 @@ namespace pfc
             pyWrappedField(other), mapping(mapping)
         {}
 
-        inline Field<TFieldSolver>* getField() const {
+        inline TFieldSolver* getFieldSolver() const {
             std::shared_ptr<pyField<TFieldSolver>> pyFieldPointer =
                 std::dynamic_pointer_cast<pyField<TFieldSolver>>(pyWrappedField);
-            if (pyFieldPointer) return pyFieldPointer->getField();
+            if (pyFieldPointer) return pyFieldPointer->getFieldSolver();
 
             std::shared_ptr<pyMappedField<TFieldSolver>> pyMappedFieldPointer =
                 std::dynamic_pointer_cast<pyMappedField<TFieldSolver>>(pyWrappedField);
-            if (pyMappedFieldPointer) return pyMappedFieldPointer->getField();
+            if (pyMappedFieldPointer) return pyMappedFieldPointer->getFieldSolver();
 
-            return 0;
+            return nullptr;
+        }
+        inline typename TFieldSolver::GridType* getGrid() const {
+            std::shared_ptr<pyField<TFieldSolver>> pyFieldPointer =
+                std::dynamic_pointer_cast<pyField<TFieldSolver>>(pyWrappedField);
+            if (pyFieldPointer) return pyFieldPointer->getGrid();
+
+            std::shared_ptr<pyMappedField<TFieldSolver>> pyMappedFieldPointer =
+                std::dynamic_pointer_cast<pyMappedField<TFieldSolver>>(pyWrappedField);
+            if (pyMappedFieldPointer) return pyMappedFieldPointer->getGrid();
+
+            return nullptr;
         }
 
         inline FP3 convertCoords(const FP3& coords) const {
             bool status = true;
-            return getDirectCoords(coords, getField()->getTime(), &status);
+            return getDirectCoords(coords, getFieldSolver()->getTime(), &status);
         }
 
         std::shared_ptr<pyFieldBase> applyMapping(
@@ -412,7 +431,7 @@ namespace pfc
             FP(BaseInterface::* getFieldValue)(const FP3&) const) const
         {
             bool status = true;
-            FP time = getField()->getTime();
+            FP time = getFieldSolver()->getTime();
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return 0.0;
             return (this->*getFieldValue)(inverseCoords);
@@ -422,7 +441,7 @@ namespace pfc
             FP3(BaseInterface::* getFieldValue)(const FP3&) const) const
         {
             bool status = true;
-            FP time = getField()->getTime();
+            FP time = getFieldSolver()->getTime();
             FP3 inverseCoords = getInverseCoords(coords, time, &status);
             if (!status) return FP3(0.0, 0.0, 0.0);
             return (this->*getFieldValue)(inverseCoords);

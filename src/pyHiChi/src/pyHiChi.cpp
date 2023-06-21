@@ -50,7 +50,7 @@ void processParticles(QED* self, Ensemble3d* particles,
     for (int i = 0; i < N; i++)
     {
         field->setTime(startTime + i * timeStep);
-        self->processParticles(particles, field->getField()->getGrid(), timeStep);
+        self->processParticles(particles, field->getGrid(), timeStep);
     }
 }
 
