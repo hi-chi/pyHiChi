@@ -1,50 +1,49 @@
 #pragma once
-#include "Grid.h"
-#include "FieldSolver.h"
 #include "Pml.h"
-#include "Constants.h"
 
 namespace pfc {
 
-    template<GridTypes gridTypes>
-    class PmlSpectralTimeStaggered : public PmlSpectral<gridTypes>
+    template<class TGrid, class TDerived>
+    class PmlSpectralTimeStaggered : public PmlSpectral<TGrid>
     {
     public:
-        PmlSpectralTimeStaggered(SpectralFieldSolver<gridTypes>* solver, Int3 sizePml) :
-            PmlSpectral<gridTypes>(solver, sizePml),
-            tmpFieldReal(solver->grid->sizeStorage),
-            tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(solver->grid->numCells))
+        PmlSpectralTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML) :
+            PmlSpectral<TGrid>(grid, complexGrid, dt, sizePML),
+            tmpFieldReal(this->grid->sizeStorage),
+            tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(this->grid->numCells))
         {
-            fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, solver->grid->numCells);
+            fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, this->grid->numCells);
         }
 
-        void updateBxSplit() override;
-        void updateBySplit() override;
-        void updateBzSplit() override;
+        /* implement the next methods in derived classes
+        void computeTmpField(CoordinateEnum coordK, SpectralScalarField<FP, complexFP>& field, double dt);
+        */
+        
+        void updateBxSplit();
+        void updateBySplit();
+        void updateBzSplit();
 
-        void updateExSplit() override;
-        void updateEySplit() override;
-        void updateEzSplit() override;
+        void updateExSplit();
+        void updateEySplit();
+        void updateEzSplit();
 
-        virtual void computeTmpField(MemberOfFP3 coordK,
-            SpectralScalarField<FP, complexFP>& field, double dt, double sign) {};
+        void updateBSplit();
+        void updateESplit();
+
+        FP3 getWaveVector(const Int3& ind);
 
         ScalarField<FP> tmpFieldReal;
         SpectralScalarField<FP, complexFP> tmpFieldComplex;
         FourierTransformField fourierTransform;
 
     protected:
-        SpectralFieldSolver<gridTypes>* getFieldSolver() {
-            return static_cast<SpectralFieldSolver<gridTypes>*>(this->fieldSolver);
-        }
-
         void updateFieldSplit(std::vector<FP>& field,
-            const std::vector<Int3>& index);
+            const std::vector<Int3>& index, FP sign);
     };
 
-    template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStaggered<gridTypes>::updateFieldSplit(std::vector<FP>& field,
-        const std::vector<Int3>& index)
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateFieldSplit(
+        std::vector<FP>& field, const std::vector<Int3>& index, FP sign)
     {
         const int size = index.size();
 
@@ -53,68 +52,97 @@ namespace pfc {
         {
             int i = index[idx].x, j = index[idx].y, k = index[idx].z;
 
-            field[idx] += tmpFieldReal(i, j, k);
+            field[idx] += sign * tmpFieldReal(i, j, k);
         }
     }
 
-    template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStaggered<gridTypes>::updateBxSplit()
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBxSplit()
     {
-        SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
-        computeTmpField(&FP3::y, fs->complexGrid->Ez, fs->dt * 0.5, -1);
-        updateFieldSplit(this->byx, this->bIndex);
-        computeTmpField(&FP3::z, fs->complexGrid->Ey, fs->dt * 0.5, +1);
-        updateFieldSplit(this->bzx, this->bIndex);
+        TDerived* derived = static_cast<TDerived*>(this);
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ez, this->dt * 0.5);
+        updateFieldSplit(this->byx, this->bIndex, -1);
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ey, this->dt * 0.5);
+        updateFieldSplit(this->bzx, this->bIndex, +1);
     }
 
-    template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStaggered<gridTypes>::updateBySplit()
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBySplit()
     {
-        SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
-        computeTmpField(&FP3::z, fs->complexGrid->Ex, fs->dt * 0.5, -1);
-        updateFieldSplit(this->bzy, this->bIndex);
-        computeTmpField(&FP3::x, fs->complexGrid->Ez, fs->dt * 0.5, +1);
-        updateFieldSplit(this->bxy, this->bIndex);
+        TDerived* derived = static_cast<TDerived*>(this);
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ex, this->dt * 0.5);
+        updateFieldSplit(this->bzy, this->bIndex, -1);
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ez, this->dt * 0.5);
+        updateFieldSplit(this->bxy, this->bIndex, +1);
     }
 
-    template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStaggered<gridTypes>::updateBzSplit()
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBzSplit()
     {
-        SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
-        computeTmpField(&FP3::x, fs->complexGrid->Ey, fs->dt * 0.5, -1);
-        updateFieldSplit(this->bxz, this->bIndex);
-        computeTmpField(&FP3::y, fs->complexGrid->Ex, fs->dt * 0.5, +1);
-        updateFieldSplit(this->byz, this->bIndex);
+        TDerived* derived = static_cast<TDerived*>(this);
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ey, this->dt * 0.5);
+        updateFieldSplit(this->bxz, this->bIndex, -1);
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ex, this->dt * 0.5);
+        updateFieldSplit(this->byz, this->bIndex, +1);
     }
 
-    template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStaggered<gridTypes>::updateExSplit()
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateExSplit()
     {
-        SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
-        computeTmpField(&FP3::y, fs->complexGrid->Bz, fs->dt, +1);
-        updateFieldSplit(this->eyx, this->eIndex);
-        computeTmpField(&FP3::z, fs->complexGrid->By, fs->dt, -1);
-        updateFieldSplit(this->ezx, this->eIndex);
+        TDerived* derived = static_cast<TDerived*>(this);
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Bz, this->dt);
+        updateFieldSplit(this->eyx, this->eIndex, +1);
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->By, this->dt);
+        updateFieldSplit(this->ezx, this->eIndex, -1);
     }
 
-    template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStaggered<gridTypes>::updateEySplit()
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateEySplit()
     {
-        SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
-        computeTmpField(&FP3::z, fs->complexGrid->Bx, fs->dt, +1);
-        updateFieldSplit(this->ezy, this->eIndex);
-        computeTmpField(&FP3::x, fs->complexGrid->Bz, fs->dt, -1);
-        updateFieldSplit(this->exy, this->eIndex);
+        TDerived* derived = static_cast<TDerived*>(this);
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Bx, this->dt);
+        updateFieldSplit(this->ezy, this->eIndex, +1);
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Bz, this->dt);
+        updateFieldSplit(this->exy, this->eIndex, -1);
     }
 
-    template<GridTypes gridTypes>
-    inline void PmlSpectralTimeStaggered<gridTypes>::updateEzSplit()
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateEzSplit()
     {
-        SpectralFieldSolver<gridTypes>* fs = getFieldSolver();
-        computeTmpField(&FP3::x, fs->complexGrid->By, fs->dt, +1);
-        updateFieldSplit(this->exz, this->eIndex);
-        computeTmpField(&FP3::y, fs->complexGrid->Bx, fs->dt, -1);
-        updateFieldSplit(this->eyz, this->eIndex);
+        TDerived* derived = static_cast<TDerived*>(this);
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->By, this->dt);
+        updateFieldSplit(this->exz, this->eIndex, +1);
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Bx, this->dt);
+        updateFieldSplit(this->eyz, this->eIndex, -1);
+    }
+
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBSplit()
+    {
+        updateBxSplit();
+        updateBySplit();
+        updateBzSplit();
+    }
+
+    template<class TGrid, class TDerived>
+    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateESplit()
+    {
+        updateExSplit();
+        updateEySplit();
+        updateEzSplit();
+    }
+
+    template<class TGrid, class TDerived>
+    inline FP3 PmlSpectralTimeStaggered<TGrid, TDerived>::getWaveVector(const Int3& ind)
+    {
+        // TODO: check number of cells
+        FP kx = (2 * constants::pi * ((ind.x <= this->grid->numCells.x / 2) ? ind.x : ind.x - this->grid->numCells.x)) /
+            (this->grid->steps.x * this->grid->numCells.x);
+        FP ky = (2 * constants::pi * ((ind.y <= this->grid->numCells.y / 2) ? ind.y : ind.y - this->grid->numCells.y)) /
+            (this->grid->steps.y * this->grid->numCells.y);
+        FP kz = (2 * constants::pi * ((ind.z <= this->grid->numCells.z / 2) ? ind.z : ind.z - this->grid->numCells.z)) /
+            (this->grid->steps.z * this->grid->numCells.z);
+        return FP3(kx, ky, kz);
     }
 
 }

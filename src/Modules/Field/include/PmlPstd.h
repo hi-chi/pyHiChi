@@ -1,34 +1,34 @@
 #pragma once
-#include "Grid.h"
-#include "FieldSolver.h"
 #include "PmlSpectralTimeStaggered.h"
-#include "Constants.h"
 
 namespace pfc {
 
-    class PmlPstd : public PmlSpectralTimeStaggered<GridTypes::PSTDGridType>
+    class PmlPstd : public PmlSpectralTimeStaggered<PSTDGrid, PmlPstd>
     {
     public:
-        PmlPstd(SpectralFieldSolver<GridTypes::PSTDGridType>* solver, Int3 sizePML) :
-            PmlSpectralTimeStaggered(solver, sizePML) {}
+        PmlPstd(PSTDGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML) :
+            PmlSpectralTimeStaggered(grid, complexGrid, dt, sizePML) {}
 
-        virtual void computeTmpField(MemberOfFP3 coordK,
+        void computeTmpField(CoordinateEnum coordK,
             SpectralScalarField<FP, complexFP>& field, double dt);
     };
 
-    inline void PmlPstd::computeTmpField(MemberOfFP3 coordK,
+    inline void PmlPstd::computeTmpField(CoordinateEnum coordK,
         SpectralScalarField<FP, complexFP>& field, double dt)
     {
-        SpectralFieldSolver<GridTypes::PSTDGridType>* fs = getFieldSolver();
-        Int3 begin = fs->updateComplexBAreaBegin;
-        Int3 end = fs->updateComplexBAreaEnd;
+        // TODO: check border indices
+        Int3 begin = Int3(0, 0, 0);
+        Int3 end = this->complexGrid->numCells;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
-                for (int k = begin.z; k < end.z; k++)
-                    tmpFieldComplex(i, j, k) = constants::c * dt * complexFP::i() *
-                    (complexFP)(fs->getWaveVector(Int3(i, j, k)).*coordK) * field(i, j, k);
-        fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
+                for (int k = begin.z; k < end.z; k++) {
+                    this->tmpFieldComplex(i, j, k) = constants::c * dt * complexFP::i() *
+                        (complexFP)(this->getWaveVector(Int3(i, j, k))[(int)coordK]) * field(i, j, k);
+                }
+
+        this->fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
     }
 
 }

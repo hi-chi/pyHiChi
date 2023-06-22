@@ -8,46 +8,22 @@
 #include "FieldGeneratorSpectral.h"
 
 namespace pfc {
-    class PSTD : public SpectralFieldSolver<PSTDGridType>
+    class PSTD : public SpectralFieldSolver<PSTDGrid, PmlPstd, FieldGeneratorSpectral<PSTDGrid>>
     {
     public:
 
         using GridType = PSTDGrid;
         using PmlType = PmlPstd;
-        using FieldGeneratorType = FieldGeneratorSpectral<PSTDGridType>;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSTDGridType>;
+        using FieldGeneratorType = FieldGeneratorSpectral<PSTDGrid>;
+        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSTDGrid>;
 
+        PSTD(GridType* grid);  // use when load
         PSTD(GridType* grid, FP dt);
 
         void updateFields();
 
         void updateHalfB();
         void updateE();
-
-        void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-
-        template <class TBoundaryCondition>
-        void setBoundaryCondition();
-        template <class TBoundaryCondition>
-        void setBoundaryCondition(CoordinateEnum axis);
-
-        void setFieldGenerator(
-            const Int3& leftGenIndex, const Int3& rightGenIndex,
-            FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
-            FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
-            FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
-            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
-            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
-        void setFieldGenerator(
-            const Int3& leftGenIndex, const Int3& rightGenIndex,
-            /* first index is index of edge (x, y, z),
-            second index is index of field component (ex, ey, ez or bx, by, bz) */
-            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
-            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
-            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
-            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
-            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
-            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
         void setTimeStep(FP dt);
 
@@ -65,26 +41,20 @@ namespace pfc {
             return dt < getCourantConditionTimeStep();
         }
 
-        static bool isSchemeTimeStaggered() {
+        static bool isTimeStaggered() {
             return true;
         }
-        bool isTimeStaggered() const override {
-            return isSchemeTimeStaggered();
-        }
-
-    private:
-
-        PmlType* getPml() const {
-            return static_cast<PmlType*>(pml.get());
-        }
-        FieldGeneratorType* getGenerator() const {
-            return static_cast<FieldGeneratorType*>(generator.get());
-        }
-
     };
 
+    inline PSTD::PSTD(GridType* grid) :
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
+    {
+        updateDims();
+        updateInternalDims();
+    }
+
     inline PSTD::PSTD(GridType* grid, FP dt) :
-        SpectralFieldSolver<GridType::gridType>(grid, dt)
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt)
     {
         if (!isCourantConditionSatisfied(dt)) {
             std::cout
@@ -96,68 +66,12 @@ namespace pfc {
         updateInternalDims();
     }
 
-    inline void PSTD::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
-    {
-        pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
-        updateInternalDims();
-    }
-
-    template <class TBoundaryCondition>
-    inline void PSTD::setBoundaryCondition()
-    {
-        for (int d = 0; d < grid->dimensionality; d++)
-            boundaryConditions[d].reset(new TBoundaryCondition((CoordinateEnum)d, this));
-    }
-
-    template <class TBoundaryCondition>
-    inline void PSTD::setBoundaryCondition(CoordinateEnum axis)
-    {
-        if ((int)axis >= grid->dimensionality) {
-            std::cout
-                << "WARNING: an attempt to set boundary conditions for an axis greater than the dimensionality is ignored"
-                << std::endl;
-        }
-        boundaryConditions[(int)axis].reset(new TBoundaryCondition(axis, this));
-    }
-
-    inline void PSTD::setFieldGenerator(
-        const Int3& leftGenIndex, const Int3& rightGenIndex,
-        FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
-        FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
-        FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
-        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
-    {
-        generator.reset(new FieldGeneratorType(
-            this, leftGenIndex, rightGenIndex,
-            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
-            isLeftBorderEnabled, isRightBorderEnabled)
-        );
-    }
-
-    inline void PSTD::setFieldGenerator(
-        const Int3& leftGenIndex, const Int3& rightGenIndex,
-        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
-        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
-        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
-        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
-        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
-    {
-        generator.reset(new FieldGeneratorType(
-            this, leftGenIndex, rightGenIndex,
-            leftBFunc, rightBFunc, leftEFunc, rightEFunc,
-            isLeftBorderEnabled, isRightBorderEnabled)
-        );
-    }
-
     inline void PSTD::setTimeStep(FP dt)
     {
         if (isCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            if (pml) pml.reset(new PmlType(this, pml->sizePML));
-            for (int d = 0; d < 3; d++)
-                if (boundaryConditions[d])
-                    boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
-            if (generator) generator.reset(new FieldGeneratorType(*getGenerator()));
+            resetPML();
+            resetFieldGenerator();
         }
         else {
             std::cout
@@ -168,27 +82,28 @@ namespace pfc {
 
     inline void PSTD::updateFields()
     {
+        // TODO: consider boundary conditions and generator
+
         doFourierTransform(fourier_transform::Direction::RtoC);
 
-        if (pml) getPml()->updateBSplit();
+        if (pml) pml->updateBSplit();
         updateHalfB();
-        for (int d = 0; d < grid->dimensionality; d++)
-            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
+        // applyBoundaryConditionsB(globalTime + dt * 0.5);
+        // if (generator) generator->generateB(globalTime);  // send current E time
 
-        if (pml) getPml()->updateESplit();
+        if (pml) pml->updateESplit();
         updateE();
-        for (int d = 0; d < grid->dimensionality; d++)
-            if (boundaryConditions[d]) boundaryConditions[d]->generateE();
+        // applyBoundaryConditionsE(globalTime + dt);
+        // if (generator) generator->generateE(globalTime + dt * 0.5);  // send current B time
 
-        if (pml) getPml()->updateBSplit();
+        if (pml) pml->updateBSplit();
         updateHalfB();
-        for (int d = 0; d < grid->dimensionality; d++)
-            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
+        // applyBoundaryConditionsB(globalTime + dt);
 
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml) getPml()->updateB();
-        if (pml) getPml()->updateE();
+        if (pml) pml->updateB();
+        if (pml) pml->updateE();
 
         globalTime += dt;
     }

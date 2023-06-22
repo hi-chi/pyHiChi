@@ -3,21 +3,23 @@
 
 namespace pfc
 {
-    class FieldGeneratorFdtd : public FieldGenerator<GridTypes::YeeGridType>
+    class FieldGeneratorFdtd : public FieldGenerator<YeeGrid>
     {
     public:
 
-        FieldGeneratorFdtd(FieldSolver<GridTypes::YeeGridType>* fieldSolver,
+        using FunctionType = typename FieldGenerator<YeeGrid>::FunctionType;
+
+        FieldGeneratorFdtd(YeeGrid* grid, FP dt,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
             FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(fieldSolver, leftGenIndex, rightGenIndex,
+            FieldGenerator(grid, dt, leftGenIndex, rightGenIndex,
                 bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
-        FieldGeneratorFdtd(FieldSolver<GridTypes::YeeGridType>* fieldSolver,
+        FieldGeneratorFdtd(YeeGrid* grid, FP dt,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             /* first index is index of edge (x, y, z),
             second index is index of field component (ex, ey, ez or bx, by, bz) */
@@ -27,12 +29,24 @@ namespace pfc
             const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(fieldSolver, leftGenIndex, rightGenIndex,
+            FieldGenerator(grid, dt, leftGenIndex, rightGenIndex,
                 leftBFunc, rightBFunc, leftEFunc, rightEFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
-        void generateB() override;
-        void generateE() override;
+        FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& bFunc,
+            const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
+            FieldGenerator(grid, dt, leftGenIndex, rightGenIndex,
+                bFunc, eFunc, isLeftBorderEnabled, isRightBorderEnabled) {}
+
+        FieldGeneratorFdtd(YeeGrid* grid, FP dt, const FieldGeneratorFdtd& gen) :
+            FieldGenerator(grid, dt, gen) {}
+
+        void generateB(FP time);
+        void generateE(FP time);
 
     protected:
 
@@ -48,16 +62,12 @@ namespace pfc
 
     };
 
-    inline void FieldGeneratorFdtd::generateB()
+    inline void FieldGeneratorFdtd::generateB(FP time)
     {
-        Grid<FP, GridTypes::YeeGridType>* grid = fieldSolver->grid;
+        const FP cdt = constants::c * this->dt;
+        const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / this->grid->steps;
 
-        const FP time = this->fieldSolver->globalTime;
-
-        const FP cdt = constants::c * fieldSolver->dt;
-        const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / grid->steps;
-
-        for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
+        for (int dim0 = 0; dim0 < this->grid->dimensionality; dim0++)
         {
             int dim1 = (dim0 + 1) % 3;
             int dim2 = (dim0 + 2) % 3;
@@ -68,14 +78,15 @@ namespace pfc
                 rightGeneratorIndex[dim0]
             };
 
+            // TODO: check border indices
             int begin1 = isLeftBorderEnabled[dim1] ?
-                leftGeneratorIndex[dim1] : fieldSolver->internalBAreaBegin[dim1];
+                leftGeneratorIndex[dim1] : 0;
             int begin2 = isLeftBorderEnabled[dim2] ?
-                leftGeneratorIndex[dim2] : fieldSolver->internalBAreaBegin[dim2];
+                leftGeneratorIndex[dim2] : 0;
             int end1 = isRightBorderEnabled[dim1] ?
-                rightGeneratorIndex[dim1] : fieldSolver->internalBAreaEnd[dim1];
+                rightGeneratorIndex[dim1] : this->grid->numCells[dim1];
             int end2 = isRightBorderEnabled[dim2] ?
-                rightGeneratorIndex[dim2] : fieldSolver->internalBAreaEnd[dim2];
+                rightGeneratorIndex[dim2] : this->grid->numCells[dim2];
 
             Int3 isBorderEnabled[2] = { isLeftBorderEnabled, isRightBorderEnabled };
 
@@ -89,31 +100,26 @@ namespace pfc
                         std::vector<Int3> eIndices = getEGridIndices(genIndexDim0[side], j, k, dim0, dim1, dim2);
                         std::vector<Int3> bIndices = getBGridIndices(genIndexDim0[side], j, k, dim0, dim1, dim2);
 
-                        FP3 exCoords = grid->ExPosition(eIndices[0].x, eIndices[0].y, eIndices[0].z);
-                        FP3 eyCoords = grid->EyPosition(eIndices[1].x, eIndices[1].y, eIndices[1].z);
-                        FP3 ezCoords = grid->EzPosition(eIndices[2].x, eIndices[2].y, eIndices[2].z);
+                        FP3 exCoords = this->grid->ExPosition(eIndices[0].x, eIndices[0].y, eIndices[0].z);
+                        FP3 eyCoords = this->grid->EyPosition(eIndices[1].x, eIndices[1].y, eIndices[1].z);
+                        FP3 ezCoords = this->grid->EzPosition(eIndices[2].x, eIndices[2].y, eIndices[2].z);
 
                         FP3 current = getBCurrents(side, dim0, exCoords, eyCoords, ezCoords, time);
 
-                        grid->Bx(bIndices[0]) += norm_coeffs[dim0] * current.x;
-                        grid->By(bIndices[1]) += norm_coeffs[dim0] * current.y;
-                        grid->Bz(bIndices[2]) += norm_coeffs[dim0] * current.z;
+                        this->grid->Bx(bIndices[0]) += norm_coeffs[dim0] * current.x;
+                        this->grid->By(bIndices[1]) += norm_coeffs[dim0] * current.y;
+                        this->grid->Bz(bIndices[2]) += norm_coeffs[dim0] * current.z;
                     }
             }
         }
     }
 
-    inline void FieldGeneratorFdtd::generateE()
+    inline void FieldGeneratorFdtd::generateE(FP time)
     {
-        Grid<FP, GridTypes::YeeGridType>* grid = fieldSolver->grid;
+        const FP cdt = constants::c * this->dt;
+        const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / this->grid->steps;
 
-        const FP time = this->fieldSolver->globalTime +
-            (this->fieldSolver->isTimeStaggered() ? this->fieldSolver->dt * 0.5 : 0.0);
-
-        const FP cdt = constants::c * fieldSolver->dt;
-        const FP3 norm_coeffs = FP3(cdt, cdt, cdt) / grid->steps;
-
-        for (int dim0 = 0; dim0 < grid->dimensionality; dim0++)
+        for (int dim0 = 0; dim0 < this->grid->dimensionality; dim0++)
         {
             int dim1 = (dim0 + 1) % 3;
             int dim2 = (dim0 + 2) % 3;
@@ -124,14 +130,15 @@ namespace pfc
                 rightGeneratorIndex[dim0]
             };
 
+            // TODO: check border indices
             int begin1 = isLeftBorderEnabled[dim1] ?
-                leftGeneratorIndex[dim1] : fieldSolver->internalEAreaBegin[dim1];
+                leftGeneratorIndex[dim1] : 0;
             int begin2 = isLeftBorderEnabled[dim2] ?
-                leftGeneratorIndex[dim2] : fieldSolver->internalEAreaBegin[dim2];
+                leftGeneratorIndex[dim2] : 0;
             int end1 = isRightBorderEnabled[dim1] ?
-                rightGeneratorIndex[dim1] : fieldSolver->internalEAreaEnd[dim1];
+                rightGeneratorIndex[dim1] : this->grid->numCells[dim1];
             int end2 = isRightBorderEnabled[dim2] ?
-                rightGeneratorIndex[dim2] : fieldSolver->internalEAreaEnd[dim2];
+                rightGeneratorIndex[dim2] : this->grid->numCells[dim2];
 
             Int3 isBorderEnabled[2] = { isLeftBorderEnabled, isRightBorderEnabled };
 
@@ -145,15 +152,15 @@ namespace pfc
                         std::vector<Int3> eIndices = getEGridIndices(genIndexDim0[side], j, k, dim0, dim1, dim2);
                         std::vector<Int3> bIndices = getBGridIndices(genIndexDim0[side], j, k, dim0, dim1, dim2);
 
-                        FP3 bxCoords = grid->BxPosition(bIndices[0].x, bIndices[0].y, bIndices[0].z);
-                        FP3 byCoords = grid->ByPosition(bIndices[1].x, bIndices[1].y, bIndices[1].z);
-                        FP3 bzCoords = grid->BzPosition(bIndices[2].x, bIndices[2].y, bIndices[2].z);
+                        FP3 bxCoords = this->grid->BxPosition(bIndices[0].x, bIndices[0].y, bIndices[0].z);
+                        FP3 byCoords = this->grid->ByPosition(bIndices[1].x, bIndices[1].y, bIndices[1].z);
+                        FP3 bzCoords = this->grid->BzPosition(bIndices[2].x, bIndices[2].y, bIndices[2].z);
 
                         FP3 current = getECurrents(side, dim0, bxCoords, byCoords, bzCoords, time);
 
-                        grid->Ex(eIndices[0]) += norm_coeffs[dim0] * current.x;
-                        grid->Ey(eIndices[1]) += norm_coeffs[dim0] * current.y;
-                        grid->Ez(eIndices[2]) += norm_coeffs[dim0] * current.z;
+                        this->grid->Ex(eIndices[0]) += norm_coeffs[dim0] * current.x;
+                        this->grid->Ey(eIndices[1]) += norm_coeffs[dim0] * current.y;
+                        this->grid->Ez(eIndices[2]) += norm_coeffs[dim0] * current.z;
                     }
             }
         }

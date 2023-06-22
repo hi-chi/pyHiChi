@@ -1,44 +1,40 @@
 #pragma once
-#include "Grid.h"
-#include "FieldSolver.h"
 #include "PmlSpectralTimeStaggered.h"
-#include "Constants.h"
-#include "macros.h"
 
 namespace pfc {
 
-    template <GridTypes TPSATDGridType>
-    class PmlPsatdTimeStaggered : public PmlSpectralTimeStaggered<TPSATDGridType>
+    template <class TGrid>
+    class PmlPsatdTimeStaggered : public PmlSpectralTimeStaggered<TGrid, PmlPsatdTimeStaggered<TGrid>>
     {
     public:
-        PmlPsatdTimeStaggered(SpectralFieldSolver<TPSATDGridType>* solver, Int3 sizePML) :
-            PmlSpectralTimeStaggered<TPSATDGridType>(solver, sizePML) {}
+        PmlPsatdTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML) :
+            PmlSpectralTimeStaggered<TGrid, PmlPsatdTimeStaggered<TGrid>>(grid, complexGrid, dt, sizePML) {}
 
-        void computeTmpField(MemberOfFP3 coordK,
+        void computeTmpField(CoordinateEnum coordK,
             SpectralScalarField<FP, complexFP>& field, double dt);
     };
 
-    template <GridTypes TPSATDGridType>
-    inline void PmlPsatdTimeStaggered<TPSATDGridType>::computeTmpField(MemberOfFP3 coordK,
-        SpectralScalarField<FP, complexFP>& field, double dt)
+    template <class TGrid>
+    inline void PmlPsatdTimeStaggered<TGrid>::computeTmpField(
+        CoordinateEnum coordK, SpectralScalarField<FP, complexFP>& field, double dt)
     {
-        SpectralFieldSolver<TPSATDGridType>* fs = PmlSpectralTimeStaggered<TPSATDGridType>::getFieldSolver();
-        Int3 begin = fs->updateComplexBAreaBegin;
-        Int3 end = fs->updateComplexBAreaEnd;
+        // TODO: check border indices
+        Int3 begin = Int3(0, 0, 0);
+        Int3 end = this->complexGrid->numCells;
 
-        OMP_FOR_COLLAPSE()
+        OMP_FOR()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
                 for (int k = begin.z; k < end.z; k++) {
-                    FP3 K = fs->getWaveVector(Int3(i, j, k));
+                    FP3 K = this->getWaveVector(Int3(i, j, k));
                     FP normK = K.norm();
                     if (normK == 0) continue;
                     K = K / normK;
 
-                    PmlSpectralTimeStaggered<TPSATDGridType>::tmpFieldComplex(i, j, k) =
-                        2.0 * sin(normK*constants::c*dt*0.5) * complexFP::i() *
-                        (complexFP)(K.*coordK) * field(i, j, k);
+                    this->tmpFieldComplex(i, j, k) = 2.0 * sin(normK * constants::c * dt * 0.5) *
+                        complexFP::i() * (complexFP)(K[(int)coordK]) * field(i, j, k);
                 }
-        PmlSpectralTimeStaggered<TPSATDGridType>::fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
+
+        this->fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
     }
 }

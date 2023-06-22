@@ -3,27 +3,23 @@
 
 namespace pfc
 {
-    template <GridTypes gridTypes>
-    class PeriodicalBoundaryConditionSpectral : public FieldBoundaryCondition<gridTypes> {
+    template <class TGrid>
+    class PeriodicalBoundaryConditionSpectral : public FieldBoundaryCondition<TGrid> {
     public:
 
         // periodical boundaries for spectral solvers are default because of FFT
         // this class does nothing
 
-        PeriodicalBoundaryConditionSpectral(CoordinateEnum axis,
-            SpectralFieldSolver<gridTypes>* fieldSolver) :
-            FieldBoundaryCondition<gridTypes>(axis, fieldSolver) {
+        PeriodicalBoundaryConditionSpectral(TGrid* grid, CoordinateEnum axis) :
+            FieldBoundaryCondition<TGrid>(grid, axis) {
         }
 
-        void generateB() override {};
-        void generateE() override {};
+        void generateB(FP time) override {}
+        void generateE(FP time) override {}
 
-        FieldBoundaryCondition<gridTypes>* createInstance(
-            FieldSolver<gridTypes>* fieldSolver = nullptr) override {
-            SpectralFieldSolver<gridTypes>* solver = fieldSolver ?
-                static_cast<SpectralFieldSolver<gridTypes>*>(fieldSolver) :
-                static_cast<SpectralFieldSolver<gridTypes>*>(this->fieldSolver);
-            return new PeriodicalBoundaryConditionSpectral(this->axis, solver);
+        FieldBoundaryCondition<TGrid>* createInstance(
+            TGrid* grid, CoordinateEnum axis) override {
+            return new PeriodicalBoundaryConditionSpectral(grid, axis);
         }
     };
 }

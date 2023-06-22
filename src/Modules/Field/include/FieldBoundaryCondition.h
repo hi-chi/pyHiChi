@@ -1,34 +1,28 @@
 #pragma once
-#include <array>
-
-#include "Grid.h"
-#include "FieldSolver.h"
+#include "Enums.h"
+#include "Vectors.h"
 
 namespace pfc
 {
 
-    template<GridTypes gridTypes>
+    template<class TGrid>
     class FieldBoundaryCondition
     {
     public:
 
-        FieldBoundaryCondition(CoordinateEnum axis, FieldSolver<gridTypes>* fieldSolver) :
-            fieldSolver(fieldSolver), axis(axis) {
+        FieldBoundaryCondition(TGrid* grid, CoordinateEnum axis) :
+            grid(grid), axis(axis) {
         }
 
-        FieldBoundaryCondition(const FieldBoundaryCondition<gridTypes>& gen) :
-            fieldSolver(gen.fieldSolver), axis(gen.axis) {
-        }
-
+        // polymorfic class
         virtual ~FieldBoundaryCondition() {}
+        virtual FieldBoundaryCondition<TGrid>* createInstance(
+            TGrid* grid, CoordinateEnum axis) = 0;
 
-        virtual void generateB() = 0;
-        virtual void generateE() = 0;
+        virtual void generateB(FP time) = 0;
+        virtual void generateE(FP time) = 0;
 
-        virtual FieldBoundaryCondition<gridTypes>* createInstance(
-            FieldSolver<gridTypes>* fieldSolver = nullptr) = 0;
-
-        FieldSolver<gridTypes>* fieldSolver;
+        TGrid* grid = nullptr;
         CoordinateEnum axis;
     };
 }

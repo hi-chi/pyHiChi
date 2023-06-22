@@ -1,7 +1,7 @@
 #pragma once
 
 namespace pfc {
-    enum GridTypes {
+    enum class GridTypes {
         YeeGridType = 0,
         StraightGridType = 1,
         PSTDGridType = 2,

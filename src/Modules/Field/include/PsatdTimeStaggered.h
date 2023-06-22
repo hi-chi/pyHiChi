@@ -10,15 +10,17 @@
 namespace pfc {
 
     template <bool ifPoisson>
-    class PSATDTimeStaggeredT : public SpectralFieldSolver<PSATDTimeStaggeredGridType>
+    class PSATDTimeStaggeredT : public SpectralFieldSolver<PSATDTimeStaggeredGrid,
+        PmlPsatdTimeStaggered<PSATDTimeStaggeredGrid>, FieldGeneratorSpectral<PSATDTimeStaggeredGrid>>
     {
     public:
 
         using GridType = PSATDTimeStaggeredGrid;
-        using PmlType = PmlPsatdTimeStaggered<PSATDTimeStaggeredGridType>;
-        using FieldGeneratorType = FieldGeneratorSpectral<PSATDTimeStaggeredGridType>;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDTimeStaggeredGridType>;
+        using PmlType = PmlPsatdTimeStaggered<PSATDTimeStaggeredGrid>;
+        using FieldGeneratorType = FieldGeneratorSpectral<PSATDTimeStaggeredGrid>;
+        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDTimeStaggeredGrid>;
 
+        PSATDTimeStaggeredT(GridType* grid);  // use when load
         PSATDTimeStaggeredT(GridType* grid, FP dt);
 
         void updateFields();
@@ -26,36 +28,9 @@ namespace pfc {
         void updateHalfB();
         void updateE();
 
-        void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-
-        template <class TBoundaryCondition>
-        void setBoundaryCondition();
-        template <class TBoundaryCondition>
-        void setBoundaryCondition(CoordinateEnum axis);
-
-        void setFieldGenerator(
-            const Int3& leftGenIndex, const Int3& rightGenIndex,
-            FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
-            FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
-            FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
-            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
-            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
-        void setFieldGenerator(
-            const Int3& leftGenIndex, const Int3& rightGenIndex,
-            /* first index is index of edge (x, y, z),
-            second index is index of field component (ex, ey, ez or bx, by, bz) */
-            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
-            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
-            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
-            const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
-            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
-            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
-
-        void setTimeStep(FP dt);
-
         void convertFieldsPoissonEquation();
 
-        ScalarField<complexFP> tmpJx, tmpJy, tmpJz;
+        void setTimeStep(FP dt);
 
         static FP getCourantConditionTimeStep(const FP3& gridSteps) {
             // PSATD is free of the Courant condition
@@ -73,125 +48,49 @@ namespace pfc {
             return true;
         }
 
-        static bool isSchemeTimeStaggered() {
+        static bool isTimeStaggered() {
             return true;
-        }
-        bool isTimeStaggered() const override {
-            return isSchemeTimeStaggered();
         }
 
         void save(std::ostream& ostr);
         void load(std::istream& istr);
 
-    protected:
+        ScalarField<complexFP> tmpJx, tmpJy, tmpJz;
 
-        PmlType* getPml() const {
-            return static_cast<PmlType*>(pml.get());
-        }
-        FieldGeneratorType* getGenerator() const {
-            return static_cast<FieldGeneratorType*>(generator.get());
-        }
+    protected:
 
         void saveJ();
         void assignJ(SpectralScalarField<FP, complexFP>& J, ScalarField<complexFP>& tmpJ);
     };
 
-    template<bool ifPoisson>
-    inline void PSATDTimeStaggeredT<ifPoisson>::save(std::ostream& ostr)
-    {
-        FieldSolver<GridType::gridType>::save(ostr);
-        tmpJx.save(ostr);
-        tmpJy.save(ostr);
-        tmpJz.save(ostr);
-    }
-
-    template<bool ifPoisson>
-    inline void PSATDTimeStaggeredT<ifPoisson>::load(std::istream& istr)
-    {
-        FieldSolver<GridType::gridType>::load(istr);
-        tmpJx.load(istr);
-        tmpJy.load(istr);
-        tmpJz.load(istr);
-    }
-
     template <bool ifPoisson>
-    inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* _grid, FP dt) :
-        SpectralFieldSolver<GridType::gridType>(_grid, dt),
-        tmpJx(complexGrid->sizeStorage),
-        tmpJy(complexGrid->sizeStorage),
-        tmpJz(complexGrid->sizeStorage)
+    inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid) :
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid),
+        tmpJx(this->complexGrid->sizeStorage),
+        tmpJy(this->complexGrid->sizeStorage),
+        tmpJz(this->complexGrid->sizeStorage)
     {
         updateDims();
         updateInternalDims();
     }
 
     template <bool ifPoisson>
-    inline void PSATDTimeStaggeredT<ifPoisson>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
+    inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid, FP dt) :
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt),
+        tmpJx(this->complexGrid->sizeStorage),
+        tmpJy(this->complexGrid->sizeStorage),
+        tmpJz(this->complexGrid->sizeStorage)
     {
-        pml.reset(new PmlType(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
+        updateDims();
         updateInternalDims();
-    }
-
-    template <bool ifPoisson>
-    template <class TBoundaryCondition>
-    inline void PSATDTimeStaggeredT<ifPoisson>::setBoundaryCondition()
-    {
-        for (int d = 0; d < grid->dimensionality; d++)
-            boundaryConditions[d].reset(new TBoundaryCondition((CoordinateEnum)d, this));
-    }
-
-    template <bool ifPoisson>
-    template <class TBoundaryCondition>
-    inline void PSATDTimeStaggeredT<ifPoisson>::setBoundaryCondition(CoordinateEnum axis)
-    {
-        if ((int)axis >= grid->dimensionality) {
-            std::cout
-                << "WARNING: an attempt to set boundary conditions for an axis greater than the dimensionality is ignored"
-                << std::endl;
-        }
-        boundaryConditions[(int)axis].reset(new TBoundaryCondition(axis, this));
-    }
-
-    template <bool ifPoisson>
-    inline void PSATDTimeStaggeredT<ifPoisson>::setFieldGenerator(
-        const Int3& leftGenIndex, const Int3& rightGenIndex,
-        FieldGeneratorType::FunctionType bxFunc, FieldGeneratorType::FunctionType byFunc,
-        FieldGeneratorType::FunctionType bzFunc, FieldGeneratorType::FunctionType exFunc,
-        FieldGeneratorType::FunctionType eyFunc, FieldGeneratorType::FunctionType ezFunc,
-        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
-    {
-        generator.reset(new FieldGeneratorType(
-            this, leftGenIndex, rightGenIndex,
-            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
-            isLeftBorderEnabled, isRightBorderEnabled)
-        );
-    }
-
-    template <bool ifPoisson>
-    inline void PSATDTimeStaggeredT<ifPoisson>::setFieldGenerator(
-        const Int3& leftGenIndex, const Int3& rightGenIndex,
-        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftBFunc,
-        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightBFunc,
-        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& leftEFunc,
-        const std::array<std::array<FieldGeneratorType::FunctionType, 3>, 3>& rightEFunc,
-        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
-    {
-        generator.reset(new FieldGeneratorType(
-            this, leftGenIndex, rightGenIndex,
-            leftBFunc, rightBFunc, leftEFunc, rightEFunc,
-            isLeftBorderEnabled, isRightBorderEnabled)
-        );
     }
 
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::setTimeStep(FP dt)
     {
         this->dt = dt;
-        if (pml) pml.reset(new PmlType(this, pml->sizePML));
-        for (int d = 0; d < 3; d++)
-            if (boundaryConditions[d])
-                boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this));
-        if (generator) generator.reset(new FieldGeneratorType(*getGenerator()));
+        resetPML();
+        resetFieldGenerator();
     }
 
     template <bool ifPoisson>
@@ -218,28 +117,29 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::updateFields()
     {
+        // TODO: consider boundary conditions and generator
+
         doFourierTransform(fourier_transform::Direction::RtoC);
 
-        if (pml) getPml()->updateBSplit();
+        if (pml) pml->updateBSplit();
         updateHalfB();
-        for (int d = 0; d < grid->dimensionality; d++)
-            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
+        // applyBoundaryConditionsB(globalTime + dt * 0.5);
+        // if (generator) generator->generateB(globalTime);  // send current E time
 
-        if (pml) getPml()->updateESplit();
+        if (pml) pml->updateESplit();
         updateE();
-        for (int d = 0; d < grid->dimensionality; d++)
-            if (boundaryConditions[d]) boundaryConditions[d]->generateE();
+        // applyBoundaryConditionsE(globalTime + dt);
+        // if (generator) generator->generateE(globalTime + dt * 0.5);  // send current B time
 
-        if (pml) getPml()->updateBSplit();
+        if (pml) pml->updateBSplit();
         updateHalfB();
-        for (int d = 0; d < grid->dimensionality; d++)
-            if (boundaryConditions[d]) boundaryConditions[d]->generateB();
+        // applyBoundaryConditionsB(globalTime + dt);
 
         saveJ();
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml) getPml()->updateB();
-        if (pml) getPml()->updateE();
+        if (pml) pml->updateB();
+        if (pml) pml->updateE();
 
         globalTime += dt;
     }
@@ -387,6 +287,24 @@ namespace pfc {
                     complexGrid->Ey(i, j, k) += -El.y + coeff1 * crossKB.y - coeff2 * (J.y - Jl.y);
                     complexGrid->Ez(i, j, k) += -El.z + coeff1 * crossKB.z - coeff2 * (J.z - Jl.z);
                 }
+    }
+
+    template<bool ifPoisson>
+    inline void PSATDTimeStaggeredT<ifPoisson>::save(std::ostream& ostr)
+    {
+        FieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+        tmpJx.save(ostr);
+        tmpJy.save(ostr);
+        tmpJz.save(ostr);
+    }
+
+    template<bool ifPoisson>
+    inline void PSATDTimeStaggeredT<ifPoisson>::load(std::istream& istr)
+    {
+        FieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+        tmpJx.load(istr);
+        tmpJy.load(istr);
+        tmpJz.load(istr);
     }
 
     typedef PSATDTimeStaggeredT<true> PSATDTimeStaggeredPoisson;

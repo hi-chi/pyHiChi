@@ -2,7 +2,6 @@
 #include <array>
 #include <functional>
 
-#include "FieldSolver.h"
 #include "Grid.h"
 #include "Vectors.h"
 #include "Enums.h"
@@ -16,26 +15,26 @@ namespace pfc
         }
     }
 
-    template<GridTypes gridTypes>
+    template<class TGrid>
     class FieldGenerator
     {
     public:
 
         using FunctionType = std::function<FP(FP, FP, FP, FP)>;  // f(x, y, z, t)
 
-        FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+        FieldGenerator(TGrid* grid, FP dt,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
-        FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+        FieldGenerator(TGrid* grid, FP dt,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
             FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
-        FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+        FieldGenerator(TGrid* grid, FP dt,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             /* first index is index of edge (x, y, z),
             second index is index of field component (ex, ey, ez or bx, by, bz) */
@@ -46,10 +45,19 @@ namespace pfc
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
-        virtual ~FieldGenerator() {}
+        FieldGenerator(TGrid* grid, FP dt,
+            const Int3& leftGenIndex, const Int3& rightGenIndex,
+            const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& bFunc,
+            const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
+            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
-        virtual void generateB() = 0;
-        virtual void generateE() = 0;
+        FieldGenerator(TGrid* grid, FP dt, const FieldGenerator& gen);
+
+        /* implement the next methods in derived classes
+        void generateB(FP time);
+        void generateE(FP time);
+        */
 
         // sets one function for all borders
         void setFunction(FieldEnum field, CoordinateEnum fieldComponent, FunctionType func);
@@ -57,7 +65,8 @@ namespace pfc
         void setFunction(FieldEnum field, CoordinateEnum fieldComponent,
             CoordinateEnum edge, SideEnum side, FunctionType func);
 
-        FieldSolver<gridTypes>* fieldSolver;
+        TGrid* grid = nullptr;
+        FP dt = 0.0;
 
         // first index is left/right
         // second index is index of edge
@@ -69,13 +78,13 @@ namespace pfc
         Int3 leftGeneratorIndex, rightGeneratorIndex;
     };
 
-    template<GridTypes gridTypes>
-    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+    template<class TGrid>
+    inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
         const Int3& leftGenIndex, const Int3& rightGenIndex,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
-        fieldSolver(fieldSolver)
+        grid(grid), dt(dt)
     {
-        Int3 numExtLeftCells = fieldSolver->grid->getNumExternalLeftCells();
+        Int3 numExtLeftCells = this->grid->getNumExternalLeftCells();
 
         this->isLeftBorderEnabled = isLeftBorderEnabled;
         this->isRightBorderEnabled = isRightBorderEnabled;
@@ -91,13 +100,13 @@ namespace pfc
             }
     }
 
-    template<GridTypes gridTypes>
-    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+    template<class TGrid>
+    inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
         const Int3& leftGenIndex, const Int3& rightGenIndex,
         FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
         FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
-        FieldGenerator<gridTypes>(fieldSolver, leftGenIndex, rightGenIndex,
+        FieldGenerator<TGrid>(grid, dt, leftGenIndex, rightGenIndex,
             isLeftBorderEnabled, isRightBorderEnabled)
     {
         setFunction(FieldEnum::B, CoordinateEnum::x, bxFunc);
@@ -108,15 +117,15 @@ namespace pfc
         setFunction(FieldEnum::E, CoordinateEnum::z, ezFunc);
     }
 
-    template<GridTypes gridTypes>
-    inline FieldGenerator<gridTypes>::FieldGenerator(FieldSolver<gridTypes>* fieldSolver,
+    template<class TGrid>
+    inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
         const Int3& leftGenIndex, const Int3& rightGenIndex,
         const std::array<std::array<FunctionType, 3>, 3>& leftBFunc,
         const std::array<std::array<FunctionType, 3>, 3>& rightBFunc,
         const std::array<std::array<FunctionType, 3>, 3>& leftEFunc,
         const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
-        FieldGenerator<gridTypes>(fieldSolver, leftGenIndex, rightGenIndex,
+        FieldGenerator<TGrid>(grid, dt, leftGenIndex, rightGenIndex,
             isLeftBorderEnabled, isRightBorderEnabled)
     {
         for (int edge = 0; edge < 3; edge++)
@@ -132,10 +141,30 @@ namespace pfc
             }
     }
 
-    template<GridTypes gridTypes>
-    inline void FieldGenerator<gridTypes>::setFunction(
+    template<class TGrid>
+    inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& bFunc,
+        const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
+        FieldGenerator<TGrid>(grid, dt, leftGenIndex, rightGenIndex,
+            bFunc[0], bFunc[1], eFunc[0], eFunc[1],
+            isLeftBorderEnabled, isRightBorderEnabled)
+    {}
+
+    template<class TGrid>
+    inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
+        const FieldGenerator<TGrid>& gen) :
+        FieldGenerator<TGrid>(grid, dt,
+            gen.leftGeneratorIndex, gen.rightGeneratorIndex,
+            gen.bFunc[0], gen.bFunc[1], gen.eFunc[0], gen.eFunc[1],
+            gen.isLeftBorderEnabled, gen.isRightBorderEnabled)
+    {}
+
+    template<class TGrid>
+    inline void FieldGenerator<TGrid>::setFunction(
         FieldEnum field, CoordinateEnum fieldComponent,
-        FieldGenerator<gridTypes>::FunctionType func)
+        FieldGenerator<TGrid>::FunctionType func)
     {
         for (int side = 0; side < 2; side++)
             for (int edge = 0; edge < 3; edge++)
@@ -143,10 +172,10 @@ namespace pfc
                     (CoordinateEnum)edge, (SideEnum)side, func);
     }
 
-    template<GridTypes gridTypes>
-    inline void FieldGenerator<gridTypes>::setFunction(
+    template<class TGrid>
+    inline void FieldGenerator<TGrid>::setFunction(
         FieldEnum field, CoordinateEnum fieldComponent,
-        CoordinateEnum edge, SideEnum side, FieldGenerator<gridTypes>::FunctionType func)
+        CoordinateEnum edge, SideEnum side, FieldGenerator<TGrid>::FunctionType func)
     {
         switch (field) {
         case FieldEnum::B:

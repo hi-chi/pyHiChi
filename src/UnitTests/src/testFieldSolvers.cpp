@@ -206,8 +206,6 @@ TYPED_TEST(FieldSolverTest, SetTimeStepTest) {
 
     this->fieldSolver->setTimeStep(newTimeStep);
 
-    ASSERT_EQ(newTimeStep, this->fieldSolver->pml->fieldSolver->dt);
-    for (int d = 0; d < this->grid->dimensionality; d++)
-        ASSERT_EQ(newTimeStep, this->fieldSolver->boundaryConditions[d]->fieldSolver->dt);
-    ASSERT_EQ(newTimeStep, this->fieldSolver->generator->fieldSolver->dt);
+    ASSERT_EQ(newTimeStep, this->fieldSolver->pml->dt);
+    ASSERT_EQ(newTimeStep, this->fieldSolver->generator->dt);
 }
