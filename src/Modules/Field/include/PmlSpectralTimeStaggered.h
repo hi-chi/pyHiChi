@@ -7,8 +7,10 @@ namespace pfc {
     class PmlSpectralTimeStaggered : public PmlSpectral<TGrid>
     {
     public:
-        PmlSpectralTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML) :
-            PmlSpectral<TGrid>(grid, complexGrid, dt, sizePML),
+        PmlSpectralTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML,
+            Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd) :
+            PmlSpectral<TGrid>(grid, complexGrid, dt, sizePML, domainIndexBegin, domainIndexEnd,
+                complexDomainIndexBegin, complexDomainIndexEnd),
             tmpFieldReal(this->grid->sizeStorage),
             tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(this->grid->numCells))
         {
@@ -61,9 +63,9 @@ namespace pfc {
     {
         TDerived* derived = static_cast<TDerived*>(this);
         derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ez, this->dt * 0.5);
-        updateFieldSplit(this->byx, this->bIndex, -1);
+        updateFieldSplit(this->byx, this->index, -1);
         derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ey, this->dt * 0.5);
-        updateFieldSplit(this->bzx, this->bIndex, +1);
+        updateFieldSplit(this->bzx, this->index, +1);
     }
 
     template<class TGrid, class TDerived>
@@ -71,9 +73,9 @@ namespace pfc {
     {
         TDerived* derived = static_cast<TDerived*>(this);
         derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ex, this->dt * 0.5);
-        updateFieldSplit(this->bzy, this->bIndex, -1);
+        updateFieldSplit(this->bzy, this->index, -1);
         derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ez, this->dt * 0.5);
-        updateFieldSplit(this->bxy, this->bIndex, +1);
+        updateFieldSplit(this->bxy, this->index, +1);
     }
 
     template<class TGrid, class TDerived>
@@ -81,9 +83,9 @@ namespace pfc {
     {
         TDerived* derived = static_cast<TDerived*>(this);
         derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ey, this->dt * 0.5);
-        updateFieldSplit(this->bxz, this->bIndex, -1);
+        updateFieldSplit(this->bxz, this->index, -1);
         derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ex, this->dt * 0.5);
-        updateFieldSplit(this->byz, this->bIndex, +1);
+        updateFieldSplit(this->byz, this->index, +1);
     }
 
     template<class TGrid, class TDerived>
@@ -91,9 +93,9 @@ namespace pfc {
     {
         TDerived* derived = static_cast<TDerived*>(this);
         derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Bz, this->dt);
-        updateFieldSplit(this->eyx, this->eIndex, +1);
+        updateFieldSplit(this->eyx, this->index, +1);
         derived->computeTmpField(CoordinateEnum::z, this->complexGrid->By, this->dt);
-        updateFieldSplit(this->ezx, this->eIndex, -1);
+        updateFieldSplit(this->ezx, this->index, -1);
     }
 
     template<class TGrid, class TDerived>
@@ -101,9 +103,9 @@ namespace pfc {
     {
         TDerived* derived = static_cast<TDerived*>(this);
         derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Bx, this->dt);
-        updateFieldSplit(this->ezy, this->eIndex, +1);
+        updateFieldSplit(this->ezy, this->index, +1);
         derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Bz, this->dt);
-        updateFieldSplit(this->exy, this->eIndex, -1);
+        updateFieldSplit(this->exy, this->index, -1);
     }
 
     template<class TGrid, class TDerived>
@@ -111,9 +113,9 @@ namespace pfc {
     {
         TDerived* derived = static_cast<TDerived*>(this);
         derived->computeTmpField(CoordinateEnum::x, this->complexGrid->By, this->dt);
-        updateFieldSplit(this->exz, this->eIndex, +1);
+        updateFieldSplit(this->exz, this->index, +1);
         derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Bx, this->dt);
-        updateFieldSplit(this->eyz, this->eIndex, -1);
+        updateFieldSplit(this->eyz, this->index, -1);
     }
 
     template<class TGrid, class TDerived>

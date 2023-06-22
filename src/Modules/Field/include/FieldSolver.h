@@ -245,7 +245,12 @@ namespace pfc {
     template<class TGrid, class TPml, class TFieldGenerator>
     inline void RealFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(Int3 sizePML)
     {
-        pml.reset(new TPml(this->grid, this->dt, sizePML));
+        // remove old pml, revert solver to initial state 
+        pml.reset(nullptr);
+        updateDomainBorders();
+        // create new pml
+        pml.reset(new TPml(this->grid, this->dt, sizePML,
+            this->domainIndexBegin, this->domainIndexEnd));
         updateDomainBorders();
     }
 
@@ -373,7 +378,13 @@ namespace pfc {
     template<class TGrid, class TPml, class TFieldGenerator>
     inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(Int3 sizePML)
     {
-        pml.reset(new TPml(this->grid, this->complexGrid.get(), this->dt, sizePML));
+        // remove old pml, revert solver to initial state 
+        pml.reset(nullptr);
+        updateDomainBorders();
+        // create new pml
+        pml.reset(new TPml(this->grid, this->complexGrid.get(), this->dt, sizePML,
+            this->domainIndexBegin, this->domainIndexEnd,
+            this->complexDomainIndexBegin, this->complexDomainIndexEnd));
         updateDomainBorders();
     }
 

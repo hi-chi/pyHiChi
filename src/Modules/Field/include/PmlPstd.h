@@ -6,8 +6,10 @@ namespace pfc {
     class PmlPstd : public PmlSpectralTimeStaggered<PSTDGrid, PmlPstd>
     {
     public:
-        PmlPstd(PSTDGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML) :
-            PmlSpectralTimeStaggered(grid, complexGrid, dt, sizePML) {}
+        PmlPstd(PSTDGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML,
+            Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd) :
+            PmlSpectralTimeStaggered(grid, complexGrid, dt, sizePML,
+                domainIndexBegin, domainIndexEnd, complexDomainIndexBegin, complexDomainIndexEnd) {}
 
         void computeTmpField(CoordinateEnum coordK,
             SpectralScalarField<FP, complexFP>& field, double dt);
@@ -16,9 +18,8 @@ namespace pfc {
     inline void PmlPstd::computeTmpField(CoordinateEnum coordK,
         SpectralScalarField<FP, complexFP>& field, double dt)
     {
-        // TODO: check border indices
-        Int3 begin = Int3(0, 0, 0);
-        Int3 end = this->complexGrid->numCells;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++)

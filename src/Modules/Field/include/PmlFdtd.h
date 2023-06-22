@@ -8,8 +8,9 @@ namespace pfc {
     class PmlFdtd : public PmlReal<YeeGrid>
     {
     public:
-        PmlFdtd(YeeGrid* grid, FP dt, Int3 sizePML) :
-            PmlReal(grid, dt, sizePML) {}
+        PmlFdtd(YeeGrid* grid, FP dt, Int3 sizePML,
+            Int3 domainIndexBegin, Int3 domainIndexEnd) :
+            PmlReal(grid, dt, sizePML, domainIndexBegin, domainIndexEnd) {}
 
         void updateB();
         void updateE();
@@ -36,7 +37,7 @@ namespace pfc {
 
     inline void PmlFdtd::updateB3D()
     {
-        const int numPmlIndicesB = this->bIndex.size();
+        const int numPmlIndicesB = this->index.size();
         const FP cdt = constants::c * this->dt;
         const FP threshold = std::numeric_limits<FP>::epsilon();
         const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
@@ -44,7 +45,7 @@ namespace pfc {
         OMP_FOR()
         for (int idx = 0; idx < numPmlIndicesB; ++idx)
         {
-            int i = bIndex[idx].x, j = bIndex[idx].y, k = bIndex[idx].z;
+            int i = index[idx].x, j = index[idx].y, k = index[idx].z;
             FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
             // Yee Grid indices: By(i, ..., ...), Bz(i, ..., ...) -> sigmaX(i)
@@ -97,7 +98,7 @@ namespace pfc {
 
     inline void PmlFdtd::updateB2D()
     {
-        const int numPmlIndicesB = this->bIndex.size();
+        const int numPmlIndicesB = this->index.size();
         const FP cdt = constants::c * this->dt;
         const FP threshold = std::numeric_limits<FP>::epsilon();
         const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
@@ -105,7 +106,7 @@ namespace pfc {
         OMP_FOR()
         for (int idx = 0; idx < numPmlIndicesB; ++idx)
         {
-            int i = bIndex[idx].x, j = bIndex[idx].y, k = bIndex[idx].z;
+            int i = index[idx].x, j = index[idx].y, k = index[idx].z;
             FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
             // Yee Grid indices: By(i, ..., ...), Bz(i, ..., ...) -> sigmaX(i)
@@ -152,7 +153,7 @@ namespace pfc {
 
     inline void PmlFdtd::updateB1D()
     {
-        const int numPmlIndicesB = this->bIndex.size();
+        const int numPmlIndicesB = this->index.size();
         const FP cdt = constants::c * this->dt;
         const FP threshold = std::numeric_limits<FP>::epsilon();
         const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
@@ -160,7 +161,7 @@ namespace pfc {
         OMP_FOR()
         for (int idx = 0; idx < numPmlIndicesB; ++idx)
         {
-            int i = bIndex[idx].x, j = bIndex[idx].y, k = bIndex[idx].z;
+            int i = index[idx].x, j = index[idx].y, k = index[idx].z;
             FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
             // Yee Grid indices: By(i, ..., ...), Bz(i, ..., ...) -> sigmaX(i)
@@ -211,7 +212,7 @@ namespace pfc {
 
     inline void PmlFdtd::updateE3D()
     {
-        const int numPmlIndicesE = this->eIndex.size();
+        const int numPmlIndicesE = this->index.size();
         const FP cdt = constants::c * this->dt;
         const FP threshold = std::numeric_limits<FP>::epsilon();
         const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
@@ -219,7 +220,7 @@ namespace pfc {
         OMP_FOR()
         for (int idx = 0; idx < numPmlIndicesE; ++idx)
         {
-            int i = eIndex[idx].x, j = eIndex[idx].y, k = eIndex[idx].z;
+            int i = index[idx].x, j = index[idx].y, k = index[idx].z;
             FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
             // Yee Grid indices: Ey(i+1/2, ..., ...), Ez(i+1/2, ..., ...) -> sigmaX(i+1/2)
@@ -272,7 +273,7 @@ namespace pfc {
 
     inline void PmlFdtd::updateE2D()
     {
-        const int numPmlIndicesE = this->eIndex.size();
+        const int numPmlIndicesE = this->index.size();
         const FP cdt = constants::c * this->dt;
         const FP threshold = std::numeric_limits<FP>::epsilon();
         const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
@@ -280,7 +281,7 @@ namespace pfc {
         OMP_FOR()
         for (int idx = 0; idx < numPmlIndicesE; ++idx)
         {
-            int i = eIndex[idx].x, j = eIndex[idx].y, k = eIndex[idx].z;
+            int i = index[idx].x, j = index[idx].y, k = index[idx].z;
             FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
             // Yee Grid indices: Ey(i+1/2, ..., ...), Ez(i+1/2, ..., ...) -> sigmaX(i+1/2)
@@ -327,7 +328,7 @@ namespace pfc {
 
     inline void PmlFdtd::updateE1D()
     {
-        const int numPmlIndicesE = this->eIndex.size();
+        const int numPmlIndicesE = this->index.size();
         const FP cdt = constants::c * this->dt;
         const FP threshold = std::numeric_limits<FP>::epsilon();
         const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
@@ -335,7 +336,7 @@ namespace pfc {
         OMP_FOR()
         for (int idx = 0; idx < numPmlIndicesE; ++idx)
         {
-            int i = eIndex[idx].x, j = eIndex[idx].y, k = eIndex[idx].z;
+            int i = index[idx].x, j = index[idx].y, k = index[idx].z;
             FP sigma = 0, coeff1 = 0, coeff2 = 0;
 
             // Yee Grid indices: Ey(i+1/2, ..., ...), Ez(i+1/2, ..., ...) -> sigmaX(i+1/2)
