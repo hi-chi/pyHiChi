@@ -142,8 +142,8 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
 
     FP finalT = this->fieldSolver->dt * this->numSteps;
 
-    Int3 begin = this->fieldSolver->updateEAreaBegin;
-    Int3 end = this->fieldSolver->updateEAreaEnd;
+    Int3 begin = this->fieldSolver->domainIndexBegin;
+    Int3 end = this->fieldSolver->domainIndexEnd;
 
     for (int i = begin.x; i < end.x; ++i)
         for (int j = begin.y; j < end.y; ++j)
@@ -161,9 +161,6 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
                 actualE.z = this->grid->Ez(i, j, k);
                 ASSERT_NEAR(expectedE.norm(), actualE.norm(), this->maxError);
             }
-
-    begin = this->fieldSolver->updateBAreaBegin;
-    end = this->fieldSolver->updateBAreaEnd;
 
     for (int i = begin.x; i < end.x; ++i)
         for (int j = begin.y; j < end.y; ++j)

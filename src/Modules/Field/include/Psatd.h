@@ -56,18 +56,12 @@ namespace pfc {
     template <bool ifPoisson>
     inline PSATDT<ifPoisson>::PSATDT(GridType* grid) :
         SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
-    {
-        updateDims();
-        updateInternalDims();
-    }
+    {}
 
     template <bool ifPoisson>
     inline PSATDT<ifPoisson>::PSATDT(GridType* grid, FP dt) :
         SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt)
-    {
-        updateDims();
-        updateInternalDims();
-    }  
+    {}  
 
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::setTimeStep(FP dt)
@@ -112,8 +106,9 @@ namespace pfc {
     inline void PSATDT<ifPoisson>::convertFieldsPoissonEquation()
     {
         doFourierTransform(fourier_transform::Direction::RtoC);
-        const Int3 begin = updateComplexBAreaBegin;
-        const Int3 end = updateComplexBAreaEnd;
+
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
@@ -142,8 +137,8 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::updateEB()
     {
-        const Int3 begin = updateComplexBAreaBegin;
-        const Int3 end = updateComplexBAreaEnd;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         FP dt = 0.5 * this->dt;
 
@@ -194,8 +189,8 @@ namespace pfc {
     template <>
     inline void PSATDT<true>::updateEB()
     {
-        const Int3 begin = updateComplexBAreaBegin;
-        const Int3 end = updateComplexBAreaEnd;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         FP dt = 0.5 * this->dt;
 

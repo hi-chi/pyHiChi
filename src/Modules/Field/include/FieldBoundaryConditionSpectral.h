@@ -10,16 +10,16 @@ namespace pfc
         // periodical boundaries for spectral solvers are default because of FFT
         // this class does nothing
 
-        PeriodicalBoundaryConditionSpectral(TGrid* grid, CoordinateEnum axis) :
-            FieldBoundaryCondition<TGrid>(grid, axis) {
-        }
+        PeriodicalBoundaryConditionSpectral(TGrid* grid, CoordinateEnum axis,
+            Int3 leftBorderIndex, Int3 rightBorderIndex) :
+            FieldBoundaryCondition<TGrid>(grid, axis, leftBorderIndex, rightBorderIndex) {}
 
         void generateB(FP time) override {}
         void generateE(FP time) override {}
 
         FieldBoundaryCondition<TGrid>* createInstance(
-            TGrid* grid, CoordinateEnum axis) override {
-            return new PeriodicalBoundaryConditionSpectral(grid, axis);
+            TGrid* grid, CoordinateEnum axis, Int3 leftBorderIndex, Int3 rightBorderIndex) override {
+            return new PeriodicalBoundaryConditionSpectral(grid, axis, leftBorderIndex, rightBorderIndex);
         }
     };
 }

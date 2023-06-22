@@ -48,10 +48,7 @@ namespace pfc {
 
     inline PSTD::PSTD(GridType* grid) :
         SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
-    {
-        updateDims();
-        updateInternalDims();
-    }
+    {}
 
     inline PSTD::PSTD(GridType* grid, FP dt) :
         SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt)
@@ -62,8 +59,6 @@ namespace pfc {
                 << std::endl;
             this->dt = getCourantConditionTimeStep() * 0.5;
         }
-        updateDims();
-        updateInternalDims();
     }
 
     inline void PSTD::setTimeStep(FP dt)
@@ -110,8 +105,8 @@ namespace pfc {
 
     inline void PSTD::updateHalfB()
     {
-        const Int3 begin = updateComplexBAreaBegin;
-        const Int3 end = updateComplexBAreaEnd;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         FP dt = 0.5 * this->dt;
 
@@ -132,8 +127,8 @@ namespace pfc {
 
     inline void PSTD::updateE()
     {
-        const Int3 begin = updateComplexEAreaBegin;
-        const Int3 end = updateComplexEAreaEnd;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)

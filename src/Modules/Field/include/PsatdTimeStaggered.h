@@ -69,10 +69,7 @@ namespace pfc {
         tmpJx(this->complexGrid->sizeStorage),
         tmpJy(this->complexGrid->sizeStorage),
         tmpJz(this->complexGrid->sizeStorage)
-    {
-        updateDims();
-        updateInternalDims();
-    }
+    {}
 
     template <bool ifPoisson>
     inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid, FP dt) :
@@ -80,10 +77,7 @@ namespace pfc {
         tmpJx(this->complexGrid->sizeStorage),
         tmpJy(this->complexGrid->sizeStorage),
         tmpJz(this->complexGrid->sizeStorage)
-    {
-        updateDims();
-        updateInternalDims();
-    }
+    {}
 
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::setTimeStep(FP dt)
@@ -147,8 +141,9 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::convertFieldsPoissonEquation() {
         doFourierTransform(fourier_transform::Direction::RtoC);
-        const Int3 begin = updateComplexBAreaBegin;
-        const Int3 end = updateComplexBAreaEnd;
+        
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
@@ -177,8 +172,8 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::updateHalfB()
     {
-        const Int3 begin = updateComplexBAreaBegin;
-        const Int3 end = updateComplexBAreaEnd;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         FP dt = 0.5 * this->dt;
 
@@ -214,8 +209,8 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::updateE()
     {
-        const Int3 begin = updateComplexEAreaBegin;
-        const Int3 end = updateComplexEAreaEnd;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
@@ -253,8 +248,8 @@ namespace pfc {
     template <>
     inline void PSATDTimeStaggeredT<true>::updateE()
     {
-        const Int3 begin = updateComplexEAreaBegin;
-        const Int3 end = updateComplexEAreaEnd;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)

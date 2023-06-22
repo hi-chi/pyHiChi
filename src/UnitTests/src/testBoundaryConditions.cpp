@@ -135,8 +135,8 @@ TYPED_TEST(PeriodicBoundaryConditionTest, PeriodicBoundaryConditionTest)
     // signal should be the same as at the beginning
     FP startT = 0;
 
-    Int3 begin = this->fieldSolver->updateEAreaBegin;
-    Int3 end = this->fieldSolver->updateEAreaEnd;
+    Int3 begin = this->fieldSolver->domainIndexBegin;
+    Int3 end = this->fieldSolver->domainIndexEnd;
 
     for (int i = begin.x; i < end.x; ++i)
         for (int j = begin.y; j < end.y; ++j)
@@ -154,9 +154,6 @@ TYPED_TEST(PeriodicBoundaryConditionTest, PeriodicBoundaryConditionTest)
                 actualE.z = this->grid->Ez(i, j, k);
                 ASSERT_NEAR((expectedE - actualE).norm(), 0.0, this->maxError);
             }
-
-    begin = this->fieldSolver->updateBAreaBegin;
-    end = this->fieldSolver->updateBAreaEnd;
 
     for (int i = begin.x; i < end.x; ++i)
         for (int j = begin.y; j < end.y; ++j)
@@ -217,8 +214,8 @@ TYPED_TEST(ReflectBoundaryConditionTest, MixedPeriodicAndReflectBoundaryConditio
     // because signal is symmetric
     FP startT = 0;
 
-    Int3 begin = this->fieldSolver->updateEAreaBegin;
-    Int3 end = this->fieldSolver->updateEAreaEnd;
+    Int3 begin = this->fieldSolver->domainIndexBegin;
+    Int3 end = this->fieldSolver->domainIndexEnd;
 
     for (int i = begin.x; i < end.x; ++i)
         for (int j = begin.y; j < end.y; ++j)
@@ -236,9 +233,6 @@ TYPED_TEST(ReflectBoundaryConditionTest, MixedPeriodicAndReflectBoundaryConditio
                 actualE.z = this->grid->Ez(i, j, k);
                 ASSERT_NEAR((expectedE - actualE).norm(), 0.0, this->maxError);
             }
-
-    begin = this->fieldSolver->updateBAreaBegin;
-    end = this->fieldSolver->updateBAreaEnd;
 
     for (int i = begin.x; i < end.x; ++i)
         for (int j = begin.y; j < end.y; ++j)

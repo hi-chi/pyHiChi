@@ -49,15 +49,6 @@ namespace pfc {
             return true;
         }
 
-        void updateDims() {
-            this->updateEAreaBegin = Int3(0, 0, 0);
-            this->updateEAreaEnd = this->grid->numCells -
-                this->grid->correctNumCellsAccordingToDim(Int3(1, 1, 1));
-            this->updateBAreaBegin =
-                this->grid->correctNumCellsAccordingToDim(Int3(1, 1, 1));
-            this->updateBAreaEnd = this->grid->numCells;
-        }
-
     private:
 
         void updateHalfB3D();
@@ -73,15 +64,13 @@ namespace pfc {
     };
 
     inline FDTD::FDTD(GridType* grid) :
-        RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
-    {
-        updateDims();
-        updateInternalDims();
-        anisotropyCoeff = FP3(1, 1, 1);
-    }
+        RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid),
+        anisotropyCoeff(1, 1, 1)
+    {}
 
     inline FDTD::FDTD(GridType* grid, FP dt) :
-        RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt)
+        RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt),
+        anisotropyCoeff(1, 1, 1)
     {
         if (!isCourantConditionSatisfied(dt)) {
             std::cout
@@ -89,9 +78,6 @@ namespace pfc {
                 << std::endl;
             this->dt = getCourantConditionTimeStep() * 0.5;
         }
-        updateDims();
-        updateInternalDims();
-        anisotropyCoeff = FP3(1, 1, 1);
     }
 
     inline void FDTD::setTimeStep(FP dt)
@@ -184,8 +170,8 @@ namespace pfc {
         const FP coeffZX = cdt / (grid->steps.z * anisotropyCoeff.x);
         const FP coeffZY = cdt / (grid->steps.z * anisotropyCoeff.y);
 
-        const Int3 begin = internalBAreaBegin;
-        const Int3 end = internalBAreaEnd;
+        const Int3 begin = this->domainIndexBegin;
+        const Int3 end = this->domainIndexEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
@@ -212,8 +198,8 @@ namespace pfc {
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
         const FP coeffYZ = cdt / (grid->steps.y * anisotropyCoeff.z);
 
-        const Int3 begin = internalBAreaBegin;
-        const Int3 end = internalBAreaEnd;
+        const Int3 begin = this->domainIndexBegin;
+        const Int3 end = this->domainIndexEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
@@ -234,8 +220,8 @@ namespace pfc {
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
-        const Int3 begin = internalBAreaBegin;
-        const Int3 end = internalBAreaEnd;
+        const Int3 begin = this->domainIndexBegin;
+        const Int3 end = this->domainIndexEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
@@ -265,8 +251,8 @@ namespace pfc {
         const FP coeffZX = cdt / (grid->steps.z * anisotropyCoeff.x);
         const FP coeffZY = cdt / (grid->steps.z * anisotropyCoeff.y);
 
-        const Int3 begin = internalEAreaBegin;
-        const Int3 end = internalEAreaEnd;
+        const Int3 begin = this->domainIndexBegin;
+        const Int3 end = this->domainIndexEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
@@ -297,8 +283,8 @@ namespace pfc {
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
         const FP coeffYZ = cdt / (grid->steps.y * anisotropyCoeff.z);
 
-        const Int3 begin = internalEAreaBegin;
-        const Int3 end = internalEAreaEnd;
+        const Int3 begin = this->domainIndexBegin;
+        const Int3 end = this->domainIndexEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
@@ -322,8 +308,8 @@ namespace pfc {
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
-        const Int3 begin = internalEAreaBegin;
-        const Int3 end = internalEAreaEnd;
+        const Int3 begin = this->domainIndexBegin;
+        const Int3 end = this->domainIndexEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {

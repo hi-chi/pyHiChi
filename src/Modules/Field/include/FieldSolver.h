@@ -18,7 +18,7 @@ namespace pfc {
 
     public:
 
-        FieldSolver(TGrid* grid); // use when load
+        FieldSolver(TGrid* grid);  // use when load
         FieldSolver(TGrid* grid, FP dt);
 
         /* implement the next methods in derived classes
@@ -40,8 +40,7 @@ namespace pfc {
         void save(std::ostream& ostr);
         void load(std::istream& istr);
 
-        void updateDims();
-        void updateInternalDims();
+        void updateDomainBorders();
 
         void applyBoundaryConditionsB(FP time);
         void applyBoundaryConditionsE(FP time);
@@ -83,12 +82,8 @@ namespace pfc {
         std::array<std::unique_ptr<FieldBoundaryCondition<TGrid>>, 3> boundaryConditions;
         std::unique_ptr<TFieldGenerator> generator;
 
-        // Index space being updated in form [begin, end).
-        Int3 updateBAreaBegin, updateBAreaEnd;
-        Int3 updateEAreaBegin, updateEAreaEnd;
-        // Index space being updated in non-PML area.
-        Int3 internalBAreaBegin, internalBAreaEnd;
-        Int3 internalEAreaBegin, internalEAreaEnd;
+        // Index space being updated between borders (in non-pml area)
+        Int3 domainIndexBegin, domainIndexEnd;
 
         FP globalTime = 0.0;
         FP dt = 0.0;
@@ -98,16 +93,14 @@ namespace pfc {
     inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid) :
         grid(grid)
     {
-        updateDims();
-        updateInternalDims();
+        updateDomainBorders();
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
     inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid, FP dt) :
         grid(grid), globalTime(0.0), dt(dt)
     {
-        updateDims();
-        updateInternalDims();
+        updateDomainBorders();
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
@@ -127,33 +120,15 @@ namespace pfc {
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::updateDims()
+    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::updateDomainBorders()
     {
-        updateEAreaBegin = Int3(0, 0, 0);
-        updateEAreaEnd = grid->numCells;
-        updateBAreaBegin = Int3(0, 0, 0);
-        updateBAreaEnd = grid->numCells;
-    }
+        this->domainIndexBegin = this->grid->getNumExternalLeftCells();
+        this->domainIndexEnd = this->domainIndexBegin + this->grid->numInternalCells;
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::updateInternalDims()
-    {
         if (pml)
         {
-            for (int d = 0; d < 3; ++d)
-            {
-                internalBAreaBegin[d] = std::max(updateBAreaBegin[d], pml->leftPmlBorder[d]);
-                internalBAreaEnd[d] = std::min(updateBAreaEnd[d], pml->rightPmlBorder[d]);
-                internalEAreaBegin[d] = std::max(updateEAreaBegin[d], pml->leftPmlBorder[d]);
-                internalEAreaEnd[d] = std::min(updateEAreaEnd[d], pml->rightPmlBorder[d]);
-            }
-        }
-        else
-        {
-            internalBAreaBegin = updateBAreaBegin;
-            internalBAreaEnd = updateBAreaEnd;
-            internalEAreaBegin = updateEAreaBegin;
-            internalEAreaEnd = updateEAreaEnd;
+            this->domainIndexBegin += pml->sizePML;
+            this->domainIndexEnd -= pml->sizePML;
         }
     }
 
@@ -219,7 +194,8 @@ namespace pfc {
     inline void FieldSolver<TGrid, TPml, TFieldGenerator>::setBoundaryCondition()
     {
         for (int d = 0; d < this->grid->dimensionality; d++)
-            boundaryConditions[d].reset(new TBoundaryCondition(this->grid, (CoordinateEnum)d));
+            boundaryConditions[d].reset(new TBoundaryCondition(this->grid,
+                (CoordinateEnum)d, this->domainIndexBegin, this->domainIndexEnd));
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
@@ -231,7 +207,8 @@ namespace pfc {
                 << "WARNING: an attempt to set boundary conditions for an axis greater than the dimensionality is ignored"
                 << std::endl;
         }
-        boundaryConditions[(int)axis].reset(new TBoundaryCondition(this->grid, axis));
+        boundaryConditions[(int)axis].reset(new TBoundaryCondition(this->grid, axis,
+            this->domainIndexBegin, this->domainIndexEnd));
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
@@ -239,8 +216,8 @@ namespace pfc {
     {
         for (int d = 0; d < 3; d++)
             if (boundaryConditions[d])
-                boundaryConditions[d].reset(boundaryConditions[d]->createInstance(
-                    this->grid, boundaryConditions[d]->axis));
+                boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this->grid,
+                    boundaryConditions[d]->axis, this->domainIndexBegin, this->domainIndexEnd));
     }
 
 
@@ -269,7 +246,7 @@ namespace pfc {
     inline void RealFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(Int3 sizePML)
     {
         pml.reset(new TPml(this->grid, this->dt, sizePML));
-        updateInternalDims();
+        updateDomainBorders();
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
@@ -300,7 +277,7 @@ namespace pfc {
         FP3 getWaveVector(const Int3& ind);
 
         void initComplexPart();
-        void updateComplexDims();
+        void updateComplexDomainBorders();
 
         void setPML(Int3 sizePML);
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
@@ -308,8 +285,7 @@ namespace pfc {
 
         std::unique_ptr<SpectralGrid<FP, complexFP>> complexGrid;
 
-        Int3 updateComplexEAreaBegin, updateComplexEAreaEnd;
-        Int3 updateComplexBAreaBegin, updateComplexBAreaEnd;
+        Int3 complexDomainIndexBegin, complexDomainIndexEnd;
 
         FourierTransformGrid fourierTransform;
 
@@ -384,23 +360,21 @@ namespace pfc {
             fourier_transform::getSizeOfComplexArray(this->grid->numCells),
             this->grid->globalGridDims, this->grid));
         fourierTransform.initialize<TGrid>(this->grid, this->complexGrid.get());
-        updateComplexDims();
+        updateComplexDomainBorders();
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::updateComplexDims()
+    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::updateComplexDomainBorders()
     {
-        this->updateComplexEAreaBegin = Int3(0, 0, 0);
-        this->updateComplexEAreaEnd = this->complexGrid->numCells;
-        this->updateComplexBAreaBegin = Int3(0, 0, 0);
-        this->updateComplexBAreaEnd = this->complexGrid->numCells;
+        this->complexDomainIndexBegin = Int3(0, 0, 0);
+        this->complexDomainIndexEnd = this->complexGrid->numCells;
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
     inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(Int3 sizePML)
     {
         pml.reset(new TPml(this->grid, this->complexGrid.get(), this->dt, sizePML));
-        updateInternalDims();
+        updateDomainBorders();
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
