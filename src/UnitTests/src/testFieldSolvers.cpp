@@ -142,8 +142,8 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
 
     FP finalT = this->fieldSolver->dt * this->numSteps;
 
-    Int3 begin = this->fieldSolver->domainIndexBegin;
-    Int3 end = this->fieldSolver->domainIndexEnd;
+    Int3 begin = this->fieldSolver->internalAreaBegin;
+    Int3 end = this->fieldSolver->internalAreaEnd;
 
     for (int i = begin.x; i < end.x; ++i)
         for (int j = begin.y; j < end.y; ++j)

@@ -170,8 +170,8 @@ namespace pfc {
         const FP coeffZX = cdt / (grid->steps.z * anisotropyCoeff.x);
         const FP coeffZY = cdt / (grid->steps.z * anisotropyCoeff.y);
 
-        const Int3 begin = this->domainIndexBegin;
-        const Int3 end = this->domainIndexEnd;
+        const Int3 begin = this->internalAreaBegin;
+        const Int3 end = this->internalAreaEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
@@ -198,8 +198,8 @@ namespace pfc {
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
         const FP coeffYZ = cdt / (grid->steps.y * anisotropyCoeff.z);
 
-        const Int3 begin = this->domainIndexBegin;
-        const Int3 end = this->domainIndexEnd;
+        const Int3 begin = this->internalAreaBegin;
+        const Int3 end = this->internalAreaEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
@@ -220,8 +220,8 @@ namespace pfc {
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
-        const Int3 begin = this->domainIndexBegin;
-        const Int3 end = this->domainIndexEnd;
+        const Int3 begin = this->internalAreaBegin;
+        const Int3 end = this->internalAreaEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
@@ -251,8 +251,8 @@ namespace pfc {
         const FP coeffZX = cdt / (grid->steps.z * anisotropyCoeff.x);
         const FP coeffZY = cdt / (grid->steps.z * anisotropyCoeff.y);
 
-        const Int3 begin = this->domainIndexBegin;
-        const Int3 end = this->domainIndexEnd;
+        const Int3 begin = this->internalAreaBegin;
+        const Int3 end = this->internalAreaEnd;
 
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
@@ -283,8 +283,8 @@ namespace pfc {
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
         const FP coeffYZ = cdt / (grid->steps.y * anisotropyCoeff.z);
 
-        const Int3 begin = this->domainIndexBegin;
-        const Int3 end = this->domainIndexEnd;
+        const Int3 begin = this->internalAreaBegin;
+        const Int3 end = this->internalAreaEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
@@ -308,8 +308,8 @@ namespace pfc {
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
-        const Int3 begin = this->domainIndexBegin;
-        const Int3 end = this->domainIndexEnd;
+        const Int3 begin = this->internalAreaBegin;
+        const Int3 end = this->internalAreaEnd;
 
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
