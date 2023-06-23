@@ -20,14 +20,6 @@ namespace pfc {
         /* implement the next methods in derived classes
         void computeTmpField(CoordinateEnum coordK, SpectralScalarField<FP, complexFP>& field, double dt);
         */
-        
-        void updateBxSplit();
-        void updateBySplit();
-        void updateBzSplit();
-
-        void updateExSplit();
-        void updateEySplit();
-        void updateEzSplit();
 
         void updateBSplit();
         void updateESplit();
@@ -37,101 +29,82 @@ namespace pfc {
         ScalarField<FP> tmpFieldReal;
         SpectralScalarField<FP, complexFP> tmpFieldComplex;
         FourierTransformField fourierTransform;
-
-    protected:
-        void updateFieldSplit(std::vector<FP>& field,
-            const std::vector<Int3>& index, FP sign);
     };
-
-    template<class TGrid, class TDerived>
-    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateFieldSplit(
-        std::vector<FP>& field, const std::vector<Int3>& index, FP sign)
-    {
-        const int size = index.size();
-
-        OMP_FOR()
-        for (int idx = 0; idx < size; ++idx)
-        {
-            int i = index[idx].x, j = index[idx].y, k = index[idx].z;
-
-            field[idx] += sign * tmpFieldReal(i, j, k);
-        }
-    }
-
-    template<class TGrid, class TDerived>
-    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBxSplit()
-    {
-        TDerived* derived = static_cast<TDerived*>(this);
-        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ez, this->dt * 0.5);
-        updateFieldSplit(this->byx, this->index, -1);
-        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ey, this->dt * 0.5);
-        updateFieldSplit(this->bzx, this->index, +1);
-    }
-
-    template<class TGrid, class TDerived>
-    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBySplit()
-    {
-        TDerived* derived = static_cast<TDerived*>(this);
-        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ex, this->dt * 0.5);
-        updateFieldSplit(this->bzy, this->index, -1);
-        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ez, this->dt * 0.5);
-        updateFieldSplit(this->bxy, this->index, +1);
-    }
-
-    template<class TGrid, class TDerived>
-    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBzSplit()
-    {
-        TDerived* derived = static_cast<TDerived*>(this);
-        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ey, this->dt * 0.5);
-        updateFieldSplit(this->bxz, this->index, -1);
-        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ex, this->dt * 0.5);
-        updateFieldSplit(this->byz, this->index, +1);
-    }
-
-    template<class TGrid, class TDerived>
-    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateExSplit()
-    {
-        TDerived* derived = static_cast<TDerived*>(this);
-        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Bz, this->dt);
-        updateFieldSplit(this->eyx, this->index, +1);
-        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->By, this->dt);
-        updateFieldSplit(this->ezx, this->index, -1);
-    }
-
-    template<class TGrid, class TDerived>
-    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateEySplit()
-    {
-        TDerived* derived = static_cast<TDerived*>(this);
-        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Bx, this->dt);
-        updateFieldSplit(this->ezy, this->index, +1);
-        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Bz, this->dt);
-        updateFieldSplit(this->exy, this->index, -1);
-    }
-
-    template<class TGrid, class TDerived>
-    inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateEzSplit()
-    {
-        TDerived* derived = static_cast<TDerived*>(this);
-        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->By, this->dt);
-        updateFieldSplit(this->exz, this->index, +1);
-        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Bx, this->dt);
-        updateFieldSplit(this->eyz, this->index, -1);
-    }
 
     template<class TGrid, class TDerived>
     inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBSplit()
     {
-        updateBxSplit();
-        updateBySplit();
-        updateBzSplit();
+        TDerived* derived = static_cast<TDerived*>(this);
+
+        const int size = this->splitGrid->getNumPmlNodes();
+
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ez, this->dt * 0.5);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->bxy[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ey, this->dt * 0.5);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->bxz[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ex, this->dt * 0.5);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->byz[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ez, this->dt * 0.5);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->byx[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ey, this->dt * 0.5);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->bzx[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ex, this->dt * 0.5);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->bzy[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
     }
 
     template<class TGrid, class TDerived>
     inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateESplit()
     {
-        updateExSplit();
-        updateEySplit();
-        updateEzSplit();
+        TDerived* derived = static_cast<TDerived*>(this);
+
+        const int size = this->splitGrid->getNumPmlNodes();
+
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Bz, this->dt);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->exy[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->By, this->dt);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->exz[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Bx, this->dt);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->eyz[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Bz, this->dt);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->eyx[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->By, this->dt);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->ezx[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
+
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Bx, this->dt);
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+            this->splitGrid->ezy[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
     }
 
     template<class TGrid, class TDerived>
