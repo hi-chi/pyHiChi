@@ -83,9 +83,9 @@ namespace pfc {
         std::unique_ptr<TFieldGenerator> generator;
 
         // Index space being updated in non-pml area
-        Int3 internalAreaBegin, internalAreaEnd;
+        Int3 internalIndexBegin, internalIndexEnd;
         // Internal index space, const
-        const Int3 domainAreaBegin, domainAreaEnd;
+        const Int3 domainIndexBegin, domainIndexEnd;
 
         FP globalTime = 0.0;
         FP dt = 0.0;
@@ -93,16 +93,16 @@ namespace pfc {
 
     template<class TGrid, class TPml, class TFieldGenerator>
     inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid) :
-        grid(grid), domainAreaBegin(grid->getNumExternalLeftCells()),
-        domainAreaEnd(grid->getNumExternalLeftCells() + grid->numInternalCells)
+        grid(grid), domainIndexBegin(grid->getNumExternalLeftCells()),
+        domainIndexEnd(grid->getNumExternalLeftCells() + grid->numInternalCells)
     {
         updateDomainBorders();
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
     inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid, FP dt) :
-        grid(grid), globalTime(0.0), dt(dt), domainAreaBegin(grid->getNumExternalLeftCells()),
-        domainAreaEnd(grid->getNumExternalLeftCells() + grid->numInternalCells)
+        grid(grid), globalTime(0.0), dt(dt), domainIndexBegin(grid->getNumExternalLeftCells()),
+        domainIndexEnd(grid->getNumExternalLeftCells() + grid->numInternalCells)
     {
         updateDomainBorders();
     }
@@ -126,13 +126,13 @@ namespace pfc {
     template<class TGrid, class TPml, class TFieldGenerator>
     inline void FieldSolver<TGrid, TPml, TFieldGenerator>::updateDomainBorders()
     {
-        this->internalAreaBegin = this->grid->getNumExternalLeftCells();
-        this->internalAreaEnd = this->internalAreaBegin + this->grid->numInternalCells;
+        this->internalIndexBegin = this->grid->getNumExternalLeftCells();
+        this->internalIndexEnd = this->internalIndexBegin + this->grid->numInternalCells;
 
         if (pml)
         {
-            this->internalAreaBegin += pml->sizePML;
-            this->internalAreaEnd -= pml->sizePML;
+            this->internalIndexBegin += pml->sizePML;
+            this->internalIndexEnd -= pml->sizePML;
         }
     }
 
@@ -199,7 +199,7 @@ namespace pfc {
     {
         for (int d = 0; d < this->grid->dimensionality; d++)
             boundaryConditions[d].reset(new TBoundaryCondition(this->grid,
-                (CoordinateEnum)d, this->domainAreaBegin, this->domainAreaEnd));
+                (CoordinateEnum)d, this->domainIndexBegin, this->domainIndexEnd));
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
@@ -212,7 +212,7 @@ namespace pfc {
                 << std::endl;
         }
         boundaryConditions[(int)axis].reset(new TBoundaryCondition(this->grid,
-            axis, this->domainAreaBegin, this->domainAreaEnd));
+            axis, this->domainIndexBegin, this->domainIndexEnd));
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
@@ -221,7 +221,7 @@ namespace pfc {
         for (int d = 0; d < 3; d++)
             if (boundaryConditions[d])
                 boundaryConditions[d].reset(boundaryConditions[d]->createInstance(this->grid,
-                    boundaryConditions[d]->axis, this->domainAreaBegin, this->domainAreaEnd));
+                    boundaryConditions[d]->axis, this->domainIndexBegin, this->domainIndexEnd));
     }
 
 
@@ -250,7 +250,7 @@ namespace pfc {
     inline void RealFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(Int3 sizePML)
     {
         pml.reset(new TPml(this->grid, this->dt, sizePML,
-            this->domainAreaBegin, this->domainAreaEnd));
+            this->domainIndexBegin, this->domainIndexEnd));
         updateDomainBorders();
     }
 
@@ -349,13 +349,13 @@ namespace pfc {
     template<class TGrid, class TPml, class TFieldGenerator>
     inline FP3 SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::getWaveVector(const Int3& ind)
     {
-        // TODO: check number of cells
-        FP kx = (2 * constants::pi * ((ind.x <= this->grid->numCells.x / 2) ? ind.x : ind.x - this->grid->numCells.x)) /
-            (this->grid->steps.x * this->grid->numCells.x);
-        FP ky = (2 * constants::pi * ((ind.y <= this->grid->numCells.y / 2) ? ind.y : ind.y - this->grid->numCells.y)) /
-            (this->grid->steps.y * this->grid->numCells.y);
-        FP kz = (2 * constants::pi * ((ind.z <= this->grid->numCells.z / 2) ? ind.z : ind.z - this->grid->numCells.z)) /
-            (this->grid->steps.z * this->grid->numCells.z);
+        const Int3 domainSize = this->domainIndexEnd - this->domainIndexBegin;
+        FP kx = ((FP)2.0 * constants::pi * ((ind.x <= domainSize.x / 2) ? ind.x : ind.x - domainSize.x)) /
+            (this->grid->steps.x * domainSize.x);
+        FP ky = ((FP)2.0 * constants::pi * ((ind.y <= domainSize.y / 2) ? ind.y : ind.y - domainSize.y)) /
+            (this->grid->steps.y * domainSize.y);
+        FP kz = ((FP)2.0 * constants::pi * ((ind.z <= domainSize.z / 2) ? ind.z : ind.z - domainSize.z)) /
+            (this->grid->steps.z * domainSize.z);
         return FP3(kx, ky, kz);
     }
 
@@ -379,7 +379,7 @@ namespace pfc {
     inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(Int3 sizePML)
     {
         pml.reset(new TPml(this->grid, this->complexGrid.get(), this->dt, sizePML,
-            this->domainAreaBegin, this->domainAreaEnd,
+            this->domainIndexBegin, this->domainIndexEnd,
             this->complexDomainIndexBegin, this->complexDomainIndexEnd));
         updateDomainBorders();
     }

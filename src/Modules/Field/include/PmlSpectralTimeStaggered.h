@@ -110,13 +110,13 @@ namespace pfc {
     template<class TGrid, class TDerived>
     inline FP3 PmlSpectralTimeStaggered<TGrid, TDerived>::getWaveVector(const Int3& ind)
     {
-        // TODO: check number of cells
-        FP kx = (2 * constants::pi * ((ind.x <= this->grid->numCells.x / 2) ? ind.x : ind.x - this->grid->numCells.x)) /
-            (this->grid->steps.x * this->grid->numCells.x);
-        FP ky = (2 * constants::pi * ((ind.y <= this->grid->numCells.y / 2) ? ind.y : ind.y - this->grid->numCells.y)) /
-            (this->grid->steps.y * this->grid->numCells.y);
-        FP kz = (2 * constants::pi * ((ind.z <= this->grid->numCells.z / 2) ? ind.z : ind.z - this->grid->numCells.z)) /
-            (this->grid->steps.z * this->grid->numCells.z);
+        const Int3 domainSize = this->domainIndexEnd - this->domainIndexBegin;
+        FP kx = ((FP)2.0 * constants::pi * ((ind.x <= domainSize.x / 2) ? ind.x : ind.x - domainSize.x)) /
+            (this->grid->steps.x * domainSize.x);
+        FP ky = ((FP)2.0 * constants::pi * ((ind.y <= domainSize.y / 2) ? ind.y : ind.y - domainSize.y)) /
+            (this->grid->steps.y * domainSize.y);
+        FP kz = ((FP)2.0 * constants::pi * ((ind.z <= domainSize.z / 2) ? ind.z : ind.z - domainSize.z)) /
+            (this->grid->steps.z * domainSize.z);
         return FP3(kx, ky, kz);
     }
 
