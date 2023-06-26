@@ -38,32 +38,32 @@ namespace pfc {
 
         const int size = this->splitGrid->getNumPmlNodes();
 
-        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ez, this->dt * 0.5);
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ez, this->dt);
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
             this->splitGrid->bxy[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
 
-        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ey, this->dt * 0.5);
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ey, this->dt);
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
             this->splitGrid->bxz[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
 
-        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ex, this->dt * 0.5);
+        derived->computeTmpField(CoordinateEnum::z, this->complexGrid->Ex, this->dt);
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
             this->splitGrid->byz[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
 
-        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ez, this->dt * 0.5);
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ez, this->dt);
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
             this->splitGrid->byx[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
 
-        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ey, this->dt * 0.5);
+        derived->computeTmpField(CoordinateEnum::x, this->complexGrid->Ey, this->dt);
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
             this->splitGrid->bzx[idx] -= this->tmpFieldReal(this->splitGrid->getIndex3d(idx));
 
-        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ex, this->dt * 0.5);
+        derived->computeTmpField(CoordinateEnum::y, this->complexGrid->Ex, this->dt);
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
             this->splitGrid->bzy[idx] += this->tmpFieldReal(this->splitGrid->getIndex3d(idx));

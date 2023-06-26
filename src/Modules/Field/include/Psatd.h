@@ -92,8 +92,6 @@ namespace pfc {
         // applyBoundaryConditionsB(globalTime + dt);
         // applyBoundaryConditionsE(globalTime + dt);
 
-        if (pml) pml->updateBSplit();
-
         doFourierTransform(fourier_transform::Direction::CtoR);
 
         if (pml) pml->updateB();

@@ -91,7 +91,6 @@ namespace pfc {
         // if (generator) generator->generateE(globalTime + dt * 0.5);  // send current B time
         // applyBoundaryConditionsE(globalTime + dt);
 
-        if (pml) pml->updateBSplit();
         updateHalfB();
         // applyBoundaryConditionsB(globalTime + dt);
 
