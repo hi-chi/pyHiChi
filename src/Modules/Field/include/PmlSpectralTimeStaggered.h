@@ -12,9 +12,9 @@ namespace pfc {
             PmlSpectral<TGrid>(grid, complexGrid, dt, sizePML, domainIndexBegin, domainIndexEnd,
                 complexDomainIndexBegin, complexDomainIndexEnd),
             tmpFieldReal(this->grid->sizeStorage),
-            tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(this->grid->numCells))
+            tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(domainIndexEnd - domainIndexBegin))
         {
-            fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, this->grid->numCells);
+            fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, domainIndexEnd - domainIndexBegin);
         }
 
         /* implement the next methods in derived classes

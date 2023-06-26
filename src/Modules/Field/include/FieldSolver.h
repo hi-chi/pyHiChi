@@ -365,7 +365,7 @@ namespace pfc {
     template<class TGrid, class TPml, class TFieldGenerator>
     inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::initComplexPart() {
         complexGrid.reset(new SpectralGrid<FP, complexFP>(
-            fourier_transform::getSizeOfComplexArray(this->grid->numCells),
+            fourier_transform::getSizeOfComplexArray(this->domainIndexEnd - this->domainIndexBegin),
             this->grid->globalGridDims, this->grid));
         fourierTransform.initialize<TGrid>(this->grid, this->complexGrid.get());
         updateComplexDomainBorders();
