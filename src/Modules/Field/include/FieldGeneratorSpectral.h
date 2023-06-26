@@ -12,16 +12,19 @@ namespace pfc
         using FunctionType = typename FieldGenerator<TGrid>::FunctionType;
 
         FieldGeneratorSpectral(TGrid* grid, FP dt,
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
             FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator<TGrid>(grid, dt, leftGenIndex, rightGenIndex,
+            FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
+                leftGenIndex, rightGenIndex,
                 bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
         FieldGeneratorSpectral(TGrid* grid, FP dt,
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             /* first index is index of edge (x, y, z),
             second index is index of field component (ex, ey, ez or bx, by, bz) */
@@ -31,21 +34,25 @@ namespace pfc
             const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator<TGrid>(grid, dt, leftGenIndex, rightGenIndex,
+            FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
+                leftGenIndex, rightGenIndex,
                 leftBFunc, rightBFunc, leftEFunc, rightEFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
         FieldGeneratorSpectral(TGrid* grid, FP dt,
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& bFunc,
             const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator<TGrid>(grid, dt, leftGenIndex, rightGenIndex,
+            FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
+                leftGenIndex, rightGenIndex,
                 bFunc, eFunc, isLeftBorderEnabled, isRightBorderEnabled) {}
 
-        FieldGeneratorSpectral(TGrid* grid, FP dt, const FieldGeneratorSpectral& gen) :
-            FieldGenerator<TGrid>(grid, dt, gen) {}
+        FieldGeneratorSpectral(TGrid* grid, FP dt, const Int3& domainIndexBegin,
+            const Int3& domainIndexEnd, const FieldGeneratorSpectral& gen) :
+            FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd, gen) {}
 
         void generateB(FP time) {}
         void generateE(FP time) {}

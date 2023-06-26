@@ -10,16 +10,19 @@ namespace pfc
         using FunctionType = typename FieldGenerator<YeeGrid>::FunctionType;
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
             FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(grid, dt, leftGenIndex, rightGenIndex,
+            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, 
+                leftGenIndex, rightGenIndex,
                 bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             /* first index is index of edge (x, y, z),
             second index is index of field component (ex, ey, ez or bx, by, bz) */
@@ -29,21 +32,25 @@ namespace pfc
             const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(grid, dt, leftGenIndex, rightGenIndex,
+            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, 
+                leftGenIndex, rightGenIndex,
                 leftBFunc, rightBFunc, leftEFunc, rightEFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
             const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& bFunc,
             const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(grid, dt, leftGenIndex, rightGenIndex,
-                bFunc, eFunc, isLeftBorderEnabled, isRightBorderEnabled) {}
+            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd,
+                leftGenIndex, rightGenIndex, bFunc, eFunc,
+                isLeftBorderEnabled, isRightBorderEnabled) {}
 
-        FieldGeneratorFdtd(YeeGrid* grid, FP dt, const FieldGeneratorFdtd& gen) :
-            FieldGenerator(grid, dt, gen) {}
+        FieldGeneratorFdtd(YeeGrid* grid, FP dt, const Int3& domainIndexBegin,
+            const Int3& domainIndexEnd, const FieldGeneratorFdtd& gen) :
+            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, gen) {}
 
         void generateB(FP time);
         void generateE(FP time);
@@ -78,15 +85,14 @@ namespace pfc
                 rightGeneratorIndex[dim0]
             };
 
-            // TODO: check border indices
             int begin1 = isLeftBorderEnabled[dim1] ?
-                leftGeneratorIndex[dim1] : 0;
+                leftGeneratorIndex[dim1] : this->domainIndexBegin[dim1];
             int begin2 = isLeftBorderEnabled[dim2] ?
-                leftGeneratorIndex[dim2] : 0;
+                leftGeneratorIndex[dim2] : this->domainIndexBegin[dim2];
             int end1 = isRightBorderEnabled[dim1] ?
-                rightGeneratorIndex[dim1] : this->grid->numCells[dim1];
+                rightGeneratorIndex[dim1] : this->domainIndexEnd[dim1];
             int end2 = isRightBorderEnabled[dim2] ?
-                rightGeneratorIndex[dim2] : this->grid->numCells[dim2];
+                rightGeneratorIndex[dim2] : this->domainIndexEnd[dim2];
 
             Int3 isBorderEnabled[2] = { isLeftBorderEnabled, isRightBorderEnabled };
 
@@ -130,15 +136,14 @@ namespace pfc
                 rightGeneratorIndex[dim0]
             };
 
-            // TODO: check border indices
             int begin1 = isLeftBorderEnabled[dim1] ?
-                leftGeneratorIndex[dim1] : 0;
+                leftGeneratorIndex[dim1] : this->domainIndexBegin[dim1];
             int begin2 = isLeftBorderEnabled[dim2] ?
-                leftGeneratorIndex[dim2] : 0;
+                leftGeneratorIndex[dim2] : this->domainIndexBegin[dim2];
             int end1 = isRightBorderEnabled[dim1] ?
-                rightGeneratorIndex[dim1] : this->grid->numCells[dim1];
+                rightGeneratorIndex[dim1] : this->domainIndexEnd[dim1];
             int end2 = isRightBorderEnabled[dim2] ?
-                rightGeneratorIndex[dim2] : this->grid->numCells[dim2];
+                rightGeneratorIndex[dim2] : this->domainIndexEnd[dim2];
 
             Int3 isBorderEnabled[2] = { isLeftBorderEnabled, isRightBorderEnabled };
 

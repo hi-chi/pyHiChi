@@ -1,6 +1,7 @@
 #pragma once
 #include "Enums.h"
 #include "Vectors.h"
+#include "Grid.h"
 
 namespace pfc
 {

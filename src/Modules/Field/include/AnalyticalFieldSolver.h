@@ -11,7 +11,7 @@ namespace pfc {
 
         using GridType = AnalyticalField;  // AnalyticalField plays a grid role
 
-        AnalyticalFieldSolver(AnalyticalField* field) : field(field) {}  // used when save/load
+        AnalyticalFieldSolver(AnalyticalField* field) : field(field) {}  // use when load
         AnalyticalFieldSolver(AnalyticalField* field, FP dt) : field(field), dt(dt) {}
 
         void updateFields() {
