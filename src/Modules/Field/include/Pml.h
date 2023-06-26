@@ -28,6 +28,9 @@ namespace pfc {
 
         Int3 sizePML;
         Int3 leftPmlBorder, rightPmlBorder;
+        FP3 leftPmlBorderCoord, rightPmlBorderCoord;
+        FP3 leftGlobalBorderCoord, rightGlobalBorderCoord;
+
         Int3 domainIndexBegin, domainIndexEnd;  // internal domain area including pml
 
     protected:
@@ -68,9 +71,14 @@ namespace pfc {
     {
         checkGridAndPmlSize(this->grid->globalGridDims);
 
-        // TODO: consider that pml is only in edge domains
-        this->leftPmlBorder = this->sizePML + this->grid->getNumExternalLeftCells();
-        this->rightPmlBorder = this->leftPmlBorder + (this->grid->numInternalCells - 2 * this->sizePML);
+        // TODO: consider local domain borders
+        this->leftPmlBorder = this->sizePML + this->domainIndexBegin;
+        this->rightPmlBorder = this->domainIndexEnd - this->sizePML;
+        this->leftGlobalBorderCoord = FP3(0, 0, 0);
+        this->rightGlobalBorderCoord = this->leftGlobalBorderCoord +
+            this->grid->steps * (FP3)(this->domainIndexEnd - this->domainIndexBegin);
+        this->leftPmlBorderCoord = this->leftGlobalBorderCoord + this->grid->steps * (FP3)this->sizePML;
+        this->rightPmlBorderCoord = this->rightGlobalBorderCoord - this->grid->steps * (FP3)this->sizePML;
 
         this->splitGrid.reset(new PmlSplitGrid(this->leftPmlBorder, this->rightPmlBorder,
             this->domainIndexBegin, this->domainIndexEnd));
@@ -82,16 +90,11 @@ namespace pfc {
     {
         int d = (int)axis;
 
-        FP globalLeftBorderCoord = this->grid->origin[d];
-        FP globalRightBorderCoord = this->grid->origin[d] + this->grid->steps[d] * this->grid->numCells[d];
-        FP leftPmlBorderCoord = this->grid->origin[d] + this->grid->steps[d] * leftPmlBorder[d];
-        FP rightPmlBorderCoord = this->grid->origin[d] + this->grid->steps[d] * rightPmlBorder[d];
-
         FP distance;
-        if (coord < leftPmlBorderCoord)
-            distance = (leftPmlBorderCoord - coord) / (leftPmlBorderCoord - globalLeftBorderCoord);
-        else if (coord >= rightPmlBorderCoord)
-            distance = (coord - rightPmlBorderCoord) / (globalRightBorderCoord - rightPmlBorderCoord);
+        if (coord < leftPmlBorderCoord[d])
+            distance = (leftPmlBorderCoord[d] - coord) / (leftPmlBorderCoord[d] - leftGlobalBorderCoord[d]);
+        else if (coord >= rightPmlBorderCoord[d])
+            distance = (coord - rightPmlBorderCoord[d]) / (rightGlobalBorderCoord[d] - rightPmlBorderCoord[d]);
         else distance = 0;
 
         return this->maxSigma[d] * pow(distance, (FP)n);
