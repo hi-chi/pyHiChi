@@ -83,13 +83,13 @@ namespace pfc {
 
         if (pml) pml->updateBSplit();
         updateHalfB();
-        // applyBoundaryConditionsB(globalTime + dt * 0.5);
         // if (generator) generator->generateB(globalTime);  // send current E time
+        // applyBoundaryConditionsB(globalTime + dt * 0.5);
 
         if (pml) pml->updateESplit();
         updateE();
-        // applyBoundaryConditionsE(globalTime + dt);
         // if (generator) generator->generateE(globalTime + dt * 0.5);  // send current B time
+        // applyBoundaryConditionsE(globalTime + dt);
 
         if (pml) pml->updateBSplit();
         updateHalfB();

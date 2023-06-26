@@ -162,8 +162,7 @@ namespace pfc {
         const Int3& isRightBorderEnabled = Int3(1, 1, 1))
     {
         generator.reset(new TFieldGenerator(
-            this->grid, this->dt,
-            this->domainIndexBegin, this->domainIndexEnd,
+            this->grid, this->dt, this->domainIndexBegin, this->domainIndexEnd,
             leftGenIndex, rightGenIndex,
             bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
             isLeftBorderEnabled, isRightBorderEnabled)
@@ -183,8 +182,7 @@ namespace pfc {
         const Int3& isRightBorderEnabled = Int3(1, 1, 1))
     {
         generator.reset(new TFieldGenerator(
-            this->grid, this->dt,
-            this->domainIndexBegin, this->domainIndexEnd,
+            this->grid, this->dt, this->domainIndexBegin, this->domainIndexEnd,
             leftGenIndex, rightGenIndex,
             leftBFunc, rightBFunc, leftEFunc, rightEFunc,
             isLeftBorderEnabled, isRightBorderEnabled)

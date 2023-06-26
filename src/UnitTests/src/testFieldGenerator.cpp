@@ -97,9 +97,19 @@ public:
         auto eyFunc = [eFunc](FP x, FP y, FP z, FP t) { return eFunc(x, y, z, t).y; };
         auto ezFunc = [eFunc](FP x, FP y, FP z, FP t) { return eFunc(x, y, z, t).z; };
 
-        fieldSolver->setFieldGenerator(generatorStartIndex, generatorEndIndex,
+        setFieldGenerator(generatorStartIndex, generatorEndIndex,
             bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc);
     }
+
+    virtual void setFieldGenerator(
+        Int3 generatorStartIndex, Int3 generatorEndIndex,
+        std::function<FP(FP, FP, FP, FP)> bxFunc,
+        std::function<FP(FP, FP, FP, FP)> byFunc,
+        std::function<FP(FP, FP, FP, FP)> bzFunc,
+        std::function<FP(FP, FP, FP, FP)> exFunc,
+        std::function<FP(FP, FP, FP, FP)> eyFunc,
+        std::function<FP(FP, FP, FP, FP)> ezFunc
+    ) = 0;
 
     FP computeAmp() {
         FP amp = 0;
@@ -123,10 +133,132 @@ typedef ::testing::Types <
     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>
 > types;
-TYPED_TEST_CASE(FieldGeneratorTest, types);
 
 
-TYPED_TEST(FieldGeneratorTest, FieldGeneratorTestPlaneWave) {
+template <class TTypeDefinitionsFieldTest>
+class FieldGeneratorTestAllBorders : public FieldGeneratorTest<TTypeDefinitionsFieldTest> {
+public:
+
+    virtual void setFieldGenerator(
+        Int3 generatorStartIndex, Int3 generatorEndIndex,
+        std::function<FP(FP, FP, FP, FP)> bxFunc,
+        std::function<FP(FP, FP, FP, FP)> byFunc,
+        std::function<FP(FP, FP, FP, FP)> bzFunc,
+        std::function<FP(FP, FP, FP, FP)> exFunc,
+        std::function<FP(FP, FP, FP, FP)> eyFunc,
+        std::function<FP(FP, FP, FP, FP)> ezFunc
+        )
+    {
+        this->fieldSolver->setFieldGenerator(generatorStartIndex, generatorEndIndex,
+            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc);
+    }
+
+};
+TYPED_TEST_CASE(FieldGeneratorTestAllBorders, types);
+
+TYPED_TEST(FieldGeneratorTestAllBorders, FieldGeneratorTestAllBorders) {
+    // to disable testing of spectral solvers without enabled fftw
+#ifndef __USE_FFT__
+    SUCCEED();
+#else
+
+    for (int step = 0; step < this->numSteps; ++step) {
+        this->fieldSolver->updateFields();
+    }
+
+    FP finalAmp = this->computeAmp();
+
+    ASSERT_NEAR(finalAmp, 0, this->relatedAmpThreshold);
+
+#endif
+}
+
+
+template <class TTypeDefinitionsFieldTest>
+class FieldGeneratorTestOneBorderConstructor1 : public FieldGeneratorTest<TTypeDefinitionsFieldTest> {
+public:
+
+    virtual void setFieldGenerator(
+        Int3 generatorStartIndex, Int3 generatorEndIndex,
+        std::function<FP(FP, FP, FP, FP)> bxFunc,
+        std::function<FP(FP, FP, FP, FP)> byFunc,
+        std::function<FP(FP, FP, FP, FP)> bzFunc,
+        std::function<FP(FP, FP, FP, FP)> exFunc,
+        std::function<FP(FP, FP, FP, FP)> eyFunc,
+        std::function<FP(FP, FP, FP, FP)> ezFunc
+        )
+    {
+        using PeriodicalBCType = typename FieldGeneratorTest<TTypeDefinitionsFieldTest>::BoundaryConditionType;
+        Int3 enabledBorders;
+        enabledBorders[(int)axis] = 1;
+
+        this->fieldSolver->setFieldGenerator(generatorStartIndex, generatorEndIndex,
+            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc, enabledBorders, enabledBorders
+        );
+
+        for (int d = 1; d < this->grid->dimensionality; d++)
+            this->fieldSolver->template setBoundaryCondition<PeriodicalBCType>((CoordinateEnum)d);
+    }
+
+};
+TYPED_TEST_CASE(FieldGeneratorTestOneBorderConstructor1, types);
+
+TYPED_TEST(FieldGeneratorTestOneBorderConstructor1, FieldGeneratorTestOneBorder) {
+    // to disable testing of spectral solvers without enabled fftw
+#ifndef __USE_FFT__
+    SUCCEED();
+#else
+
+    for (int step = 0; step < this->numSteps; ++step) {
+        this->fieldSolver->updateFields();
+    }
+
+    FP finalAmp = this->computeAmp();
+
+    ASSERT_NEAR(finalAmp, 0, this->relatedAmpThreshold);
+
+#endif
+}
+
+
+template <class TTypeDefinitionsFieldTest>
+class FieldGeneratorTestOneBorderConstructor2 : public FieldGeneratorTest<TTypeDefinitionsFieldTest> {
+public:
+
+    virtual void setFieldGenerator(
+        Int3 generatorStartIndex, Int3 generatorEndIndex,
+        std::function<FP(FP, FP, FP, FP)> bxFunc,
+        std::function<FP(FP, FP, FP, FP)> byFunc,
+        std::function<FP(FP, FP, FP, FP)> bzFunc,
+        std::function<FP(FP, FP, FP, FP)> exFunc,
+        std::function<FP(FP, FP, FP, FP)> eyFunc,
+        std::function<FP(FP, FP, FP, FP)> ezFunc
+        )
+    {
+        using PeriodicalBCType = typename FieldGeneratorTest<TTypeDefinitionsFieldTest>::BoundaryConditionType;
+        Int3 enabledBorders;
+        enabledBorders[(int)axis] = 1;
+
+        std::function<FP(FP, FP, FP, FP)> zero = field_generator::defaultFieldFunction;
+        using ArgType = std::array<std::array<std::function<FP(FP, FP, FP, FP)>, 3>, 3>;
+        using ArgType2 = std::array<std::function<FP(FP, FP, FP, FP)>, 3>;
+        ArgType bLeft =  { ArgType2{bxFunc, byFunc, bzFunc}, ArgType2{zero, zero, zero}, ArgType2{zero, zero, zero} };
+        ArgType bRight = { ArgType2{bxFunc, byFunc, bzFunc}, ArgType2{zero, zero, zero}, ArgType2{zero, zero, zero} };
+        ArgType eLeft =  { ArgType2{exFunc, eyFunc, ezFunc}, ArgType2{zero, zero, zero}, ArgType2{zero, zero, zero} };
+        ArgType eRight = { ArgType2{exFunc, eyFunc, ezFunc}, ArgType2{zero, zero, zero}, ArgType2{zero, zero, zero} };
+
+        this->fieldSolver->setFieldGenerator(generatorStartIndex, generatorEndIndex,
+            bLeft, bRight, eLeft, eRight, enabledBorders, enabledBorders
+        );
+
+        for (int d = 1; d < this->grid->dimensionality; d++)
+            this->fieldSolver->template setBoundaryCondition<PeriodicalBCType>((CoordinateEnum)d);
+    }
+
+};
+TYPED_TEST_CASE(FieldGeneratorTestOneBorderConstructor2, types);
+
+TYPED_TEST(FieldGeneratorTestOneBorderConstructor2, FieldGeneratorTestOneBorder) {
     // to disable testing of spectral solvers without enabled fftw
 #ifndef __USE_FFT__
     SUCCEED();
