@@ -42,7 +42,7 @@ namespace pfc
                 indexL[dim2] = indexR[dim2] = k;
 
                 indexL[dim0] = this->leftBorderIndex[dim0] - 1;
-                indexR[dim0] = indexL[dim0] + this->grid->numInternalCells[dim0];
+                indexR[dim0] = this->rightBorderIndex[dim0] - 1;
 
                 fx(indexL) = fx(indexR);
                 fy(indexL) = fy(indexR);
@@ -94,7 +94,7 @@ namespace pfc
                 indexL[dim2] = indexR[dim2] = k;
 
                 indexL[dim0] = this->leftBorderIndex[dim0] - 1;
-                indexR[dim0] = indexL[dim0] + this->grid->numInternalCells[dim0];
+                indexR[dim0] = this->rightBorderIndex[dim0] - 1;
 
                 this->grid->Ex(indexL) = (FP)0.0;
                 this->grid->Ey(indexL) = (FP)0.0;

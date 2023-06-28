@@ -808,6 +808,10 @@ namespace pfc
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz) {
             static_cast<TPyField*>(this)->getFieldSolver()->setPML(sizePMLx, sizePMLy, sizePMLz);
         }
+
+        void setPML(const FP3& sizePML) {
+            static_cast<TPyField*>(this)->getFieldSolver()->setPML((Int3)sizePML);
+        }
     };
 
 

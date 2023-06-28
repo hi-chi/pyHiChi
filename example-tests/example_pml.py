@@ -53,6 +53,7 @@ field = hichi.PSTDField(field_size, min_coords, field_step, time_step)
 field.set_E(value_Ex, value_Ey, value_Ez)
 field.set_B(value_Bx, value_By, value_Bz)
 field.set_PML(int(pml_size.x), int(pml_size.y), int(pml_size.z))
+field.set_periodical_BC()
 
 
 # ------------------- show -------------------

@@ -466,8 +466,10 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyYeeField)
         SET_SCALAR_FIELD_METHODS(pyYeeField)
         SET_COMMON_FIELD_METHODS(pyYeeField)
-        .def("set_PML", &pyYeeField::setPML,
+        .def("set_PML", (void (pyYeeField::*)(int, int, int))& pyYeeField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("set_PML", (void (pyYeeField::*)(const FP3&))& pyYeeField::setPML,
+            py::arg("pml_size"))
         .def("set_periodical_BC", (void (pyYeeField::*)())
             &pyYeeField::setPeriodicalBoundaryCondition)
         .def("set_periodical_BC", (void (pyYeeField::*)(CoordinateEnum))
@@ -489,8 +491,10 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSTDField)
         SET_SCALAR_FIELD_METHODS(pyPSTDField)
         SET_COMMON_FIELD_METHODS(pyPSTDField)
-        .def("set_PML", &pyPSTDField::setPML,
+        .def("set_PML", (void (pyPSTDField::*)(int, int, int))& pyPSTDField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("set_PML", (void (pyPSTDField::*)(const FP3&))& pyPSTDField::setPML,
+            py::arg("pml_size"))
         .def("set_periodical_BC", (void (pyPSTDField::*)())
             &pyPSTDField::setPeriodicalBoundaryCondition)
         .def("set_periodical_BC", (void (pyPSTDField::*)(CoordinateEnum))
@@ -511,8 +515,10 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDField)
         SET_SCALAR_FIELD_METHODS(pyPSATDField)
         SET_COMMON_FIELD_METHODS(pyPSATDField)
-        .def("set_PML", &pyPSATDField::setPML,
+        .def("set_PML", (void (pyPSATDField::*)(int, int, int))& pyPSATDField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("set_PML", (void (pyPSATDField::*)(const FP3&))& pyPSATDField::setPML,
+            py::arg("pml_size"))
         .def("set_periodical_BC", (void (pyPSATDField::*)())& pyPSATDField::setPeriodicalBoundaryCondition)
         .def("set_periodical_BC", (void (pyPSATDField::*)(CoordinateEnum))& pyPSATDField::setPeriodicalBoundaryCondition,
             py::arg("axis"))
@@ -533,8 +539,10 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDPoissonField)
         SET_SCALAR_FIELD_METHODS(pyPSATDPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDPoissonField)
-        .def("set_PML", &pyPSATDPoissonField::setPML,
+        .def("set_PML", (void (pyPSATDPoissonField::*)(int, int, int))& pyPSATDPoissonField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("set_PML", (void (pyPSATDPoissonField::*)(const FP3&))& pyPSATDPoissonField::setPML,
+            py::arg("pml_size"))
         .def("set_periodical_BC", (void (pyPSATDPoissonField::*)())& pyPSATDPoissonField::setPeriodicalBoundaryCondition)
         .def("set_periodical_BC", (void (pyPSATDPoissonField::*)(CoordinateEnum))
             &pyPSATDPoissonField::setPeriodicalBoundaryCondition, py::arg("axis"))
@@ -555,8 +563,10 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStaggeredField)
         SET_SCALAR_FIELD_METHODS(pyPSATDTimeStaggeredField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStaggeredField)
-        .def("set_PML", &pyPSATDTimeStaggeredField::setPML,
+        .def("set_PML", (void (pyPSATDTimeStaggeredField::*)(int, int, int))& pyPSATDTimeStaggeredField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("set_PML", (void (pyPSATDTimeStaggeredField::*)(const FP3&))& pyPSATDTimeStaggeredField::setPML,
+            py::arg("pml_size"))
         .def("set_periodical_BC", (void (pyPSATDTimeStaggeredField::*)())
             &pyPSATDTimeStaggeredField::setPeriodicalBoundaryCondition)
         .def("set_periodical_BC", (void (pyPSATDTimeStaggeredField::*)(CoordinateEnum))
@@ -578,8 +588,10 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
         SET_SCALAR_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
-        .def("set_PML", &pyPSATDTimeStaggeredPoissonField::setPML,
+        .def("set_PML", (void (pyPSATDTimeStaggeredPoissonField::*)(int, int, int))& pyPSATDTimeStaggeredPoissonField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
+        .def("set_PML", (void (pyPSATDTimeStaggeredPoissonField::*)(const FP3&))& pyPSATDTimeStaggeredPoissonField::setPML,
+            py::arg("pml_size"))
         .def("set_periodical_BC", (void (pyPSATDTimeStaggeredPoissonField::*)())
             &pyPSATDTimeStaggeredPoissonField::setPeriodicalBoundaryCondition)
         .def("set_periodical_BC", (void (pyPSATDTimeStaggeredPoissonField::*)(CoordinateEnum))

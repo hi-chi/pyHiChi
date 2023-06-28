@@ -71,12 +71,11 @@ namespace pfc {
     {
         checkGridAndPmlSize(this->grid->globalGridDims);
 
-        // TODO: consider local domain borders
+        // TODO: consider global and local domain borders
         this->leftPmlBorder = this->sizePML + this->domainIndexBegin;
         this->rightPmlBorder = this->domainIndexEnd - this->sizePML;
-        this->leftGlobalBorderCoord = FP3(0, 0, 0);
-        this->rightGlobalBorderCoord = this->leftGlobalBorderCoord +
-            this->grid->steps * (FP3)(this->domainIndexEnd - this->domainIndexBegin);
+        this->leftGlobalBorderCoord = this->grid->origin + (FP3)this->domainIndexBegin * this->grid->steps;
+        this->rightGlobalBorderCoord = this->grid->origin + (FP3)this->domainIndexEnd * this->grid->steps;
         this->leftPmlBorderCoord = this->leftGlobalBorderCoord + this->grid->steps * (FP3)this->sizePML;
         this->rightPmlBorderCoord = this->rightGlobalBorderCoord - this->grid->steps * (FP3)this->sizePML;
 
