@@ -35,7 +35,7 @@ public:
         for (int d = 0; d < dimension; d++) {
             gridSize[d] = gridSizeTransverse;
         }
-        gridSize[(int)axis] = gridSizeLongitudinal;
+        gridSize[(int)this->axis] = gridSizeLongitudinal;
 
         this->minCoords = FP3(0, 0, 0);
         this->maxCoords = (FP3)gridSize * constants::c;
@@ -48,7 +48,7 @@ public:
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
         fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
            
-        this->numSteps = 2 * (int)((this->maxCoords - this->minCoords)[(int)axis] /
+        this->numSteps = 2 * (int)((this->maxCoords - this->minCoords)[(int)this->axis] /
             (constants::c * fieldSolver->dt));
 
         initializeGenerator();
@@ -63,10 +63,10 @@ public:
         }
 
         int axis0 = (int)this->axis;
-        int axis1 = ((int)axis + 1) % 3;
-        int axis2 = ((int)axis + 2) % 3;
+        int axis1 = ((int)this->axis + 1) % 3;
+        int axis2 = ((int)this->axis + 2) % 3;
 
-        FP L = (this->maxCoords - this->minCoords)[(int)axis];
+        FP L = (this->maxCoords - this->minCoords)[(int)this->axis];
 
         auto fieldFunc = [axis0, L](FP x, FP y, FP z, FP t) {
             FP coord = (FP3(x, y, z)[axis0] - constants::c * t) / L;
@@ -190,7 +190,7 @@ public:
     {
         using PeriodicalBCType = typename FieldGeneratorTest<TTypeDefinitionsFieldTest>::BoundaryConditionType;
         Int3 enabledBorders;
-        enabledBorders[(int)axis] = 1;
+        enabledBorders[(int)this->axis] = 1;
 
         this->fieldSolver->setFieldGenerator(generatorStartIndex, generatorEndIndex,
             bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc, enabledBorders, enabledBorders
@@ -237,7 +237,7 @@ public:
     {
         using PeriodicalBCType = typename FieldGeneratorTest<TTypeDefinitionsFieldTest>::BoundaryConditionType;
         Int3 enabledBorders;
-        enabledBorders[(int)axis] = 1;
+        enabledBorders[(int)this->axis] = 1;
 
         std::function<FP(FP, FP, FP, FP)> zero = field_generator::defaultFieldFunction;
         using ArgType = std::array<std::array<std::function<FP(FP, FP, FP, FP)>, 3>, 3>;
