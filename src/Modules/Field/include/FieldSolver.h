@@ -365,7 +365,7 @@ namespace pfc {
         this->complexGrid.reset(new SpectralGrid<FP, complexFP>(
             fourier_transform::getSizeOfComplexArray(this->domainIndexEnd - this->domainIndexBegin),
             this->grid->globalGridDims, this->grid));
-        this->fourierTransform.initialize<TGrid>(this->grid, this->complexGrid.get());
+        this->fourierTransform.template initialize<TGrid>(this->grid, this->complexGrid.get());
         this->updateComplexDomainBorders();
     }
 
