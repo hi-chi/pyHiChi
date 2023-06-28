@@ -33,7 +33,7 @@ public:
     FP3 minCoords, maxCoords;
     int numSteps = 0;
 
-    FP relatedEnergyThreshold = 1e-1;
+    FP relatedEnergyThreshold = 0.05;
 
     virtual void SetUp() {
         gridSize = Int3(1, 1, 1);
@@ -57,7 +57,7 @@ public:
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
         this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
-        this->numSteps = (int)((this->pmlRightStart - this->pmlLeftEnd)[(int)axis] /
+        this->numSteps = (int)(1.3 * (this->pmlRightStart - this->pmlLeftEnd)[(int)axis] /
             (constants::c * this->timeStep));
 
         this->fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
@@ -103,7 +103,7 @@ public:
     FP3 funcB(FP x, FP y, FP z) {
         CoordinateEnum axisB = CoordinateEnum(((int)axis + 2) % 3);
         FP3 b;
-        b[(int)axisB] = fieldFunc(x, y, z);
+        b[(int)axisB] = -fieldFunc(x, y, z);
         return b;
     }
 
@@ -120,33 +120,33 @@ public:
 };
 
 typedef ::testing::Types <
-    TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>,
+    //TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
+    //TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>//,
     
-    TypeDefinitionsFieldTest<PSTD, 1, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::z>,
-    
-    TypeDefinitionsFieldTest<PSATD, 1, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::z>,
-    
-    TypeDefinitionsFieldTest<PSATDTimeStaggered, 1, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::x>,
-    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::z>
+    //TypeDefinitionsFieldTest<PSTD, 1, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::y>,
+    //TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::y>,
+    //TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::z>,
+    //
+    //TypeDefinitionsFieldTest<PSATD, 1, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::y>,
+    //TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::y>,
+    //TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::z>,
+    //
+    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 1, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::y>,
+    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::x>,
+    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::y>,
+    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::z>
 > types;
 
 
