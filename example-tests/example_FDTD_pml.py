@@ -62,10 +62,8 @@ N = 100
 x = np.linspace(min_coords.x, max_coords.x, N)
 z = np.linspace(min_coords.z, max_coords.z, N)
 
-
 def get_fields():
     global field, x, z, N
-    #print(field)
     Ex = np.zeros(shape=(N,N))
     Ey = np.zeros(shape=(N,N))
     Ez = np.zeros(shape=(N,N))
@@ -74,7 +72,7 @@ def get_fields():
     Bz = np.zeros(shape=(N,N))
     for ix in range(N):
         for iy in range(N):
-            coord_xz = hichi.Vector3d(x[ix], 0.0, z[iy])
+            coord_xz = hichi.Vector3d(x[ix], (max_coords.y - min_coords.y)*0.5, z[iy])
             E = field.get_E(coord_xz)
             Ex[ix, iy] = E.x
             Ey[ix, iy] = E.y
@@ -154,5 +152,3 @@ ani = animation.FuncAnimation(fig, update_fig, interval=50, blit=True)
 plt.tight_layout()
 
 plt.show()
-
-
