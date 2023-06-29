@@ -39,12 +39,18 @@ namespace pfc
         FieldGenerator(TGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            /* first index is index of edge (x, y, z),
-            second index is index of field component (ex, ey, ez or bx, by, bz) */
-            const std::array<std::array<FunctionType, 3>, 3>& leftBFunc,
-            const std::array<std::array<FunctionType, 3>, 3>& rightBFunc,
-            const std::array<std::array<FunctionType, 3>, 3>& leftEFunc,
-            const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
+            const std::array<FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
+            const std::array<FunctionType, 3>& xRightBFunc,
+            const std::array<FunctionType, 3>& yLeftBFunc,
+            const std::array<FunctionType, 3>& yRightBFunc,
+            const std::array<FunctionType, 3>& zLeftBFunc,
+            const std::array<FunctionType, 3>& zRightBFunc,
+            const std::array<FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
+            const std::array<FunctionType, 3>& xRightEFunc,
+            const std::array<FunctionType, 3>& yLeftEFunc,
+            const std::array<FunctionType, 3>& yRightEFunc,
+            const std::array<FunctionType, 3>& zLeftEFunc,
+            const std::array<FunctionType, 3>& zRightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
@@ -129,25 +135,30 @@ namespace pfc
     inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
         const Int3& domainIndexBegin, const Int3& domainIndexEnd,
         const Int3& leftGenIndex, const Int3& rightGenIndex,
-        const std::array<std::array<FunctionType, 3>, 3>& leftBFunc,
-        const std::array<std::array<FunctionType, 3>, 3>& rightBFunc,
-        const std::array<std::array<FunctionType, 3>, 3>& leftEFunc,
-        const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
+        const std::array<FunctionType, 3>& xLeftBFunc,
+        const std::array<FunctionType, 3>& xRightBFunc,
+        const std::array<FunctionType, 3>& yLeftBFunc,
+        const std::array<FunctionType, 3>& yRightBFunc,
+        const std::array<FunctionType, 3>& zLeftBFunc,
+        const std::array<FunctionType, 3>& zRightBFunc,
+        const std::array<FunctionType, 3>& xLeftEFunc,
+        const std::array<FunctionType, 3>& xRightEFunc,
+        const std::array<FunctionType, 3>& yLeftEFunc,
+        const std::array<FunctionType, 3>& yRightEFunc,
+        const std::array<FunctionType, 3>& zLeftEFunc,
+        const std::array<FunctionType, 3>& zRightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
         FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
             leftGenIndex, rightGenIndex, isLeftBorderEnabled, isRightBorderEnabled)
     {
-        for (int edge = 0; edge < 3; edge++)
-            for (int comp = 0; comp < 3; comp++) {
-                setFunction(FieldEnum::B, (CoordinateEnum)comp,
-                    (CoordinateEnum)edge, SideEnum::LEFT, leftBFunc[edge][comp]);
-                setFunction(FieldEnum::B, (CoordinateEnum)comp,
-                    (CoordinateEnum)edge, SideEnum::RIGHT, rightBFunc[edge][comp]);
-                setFunction(FieldEnum::E, (CoordinateEnum)comp,
-                    (CoordinateEnum)edge, SideEnum::LEFT, leftEFunc[edge][comp]);
-                setFunction(FieldEnum::E, (CoordinateEnum)comp,
-                    (CoordinateEnum)edge, SideEnum::RIGHT, rightEFunc[edge][comp]);
-            }
+        this->bFunc = {
+            std::array<std::array<FunctionType, 3>, 3>{ xLeftBFunc, yLeftBFunc, zLeftBFunc },
+            std::array<std::array<FunctionType, 3>, 3>{ xRightBFunc, yRightBFunc, zRightBFunc }
+        };
+        this->eFunc = {
+            std::array<std::array<FunctionType, 3>, 3>{ xLeftEFunc, yLeftEFunc, zLeftEFunc },
+            std::array<std::array<FunctionType, 3>, 3>{ xRightEFunc, yRightEFunc, zRightEFunc }
+        };
     }
 
     template<class TGrid>
@@ -158,16 +169,18 @@ namespace pfc
         const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
         FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
-            leftGenIndex, rightGenIndex, bFunc[0], bFunc[1], eFunc[0], eFunc[1],
-            isLeftBorderEnabled, isRightBorderEnabled)
-    {}
+            leftGenIndex, rightGenIndex, isLeftBorderEnabled, isRightBorderEnabled)
+    {
+        this->bFunc = bFunc;
+        this->eFunc = eFunc;
+    }
 
     template<class TGrid>
     inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
         Int3 domainIndexBegin, Int3 domainIndexEnd, const FieldGenerator<TGrid>& gen) :
         FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
             gen.leftGeneratorIndex, gen.rightGeneratorIndex,
-            gen.bFunc[0], gen.bFunc[1], gen.eFunc[0], gen.eFunc[1],
+            gen.bFunc, gen.eFunc,
             gen.isLeftBorderEnabled, gen.isRightBorderEnabled)
     {}
 

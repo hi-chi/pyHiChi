@@ -26,17 +26,24 @@ namespace pfc
         FieldGeneratorSpectral(TGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            /* first index is index of edge (x, y, z),
-            second index is index of field component (ex, ey, ez or bx, by, bz) */
-            const std::array<std::array<FunctionType, 3>, 3>& leftBFunc,
-            const std::array<std::array<FunctionType, 3>, 3>& rightBFunc,
-            const std::array<std::array<FunctionType, 3>, 3>& leftEFunc,
-            const std::array<std::array<FunctionType, 3>, 3>& rightEFunc,
+            const std::array<FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
+            const std::array<FunctionType, 3>& xRightBFunc,
+            const std::array<FunctionType, 3>& yLeftBFunc,
+            const std::array<FunctionType, 3>& yRightBFunc,
+            const std::array<FunctionType, 3>& zLeftBFunc,
+            const std::array<FunctionType, 3>& zRightBFunc,
+            const std::array<FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
+            const std::array<FunctionType, 3>& xRightEFunc,
+            const std::array<FunctionType, 3>& yLeftEFunc,
+            const std::array<FunctionType, 3>& yRightEFunc,
+            const std::array<FunctionType, 3>& zLeftEFunc,
+            const std::array<FunctionType, 3>& zRightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
             FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
                 leftGenIndex, rightGenIndex,
-                leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+                xLeftBFunc, xRightBFunc, yLeftBFunc, yRightBFunc, zLeftBFunc, zRightBFunc,
+                xLeftEFunc, xRightEFunc, yLeftEFunc, yRightEFunc, zLeftEFunc, zRightEFunc,
                 isLeftBorderEnabled, isRightBorderEnabled) {}
 
         FieldGeneratorSpectral(TGrid* grid, FP dt,

@@ -240,15 +240,14 @@ public:
         enabledBorders[(int)this->axis] = 1;
 
         std::function<FP(FP, FP, FP, FP)> zero = field_generator::defaultFieldFunction;
-        using ArgType = std::array<std::array<std::function<FP(FP, FP, FP, FP)>, 3>, 3>;
-        using ArgType2 = std::array<std::function<FP(FP, FP, FP, FP)>, 3>;
-        ArgType bLeft =  { ArgType2{bxFunc, byFunc, bzFunc}, ArgType2{zero, zero, zero}, ArgType2{zero, zero, zero} };
-        ArgType bRight = { ArgType2{bxFunc, byFunc, bzFunc}, ArgType2{zero, zero, zero}, ArgType2{zero, zero, zero} };
-        ArgType eLeft =  { ArgType2{exFunc, eyFunc, ezFunc}, ArgType2{zero, zero, zero}, ArgType2{zero, zero, zero} };
-        ArgType eRight = { ArgType2{exFunc, eyFunc, ezFunc}, ArgType2{zero, zero, zero}, ArgType2{zero, zero, zero} };
-
         this->fieldSolver->setFieldGenerator(generatorStartIndex, generatorEndIndex,
-            bLeft, bRight, eLeft, eRight, enabledBorders, enabledBorders
+            { bxFunc, byFunc, bzFunc }, { bxFunc, byFunc, bzFunc },
+            { zero, zero, zero }, { zero, zero, zero },
+            { zero, zero, zero }, { zero, zero, zero },
+            { exFunc, eyFunc, ezFunc }, { exFunc, eyFunc, ezFunc },
+            { zero, zero, zero }, { zero, zero, zero },
+            { zero, zero, zero }, { zero, zero, zero },
+            enabledBorders, enabledBorders
         );
 
         for (int d = 1; d < this->grid->dimensionality; d++)

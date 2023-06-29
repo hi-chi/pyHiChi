@@ -714,29 +714,20 @@ namespace pfc
             bool isXRightBorderEnabled, bool isYRightBorderEnabled, bool isZRightBorderEnabled
         )
         {
-            std::array<std::array<FunctionType, 3>, 3> leftBFunc;
-            leftBFunc[0][0] = cppFunc(xMinBx); leftBFunc[0][1] = cppFunc(xMinBy); leftBFunc[0][2] = cppFunc(xMinBz);
-            leftBFunc[1][0] = cppFunc(yMinBx); leftBFunc[1][1] = cppFunc(yMinBy); leftBFunc[1][2] = cppFunc(yMinBz);
-            leftBFunc[2][0] = cppFunc(zMinBx); leftBFunc[2][1] = cppFunc(zMinBy); leftBFunc[2][2] = cppFunc(zMinBz);
-
-            std::array<std::array<FunctionType, 3>, 3> rightBFunc;
-            rightBFunc[0][0] = cppFunc(xMaxBx); rightBFunc[0][1] = cppFunc(xMaxBy); rightBFunc[0][2] = cppFunc(xMaxBz);
-            rightBFunc[1][0] = cppFunc(yMaxBx); rightBFunc[1][1] = cppFunc(yMaxBy); rightBFunc[1][2] = cppFunc(yMaxBz);
-            rightBFunc[2][0] = cppFunc(zMaxBx); rightBFunc[2][1] = cppFunc(zMaxBy); rightBFunc[2][2] = cppFunc(zMaxBz);
-
-            std::array<std::array<FunctionType, 3>, 3> leftEFunc;
-            leftEFunc[0][0] = cppFunc(xMinEx); leftEFunc[0][1] = cppFunc(xMinEy); leftEFunc[0][2] = cppFunc(xMinEz);
-            leftEFunc[1][0] = cppFunc(yMinEx); leftEFunc[1][1] = cppFunc(yMinEy); leftEFunc[1][2] = cppFunc(yMinEz);
-            leftEFunc[2][0] = cppFunc(zMinEx); leftEFunc[2][1] = cppFunc(zMinEy); leftEFunc[2][2] = cppFunc(zMinEz);
-
-            std::array<std::array<FunctionType, 3>, 3> rightEFunc;
-            rightEFunc[0][0] = cppFunc(xMaxEx); rightEFunc[0][1] = cppFunc(xMaxEy); rightEFunc[0][2] = cppFunc(xMaxEz);
-            rightEFunc[1][0] = cppFunc(yMaxEx); rightEFunc[1][1] = cppFunc(yMaxEy); rightEFunc[1][2] = cppFunc(yMaxEz);
-            rightEFunc[2][0] = cppFunc(zMaxEx); rightEFunc[2][1] = cppFunc(zMaxEy); rightEFunc[2][2] = cppFunc(zMaxEz);
-
             static_cast<TPyField*>(this)->getFieldSolver()->setFieldGenerator(
                 leftGenIndex, rightGenIndex,
-                leftBFunc, rightBFunc, leftEFunc, rightEFunc,
+                { cppFunc(xMinBx), cppFunc(xMinBy), cppFunc(xMinBz) },
+                { cppFunc(xMaxBx), cppFunc(xMaxBy), cppFunc(xMaxBz) },
+                { cppFunc(yMinBx), cppFunc(yMinBy), cppFunc(yMinBz) },
+                { cppFunc(yMaxBx), cppFunc(yMaxBy), cppFunc(yMaxBz) },
+                { cppFunc(zMinBx), cppFunc(zMinBy), cppFunc(zMinBz) },
+                { cppFunc(zMaxBx), cppFunc(zMaxBy), cppFunc(zMaxBz) },
+                { cppFunc(xMinEx), cppFunc(xMinEy), cppFunc(xMinEz) },
+                { cppFunc(xMaxEx), cppFunc(xMaxEy), cppFunc(xMaxEz) },
+                { cppFunc(yMinEx), cppFunc(yMinEy), cppFunc(yMinEz) },
+                { cppFunc(yMaxEx), cppFunc(yMaxEy), cppFunc(yMaxEz) },
+                { cppFunc(zMinEx), cppFunc(zMinEy), cppFunc(zMinEz) },
+                { cppFunc(zMaxEx), cppFunc(zMaxEy), cppFunc(zMaxEz) },
                 Int3(isXLeftBorderEnabled, isYLeftBorderEnabled, isZLeftBorderEnabled),
                 Int3(isXRightBorderEnabled, isYRightBorderEnabled, isZRightBorderEnabled)
             );
