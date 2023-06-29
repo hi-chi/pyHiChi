@@ -21,13 +21,21 @@ namespace pfc {
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionFdtd;
         using ReflectBoundaryConditionType = ReflectBoundaryConditionFdtd;
 
-        FDTD(GridType* grid);  // use when load
         FDTD(GridType* grid, FP dt);
+
+        //constructor for loading
+        FDTD(GridType* grid);
 
         void updateFields();
 
         void updateHalfB();
         void updateE();
+
+        void setPeriodicalBoundaryCondition();
+        void setPeriodicalBoundaryCondition(CoordinateEnum axis);
+
+        void setReflectBoundaryCondition();
+        void setReflectBoundaryCondition(CoordinateEnum axis);
 
         void setTimeStep(FP dt);
 
@@ -37,6 +45,7 @@ namespace pfc {
                 1.0 / (gridSteps.z * gridSteps.z));
             return 1.0 / (constants::c * tmp);
         }
+
         FP getCourantConditionTimeStep() const {
             return getCourantConditionTimeStep(this->grid->steps);
         }
@@ -48,6 +57,12 @@ namespace pfc {
         static bool isTimeStaggered() {
             return true;
         }
+
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
+        void saveBoundaryCondition(std::ostream& ostr);
+        void loadBoundaryCondition(std::istream& istr);
 
     private:
 
@@ -63,11 +78,6 @@ namespace pfc {
 
     };
 
-    inline FDTD::FDTD(GridType* grid) :
-        RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid),
-        anisotropyCoeff(1, 1, 1)
-    {}
-
     inline FDTD::FDTD(GridType* grid, FP dt) :
         RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt),
         anisotropyCoeff(1, 1, 1)
@@ -78,6 +88,38 @@ namespace pfc {
                 << std::endl;
             this->dt = getCourantConditionTimeStep() * 0.5;
         }
+    }
+
+    inline FDTD::FDTD(GridType* grid) :
+        RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
+    {}
+
+    inline void FDTD::setPeriodicalBoundaryCondition()
+    {
+        for (int d = 0; d < this->grid->dimensionality; d++)
+            this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
+    }
+
+    inline void FDTD::setPeriodicalBoundaryCondition(CoordinateEnum axis)
+    {
+        if ((int)axis < this->grid->dimensionality)
+            this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
+    }
+
+    inline void FDTD::setReflectBoundaryCondition()
+    {
+        for (int d = 0; d < this->grid->dimensionality; d++)
+            this->boundaryConditions[d].reset(new ReflectBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd));
+    }
+
+    inline void FDTD::setReflectBoundaryCondition(CoordinateEnum axis)
+    {
+        if ((int)axis < this->grid->dimensionality)
+            this->boundaryConditions[(int)axis].reset(new ReflectBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
     }
 
     inline void FDTD::setTimeStep(FP dt)
@@ -321,4 +363,59 @@ namespace pfc {
         }
     }
 
+    inline void FDTD::save(std::ostream& ostr)
+    {
+        RealFieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+        ostr.write((char*)&anisotropyCoeff, sizeof(anisotropyCoeff));
+
+        this->saveFieldGenerator(ostr);
+        this->savePML(ostr);
+        this->saveBoundaryCondition(ostr);
+    }
+
+    inline void FDTD::load(std::istream& istr)
+    {
+        RealFieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+        istr.read((char*)&anisotropyCoeff, sizeof(anisotropyCoeff));
+
+        this->loadFieldGenerator(istr);
+        this->loadPML(istr);
+        this->loadBoundaryCondition(istr);
+    }
+
+    inline void FDTD::saveBoundaryCondition(std::ostream& ostr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            int isReflectBC = dynamic_cast<ReflectBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            ostr.write((char*)&isReflectBC, sizeof(isReflectBC));
+
+            if (this->boundaryConditions[d])
+                this->boundaryConditions[d]->save(ostr);
+        }
+    }
+
+    inline void FDTD::loadBoundaryCondition(std::istream& istr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = 0;
+            istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            int isReflectBC = 0;
+            istr.read((char*)&isReflectBC, sizeof(isReflectBC));
+
+            if (isPeriodicalBC) {
+                this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d]->load(istr);
+            }
+            else if (isReflectBC) {
+                this->boundaryConditions[d].reset(new ReflectBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d]->load(istr);
+            }
+        }
+    }
 }

@@ -8,9 +8,16 @@ namespace pfc {
     class PmlFdtd : public PmlReal<YeeGrid>
     {
     public:
-        PmlFdtd(YeeGrid* grid, FP dt, Int3 sizePML,
-            Int3 domainIndexBegin, Int3 domainIndexEnd) :
-            PmlReal(grid, dt, sizePML, domainIndexBegin, domainIndexEnd) {}
+
+        PmlFdtd(YeeGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
+            Int3 sizePML, FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+            PmlReal(grid, dt, domainIndexBegin, domainIndexEnd, sizePML, nPmlParam, r0PmlParam)
+        {}
+
+        // constructor for loading
+        PmlFdtd(YeeGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd) :
+            PmlReal(grid, dt, domainIndexBegin, domainIndexEnd)
+        {}
 
         void updateB();
         void updateE();

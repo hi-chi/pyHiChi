@@ -7,7 +7,6 @@ class FieldGeneratorTest : public BaseFixture {
 public:
     using FieldSolverType = typename TTypeDefinitionsFieldTest::FieldSolverType;
     using GridType = typename TTypeDefinitionsFieldTest::FieldSolverType::GridType;
-    using BoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
 
     const int dimension = TTypeDefinitionsFieldTest::dimension;
     const CoordinateEnum axis = TTypeDefinitionsFieldTest::axis;
@@ -46,7 +45,7 @@ public:
         this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
-        fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
+        fieldSolver->setPeriodicalBoundaryCondition();
            
         this->numSteps = 2 * (int)((this->maxCoords - this->minCoords)[(int)this->axis] /
             (constants::c * fieldSolver->dt));
@@ -188,7 +187,6 @@ public:
         std::function<FP(FP, FP, FP, FP)> ezFunc
         )
     {
-        using PeriodicalBCType = typename FieldGeneratorTest<TTypeDefinitionsFieldTest>::BoundaryConditionType;
         Int3 enabledBorders;
         enabledBorders[(int)this->axis] = 1;
 
@@ -197,7 +195,7 @@ public:
         );
 
         for (int d = 1; d < this->grid->dimensionality; d++)
-            this->fieldSolver->template setBoundaryCondition<PeriodicalBCType>((CoordinateEnum)d);
+            this->fieldSolver->setPeriodicalBoundaryCondition((CoordinateEnum)d);
     }
 
 };
@@ -235,7 +233,6 @@ public:
         std::function<FP(FP, FP, FP, FP)> ezFunc
         )
     {
-        using PeriodicalBCType = typename FieldGeneratorTest<TTypeDefinitionsFieldTest>::BoundaryConditionType;
         Int3 enabledBorders;
         enabledBorders[(int)this->axis] = 1;
 
@@ -251,7 +248,7 @@ public:
         );
 
         for (int d = 1; d < this->grid->dimensionality; d++)
-            this->fieldSolver->template setBoundaryCondition<PeriodicalBCType>((CoordinateEnum)d);
+            this->fieldSolver->setPeriodicalBoundaryCondition((CoordinateEnum)d);
     }
 
 };

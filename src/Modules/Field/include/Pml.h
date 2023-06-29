@@ -10,9 +10,12 @@ namespace pfc {
     class Pml
     {
     public:
-        Pml(TGrid* grid, FP dt, Int3 sizePML,
-            Int3 domainIndexBegin, Int3 domainIndexEnd,
-            FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8);
+
+        Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
+            Int3 sizePML, FP nPmlParam, FP r0PmlParam);
+
+        // constructor for loading
+        Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
 
         /* implement the next methods in derived classes
         void updateB();
@@ -21,8 +24,12 @@ namespace pfc {
 
         forceinline FP computeSigma(FP coord, CoordinateEnum axis) const;
 
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
         TGrid* grid = nullptr;
         FP dt = 0.0;
+        Int3 domainIndexBegin, domainIndexEnd;  // internal domain area including pml
 
         std::unique_ptr<PmlSplitGrid> splitGrid;
 
@@ -30,8 +37,6 @@ namespace pfc {
         Int3 leftPmlBorder, rightPmlBorder;
         FP3 leftPmlBorderCoord, rightPmlBorderCoord;
         FP3 leftGlobalBorderCoord, rightGlobalBorderCoord;
-
-        Int3 domainIndexBegin, domainIndexEnd;  // internal domain area including pml
 
     protected:
 
@@ -63,9 +68,16 @@ namespace pfc {
     }
 
     template<class TGrid>
-    inline Pml<TGrid>::Pml(TGrid* grid, FP dt, Int3 sizePML,
+    inline Pml<TGrid>::Pml(TGrid* grid, FP dt,
+        Int3 domainIndexBegin, Int3 domainIndexEnd) :
+        grid(grid), dt(dt),
+        domainIndexBegin(domainIndexBegin), domainIndexEnd(domainIndexEnd)
+    {}
+
+    template<class TGrid>
+    inline Pml<TGrid>::Pml(TGrid* grid, FP dt,
         Int3 domainIndexBegin, Int3 domainIndexEnd,
-        FP nPmlParam, FP r0PmlParam) :
+        Int3 sizePML, FP nPmlParam, FP r0PmlParam) :
         grid(grid), dt(dt), sizePML(sizePML),
         domainIndexBegin(domainIndexBegin), domainIndexEnd(domainIndexEnd)
     {
@@ -99,20 +111,66 @@ namespace pfc {
         return this->maxSigma[d] * pow(distance, (FP)n);
     }
 
+    template<class TGrid>
+    inline void Pml<TGrid>::save(std::ostream& ostr)
+    {
+        ostr.write((char*)&sizePML, sizeof(sizePML));
+        ostr.write((char*)&n, sizeof(n));
+        ostr.write((char*)&maxSigma, sizeof(maxSigma));
+        ostr.write((char*)&leftPmlBorder, sizeof(leftPmlBorder));
+        ostr.write((char*)&rightPmlBorder, sizeof(rightPmlBorder));
+        ostr.write((char*)&leftPmlBorderCoord, sizeof(leftPmlBorderCoord));
+        ostr.write((char*)&rightPmlBorderCoord, sizeof(rightPmlBorderCoord));
+        ostr.write((char*)&leftGlobalBorderCoord, sizeof(leftGlobalBorderCoord));
+        ostr.write((char*)&rightGlobalBorderCoord, sizeof(rightGlobalBorderCoord));
+
+        splitGrid->save(ostr);
+    }
+
+    template<class TGrid>
+    inline void Pml<TGrid>::load(std::istream& istr)
+    {
+        istr.read((char*)&sizePML, sizeof(sizePML));
+        istr.read((char*)&n, sizeof(n));
+        istr.read((char*)&maxSigma, sizeof(maxSigma));
+        istr.read((char*)&leftPmlBorder, sizeof(leftPmlBorder));
+        istr.read((char*)&rightPmlBorder, sizeof(rightPmlBorder));
+        istr.read((char*)&leftPmlBorderCoord, sizeof(leftPmlBorderCoord));
+        istr.read((char*)&rightPmlBorderCoord, sizeof(rightPmlBorderCoord));
+        istr.read((char*)&leftGlobalBorderCoord, sizeof(leftGlobalBorderCoord));
+        istr.read((char*)&rightGlobalBorderCoord, sizeof(rightGlobalBorderCoord));
+
+        this->splitGrid.reset(new PmlSplitGrid(this->leftPmlBorder, this->rightPmlBorder,
+            this->domainIndexBegin, this->domainIndexEnd));
+        splitGrid->load(istr);
+    }
+
 
     template<class TGrid>
     class PmlReal : public Pml<TGrid>
     {
     public:
 
-        PmlReal(TGrid* grid, FP dt, Int3 sizePML,
-            Int3 domainIndexBegin, Int3 domainIndexEnd,
-            FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
-            Pml<TGrid>(grid, dt, sizePML,
-                domainIndexBegin, domainIndexEnd, nPmlParam, r0PmlParam)
-        {}
+        PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
+            Int3 sizePML, FP nPmlParam, FP r0PmlParam);
+
+        // constructor for loading
+        PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
 
     };
+
+    template<class TGrid>
+    inline PmlReal<TGrid>::PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
+        Int3 sizePML, FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+        Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
+            sizePML, nPmlParam, r0PmlParam)
+    {}
+
+    // constructor for loading
+    template<class TGrid>
+    inline PmlReal<TGrid>::PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd) :
+        Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd)
+    {}
 
 
     template<class TGrid>
@@ -121,15 +179,14 @@ namespace pfc {
     public:
 
         PmlSpectral(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
-            Int3 sizePML, Int3 domainIndexBegin, Int3 domainIndexEnd,
+            Int3 domainIndexBegin, Int3 domainIndexEnd,
             Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd,
-            FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
-            Pml<TGrid>(grid, dt, sizePML,
-                domainIndexBegin, domainIndexEnd, nPmlParam, r0PmlParam),
-            complexGrid(complexGrid),
-            complexDomainIndexBegin(complexDomainIndexBegin),
-            complexDomainIndexEnd(complexDomainIndexEnd)
-        {}
+            Int3 sizePML, FP nPmlParam, FP r0PmlParam);
+
+        // constructor for loading
+        PmlSpectral(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+            Int3 domainIndexBegin, Int3 domainIndexEnd,
+            Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd);
 
         /* implement the next methods in derived classes
         // first step of spectral pml: updating of split components
@@ -144,6 +201,31 @@ namespace pfc {
         SpectralGrid<FP, complexFP>* complexGrid = nullptr;
         Int3 complexDomainIndexBegin, complexDomainIndexEnd;
     };
+
+    template<class TGrid>
+    inline PmlSpectral<TGrid>::PmlSpectral(
+        TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+        Int3 domainIndexBegin, Int3 domainIndexEnd,
+        Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd,
+        Int3 sizePML, FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+        Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
+            sizePML, nPmlParam, r0PmlParam),
+        complexGrid(complexGrid),
+        complexDomainIndexBegin(complexDomainIndexBegin),
+        complexDomainIndexEnd(complexDomainIndexEnd)
+    {}
+
+    // constructor for loading
+    template<class TGrid>
+    inline PmlSpectral<TGrid>::PmlSpectral(
+        TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+        Int3 domainIndexBegin, Int3 domainIndexEnd,
+        Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd) :
+        Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd),
+        complexGrid(complexGrid),
+        complexDomainIndexBegin(complexDomainIndexBegin),
+        complexDomainIndexEnd(complexDomainIndexEnd)
+    {}
 
     template<class TGrid>
     inline void PmlSpectral<TGrid>::updateB()

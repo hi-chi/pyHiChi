@@ -11,21 +11,44 @@ namespace pfc
     {
     public:
 
-        FieldBoundaryCondition(TGrid* grid, CoordinateEnum axis,
-            Int3 leftBorderIndex, Int3 rightBorderIndex) :
+        FieldBoundaryCondition(TGrid* grid, Int3 leftBorderIndex,
+            Int3 rightBorderIndex, CoordinateEnum axis) :
             grid(grid), axis(axis),
-            leftBorderIndex(leftBorderIndex), rightBorderIndex(rightBorderIndex) {}
+            leftBorderIndex(leftBorderIndex), rightBorderIndex(rightBorderIndex)
+        {}
+
+        // constructor for loading
+        FieldBoundaryCondition(TGrid* grid, Int3 leftBorderIndex,
+            Int3 rightBorderIndex) : grid(grid),
+            leftBorderIndex(leftBorderIndex), rightBorderIndex(rightBorderIndex)
+        {}
 
         // polymorfic class
         virtual ~FieldBoundaryCondition() {}
         virtual FieldBoundaryCondition<TGrid>* createInstance(
-            TGrid* grid, CoordinateEnum axis, Int3 leftBorderIndex, Int3 rightBorderIndex) = 0;
+            TGrid* grid, Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) = 0;
 
         virtual void generateB(FP time) = 0;
         virtual void generateE(FP time) = 0;
 
+        virtual void save(std::ostream& ostr);
+        virtual void load(std::istream& istr);
+
         TGrid* grid = nullptr;
-        CoordinateEnum axis;
         Int3 leftBorderIndex, rightBorderIndex;
+
+        CoordinateEnum axis;
     };
+
+    template<class TGrid>
+    inline void FieldBoundaryCondition<TGrid>::save(std::ostream& ostr)
+    {
+        ostr.write((char*)&axis, sizeof(axis));
+    }
+
+    template<class TGrid>
+    inline void FieldBoundaryCondition<TGrid>::load(std::istream& istr)
+    {
+        istr.read((char*)&axis, sizeof(axis));
+    }
 }

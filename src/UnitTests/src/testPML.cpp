@@ -11,7 +11,6 @@ public:
 
     using FieldSolverType = typename TTypeDefinitionsFieldTest::FieldSolverType;
     using GridType = typename TTypeDefinitionsFieldTest::FieldSolverType::GridType;
-    using PeriodicalBoundaryConditionType = typename FieldSolverType::PeriodicalBoundaryConditionType;
 
     const int dimension = TTypeDefinitionsFieldTest::dimension;
     const CoordinateEnum axis = TTypeDefinitionsFieldTest::axis;
@@ -219,12 +218,9 @@ public:
     }
 
     void initTest() override {
-        using PeriodicalBoundaryConditionType =
-            typename PMLTest<TTypeDefinitionsPMLTest>::FieldSolverType::PeriodicalBoundaryConditionType;
-        
         for (int d = 0; d < this->grid->dimensionality; d++)
             if (d != (int)this->axis)
-                this->fieldSolver->template setBoundaryCondition<PeriodicalBoundaryConditionType>((CoordinateEnum)d);
+                this->fieldSolver->setPeriodicalBoundaryCondition((CoordinateEnum)d);
     }
 
 };

@@ -110,11 +110,8 @@ template <class TTypeDefinitionsFieldTest>
 class PeriodicBoundaryConditionTest : public BoundaryConditionTest<TTypeDefinitionsFieldTest> {
 public:
 
-    using BoundaryConditionType =
-        typename TTypeDefinitionsFieldTest::FieldSolverType::PeriodicalBoundaryConditionType;
-
     PeriodicBoundaryConditionTest() {
-        this->fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
+        this->fieldSolver->setPeriodicalBoundaryCondition();
     }
 
 };
@@ -180,18 +177,13 @@ template <class TTypeDefinitionsFieldTest>
 class ReflectBoundaryConditionTest : public BoundaryConditionTest<TTypeDefinitionsFieldTest> {
 public:
 
-    using PeriodicBoundaryConditionType =
-            typename TTypeDefinitionsFieldTest::FieldSolverType::PeriodicalBoundaryConditionType;
-    using ReflectBoundaryConditionType =
-            typename TTypeDefinitionsFieldTest::FieldSolverType::ReflectBoundaryConditionType;
-
     ReflectBoundaryConditionTest() {
-        this->fieldSolver->template setBoundaryCondition<ReflectBoundaryConditionType>(this->axis);
+        this->fieldSolver->setReflectBoundaryCondition(this->axis);
 
         for (int d = 0; d < 3; d++) {
             int dim = ((int)this->axis + d) % 3;
             if (dim < this->grid->dimensionality)
-                this->fieldSolver->template setBoundaryCondition<PeriodicBoundaryConditionType>((CoordinateEnum)dim);
+                this->fieldSolver->setPeriodicalBoundaryCondition((CoordinateEnum)dim);
         }
     }
 

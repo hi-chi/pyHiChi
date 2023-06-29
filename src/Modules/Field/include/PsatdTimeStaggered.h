@@ -20,8 +20,10 @@ namespace pfc {
         using FieldGeneratorType = FieldGeneratorSpectral<PSATDTimeStaggeredGrid>;
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDTimeStaggeredGrid>;
 
-        PSATDTimeStaggeredT(GridType* grid);  // use when load
         PSATDTimeStaggeredT(GridType* grid, FP dt);
+
+        // constructor for loading
+        PSATDTimeStaggeredT(GridType* grid);
 
         void updateFields();
 
@@ -29,6 +31,9 @@ namespace pfc {
         void updateE();
 
         void convertFieldsPoissonEquation();
+
+        void setPeriodicalBoundaryCondition();
+        void setPeriodicalBoundaryCondition(CoordinateEnum axis);
 
         void setTimeStep(FP dt);
 
@@ -40,6 +45,7 @@ namespace pfc {
                 1.0 / (gridSteps.z * gridSteps.z));
             return 1.0 / (constants::c * tmp);
         }
+
         FP getCourantConditionTimeStep() const {
             return getCourantConditionTimeStep(grid->steps);
         }
@@ -55,6 +61,9 @@ namespace pfc {
         void save(std::ostream& ostr);
         void load(std::istream& istr);
 
+        void saveBoundaryCondition(std::ostream& ostr);
+        void loadBoundaryCondition(std::istream& istr);
+
         ScalarField<complexFP> tmpJx, tmpJy, tmpJz;
 
     protected:
@@ -62,6 +71,14 @@ namespace pfc {
         void saveJ();
         void assignJ(SpectralScalarField<FP, complexFP>& J, ScalarField<complexFP>& tmpJ);
     };
+
+    template <bool ifPoisson>
+    inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid, FP dt) :
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt),
+        tmpJx(this->complexGrid->sizeStorage),
+        tmpJy(this->complexGrid->sizeStorage),
+        tmpJz(this->complexGrid->sizeStorage)
+    {}
 
     template <bool ifPoisson>
     inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid) :
@@ -72,12 +89,20 @@ namespace pfc {
     {}
 
     template <bool ifPoisson>
-    inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid, FP dt) :
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt),
-        tmpJx(this->complexGrid->sizeStorage),
-        tmpJy(this->complexGrid->sizeStorage),
-        tmpJz(this->complexGrid->sizeStorage)
-    {}
+    inline void PSATDTimeStaggeredT<ifPoisson>::setPeriodicalBoundaryCondition()
+    {
+        for (int d = 0; d < this->grid->dimensionality; d++)
+            this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDTimeStaggeredT<ifPoisson>::setPeriodicalBoundaryCondition(CoordinateEnum axis)
+    {
+        if ((int)axis < this->grid->dimensionality)
+            this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
+    }
 
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::setTimeStep(FP dt)
@@ -283,22 +308,59 @@ namespace pfc {
                 }
     }
 
-    template<bool ifPoisson>
+    template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::save(std::ostream& ostr)
     {
-        FieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+
         tmpJx.save(ostr);
         tmpJy.save(ostr);
         tmpJz.save(ostr);
+
+        this->saveFieldGenerator(ostr);
+        this->savePML(ostr);
+        this->saveBoundaryCondition(ostr);
     }
 
-    template<bool ifPoisson>
+    template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::load(std::istream& istr)
     {
-        FieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+        
         tmpJx.load(istr);
         tmpJy.load(istr);
         tmpJz.load(istr);
+
+        this->loadFieldGenerator(istr);
+        this->loadPML(istr);
+        this->loadBoundaryCondition(istr);
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDTimeStaggeredT<ifPoisson>::saveBoundaryCondition(std::ostream& ostr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (this->boundaryConditions[d])
+                this->boundaryConditions[d]->save(ostr);
+        }
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDTimeStaggeredT<ifPoisson>::loadBoundaryCondition(std::istream& istr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = 0;
+            istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (isPeriodicalBC) {
+                this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d]->load(istr);
+            }
+        }
     }
 
     typedef PSATDTimeStaggeredT<true> PSATDTimeStaggeredPoisson;

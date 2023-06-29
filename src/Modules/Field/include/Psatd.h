@@ -20,14 +20,19 @@ namespace pfc {
         using FieldGeneratorType = FieldGeneratorSpectral<PSATDGrid>;
         using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDGrid>;
 
-        PSATDT(GridType* grid);  // use when load
         PSATDT(GridType* grid, FP dt);
+
+        // constructor for loading
+        PSATDT(GridType* grid);
 
         void updateFields();
 
         void updateEB();
 
         void convertFieldsPoissonEquation();
+
+        void setPeriodicalBoundaryCondition();
+        void setPeriodicalBoundaryCondition(CoordinateEnum axis);
 
         void setTimeStep(FP dt);
 
@@ -51,7 +56,18 @@ namespace pfc {
             return false;
         }
 
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
+        void saveBoundaryCondition(std::ostream& ostr);
+        void loadBoundaryCondition(std::istream& istr);
+
     };
+
+    template <bool ifPoisson>
+    inline PSATDT<ifPoisson>::PSATDT(GridType* grid, FP dt) :
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt)
+    {}
 
     template <bool ifPoisson>
     inline PSATDT<ifPoisson>::PSATDT(GridType* grid) :
@@ -59,9 +75,20 @@ namespace pfc {
     {}
 
     template <bool ifPoisson>
-    inline PSATDT<ifPoisson>::PSATDT(GridType* grid, FP dt) :
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt)
-    {}  
+    inline void PSATDT<ifPoisson>::setPeriodicalBoundaryCondition()
+    {
+        for (int d = 0; d < this->grid->dimensionality; d++)
+            this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDT<ifPoisson>::setPeriodicalBoundaryCondition(CoordinateEnum axis)
+    {
+        if ((int)axis < this->grid->dimensionality)
+            this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
+    }
 
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::setTimeStep(FP dt)
@@ -233,6 +260,53 @@ namespace pfc {
                     complexGrid->By(i, j, k) = C * B.y + coef1B * kEcross.y + coef2B * kJcross.y;
                     complexGrid->Bz(i, j, k) = C * B.z + coef1B * kEcross.z + coef2B * kJcross.z;
                 }
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDT<ifPoisson>::save(std::ostream& ostr)
+    {
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+
+        this->saveFieldGenerator(ostr);
+        this->savePML(ostr);
+        this->saveBoundaryCondition(ostr);
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDT<ifPoisson>::load(std::istream& istr)
+    {
+        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+
+        this->loadFieldGenerator(istr);
+        this->loadPML(istr);
+        this->loadBoundaryCondition(istr);
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDT<ifPoisson>::saveBoundaryCondition(std::ostream& ostr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (this->boundaryConditions[d])
+                this->boundaryConditions[d]->save(ostr);
+        }
+    }
+
+    template <bool ifPoisson>
+    inline void PSATDT<ifPoisson>::loadBoundaryCondition(std::istream& istr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = 0;
+            istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (isPeriodicalBC) {
+                this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d]->load(istr);
+            }
+        }
     }
 
     typedef PSATDT<true> PSATDPoisson;

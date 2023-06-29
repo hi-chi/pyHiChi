@@ -19,7 +19,8 @@ namespace pfc
             FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, 
                 leftGenIndex, rightGenIndex,
                 bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
-                isLeftBorderEnabled, isRightBorderEnabled) {}
+                isLeftBorderEnabled, isRightBorderEnabled)
+        {}
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd,
@@ -42,7 +43,8 @@ namespace pfc
                 leftGenIndex, rightGenIndex,
                 xLeftBFunc, xRightBFunc, yLeftBFunc, yRightBFunc, zLeftBFunc, zRightBFunc,
                 xLeftEFunc, xRightEFunc, yLeftEFunc, yRightEFunc, zLeftEFunc, zRightEFunc,
-                isLeftBorderEnabled, isRightBorderEnabled) {}
+                isLeftBorderEnabled, isRightBorderEnabled)
+        {}
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd,
@@ -53,11 +55,19 @@ namespace pfc
             const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
             FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd,
                 leftGenIndex, rightGenIndex, bFunc, eFunc,
-                isLeftBorderEnabled, isRightBorderEnabled) {}
+                isLeftBorderEnabled, isRightBorderEnabled)
+        {}
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt, const Int3& domainIndexBegin,
             const Int3& domainIndexEnd, const FieldGeneratorFdtd& gen) :
-            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, gen) {}
+            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, gen)
+        {}
+
+        // constructor for loading
+        FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd) :
+            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd)
+        {}
 
         void generateB(FP time);
         void generateE(FP time);

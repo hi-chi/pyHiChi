@@ -132,8 +132,7 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
     SUCCEED();
 #else
 
-    using BoundaryConditionType = typename FieldSolverTest<TypeParam>::FieldSolverType::PeriodicalBoundaryConditionType;
-    this->fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
+    this->fieldSolver->setPeriodicalBoundaryCondition();
 
     for (int step = 0; step < this->numSteps; ++step)
     {
@@ -190,9 +189,7 @@ TYPED_TEST(FieldSolverTest, SetTimeStepTest) {
     const Int3 genRightIndex3d = this->gridSize - genLeftIndex3d;
     const Int3 pmlSize3d = this->grid->correctNumCellsAccordingToDim(Int3(pmlSize, pmlSize, pmlSize));
 
-    using BoundaryConditionType =
-        typename FieldSolverTest<TypeParam>::FieldSolverType::PeriodicalBoundaryConditionType;
-    this->fieldSolver->template setBoundaryCondition<BoundaryConditionType>();
+    this->fieldSolver->setPeriodicalBoundaryCondition();
 
     this->fieldSolver->setPML(pmlSize3d.x, pmlSize3d.y, pmlSize3d.z);
 

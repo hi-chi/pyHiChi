@@ -25,12 +25,6 @@ namespace pfc
         FieldGenerator(TGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd,
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
-            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
-
-        FieldGenerator(TGrid* grid, FP dt,
-            const Int3& domainIndexBegin, const Int3& domainIndexEnd,
-            const Int3& leftGenIndex, const Int3& rightGenIndex,
             FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
             FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
@@ -65,6 +59,10 @@ namespace pfc
         FieldGenerator(TGrid* grid, FP dt, Int3 domainIndexBegin,
             Int3 domainIndexEnd, const FieldGenerator& gen);
 
+        // constructor for loading
+        FieldGenerator(TGrid* grid, FP dt,
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd);
+
         /* implement the next methods in derived classes
         void generateB(FP time);
         void generateE(FP time);
@@ -76,42 +74,23 @@ namespace pfc
         void setFunction(FieldEnum field, CoordinateEnum fieldComponent,
             CoordinateEnum edge, SideEnum side, FunctionType func);
 
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
         TGrid* grid = nullptr;
         FP dt = 0.0;
+        Int3 domainIndexBegin, domainIndexEnd;
+
+        // generator position after domainIndexBegin
+        Int3 leftGeneratorIndex, rightGeneratorIndex;
+        // sets enabled borders
+        Int3 isLeftBorderEnabled, isRightBorderEnabled;
 
         // first index is left/right
         // second index is index of edge
         // third index is index of field component
         std::array<std::array<std::array<FunctionType, 3>, 3>, 2> eFunc, bFunc;
-
-        Int3 leftGeneratorIndex, rightGeneratorIndex;
-        Int3 domainIndexBegin, domainIndexEnd;
-
-        // sets enabled borders
-        Int3 isLeftBorderEnabled, isRightBorderEnabled;
     };
-
-    template<class TGrid>
-    inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
-        const Int3& domainIndexBegin, const Int3& domainIndexEnd,
-        const Int3& leftGenIndex, const Int3& rightGenIndex,
-        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
-        grid(grid), dt(dt),
-        domainIndexBegin(domainIndexBegin), domainIndexEnd(domainIndexEnd)
-    {
-        this->isLeftBorderEnabled = isLeftBorderEnabled;
-        this->isRightBorderEnabled = isRightBorderEnabled;
-        this->leftGeneratorIndex = domainIndexBegin + leftGenIndex;
-        this->rightGeneratorIndex = domainIndexBegin + rightGenIndex;
-
-        for (int side = 0; side < 2; side++)
-            for (int edge = 0; edge < 3; edge++) {
-                for (int comp = 0; comp < 3; comp++) {
-                    eFunc[side][edge][comp] = field_generator::defaultFieldFunction;
-                    bFunc[side][edge][comp] = field_generator::defaultFieldFunction;
-                }
-            }
-    }
 
     template<class TGrid>
     inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
@@ -121,15 +100,15 @@ namespace pfc
         FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
         FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
-            leftGenIndex, rightGenIndex, isLeftBorderEnabled, isRightBorderEnabled)
-    {
-        setFunction(FieldEnum::B, CoordinateEnum::x, bxFunc);
-        setFunction(FieldEnum::B, CoordinateEnum::y, byFunc);
-        setFunction(FieldEnum::B, CoordinateEnum::z, bzFunc);
-        setFunction(FieldEnum::E, CoordinateEnum::x, exFunc);
-        setFunction(FieldEnum::E, CoordinateEnum::y, eyFunc);
-        setFunction(FieldEnum::E, CoordinateEnum::z, ezFunc);
-    }
+            leftGenIndex, rightGenIndex,
+            { bxFunc, byFunc, bzFunc }, { bxFunc, byFunc, bzFunc },
+            { bxFunc, byFunc, bzFunc }, { bxFunc, byFunc, bzFunc },
+            { bxFunc, byFunc, bzFunc }, { bxFunc, byFunc, bzFunc },
+            { exFunc, eyFunc, ezFunc }, { exFunc, eyFunc, ezFunc },
+            { exFunc, eyFunc, ezFunc }, { exFunc, eyFunc, ezFunc },
+            { exFunc, eyFunc, ezFunc }, { exFunc, eyFunc, ezFunc },
+            isLeftBorderEnabled, isRightBorderEnabled)
+    {}
 
     template<class TGrid>
     inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
@@ -149,17 +128,13 @@ namespace pfc
         const std::array<FunctionType, 3>& zRightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
         FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
-            leftGenIndex, rightGenIndex, isLeftBorderEnabled, isRightBorderEnabled)
-    {
-        this->bFunc = {
-            std::array<std::array<FunctionType, 3>, 3>{ xLeftBFunc, yLeftBFunc, zLeftBFunc },
-            std::array<std::array<FunctionType, 3>, 3>{ xRightBFunc, yRightBFunc, zRightBFunc }
-        };
-        this->eFunc = {
-            std::array<std::array<FunctionType, 3>, 3>{ xLeftEFunc, yLeftEFunc, zLeftEFunc },
-            std::array<std::array<FunctionType, 3>, 3>{ xRightEFunc, yRightEFunc, zRightEFunc }
-        };
-    }
+            leftGenIndex, rightGenIndex,
+            { std::array<std::array<FunctionType, 3>, 3>{ xLeftBFunc, yLeftBFunc, zLeftBFunc },
+              std::array<std::array<FunctionType, 3>, 3>{ xRightBFunc, yRightBFunc, zRightBFunc } },
+            { std::array<std::array<FunctionType, 3>, 3>{ xLeftEFunc, yLeftEFunc, zLeftEFunc },
+              std::array<std::array<FunctionType, 3>, 3>{ xRightEFunc, yRightEFunc, zRightEFunc } },
+            isLeftBorderEnabled, isRightBorderEnabled)
+    {}
 
     template<class TGrid>
     inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
@@ -168,12 +143,13 @@ namespace pfc
         const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& bFunc,
         const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
-        FieldGenerator<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
-            leftGenIndex, rightGenIndex, isLeftBorderEnabled, isRightBorderEnabled)
-    {
-        this->bFunc = bFunc;
-        this->eFunc = eFunc;
-    }
+        grid(grid), dt(dt),
+        domainIndexBegin(domainIndexBegin), domainIndexEnd(domainIndexEnd),
+        leftGeneratorIndex(domainIndexBegin + leftGenIndex),
+        rightGeneratorIndex(domainIndexBegin + rightGenIndex),
+        bFunc(bFunc), eFunc(eFunc),
+        isLeftBorderEnabled(isLeftBorderEnabled), isRightBorderEnabled(isRightBorderEnabled)
+    {}
 
     template<class TGrid>
     inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
@@ -182,6 +158,13 @@ namespace pfc
             gen.leftGeneratorIndex, gen.rightGeneratorIndex,
             gen.bFunc, gen.eFunc,
             gen.isLeftBorderEnabled, gen.isRightBorderEnabled)
+    {}
+
+    template<class TGrid>
+    inline FieldGenerator<TGrid>::FieldGenerator(TGrid* grid, FP dt,
+        const Int3& domainIndexBegin, const Int3& domainIndexEnd) :
+        grid(grid), dt(dt),
+        domainIndexBegin(domainIndexBegin), domainIndexEnd(domainIndexEnd)
     {}
 
     template<class TGrid>
@@ -210,5 +193,25 @@ namespace pfc
         default:
             break;
         }
+    }
+
+    template<class TGrid>
+    inline void FieldGenerator<TGrid>::save(std::ostream& ostr)
+    {
+        ostr.write((char*)&leftGeneratorIndex, sizeof(leftGeneratorIndex));
+        ostr.write((char*)&rightGeneratorIndex, sizeof(rightGeneratorIndex));
+        ostr.write((char*)&isLeftBorderEnabled, sizeof(isLeftBorderEnabled));
+        ostr.write((char*)&isRightBorderEnabled, sizeof(isRightBorderEnabled));
+        // TODO: save functions
+    }
+
+    template<class TGrid>
+    inline void FieldGenerator<TGrid>::load(std::istream& istr)
+    {
+        istr.read((char*)&leftGeneratorIndex, sizeof(leftGeneratorIndex));
+        istr.read((char*)&rightGeneratorIndex, sizeof(rightGeneratorIndex));
+        istr.read((char*)&isLeftBorderEnabled, sizeof(isLeftBorderEnabled));
+        istr.read((char*)&isRightBorderEnabled, sizeof(isRightBorderEnabled));
+        // TODO: load functions
     }
 }

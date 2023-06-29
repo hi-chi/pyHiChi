@@ -6,10 +6,21 @@ namespace pfc {
     class PmlPstd : public PmlSpectralTimeStaggered<PSTDGrid, PmlPstd>
     {
     public:
-        PmlPstd(PSTDGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML,
+
+        PmlPstd(PSTDGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+            Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd,
+            Int3 sizePML, FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+            PmlSpectralTimeStaggered(grid, complexGrid, dt,
+                domainIndexBegin, domainIndexEnd, complexDomainIndexBegin, complexDomainIndexEnd,
+                sizePML, nPmlParam, r0PmlParam)
+        {}
+
+        // constructor for loading
+        PmlPstd(PSTDGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
             Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd) :
-            PmlSpectralTimeStaggered(grid, complexGrid, dt, sizePML,
-                domainIndexBegin, domainIndexEnd, complexDomainIndexBegin, complexDomainIndexEnd) {}
+            PmlSpectralTimeStaggered(grid, complexGrid, dt,
+                domainIndexBegin, domainIndexEnd, complexDomainIndexBegin, complexDomainIndexEnd)
+        {}
 
         void computeTmpField(CoordinateEnum coordK,
             SpectralScalarField<FP, complexFP>& field, double dt);

@@ -7,9 +7,17 @@ namespace pfc
     class PeriodicalBoundaryConditionFdtd : public FieldBoundaryCondition<YeeGrid>
     {
     public:
-        PeriodicalBoundaryConditionFdtd(YeeGrid* grid, CoordinateEnum axis,
+
+        PeriodicalBoundaryConditionFdtd(YeeGrid* grid,
+            Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) :
+            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex, axis)
+        {}
+
+        // constructor for loading
+        PeriodicalBoundaryConditionFdtd(YeeGrid* grid,
             Int3 leftBorderIndex, Int3 rightBorderIndex) :
-            FieldBoundaryCondition(grid, axis, leftBorderIndex, rightBorderIndex) {}
+            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex)
+        {}
 
         void generateB(FP time) override { generateField(time, grid->Bx, grid->By, grid->Bz); }
         void generateE(FP time) override { generateField(time, grid->Ex, grid->Ey, grid->Ez); }
@@ -17,8 +25,8 @@ namespace pfc
         void generateField(FP time, ScalarField<FP>& fx, ScalarField<FP>& fy, ScalarField<FP>& fz);
 
         FieldBoundaryCondition<YeeGrid>* createInstance(
-            YeeGrid* grid, CoordinateEnum axis, Int3 leftBorderIndex, Int3 rightBorderIndex) override {
-            return new PeriodicalBoundaryConditionFdtd(grid, axis, leftBorderIndex, rightBorderIndex);
+            YeeGrid* grid, Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) override {
+            return new PeriodicalBoundaryConditionFdtd(grid, leftBorderIndex, rightBorderIndex, axis);
         }
     };
 
@@ -61,17 +69,24 @@ namespace pfc
     class ReflectBoundaryConditionFdtd : public FieldBoundaryCondition<YeeGrid>
     {
     public:
-        ReflectBoundaryConditionFdtd(YeeGrid* grid, CoordinateEnum axis,
+
+        ReflectBoundaryConditionFdtd(YeeGrid* grid,
+            Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) :
+            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex, axis)
+        {}
+
+        // constructor for loading
+        ReflectBoundaryConditionFdtd(YeeGrid* grid,
             Int3 leftBorderIndex, Int3 rightBorderIndex) :
-            FieldBoundaryCondition(grid, axis, leftBorderIndex, rightBorderIndex) {
-        }
+            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex)
+        {}
 
         void generateB(FP time) override {}
         void generateE(FP time) override;
 
         FieldBoundaryCondition<YeeGrid>* createInstance(
-            YeeGrid* grid, CoordinateEnum axis, Int3 leftBorderIndex, Int3 rightBorderIndex) override {
-            return new ReflectBoundaryConditionFdtd(grid, axis, leftBorderIndex, rightBorderIndex);
+            YeeGrid* grid, Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) override {
+            return new ReflectBoundaryConditionFdtd(grid, leftBorderIndex, rightBorderIndex, axis);
         }
     };
 

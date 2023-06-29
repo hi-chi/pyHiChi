@@ -7,15 +7,14 @@ namespace pfc {
     class PmlSpectralTimeStaggered : public PmlSpectral<TGrid>
     {
     public:
-        PmlSpectralTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt, Int3 sizePML,
-            Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd) :
-            PmlSpectral<TGrid>(grid, complexGrid, dt, sizePML, domainIndexBegin, domainIndexEnd,
-                complexDomainIndexBegin, complexDomainIndexEnd),
-            tmpFieldReal(this->grid->sizeStorage),
-            tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(domainIndexEnd - domainIndexBegin))
-        {
-            fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, domainIndexEnd - domainIndexBegin);
-        }
+
+        PmlSpectralTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+            Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd,
+            Int3 sizePML, FP nPmlParam, FP r0PmlParam);
+
+        // constructor for loading
+        PmlSpectralTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+            Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd);
 
         /* implement the next methods in derived classes
         void computeTmpField(CoordinateEnum coordK, SpectralScalarField<FP, complexFP>& field, double dt);
@@ -30,6 +29,32 @@ namespace pfc {
         SpectralScalarField<FP, complexFP> tmpFieldComplex;
         FourierTransformField fourierTransform;
     };
+
+    template<class TGrid, class TDerived>
+    inline PmlSpectralTimeStaggered<TGrid, TDerived>::PmlSpectralTimeStaggered(
+        TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+        Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd,
+        Int3 sizePML, FP nPmlParam, FP r0PmlParam) :
+        PmlSpectral<TGrid>(grid, complexGrid, dt, domainIndexBegin, domainIndexEnd,
+            complexDomainIndexBegin, complexDomainIndexEnd, sizePML, nPmlParam, r0PmlParam),
+        tmpFieldReal(this->grid->sizeStorage),
+        tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(domainIndexEnd - domainIndexBegin))
+    {
+        fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, domainIndexEnd - domainIndexBegin);
+    }
+
+    // constructor for loading
+    template<class TGrid, class TDerived>
+    inline PmlSpectralTimeStaggered<TGrid, TDerived>::PmlSpectralTimeStaggered(
+        TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+        Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd) :
+        PmlSpectral<TGrid>(grid, complexGrid, dt, domainIndexBegin, domainIndexEnd,
+            complexDomainIndexBegin, complexDomainIndexEnd),
+        tmpFieldReal(this->grid->sizeStorage),
+        tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(domainIndexEnd - domainIndexBegin))
+    {
+        fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, domainIndexEnd - domainIndexBegin);
+    }
 
     template<class TGrid, class TDerived>
     inline void PmlSpectralTimeStaggered<TGrid, TDerived>::updateBSplit()
