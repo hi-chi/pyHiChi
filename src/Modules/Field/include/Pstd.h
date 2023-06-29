@@ -65,8 +65,8 @@ namespace pfc {
     {
         if (isCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            resetPML();
-            resetFieldGenerator();
+            if (this->pml) this->pml->dt = dt;
+            if (this->generator) this->generator->dt = dt;
         }
         else {
             std::cout

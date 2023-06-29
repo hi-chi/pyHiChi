@@ -67,8 +67,8 @@ namespace pfc {
     inline void PSATDT<ifPoisson>::setTimeStep(FP dt)
     {
         this->dt = dt;
-        resetPML();
-        resetFieldGenerator();
+        if (this->pml) this->pml->dt = dt;
+        if (this->generator) this->generator->dt = dt;
     }
 
     template <bool ifPoisson>
