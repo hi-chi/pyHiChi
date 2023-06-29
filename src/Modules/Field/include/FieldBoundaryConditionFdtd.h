@@ -36,10 +36,10 @@ namespace pfc
         int dim0 = (int)axis;
         int dim1 = (dim0 + 1) % 3;
         int dim2 = (dim0 + 2) % 3;
-        int begin1 = this->leftBorderIndex[dim1];
-        int begin2 = this->leftBorderIndex[dim2];
-        int end1 = this->rightBorderIndex[dim1];
-        int end2 = this->rightBorderIndex[dim2];
+        int begin1 = 0;
+        int begin2 = 0;
+        int end1 = this->grid->numCells[dim1];
+        int end2 = this->grid->numCells[dim2];
 
         OMP_FOR_COLLAPSE()
         for (int j = begin1; j < end1; j++)
@@ -95,10 +95,10 @@ namespace pfc
         int dim0 = (int)axis;
         int dim1 = (dim0 + 1) % 3;
         int dim2 = (dim0 + 2) % 3;
-        int begin1 = this->leftBorderIndex[dim1];
-        int begin2 = this->leftBorderIndex[dim2];
-        int end1 = this->rightBorderIndex[dim1];
-        int end2 = this->rightBorderIndex[dim2];
+        int begin1 = 0;
+        int begin2 = 0;
+        int end1 = this->grid->numCells[dim1];
+        int end2 = this->grid->numCells[dim2];
 
         OMP_FOR_COLLAPSE()
         for (int j = begin1; j < end1; j++)
