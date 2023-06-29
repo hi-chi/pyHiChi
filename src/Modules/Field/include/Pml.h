@@ -161,7 +161,7 @@ namespace pfc {
 
     template<class TGrid>
     inline PmlReal<TGrid>::PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
-        Int3 sizePML, FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+        Int3 sizePML, FP nPmlParam, FP r0PmlParam) :
         Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
             sizePML, nPmlParam, r0PmlParam)
     {}
@@ -207,7 +207,7 @@ namespace pfc {
         TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
         Int3 domainIndexBegin, Int3 domainIndexEnd,
         Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd,
-        Int3 sizePML, FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+        Int3 sizePML, FP nPmlParam, FP r0PmlParam) :
         Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
             sizePML, nPmlParam, r0PmlParam),
         complexGrid(complexGrid),

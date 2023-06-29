@@ -751,16 +751,12 @@ namespace pfc
     class pyPeriodicalBoundaryConditionSolverInterface<TFieldSolver, TPyField, true> {
     public:
 
-        using BoundaryConditionType = typename TFieldSolver::PeriodicalBoundaryConditionType;
-
         void setPeriodicalBoundaryCondition() {
-            static_cast<TPyField*>(this)
-                ->getFieldSolver()->template setBoundaryCondition<BoundaryConditionType>();
+            static_cast<TPyField*>(this)->getFieldSolver()->setPeriodicalBoundaryCondition();
         }
 
         void setPeriodicalBoundaryCondition(CoordinateEnum axis) {
-            static_cast<TPyField*>(this)
-                ->getFieldSolver()->template setBoundaryCondition<BoundaryConditionType>(axis);
+            static_cast<TPyField*>(this)->getFieldSolver()->setPeriodicalBoundaryCondition(axis);
         }
     };
 
@@ -774,16 +770,12 @@ namespace pfc
     class pyReflectBoundaryConditionSolverInterface<TFieldSolver, TPyField, true> {
     public:
 
-        using BoundaryConditionType = typename TFieldSolver::ReflectBoundaryConditionType;
-
         void setReflectBoundaryCondition() {
-            static_cast<TPyField*>(this)
-                ->getFieldSolver()->template setBoundaryCondition<BoundaryConditionType>();
+            static_cast<TPyField*>(this)->getFieldSolver()->setReflectBoundaryCondition();
         }
 
         void setReflectBoundaryCondition(CoordinateEnum axis) {
-            static_cast<TPyField*>(this)
-                ->getFieldSolver()->template setBoundaryCondition<BoundaryConditionType>(axis);
+            static_cast<TPyField*>(this)->getFieldSolver()->setReflectBoundaryCondition(axis);
         }
     };
 
