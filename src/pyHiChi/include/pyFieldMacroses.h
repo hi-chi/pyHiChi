@@ -165,7 +165,7 @@
     SET_PYFIELDBASE_FIELD_SECTION_METHODS(SET_PYFIELDBASE_3D_AREA_METHOD, "")
 
 
-// ------------------- Fielf generator setter methods -------------------
+// ------------------- Field generator setter methods -------------------
 
 
 #define SET_FIELD_GENERATOR_METHODS()                                                                 \
