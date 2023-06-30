@@ -752,11 +752,11 @@ namespace pfc
     public:
 
         void setPeriodicalBoundaryCondition() {
-            static_cast<TPyField*>(this)->getFieldSolver()->setPeriodicalBoundaryCondition();
+            static_cast<TPyField*>(this)->getFieldSolver()->setPeriodicalBoundaryConditions();
         }
 
         void setPeriodicalBoundaryCondition(CoordinateEnum axis) {
-            static_cast<TPyField*>(this)->getFieldSolver()->setPeriodicalBoundaryCondition(axis);
+            static_cast<TPyField*>(this)->getFieldSolver()->setPeriodicalBoundaryConditions(axis);
         }
     };
 
@@ -771,11 +771,11 @@ namespace pfc
     public:
 
         void setReflectBoundaryCondition() {
-            static_cast<TPyField*>(this)->getFieldSolver()->setReflectBoundaryCondition();
+            static_cast<TPyField*>(this)->getFieldSolver()->setReflectBoundaryConditions();
         }
 
         void setReflectBoundaryCondition(CoordinateEnum axis) {
-            static_cast<TPyField*>(this)->getFieldSolver()->setReflectBoundaryCondition(axis);
+            static_cast<TPyField*>(this)->getFieldSolver()->setReflectBoundaryConditions(axis);
         }
     };
 

@@ -43,7 +43,6 @@ namespace pfc {
         fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, domainIndexEnd - domainIndexBegin);
     }
 
-    // constructor for loading
     template<class TGrid, class TDerived>
     inline PmlSpectralTimeStaggered<TGrid, TDerived>::PmlSpectralTimeStaggered(
         TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,

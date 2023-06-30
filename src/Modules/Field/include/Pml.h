@@ -42,7 +42,7 @@ namespace pfc {
 
         // absorbing function parameters
         FP3 maxSigma;
-        FP n;
+        FP n = 0.0;
 
         void initializePmlParams(FP n, FP r0, const FP3& gridStep);
 
@@ -166,7 +166,6 @@ namespace pfc {
             sizePML, nPmlParam, r0PmlParam)
     {}
 
-    // constructor for loading
     template<class TGrid>
     inline PmlReal<TGrid>::PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd) :
         Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd)
@@ -215,7 +214,6 @@ namespace pfc {
         complexDomainIndexEnd(complexDomainIndexEnd)
     {}
 
-    // constructor for loading
     template<class TGrid>
     inline PmlSpectral<TGrid>::PmlSpectral(
         TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,

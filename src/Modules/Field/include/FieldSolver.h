@@ -16,7 +16,6 @@ namespace pfc {
     template<class TGrid, class TPml, class TFieldGenerator>
     class FieldSolver
     {
-
     public:
 
         FieldSolver(TGrid* grid, FP dt);
@@ -84,10 +83,10 @@ namespace pfc {
         */
 
         /* implement the next methods in derived classes
-        void set<Type>BoundaryCondition();
-        void set<Type>BoundaryCondition(CoordinateEnum axis);
-        void saveBoundaryCondition(std::ostream& ostr);
-        void loadBoundaryCondition(std::istream& istr);
+        void set<Type>BoundaryConditions();
+        void set<Type>BoundaryConditions(CoordinateEnum axis);
+        void saveBoundaryConditions(std::ostream& ostr);
+        void loadBoundaryConditions(std::istream& istr);
         */
         void resetBoundaryConditions();
 
@@ -107,16 +106,16 @@ namespace pfc {
     };
 
     template<class TGrid, class TPml, class TFieldGenerator>
-    inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid) :
-        grid(grid), domainIndexBegin(grid->getNumExternalLeftCells()),
+    inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid, FP dt) :
+        grid(grid), globalTime(0.0), dt(dt), domainIndexBegin(grid->getNumExternalLeftCells()),
         domainIndexEnd(grid->getNumExternalLeftCells() + grid->numInternalCells)
     {
         this->updateDomainBorders();
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
-    inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid, FP dt) :
-        grid(grid), globalTime(0.0), dt(dt), domainIndexBegin(grid->getNumExternalLeftCells()),
+    inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid) :
+        grid(grid), domainIndexBegin(grid->getNumExternalLeftCells()),
         domainIndexEnd(grid->getNumExternalLeftCells() + grid->numInternalCells)
     {
         this->updateDomainBorders();
@@ -236,28 +235,6 @@ namespace pfc {
             this->domainIndexBegin, this->domainIndexEnd, *(this->generator)));
     }
 
-    //template<class TGrid, class TPml, class TFieldGenerator>
-    //template <class TBoundaryCondition>
-    //inline void FieldSolver<TGrid, TPml, TFieldGenerator>::setBoundaryCondition()
-    //{
-    //    for (int d = 0; d < this->grid->dimensionality; d++)
-    //        this->boundaryConditions[d].reset(new TBoundaryCondition(this->grid,
-    //            this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
-    //}
-    //
-    //template<class TGrid, class TPml, class TFieldGenerator>
-    //template <class TBoundaryCondition>
-    //inline void FieldSolver<TGrid, TPml, TFieldGenerator>::setBoundaryCondition(CoordinateEnum axis)
-    //{
-    //    if ((int)axis >= this->grid->dimensionality) {
-    //        std::cout
-    //            << "WARNING: an attempt to set boundary conditions for an axis greater than the dimensionality is ignored"
-    //            << std::endl;
-    //    }
-    //    this->boundaryConditions[(int)axis].reset(new TBoundaryCondition(this->grid,
-    //        this->domainIndexBegin, this->domainIndexEnd, axis));
-    //}
-
     template<class TGrid, class TPml, class TFieldGenerator>
     inline void FieldSolver<TGrid, TPml, TFieldGenerator>::resetBoundaryConditions()
     {
@@ -371,15 +348,15 @@ namespace pfc {
     };
 
     template<class TGrid, class TPml, class TFieldGenerator>
-    inline SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::SpectralFieldSolver(TGrid* grid) :
-        FieldSolver<TGrid, TPml, TFieldGenerator>(grid)
+    inline SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::SpectralFieldSolver(TGrid* grid, FP dt) :
+        FieldSolver<TGrid, TPml, TFieldGenerator>(grid, dt)
     {
         initComplexPart();
     }
 
     template<class TGrid, class TPml, class TFieldGenerator>
-    inline SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::SpectralFieldSolver(TGrid* grid, FP dt) :
-        FieldSolver<TGrid, TPml, TFieldGenerator>(grid, dt)
+    inline SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::SpectralFieldSolver(TGrid* grid) :
+        FieldSolver<TGrid, TPml, TFieldGenerator>(grid)
     {
         initComplexPart();
     }

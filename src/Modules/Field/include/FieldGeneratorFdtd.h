@@ -15,12 +15,7 @@ namespace pfc
             FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
             FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
-            const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, 
-                leftGenIndex, rightGenIndex,
-                bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
-                isLeftBorderEnabled, isRightBorderEnabled)
-        {}
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd,
@@ -38,13 +33,7 @@ namespace pfc
             const std::array<FunctionType, 3>& zLeftEFunc,
             const std::array<FunctionType, 3>& zRightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
-            const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, 
-                leftGenIndex, rightGenIndex,
-                xLeftBFunc, xRightBFunc, yLeftBFunc, yRightBFunc, zLeftBFunc, zRightBFunc,
-                xLeftEFunc, xRightEFunc, yLeftEFunc, yRightEFunc, zLeftEFunc, zRightEFunc,
-                isLeftBorderEnabled, isRightBorderEnabled)
-        {}
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd,
@@ -52,22 +41,14 @@ namespace pfc
             const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& bFunc,
             const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
-            const Int3& isRightBorderEnabled = Int3(1, 1, 1)) :
-            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd,
-                leftGenIndex, rightGenIndex, bFunc, eFunc,
-                isLeftBorderEnabled, isRightBorderEnabled)
-        {}
+            const Int3& isRightBorderEnabled = Int3(1, 1, 1));
 
         FieldGeneratorFdtd(YeeGrid* grid, FP dt, const Int3& domainIndexBegin,
-            const Int3& domainIndexEnd, const FieldGeneratorFdtd& gen) :
-            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, gen)
-        {}
+            const Int3& domainIndexEnd, const FieldGeneratorFdtd& gen);
 
         // constructor for loading
         FieldGeneratorFdtd(YeeGrid* grid, FP dt,
-            const Int3& domainIndexBegin, const Int3& domainIndexEnd) :
-            FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd)
-        {}
+            const Int3& domainIndexBegin, const Int3& domainIndexEnd);
 
         void generateB(FP time);
         void generateE(FP time);
@@ -85,6 +66,62 @@ namespace pfc
             int dim0, int dim1, int dim2) const;
 
     };
+
+    inline FieldGeneratorFdtd::FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+        const Int3& domainIndexBegin, const Int3& domainIndexEnd,
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        FunctionType bxFunc, FunctionType byFunc, FunctionType bzFunc,
+        FunctionType exFunc, FunctionType eyFunc, FunctionType ezFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
+        FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd,
+            leftGenIndex, rightGenIndex,
+            bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+    {}
+
+    inline FieldGeneratorFdtd::FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+        const Int3& domainIndexBegin, const Int3& domainIndexEnd,
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        const std::array<FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
+        const std::array<FunctionType, 3>& xRightBFunc,
+        const std::array<FunctionType, 3>& yLeftBFunc,
+        const std::array<FunctionType, 3>& yRightBFunc,
+        const std::array<FunctionType, 3>& zLeftBFunc,
+        const std::array<FunctionType, 3>& zRightBFunc,
+        const std::array<FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
+        const std::array<FunctionType, 3>& xRightEFunc,
+        const std::array<FunctionType, 3>& yLeftEFunc,
+        const std::array<FunctionType, 3>& yRightEFunc,
+        const std::array<FunctionType, 3>& zLeftEFunc,
+        const std::array<FunctionType, 3>& zRightEFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
+        FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd,
+            leftGenIndex, rightGenIndex,
+            xLeftBFunc, xRightBFunc, yLeftBFunc, yRightBFunc, zLeftBFunc, zRightBFunc,
+            xLeftEFunc, xRightEFunc, yLeftEFunc, yRightEFunc, zLeftEFunc, zRightEFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+    {}
+
+    inline FieldGeneratorFdtd::FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+        const Int3& domainIndexBegin, const Int3& domainIndexEnd,
+        const Int3& leftGenIndex, const Int3& rightGenIndex,
+        const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& bFunc,
+        const std::array<std::array<std::array<FunctionType, 3>, 3>, 2>& eFunc,
+        const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled) :
+        FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd,
+            leftGenIndex, rightGenIndex, bFunc, eFunc,
+            isLeftBorderEnabled, isRightBorderEnabled)
+    {}
+
+    inline FieldGeneratorFdtd::FieldGeneratorFdtd(YeeGrid* grid, FP dt, const Int3& domainIndexBegin,
+        const Int3& domainIndexEnd, const FieldGeneratorFdtd& gen) :
+        FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd, gen)
+    {}
+
+    inline FieldGeneratorFdtd::FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+        const Int3& domainIndexBegin, const Int3& domainIndexEnd) :
+        FieldGenerator(grid, dt, domainIndexBegin, domainIndexEnd)
+    {}
 
     inline void FieldGeneratorFdtd::generateB(FP time)
     {

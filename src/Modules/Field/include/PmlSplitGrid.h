@@ -17,18 +17,17 @@ namespace pfc {
         forceinline Int3 getIndex3d(int idx) { return index[idx]; }
         forceinline std::vector<Int3>& getIndices() { return index; }
 
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
+        void resizeFields(int size);
+
         std::vector<FP> bxy, bxz, byx, byz, bzx, bzy;  // split magnetic field
         std::vector<FP> exy, exz, eyx, eyz, ezx, ezy;  // split electric field
         // first index (x, y, z) is component, second one is propagation direction
 
         std::vector<Int3> index;  // natural 3d indexes of nodes in PML
         // indices go through area from left corner to right corner
-
-        void save(std::ostream& ostr);
-        void load(std::istream& istr);
-
-        void resizeFields(int size);
-
     };
 
     inline PmlSplitGrid::PmlSplitGrid(

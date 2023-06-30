@@ -45,7 +45,7 @@ public:
         this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
-        fieldSolver->setPeriodicalBoundaryCondition();
+        fieldSolver->setPeriodicalBoundaryConditions();
            
         this->numSteps = 2 * (int)((this->maxCoords - this->minCoords)[(int)this->axis] /
             (constants::c * fieldSolver->dt));
@@ -195,7 +195,7 @@ public:
         );
 
         for (int d = 1; d < this->grid->dimensionality; d++)
-            this->fieldSolver->setPeriodicalBoundaryCondition((CoordinateEnum)d);
+            this->fieldSolver->setPeriodicalBoundaryConditions((CoordinateEnum)d);
     }
 
 };
@@ -248,7 +248,7 @@ public:
         );
 
         for (int d = 1; d < this->grid->dimensionality; d++)
-            this->fieldSolver->setPeriodicalBoundaryCondition((CoordinateEnum)d);
+            this->fieldSolver->setPeriodicalBoundaryConditions((CoordinateEnum)d);
     }
 
 };

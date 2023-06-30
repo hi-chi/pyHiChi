@@ -20,7 +20,8 @@ namespace pfc
         // constructor for loading
         FieldBoundaryCondition(TGrid* grid, Int3 leftBorderIndex,
             Int3 rightBorderIndex) : grid(grid),
-            leftBorderIndex(leftBorderIndex), rightBorderIndex(rightBorderIndex)
+            leftBorderIndex(leftBorderIndex), rightBorderIndex(rightBorderIndex),
+            axis(CoordinateEnum::x)
         {}
 
         // polymorfic class

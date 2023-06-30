@@ -241,7 +241,7 @@ public:
             field_generator::defaultFieldFunction, field_generator::defaultFieldFunction,
             field_generator::defaultFieldFunction, field_generator::defaultFieldFunction,
             field_generator::defaultFieldFunction, field_generator::defaultFieldFunction);
-        this->solver->setPeriodicalBoundaryCondition();
+        this->solver->setPeriodicalBoundaryConditions();
 
         initializeGrid();
     }

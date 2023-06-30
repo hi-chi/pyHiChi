@@ -31,11 +31,11 @@ namespace pfc {
         void updateHalfB();
         void updateE();
 
-        void setPeriodicalBoundaryCondition();
-        void setPeriodicalBoundaryCondition(CoordinateEnum axis);
+        void setPeriodicalBoundaryConditions();
+        void setPeriodicalBoundaryConditions(CoordinateEnum axis);
 
-        void setReflectBoundaryCondition();
-        void setReflectBoundaryCondition(CoordinateEnum axis);
+        void setReflectBoundaryConditions();
+        void setReflectBoundaryConditions(CoordinateEnum axis);
 
         void setTimeStep(FP dt);
 
@@ -61,8 +61,8 @@ namespace pfc {
         void save(std::ostream& ostr);
         void load(std::istream& istr);
 
-        void saveBoundaryCondition(std::ostream& ostr);
-        void loadBoundaryCondition(std::istream& istr);
+        void saveBoundaryConditions(std::ostream& ostr);
+        void loadBoundaryConditions(std::istream& istr);
 
     private:
 
@@ -94,28 +94,28 @@ namespace pfc {
         RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
     {}
 
-    inline void FDTD::setPeriodicalBoundaryCondition()
+    inline void FDTD::setPeriodicalBoundaryConditions()
     {
         for (int d = 0; d < this->grid->dimensionality; d++)
             this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
     }
 
-    inline void FDTD::setPeriodicalBoundaryCondition(CoordinateEnum axis)
+    inline void FDTD::setPeriodicalBoundaryConditions(CoordinateEnum axis)
     {
         if ((int)axis < this->grid->dimensionality)
             this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
     }
 
-    inline void FDTD::setReflectBoundaryCondition()
+    inline void FDTD::setReflectBoundaryConditions()
     {
         for (int d = 0; d < this->grid->dimensionality; d++)
             this->boundaryConditions[d].reset(new ReflectBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd));
     }
 
-    inline void FDTD::setReflectBoundaryCondition(CoordinateEnum axis)
+    inline void FDTD::setReflectBoundaryConditions(CoordinateEnum axis)
     {
         if ((int)axis < this->grid->dimensionality)
             this->boundaryConditions[(int)axis].reset(new ReflectBoundaryConditionType(
@@ -370,7 +370,7 @@ namespace pfc {
 
         this->saveFieldGenerator(ostr);
         this->savePML(ostr);
-        this->saveBoundaryCondition(ostr);
+        this->saveBoundaryConditions(ostr);
     }
 
     inline void FDTD::load(std::istream& istr)
@@ -380,10 +380,10 @@ namespace pfc {
 
         this->loadFieldGenerator(istr);
         this->loadPML(istr);
-        this->loadBoundaryCondition(istr);
+        this->loadBoundaryConditions(istr);
     }
 
-    inline void FDTD::saveBoundaryCondition(std::ostream& ostr)
+    inline void FDTD::saveBoundaryConditions(std::ostream& ostr)
     {
         for (int d = 0; d < 3; d++) {
             int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
@@ -397,7 +397,7 @@ namespace pfc {
         }
     }
 
-    inline void FDTD::loadBoundaryCondition(std::istream& istr)
+    inline void FDTD::loadBoundaryConditions(std::istream& istr)
     {
         for (int d = 0; d < 3; d++) {
             int isPeriodicalBC = 0;

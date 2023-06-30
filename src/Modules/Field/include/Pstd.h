@@ -27,8 +27,8 @@ namespace pfc {
         void updateHalfB();
         void updateE();
 
-        void setPeriodicalBoundaryCondition();
-        void setPeriodicalBoundaryCondition(CoordinateEnum axis);
+        void setPeriodicalBoundaryConditions();
+        void setPeriodicalBoundaryConditions(CoordinateEnum axis);
 
         void setTimeStep(FP dt);
 
@@ -53,8 +53,8 @@ namespace pfc {
         void save(std::ostream& ostr);
         void load(std::istream& istr);
 
-        void saveBoundaryCondition(std::ostream& ostr);
-        void loadBoundaryCondition(std::istream& istr);
+        void saveBoundaryConditions(std::ostream& ostr);
+        void loadBoundaryConditions(std::istream& istr);
     };
 
     inline PSTD::PSTD(GridType* grid, FP dt) :
@@ -72,14 +72,14 @@ namespace pfc {
         SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
     {}
 
-    inline void PSTD::setPeriodicalBoundaryCondition()
+    inline void PSTD::setPeriodicalBoundaryConditions()
     {
         for (int d = 0; d < this->grid->dimensionality; d++)
             this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
     }
 
-    inline void PSTD::setPeriodicalBoundaryCondition(CoordinateEnum axis)
+    inline void PSTD::setPeriodicalBoundaryConditions(CoordinateEnum axis)
     {
         if ((int)axis < this->grid->dimensionality)
             this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
@@ -176,7 +176,7 @@ namespace pfc {
 
         this->saveFieldGenerator(ostr);
         this->savePML(ostr);
-        this->saveBoundaryCondition(ostr);
+        this->saveBoundaryConditions(ostr);
     }
 
     inline void PSTD::load(std::istream& istr)
@@ -185,10 +185,10 @@ namespace pfc {
 
         this->loadFieldGenerator(istr);
         this->loadPML(istr);
-        this->loadBoundaryCondition(istr);
+        this->loadBoundaryConditions(istr);
     }
 
-    inline void PSTD::saveBoundaryCondition(std::ostream& ostr)
+    inline void PSTD::saveBoundaryConditions(std::ostream& ostr)
     {
         for (int d = 0; d < 3; d++) {
             int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
@@ -199,7 +199,7 @@ namespace pfc {
         }
     }
 
-    inline void PSTD::loadBoundaryCondition(std::istream& istr)
+    inline void PSTD::loadBoundaryConditions(std::istream& istr)
     {
         for (int d = 0; d < 3; d++) {
             int isPeriodicalBC = 0;

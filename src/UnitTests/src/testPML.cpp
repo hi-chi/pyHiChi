@@ -220,7 +220,7 @@ public:
     void initTest() override {
         for (int d = 0; d < this->grid->dimensionality; d++)
             if (d != (int)this->axis)
-                this->fieldSolver->setPeriodicalBoundaryCondition((CoordinateEnum)d);
+                this->fieldSolver->setPeriodicalBoundaryConditions((CoordinateEnum)d);
     }
 
 };

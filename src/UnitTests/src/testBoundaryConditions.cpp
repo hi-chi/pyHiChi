@@ -111,7 +111,7 @@ class PeriodicBoundaryConditionTest : public BoundaryConditionTest<TTypeDefiniti
 public:
 
     PeriodicBoundaryConditionTest() {
-        this->fieldSolver->setPeriodicalBoundaryCondition();
+        this->fieldSolver->setPeriodicalBoundaryConditions();
     }
 
 };
@@ -178,12 +178,12 @@ class ReflectBoundaryConditionTest : public BoundaryConditionTest<TTypeDefinitio
 public:
 
     ReflectBoundaryConditionTest() {
-        this->fieldSolver->setReflectBoundaryCondition(this->axis);
+        this->fieldSolver->setReflectBoundaryConditions(this->axis);
 
         for (int d = 0; d < 3; d++) {
             int dim = ((int)this->axis + d) % 3;
             if (dim < this->grid->dimensionality)
-                this->fieldSolver->setPeriodicalBoundaryCondition((CoordinateEnum)dim);
+                this->fieldSolver->setPeriodicalBoundaryConditions((CoordinateEnum)dim);
         }
     }
 
