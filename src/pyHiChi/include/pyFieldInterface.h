@@ -819,24 +819,27 @@ namespace pfc
     public:
 
         void setExyz(CFunctionPointer fEx, CFunctionPointer fEy, CFunctionPointer fEz) {
-            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEx;
-            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEy;
-            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fEz;
-            static_cast<const TPyField*>(this)->getGrid()->setE(fx, fy, fz);
+            static_cast<const TPyField*>(this)->getGrid()->setE(
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fEx),
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fEy),
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fEz)
+            );
         }
 
         void setBxyz(CFunctionPointer fBx, CFunctionPointer fBy, CFunctionPointer fBz) {
-            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBx;
-            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBy;
-            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fBz;
-            static_cast<const TPyField*>(this)->getGrid()->setB(fx, fy, fz);
+            static_cast<const TPyField*>(this)->getGrid()->setB(
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fBx),
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fBy),
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fBz)
+            );
         }
 
         void setJxyz(CFunctionPointer fJx, CFunctionPointer fJy, CFunctionPointer fJz) {
-            FP(*fx)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJx;
-            FP(*fy)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJy;
-            FP(*fz)(FP, FP, FP, FP) = (FP(*)(FP, FP, FP, FP))fJz;
-            static_cast<const TPyField*>(this)->getGrid()->setJ(fx, fy, fz);
+            static_cast<const TPyField*>(this)->getGrid()->setJ(
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fJx),
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fJy),
+                std::function<FP(FP, FP, FP, FP)>((FP(*)(FP, FP, FP, FP))fJz)
+            );
         }
 
         FP3 getE(const FP3& coords) const {
