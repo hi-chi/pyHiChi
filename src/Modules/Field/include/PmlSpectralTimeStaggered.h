@@ -37,7 +37,7 @@ namespace pfc {
         Int3 sizePML, FP nPmlParam, FP r0PmlParam) :
         PmlSpectral<TGrid>(grid, complexGrid, dt, domainIndexBegin, domainIndexEnd,
             complexDomainIndexBegin, complexDomainIndexEnd, sizePML, nPmlParam, r0PmlParam),
-        tmpFieldReal(this->grid->sizeStorage),
+        tmpFieldReal(this->grid->numCells, this->grid->sizeStorage),
         tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(domainIndexEnd - domainIndexBegin))
     {
         fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, domainIndexEnd - domainIndexBegin);
@@ -49,7 +49,7 @@ namespace pfc {
         Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd) :
         PmlSpectral<TGrid>(grid, complexGrid, dt, domainIndexBegin, domainIndexEnd,
             complexDomainIndexBegin, complexDomainIndexEnd),
-        tmpFieldReal(this->grid->sizeStorage),
+        tmpFieldReal(this->grid->numCells, this->grid->sizeStorage),
         tmpFieldComplex(&tmpFieldReal, fourier_transform::getSizeOfComplexArray(domainIndexEnd - domainIndexBegin))
     {
         fourierTransform.initialize(&tmpFieldReal, &tmpFieldComplex, domainIndexEnd - domainIndexBegin);

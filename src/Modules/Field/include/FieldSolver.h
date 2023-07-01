@@ -408,9 +408,9 @@ namespace pfc {
 
     template<class TGrid, class TPml, class TFieldGenerator>
     inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::initComplexPart() {
-        this->complexGrid.reset(new SpectralGrid<FP, complexFP>(
-            fourier_transform::getSizeOfComplexArray(this->domainIndexEnd - this->domainIndexBegin),
-            this->grid->globalGridDims, this->grid));
+        this->complexGrid.reset(new SpectralGrid<FP, complexFP>(this->grid,
+            fourier_transform::getSizeOfComplexArray(this->domainIndexEnd - this->domainIndexBegin)
+            ));
         this->fourierTransform.template initialize<TGrid>(this->grid, this->complexGrid.get());
         this->updateComplexDomainBorders();
     }

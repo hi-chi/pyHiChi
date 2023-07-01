@@ -78,17 +78,17 @@ namespace pfc {
     template <bool ifPoisson>
     inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid, FP dt) :
         SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt),
-        tmpJx(this->complexGrid->sizeStorage),
-        tmpJy(this->complexGrid->sizeStorage),
-        tmpJz(this->complexGrid->sizeStorage)
+        tmpJx(this->complexGrid->numCells),
+        tmpJy(this->complexGrid->numCells),
+        tmpJz(this->complexGrid->numCells)
     {}
 
     template <bool ifPoisson>
     inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid) :
         SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid),
-        tmpJx(this->complexGrid->sizeStorage),
-        tmpJy(this->complexGrid->sizeStorage),
-        tmpJz(this->complexGrid->sizeStorage)
+        tmpJx(this->complexGrid->numCells),
+        tmpJy(this->complexGrid->numCells),
+        tmpJz(this->complexGrid->numCells)
     {}
 
     template <bool ifPoisson>
@@ -119,13 +119,14 @@ namespace pfc {
     inline void PSATDTimeStaggeredT<ifPoisson>::assignJ(
         SpectralScalarField<FP, complexFP>& J, ScalarField<complexFP>& tmpJ)
     {
-        const complexFP* const ptrJ = J.getData();
-        complexFP* const ptrTmpJ = tmpJ.getData();
-        const int n = J.getSize().volume();
+        const Int3 begin = Int3(0, 0, 0);
+        const Int3 end = J.getSize();
 
-        OMP_FOR()
-        for (int i = 0; i < n; i++)
-            ptrTmpJ[i] = ptrJ[i];
+        OMP_FOR_COLLAPSE()
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
+                    tmpJ(i, j, k) = J(i, j, k);
     }
 
     template <bool ifPoisson>

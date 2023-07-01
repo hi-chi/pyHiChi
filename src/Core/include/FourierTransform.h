@@ -148,14 +148,15 @@ namespace pfc
 
         FourierTransformField() : ArrayFourierTransform3d() {}
         FourierTransformField(ScalarField<FP>* _realData,
-            SpectralScalarField<FP, complexFP>* _complexData, Int3 _size) :
-            ArrayFourierTransform3d(_realData->getData(), _complexData->getData(),
-                _size, _realData->getSize()) {}
+            SpectralScalarField<FP, complexFP>* _complexData, Int3 _size)
+        {
+            this->initialize(_realData, _complexData, _size);
+        }
 
         void initialize(ScalarField<FP>* _realData,
             SpectralScalarField<FP, complexFP>* _complexData, Int3 _size) {
             ArrayFourierTransform3d::initialize(_realData->getData(),
-                _complexData->getData(), _size, _realData->getSize());
+                _complexData->getData(), _size, _realData->getMemSize());
         }
     };
 
