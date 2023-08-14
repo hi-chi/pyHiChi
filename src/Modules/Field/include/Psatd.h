@@ -23,7 +23,7 @@ namespace pfc {
         PSATDT(GridType* grid, FP dt);
 
         // constructor for loading
-        PSATDT(GridType* grid);
+        explicit PSATDT(GridType* grid);
 
         void updateFields();
 

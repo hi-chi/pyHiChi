@@ -47,7 +47,7 @@ namespace pfc
             const Int3& domainIndexEnd, const FieldGeneratorFdtd& gen);
 
         // constructor for loading
-        FieldGeneratorFdtd(YeeGrid* grid, FP dt,
+        explicit FieldGeneratorFdtd(YeeGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd);
 
         void generateB(FP time);

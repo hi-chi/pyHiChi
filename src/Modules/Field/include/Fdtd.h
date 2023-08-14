@@ -23,8 +23,8 @@ namespace pfc {
 
         FDTD(GridType* grid, FP dt);
 
-        //constructor for loading
-        FDTD(GridType* grid);
+        // constructor for loading
+        explicit FDTD(GridType* grid);
 
         void updateFields();
 

@@ -15,7 +15,7 @@ namespace pfc {
         {}
 
         // constructor for loading
-        PmlFdtd(YeeGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd) :
+        explicit PmlFdtd(YeeGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd) :
             PmlReal(grid, dt, domainIndexBegin, domainIndexEnd)
         {}
 

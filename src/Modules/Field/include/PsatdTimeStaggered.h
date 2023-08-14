@@ -23,7 +23,7 @@ namespace pfc {
         PSATDTimeStaggeredT(GridType* grid, FP dt);
 
         // constructor for loading
-        PSATDTimeStaggeredT(GridType* grid);
+        explicit PSATDTimeStaggeredT(GridType* grid);
 
         void updateFields();
 

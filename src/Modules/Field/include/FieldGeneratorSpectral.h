@@ -49,7 +49,7 @@ namespace pfc
             const Int3& domainIndexEnd, const FieldGeneratorSpectral& gen);
 
         // constructor for loading
-        FieldGeneratorSpectral(TGrid* grid, FP dt,
+        explicit FieldGeneratorSpectral(TGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd);
 
         void generateB(FP time) {}

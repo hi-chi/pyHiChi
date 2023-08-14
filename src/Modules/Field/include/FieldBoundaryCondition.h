@@ -18,7 +18,7 @@ namespace pfc
         {}
 
         // constructor for loading
-        FieldBoundaryCondition(TGrid* grid, Int3 leftBorderIndex,
+        explicit FieldBoundaryCondition(TGrid* grid, Int3 leftBorderIndex,
             Int3 rightBorderIndex) : grid(grid),
             leftBorderIndex(leftBorderIndex), rightBorderIndex(rightBorderIndex),
             axis(CoordinateEnum::x)

@@ -16,7 +16,7 @@ namespace pfc {
         {}
 
         // constructor for loading
-        PmlPstd(PSTDGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+        explicit PmlPstd(PSTDGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
             Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd) :
             PmlSpectralTimeStaggered(grid, complexGrid, dt,
                 domainIndexBegin, domainIndexEnd, complexDomainIndexBegin, complexDomainIndexEnd)

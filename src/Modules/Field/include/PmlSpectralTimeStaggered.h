@@ -13,7 +13,7 @@ namespace pfc {
             Int3 sizePML, FP nPmlParam, FP r0PmlParam);
 
         // constructor for loading
-        PmlSpectralTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+        explicit PmlSpectralTimeStaggered(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
             Int3 domainIndexBegin, Int3 domainIndexEnd, Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd);
 
         /* implement the next methods in derived classes

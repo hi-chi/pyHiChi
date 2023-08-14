@@ -21,7 +21,7 @@ namespace pfc {
         FieldSolver(TGrid* grid, FP dt);
 
         // constructor for loading
-        FieldSolver(TGrid* grid);
+        explicit FieldSolver(TGrid* grid);
 
         /* implement the next methods in derived classes
         void updateFields();
@@ -255,7 +255,7 @@ namespace pfc {
         {}
 
         // constructor for loading
-        RealFieldSolver(TGrid* grid) :
+        explicit RealFieldSolver(TGrid* grid) :
             FieldSolver<TGrid, TPml, TFieldGenerator>(grid)
         {}
 
@@ -316,8 +316,10 @@ namespace pfc {
     class SpectralFieldSolver : public FieldSolver<TGrid, TPml, TFieldGenerator>
     {
     public:
-        SpectralFieldSolver(TGrid* grid);  // use when load
         SpectralFieldSolver(TGrid* grid, FP dt);
+
+        // constructor for loading
+        explicit SpectralFieldSolver(TGrid* grid);
 
         void doFourierTransformB(fourier_transform::Direction direction);
         void doFourierTransformE(fourier_transform::Direction direction);

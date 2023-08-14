@@ -14,7 +14,7 @@ namespace pfc {
         AnalyticalFieldSolver(AnalyticalField* field, FP dt) : field(field), dt(dt) {}
 
         // constructor for loading
-        AnalyticalFieldSolver(AnalyticalField* field) : field(field) {}
+        explicit AnalyticalFieldSolver(AnalyticalField* field) : field(field) {}
 
         void updateFields() {
             this->field->globalTime += this->dt;

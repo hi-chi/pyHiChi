@@ -20,7 +20,7 @@ namespace pfc {
         PSTD(GridType* grid, FP dt);
 
         // constructor for loading
-        PSTD(GridType* grid);
+        explicit PSTD(GridType* grid);
 
         void updateFields();
 

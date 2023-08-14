@@ -15,7 +15,7 @@ namespace pfc {
             Int3 sizePML, FP nPmlParam, FP r0PmlParam);
 
         // constructor for loading
-        Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
+        explicit Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
 
         /* implement the next methods in derived classes
         void updateB();
@@ -155,7 +155,7 @@ namespace pfc {
             Int3 sizePML, FP nPmlParam, FP r0PmlParam);
 
         // constructor for loading
-        PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
+        explicit PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
 
     };
 
@@ -183,7 +183,7 @@ namespace pfc {
             Int3 sizePML, FP nPmlParam, FP r0PmlParam);
 
         // constructor for loading
-        PmlSpectral(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
+        explicit PmlSpectral(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
             Int3 domainIndexBegin, Int3 domainIndexEnd,
             Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd);
 

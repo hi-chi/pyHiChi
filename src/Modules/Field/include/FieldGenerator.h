@@ -60,7 +60,7 @@ namespace pfc
             Int3 domainIndexEnd, const FieldGenerator& gen);
 
         // constructor for loading
-        FieldGenerator(TGrid* grid, FP dt,
+        explicit FieldGenerator(TGrid* grid, FP dt,
             const Int3& domainIndexBegin, const Int3& domainIndexEnd);
 
         /* implement the next methods in derived classes

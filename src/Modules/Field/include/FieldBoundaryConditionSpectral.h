@@ -13,7 +13,7 @@ namespace pfc
         {}
 
         // constructor for loading
-        PeriodicalBoundaryConditionSpectral(TGrid* grid,
+        explicit PeriodicalBoundaryConditionSpectral(TGrid* grid,
             Int3 leftBorderIndex, Int3 rightBorderIndex) :
             FieldBoundaryCondition<TGrid>(grid, leftBorderIndex, rightBorderIndex)
         {}

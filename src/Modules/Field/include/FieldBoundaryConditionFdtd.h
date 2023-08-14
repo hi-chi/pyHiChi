@@ -14,7 +14,7 @@ namespace pfc
         {}
 
         // constructor for loading
-        PeriodicalBoundaryConditionFdtd(YeeGrid* grid,
+        explicit PeriodicalBoundaryConditionFdtd(YeeGrid* grid,
             Int3 leftBorderIndex, Int3 rightBorderIndex) :
             FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex)
         {}
@@ -76,7 +76,7 @@ namespace pfc
         {}
 
         // constructor for loading
-        ReflectBoundaryConditionFdtd(YeeGrid* grid,
+        explicit ReflectBoundaryConditionFdtd(YeeGrid* grid,
             Int3 leftBorderIndex, Int3 rightBorderIndex) :
             FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex)
         {}
