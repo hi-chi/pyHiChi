@@ -49,9 +49,12 @@ namespace pfc {
 
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            typename SchemeParams::FieldGeneratorType::FunctionType bxFunc, typename SchemeParams::FieldGeneratorType::FunctionType byFunc,
-            typename SchemeParams::FieldGeneratorType::FunctionType bzFunc, typename SchemeParams::FieldGeneratorType::FunctionType exFunc,
-            typename SchemeParams::FieldGeneratorType::FunctionType eyFunc, typename SchemeParams::FieldGeneratorType::FunctionType ezFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType bxFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType byFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType bzFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType exFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType eyFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
         void setFieldGenerator(
