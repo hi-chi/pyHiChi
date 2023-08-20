@@ -54,12 +54,12 @@ namespace pfc {
         GRID_GET_POSITION_IMPL(BxPosition, shiftBx);
         GRID_GET_POSITION_IMPL(ByPosition, shiftBy);
         GRID_GET_POSITION_IMPL(BzPosition, shiftBz);
-        GRID_GET_POSITION_IMPL(ExPosition, shiftEx);
-        GRID_GET_POSITION_IMPL(EyPosition, shiftEy);
-        GRID_GET_POSITION_IMPL(EzPosition, shiftEz);
-        GRID_GET_POSITION_IMPL(JxPosition, shiftJx);
-        GRID_GET_POSITION_IMPL(JyPosition, shiftJy);
-        GRID_GET_POSITION_IMPL(JzPosition, shiftJz);
+        GRID_GET_POSITION_IMPL(ExPosition, shiftEJx);
+        GRID_GET_POSITION_IMPL(EyPosition, shiftEJy);
+        GRID_GET_POSITION_IMPL(EzPosition, shiftEJz);
+        GRID_GET_POSITION_IMPL(JxPosition, shiftEJx);
+        GRID_GET_POSITION_IMPL(JyPosition, shiftEJy);
+        GRID_GET_POSITION_IMPL(JzPosition, shiftEJz);
 
         /* returns the closest left grid index for given coords, uses 'getGridCoords' method inside */
         /* signature: 'forceinline Int3 funcname(const FP3& coords) const' */
@@ -67,12 +67,12 @@ namespace pfc {
         GRID_GET_INDEX_IMPL(getIndexBx, shiftBx);
         GRID_GET_INDEX_IMPL(getIndexBy, shiftBy);
         GRID_GET_INDEX_IMPL(getIndexBz, shiftBz);
-        GRID_GET_INDEX_IMPL(getIndexEx, shiftEx);
-        GRID_GET_INDEX_IMPL(getIndexEy, shiftEy);
-        GRID_GET_INDEX_IMPL(getIndexEz, shiftEz);
-        GRID_GET_INDEX_IMPL(getIndexJx, shiftJx);
-        GRID_GET_INDEX_IMPL(getIndexJy, shiftJy);
-        GRID_GET_INDEX_IMPL(getIndexJz, shiftJz);     
+        GRID_GET_INDEX_IMPL(getIndexEx, shiftEJx);
+        GRID_GET_INDEX_IMPL(getIndexEy, shiftEJy);
+        GRID_GET_INDEX_IMPL(getIndexEz, shiftEJz);
+        GRID_GET_INDEX_IMPL(getIndexJx, shiftEJx);
+        GRID_GET_INDEX_IMPL(getIndexJy, shiftEJy);
+        GRID_GET_INDEX_IMPL(getIndexJz, shiftEJz);     
 
         /* returns the closest (left or right) grid index for given coords, uses 'getClosestGridCoords' method */
         /* signature: 'forceinline Int3 funcname(const FP3& coords) const' */
@@ -80,12 +80,12 @@ namespace pfc {
         GRID_GET_INDEX_IMPL(getClosestIndexBx, shiftBx);
         GRID_GET_INDEX_IMPL(getClosestIndexBy, shiftBy);
         GRID_GET_INDEX_IMPL(getClosestIndexBz, shiftBz);
-        GRID_GET_INDEX_IMPL(getClosestIndexEx, shiftEx);
-        GRID_GET_INDEX_IMPL(getClosestIndexEy, shiftEy);
-        GRID_GET_INDEX_IMPL(getClosestIndexEz, shiftEz);
-        GRID_GET_INDEX_IMPL(getClosestIndexJx, shiftJx);
-        GRID_GET_INDEX_IMPL(getClosestIndexJy, shiftJy);
-        GRID_GET_INDEX_IMPL(getClosestIndexJz, shiftJz);
+        GRID_GET_INDEX_IMPL(getClosestIndexEx, shiftEJx);
+        GRID_GET_INDEX_IMPL(getClosestIndexEy, shiftEJy);
+        GRID_GET_INDEX_IMPL(getClosestIndexEz, shiftEJz);
+        GRID_GET_INDEX_IMPL(getClosestIndexJx, shiftEJx);
+        GRID_GET_INDEX_IMPL(getClosestIndexJy, shiftEJy);
+        GRID_GET_INDEX_IMPL(getClosestIndexJz, shiftEJz);
 
         /* returns interpolated field value in arbitrary coords, uses 'isInside' method */
         /* signature: 'forceinline bool funcname(const FP3& coords) const' */
@@ -93,12 +93,12 @@ namespace pfc {
         GRID_IS_INSIDE_IMPL(isInsideCoordsBx, shiftBx);
         GRID_IS_INSIDE_IMPL(isInsideCoordsBy, shiftBy);
         GRID_IS_INSIDE_IMPL(isInsideCoordsBz, shiftBz);
-        GRID_IS_INSIDE_IMPL(isInsideCoordsEx, shiftEx);
-        GRID_IS_INSIDE_IMPL(isInsideCoordsEy, shiftEy);
-        GRID_IS_INSIDE_IMPL(isInsideCoordsEz, shiftEz);
-        GRID_IS_INSIDE_IMPL(isInsideCoordsJx, shiftJx);
-        GRID_IS_INSIDE_IMPL(isInsideCoordsJy, shiftJy);
-        GRID_IS_INSIDE_IMPL(isInsideCoordsJz, shiftJz);
+        GRID_IS_INSIDE_IMPL(isInsideCoordsEx, shiftEJx);
+        GRID_IS_INSIDE_IMPL(isInsideCoordsEy, shiftEJy);
+        GRID_IS_INSIDE_IMPL(isInsideCoordsEz, shiftEJz);
+        GRID_IS_INSIDE_IMPL(isInsideCoordsJx, shiftEJx);
+        GRID_IS_INSIDE_IMPL(isInsideCoordsJy, shiftEJy);
+        GRID_IS_INSIDE_IMPL(isInsideCoordsJz, shiftEJz);
 
         // the next methods interpolate and return field values
 
@@ -107,60 +107,60 @@ namespace pfc {
         GRID_GET_FIELD_CIC_IMPL(getBxCIC, Bx, shiftBx);
         GRID_GET_FIELD_CIC_IMPL(getByCIC, By, shiftBy);
         GRID_GET_FIELD_CIC_IMPL(getBzCIC, Bz, shiftBz);
-        GRID_GET_FIELD_CIC_IMPL(getExCIC, Ex, shiftEx);
-        GRID_GET_FIELD_CIC_IMPL(getEyCIC, Ey, shiftEy);
-        GRID_GET_FIELD_CIC_IMPL(getEzCIC, Ez, shiftEz);
-        GRID_GET_FIELD_CIC_IMPL(getJxCIC, Jx, shiftJx);
-        GRID_GET_FIELD_CIC_IMPL(getJyCIC, Jy, shiftJy);
-        GRID_GET_FIELD_CIC_IMPL(getJzCIC, Jz, shiftJz);
+        GRID_GET_FIELD_CIC_IMPL(getExCIC, Ex, shiftEJx);
+        GRID_GET_FIELD_CIC_IMPL(getEyCIC, Ey, shiftEJy);
+        GRID_GET_FIELD_CIC_IMPL(getEzCIC, Ez, shiftEJz);
+        GRID_GET_FIELD_CIC_IMPL(getJxCIC, Jx, shiftEJx);
+        GRID_GET_FIELD_CIC_IMPL(getJyCIC, Jy, shiftEJy);
+        GRID_GET_FIELD_CIC_IMPL(getJzCIC, Jz, shiftEJz);
 
         /* returns TSC-interpolated field value in given coords, uses 'getFieldTSC' method */
         /* signature: 'forceinline FP funcname(const FP3& coords) const' */
         GRID_GET_FIELD_TSC_IMPL(getBxTSC, Bx, shiftBx);
         GRID_GET_FIELD_TSC_IMPL(getByTSC, By, shiftBy);
         GRID_GET_FIELD_TSC_IMPL(getBzTSC, Bz, shiftBz);
-        GRID_GET_FIELD_TSC_IMPL(getExTSC, Ex, shiftEx);
-        GRID_GET_FIELD_TSC_IMPL(getEyTSC, Ey, shiftEy);
-        GRID_GET_FIELD_TSC_IMPL(getEzTSC, Ez, shiftEz);
-        GRID_GET_FIELD_TSC_IMPL(getJxTSC, Jx, shiftJx);
-        GRID_GET_FIELD_TSC_IMPL(getJyTSC, Jy, shiftJy);
-        GRID_GET_FIELD_TSC_IMPL(getJzTSC, Jz, shiftJz);
+        GRID_GET_FIELD_TSC_IMPL(getExTSC, Ex, shiftEJx);
+        GRID_GET_FIELD_TSC_IMPL(getEyTSC, Ey, shiftEJy);
+        GRID_GET_FIELD_TSC_IMPL(getEzTSC, Ez, shiftEJz);
+        GRID_GET_FIELD_TSC_IMPL(getJxTSC, Jx, shiftEJx);
+        GRID_GET_FIELD_TSC_IMPL(getJyTSC, Jy, shiftEJy);
+        GRID_GET_FIELD_TSC_IMPL(getJzTSC, Jz, shiftEJz);
 
         /* returns PCS-interpolated field value in given coords, uses 'getFieldPCS' method */
         /* signature: 'forceinline FP funcname(const FP3& coords) const' */
         GRID_GET_FIELD_PCS_IMPL(getBxPCS, Bx, shiftBx);
         GRID_GET_FIELD_PCS_IMPL(getByPCS, By, shiftBy);
         GRID_GET_FIELD_PCS_IMPL(getBzPCS, Bz, shiftBz);
-        GRID_GET_FIELD_PCS_IMPL(getExPCS, Ex, shiftEx);
-        GRID_GET_FIELD_PCS_IMPL(getEyPCS, Ey, shiftEy);
-        GRID_GET_FIELD_PCS_IMPL(getEzPCS, Ez, shiftEz);
-        GRID_GET_FIELD_PCS_IMPL(getJxPCS, Jx, shiftJx);
-        GRID_GET_FIELD_PCS_IMPL(getJyPCS, Jy, shiftJy);
-        GRID_GET_FIELD_PCS_IMPL(getJzPCS, Jz, shiftJz);
+        GRID_GET_FIELD_PCS_IMPL(getExPCS, Ex, shiftEJx);
+        GRID_GET_FIELD_PCS_IMPL(getEyPCS, Ey, shiftEJy);
+        GRID_GET_FIELD_PCS_IMPL(getEzPCS, Ez, shiftEJz);
+        GRID_GET_FIELD_PCS_IMPL(getJxPCS, Jx, shiftEJx);
+        GRID_GET_FIELD_PCS_IMPL(getJyPCS, Jy, shiftEJy);
+        GRID_GET_FIELD_PCS_IMPL(getJzPCS, Jz, shiftEJz);
 
         /* returns second order interpolated field value in given coords, uses 'getFieldSecondOrder' method */
         /* signature: 'forceinline FP funcname(const FP3& coords) const' */
         GRID_GET_FIELD_SECOND_ORDER_IMPL(getBxSecondOrder, Bx, shiftBx);
         GRID_GET_FIELD_SECOND_ORDER_IMPL(getBySecondOrder, By, shiftBy);
         GRID_GET_FIELD_SECOND_ORDER_IMPL(getBzSecondOrder, Bz, shiftBz);
-        GRID_GET_FIELD_SECOND_ORDER_IMPL(getExSecondOrder, Ex, shiftEx);
-        GRID_GET_FIELD_SECOND_ORDER_IMPL(getEySecondOrder, Ey, shiftEy);
-        GRID_GET_FIELD_SECOND_ORDER_IMPL(getEzSecondOrder, Ez, shiftEz);
-        GRID_GET_FIELD_SECOND_ORDER_IMPL(getJxSecondOrder, Jx, shiftJx);
-        GRID_GET_FIELD_SECOND_ORDER_IMPL(getJySecondOrder, Jy, shiftJy);
-        GRID_GET_FIELD_SECOND_ORDER_IMPL(getJzSecondOrder, Jz, shiftJz);
+        GRID_GET_FIELD_SECOND_ORDER_IMPL(getExSecondOrder, Ex, shiftEJx);
+        GRID_GET_FIELD_SECOND_ORDER_IMPL(getEySecondOrder, Ey, shiftEJy);
+        GRID_GET_FIELD_SECOND_ORDER_IMPL(getEzSecondOrder, Ez, shiftEJz);
+        GRID_GET_FIELD_SECOND_ORDER_IMPL(getJxSecondOrder, Jx, shiftEJx);
+        GRID_GET_FIELD_SECOND_ORDER_IMPL(getJySecondOrder, Jy, shiftEJy);
+        GRID_GET_FIELD_SECOND_ORDER_IMPL(getJzSecondOrder, Jz, shiftEJz);
 
         /* returns fourth order interpolated field value in given coords, uses 'getFieldFourthOrder' method */
         /* signature: 'forceinline FP funcname(const FP3& coords) const' */
         GRID_GET_FIELD_FOURTH_ORDER_IMPL(getBxFourthOrder, Bx, shiftBx);
         GRID_GET_FIELD_FOURTH_ORDER_IMPL(getByFourthOrder, By, shiftBy);
         GRID_GET_FIELD_FOURTH_ORDER_IMPL(getBzFourthOrder, Bz, shiftBz);
-        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getExFourthOrder, Ex, shiftEx);
-        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getEyFourthOrder, Ey, shiftEy);
-        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getEzFourthOrder, Ez, shiftEz);
-        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getJxFourthOrder, Jx, shiftJx);
-        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getJyFourthOrder, Jy, shiftJy);
-        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getJzFourthOrder, Jz, shiftJz);
+        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getExFourthOrder, Ex, shiftEJx);
+        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getEyFourthOrder, Ey, shiftEJy);
+        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getEzFourthOrder, Ez, shiftEJz);
+        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getJxFourthOrder, Jx, shiftEJx);
+        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getJyFourthOrder, Jy, shiftEJy);
+        GRID_GET_FIELD_FOURTH_ORDER_IMPL(getJzFourthOrder, Jz, shiftEJz);
 
         /* return interpolated fields e, b in given coords */
         void getFieldsCIC(const FP3& coords, FP3& e, FP3& b) const {
@@ -257,9 +257,7 @@ namespace pfc {
         ScalarField<Data> Ex, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz;
 
         // 3d shifts of the field in the cell
-        FP3 shiftBx, shiftBy, shiftBz,
-            shiftEx, shiftEy, shiftEz,
-            shiftJx, shiftJy, shiftJz;
+        FP3 shiftBx, shiftBy, shiftBz, shiftEJx, shiftEJy, shiftEJz;
 
     private:
 
@@ -339,8 +337,7 @@ namespace pfc {
         numCells(grid.numCells),
         sizeStorage(grid.sizeStorage),
         shiftBx(grid.shiftBx), shiftBy(grid.shiftBy), shiftBz(grid.shiftBz),
-        shiftEx(grid.shiftEx), shiftEy(grid.shiftEy), shiftEz(grid.shiftEz),
-        shiftJx(grid.shiftJx), shiftJy(grid.shiftJy), shiftJz(grid.shiftJz),
+        shiftEJx(grid.shiftEJx), shiftEJy(grid.shiftEJy), shiftEJz(grid.shiftEJz),
         origin(grid.origin),
         dimensionality(grid.dimensionality),
         Bx(grid.Bx), By(grid.By), Bz(grid.Bz),
@@ -365,12 +362,9 @@ namespace pfc {
         shiftBx(FP3(0.5, 0, 0)* steps),
         shiftBy(FP3(0, 0.5, 0)* steps),
         shiftBz(FP3(0, 0, 0.5)* steps),
-        shiftEx(FP3(0, 0.5, 0.5)* steps),
-        shiftEy(FP3(0.5, 0, 0.5)* steps),
-        shiftEz(FP3(0.5, 0.5, 0)* steps),
-        shiftJx(FP3(0, 0.5, 0.5)* steps),
-        shiftJy(FP3(0.5, 0, 0.5)* steps),
-        shiftJz(FP3(0.5, 0.5, 0)* steps),
+        shiftEJx(FP3(0, 0.5, 0.5)* steps),
+        shiftEJy(FP3(0.5, 0, 0.5)* steps),
+        shiftEJz(FP3(0.5, 0.5, 0)* steps),
         origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
             minCoords.y - steps.y * getNumExternalLeftCells().y,
             minCoords.z - steps.z * getNumExternalLeftCells().z),
@@ -394,12 +388,9 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0)* steps),
         shiftBy(FP3(0, 0, 0)* steps),
         shiftBz(FP3(0, 0, 0)* steps),
-        shiftEx(FP3(0, 0, 0)* steps),
-        shiftEy(FP3(0, 0, 0)* steps),
-        shiftEz(FP3(0, 0, 0)* steps),
-        shiftJx(FP3(0, 0, 0)* steps),
-        shiftJy(FP3(0, 0, 0)* steps),
-        shiftJz(FP3(0, 0, 0)* steps),
+        shiftEJx(FP3(0, 0, 0)* steps),
+        shiftEJy(FP3(0, 0, 0)* steps),
+        shiftEJz(FP3(0, 0, 0)* steps),
         origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
             minCoords.y - steps.y * getNumExternalLeftCells().y,
             minCoords.z - steps.z * getNumExternalLeftCells().z),
@@ -424,12 +415,9 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0)* steps),
         shiftBy(FP3(0, 0, 0)* steps),
         shiftBz(FP3(0, 0, 0)* steps),
-        shiftEx(FP3(0, 0, 0)* steps),
-        shiftEy(FP3(0, 0, 0)* steps),
-        shiftEz(FP3(0, 0, 0)* steps),
-        shiftJx(FP3(0, 0, 0)* steps),
-        shiftJy(FP3(0, 0, 0)* steps),
-        shiftJz(FP3(0, 0, 0)* steps),
+        shiftEJx(FP3(0, 0, 0)* steps),
+        shiftEJy(FP3(0, 0, 0)* steps),
+        shiftEJz(FP3(0, 0, 0)* steps),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
@@ -451,12 +439,9 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0)* steps),
         shiftBy(FP3(0, 0, 0)* steps),
         shiftBz(FP3(0, 0, 0)* steps),
-        shiftEx(FP3(0, 0, 0)* steps),
-        shiftEy(FP3(0, 0, 0)* steps),
-        shiftEz(FP3(0, 0, 0)* steps),
-        shiftJx(FP3(0, 0, 0)* steps),
-        shiftJy(FP3(0, 0, 0)* steps),
-        shiftJz(FP3(0, 0, 0)* steps),
+        shiftEJx(FP3(0, 0, 0)* steps),
+        shiftEJy(FP3(0, 0, 0)* steps),
+        shiftEJz(FP3(0, 0, 0)* steps),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
@@ -478,12 +463,9 @@ namespace pfc {
         shiftBx(FP3(0, 0, 0)* steps),
         shiftBy(FP3(0, 0, 0)* steps),
         shiftBz(FP3(0, 0, 0)* steps),
-        shiftEx(FP3(0, 0, 0)* steps),
-        shiftEy(FP3(0, 0, 0)* steps),
-        shiftEz(FP3(0, 0, 0)* steps),
-        shiftJx(FP3(0, 0, 0)* steps),
-        shiftJy(FP3(0, 0, 0)* steps),
-        shiftJz(FP3(0, 0, 0)* steps),
+        shiftEJx(FP3(0, 0, 0)* steps),
+        shiftEJy(FP3(0, 0, 0)* steps),
+        shiftEJz(FP3(0, 0, 0)* steps),
         origin(minCoords),
         dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
     {
@@ -655,12 +637,9 @@ namespace pfc {
         ostr.write((char*)&shiftBx, sizeof(shiftBx));
         ostr.write((char*)&shiftBy, sizeof(shiftBy));
         ostr.write((char*)&shiftBz, sizeof(shiftBz));
-        ostr.write((char*)&shiftEx, sizeof(shiftEx));
-        ostr.write((char*)&shiftEy, sizeof(shiftEy));
-        ostr.write((char*)&shiftEz, sizeof(shiftEz));
-        ostr.write((char*)&shiftJx, sizeof(shiftJx));
-        ostr.write((char*)&shiftJy, sizeof(shiftJy));
-        ostr.write((char*)&shiftJz, sizeof(shiftJz));
+        ostr.write((char*)&shiftEJx, sizeof(shiftEJx));
+        ostr.write((char*)&shiftEJy, sizeof(shiftEJy));
+        ostr.write((char*)&shiftEJz, sizeof(shiftEJz));
 
         Bx.save(ostr);
         By.save(ostr);
@@ -692,12 +671,9 @@ namespace pfc {
         istr.read((char*)&shiftBx, sizeof(shiftBx));
         istr.read((char*)&shiftBy, sizeof(shiftBy));
         istr.read((char*)&shiftBz, sizeof(shiftBz));
-        istr.read((char*)&shiftEx, sizeof(shiftEx));
-        istr.read((char*)&shiftEy, sizeof(shiftEy));
-        istr.read((char*)&shiftEz, sizeof(shiftEz));
-        istr.read((char*)&shiftJx, sizeof(shiftJx));
-        istr.read((char*)&shiftJy, sizeof(shiftJy));
-        istr.read((char*)&shiftJz, sizeof(shiftJz));
+        istr.read((char*)&shiftEJx, sizeof(shiftEJx));
+        istr.read((char*)&shiftEJy, sizeof(shiftEJy));
+        istr.read((char*)&shiftEJz, sizeof(shiftEJz));
 
         Bx.load(istr);
         By.load(istr);
