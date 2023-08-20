@@ -16,13 +16,6 @@
 
 using namespace pfc;
 
-// if project was built without FFT then don't run tests with FFT
-#ifdef __USE_FFT__
-#define ADD_TEST_FFT_PREFIX(name) name
-#else
-#define ADD_TEST_FFT_PREFIX(name) DISABLED_ ## name
-#endif
-
 #define ASSERT_EQ_COMPLEXFP(expected, actual) \
     ASSERT_EQ((expected).real, (actual).real); \
     ASSERT_EQ((expected).imag, (actual).imag); \

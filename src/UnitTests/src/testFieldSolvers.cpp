@@ -93,6 +93,19 @@ public:
     }
 };
 
+#ifndef __USE_FFT__
+
+typedef ::testing::Types <
+    TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>
+> types;
+
+#else
+
 typedef ::testing::Types <
     TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
@@ -100,21 +113,21 @@ typedef ::testing::Types <
     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>,
-    
+
     TypeDefinitionsFieldTest<PSTD, 1, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::z>,
-    
+
     TypeDefinitionsFieldTest<PSATD, 1, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::z>,
-    
+
     TypeDefinitionsFieldTest<PSATDTimeStaggered, 1, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::x>,
     TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::y>,
@@ -122,16 +135,14 @@ typedef ::testing::Types <
     TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::y>,
     TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::z>
 > types;
+
+#endif
+
 TYPED_TEST_CASE(FieldSolverTest, types);
 
 
 TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
 {
-    // to disable testing of spectral solvers without enabled fftw
-#ifndef __USE_FFT__
-    SUCCEED();
-#else
-
     this->fieldSolver->setPeriodicalBoundaryConditions();
 
     for (int step = 0; step < this->numSteps; ++step)
@@ -177,8 +188,6 @@ TYPED_TEST(FieldSolverTest, PeriodicalFieldSolverTest)
                 actualB.z = this->grid->Bz(i, j, k);
                 ASSERT_NEAR(expectedB.norm(), actualB.norm(), this->maxError);
             }
-
-#endif
 }
 
 TYPED_TEST(FieldSolverTest, SetTimeStepTest) {

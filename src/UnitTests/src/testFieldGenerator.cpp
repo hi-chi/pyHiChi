@@ -156,10 +156,6 @@ public:
 TYPED_TEST_CASE(FieldGeneratorTestAllBorders, types);
 
 TYPED_TEST(FieldGeneratorTestAllBorders, FieldGeneratorTestAllBorders) {
-    // to disable testing of spectral solvers without enabled fftw
-#ifndef __USE_FFT__
-    SUCCEED();
-#else
 
     for (int step = 0; step < this->numSteps; ++step) {
         this->fieldSolver->updateFields();
@@ -168,8 +164,6 @@ TYPED_TEST(FieldGeneratorTestAllBorders, FieldGeneratorTestAllBorders) {
     FP finalAmp = this->computeAmp();
 
     ASSERT_NEAR(finalAmp, 0, this->relatedAmpThreshold);
-
-#endif
 }
 
 
@@ -202,10 +196,6 @@ public:
 TYPED_TEST_CASE(FieldGeneratorTestOneBorderConstructor1, types);
 
 TYPED_TEST(FieldGeneratorTestOneBorderConstructor1, FieldGeneratorTestOneBorder) {
-    // to disable testing of spectral solvers without enabled fftw
-#ifndef __USE_FFT__
-    SUCCEED();
-#else
 
     for (int step = 0; step < this->numSteps; ++step) {
         this->fieldSolver->updateFields();
@@ -215,7 +205,6 @@ TYPED_TEST(FieldGeneratorTestOneBorderConstructor1, FieldGeneratorTestOneBorder)
 
     ASSERT_NEAR(finalAmp, 0, this->relatedAmpThreshold);
 
-#endif
 }
 
 
@@ -255,10 +244,6 @@ public:
 TYPED_TEST_CASE(FieldGeneratorTestOneBorderConstructor2, types);
 
 TYPED_TEST(FieldGeneratorTestOneBorderConstructor2, FieldGeneratorTestOneBorder) {
-    // to disable testing of spectral solvers without enabled fftw
-#ifndef __USE_FFT__
-    SUCCEED();
-#else
 
     for (int step = 0; step < this->numSteps; ++step) {
         this->fieldSolver->updateFields();
@@ -267,6 +252,4 @@ TYPED_TEST(FieldGeneratorTestOneBorderConstructor2, FieldGeneratorTestOneBorder)
     FP finalAmp = this->computeAmp();
 
     ASSERT_NEAR(finalAmp, 0, this->relatedAmpThreshold);
-
-#endif
 }

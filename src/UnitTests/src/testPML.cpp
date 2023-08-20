@@ -118,35 +118,50 @@ public:
 
 };
 
+#ifndef __USE_FFT__
+
 typedef ::testing::Types <
-    //TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
-    //TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>//,
-    
-    //TypeDefinitionsFieldTest<PSTD, 1, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::y>,
-    //TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::y>,
-    //TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::z>,
-    //
-    //TypeDefinitionsFieldTest<PSATD, 1, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::y>,
-    //TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::y>,
-    //TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::z>,
-    //
-    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 1, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::y>,
-    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::x>,
-    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::y>,
-    //TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::z>
+    TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>
 > types;
+
+#else
+
+typedef ::testing::Types <
+    TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>,
+
+    TypeDefinitionsFieldTest<PSTD, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::z>,
+
+    TypeDefinitionsFieldTest<PSATD, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::z>,
+
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::z>
+> types;
+
+#endif
 
 
 template <class TTypeDefinitionsPMLTest>
@@ -187,10 +202,6 @@ public:
 TYPED_TEST_SUITE(PMLTestOnly, types);
 
 TYPED_TEST(PMLTestOnly, PmlTest) {
-    // to disable testing of spectral solvers without enabled fftw
-#ifndef __USE_FFT__
-    SUCCEED();
-#else
 
     FP startEnergy = this->computeEnergy();
 
@@ -201,8 +212,6 @@ TYPED_TEST(PMLTestOnly, PmlTest) {
     FP finalEnergy = this->computeEnergy();
 
     ASSERT_NEAR(finalEnergy / startEnergy, 0, this->relatedEnergyThreshold);
-
-#endif
 }
 
 
@@ -228,10 +237,6 @@ public:
 TYPED_TEST_SUITE(PMLTestPeriodical, types);
 
 TYPED_TEST(PMLTestPeriodical, PmlTestPeriodical) {
-    // to disable testing of spectral solvers without enabled fftw
-#ifndef __USE_FFT__
-    SUCCEED();
-#else
 
     FP startEnergy = this->computeEnergy();
 
@@ -242,6 +247,4 @@ TYPED_TEST(PMLTestPeriodical, PmlTestPeriodical) {
     FP finalEnergy = this->computeEnergy();
 
     ASSERT_NEAR(finalEnergy / startEnergy, 0, this->relatedEnergyThreshold);
-
-#endif
 }
