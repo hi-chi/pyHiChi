@@ -9,16 +9,24 @@
 
 namespace pfc {
 
+    namespace psatd_time_staggered {
+        struct SchemeParams {
+            using GridType = PSATDTimeStaggeredGrid;
+            using PmlType = PmlPsatdTimeStaggered<PSATDTimeStaggeredGrid>;
+            using FieldGeneratorType = FieldGeneratorSpectral<PSATDTimeStaggeredGrid>;
+            using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDTimeStaggeredGrid>;
+        };
+    }
+
     template <bool ifPoisson>
-    class PSATDTimeStaggeredT : public SpectralFieldSolver<PSATDTimeStaggeredGrid,
-        PmlPsatdTimeStaggered<PSATDTimeStaggeredGrid>, FieldGeneratorSpectral<PSATDTimeStaggeredGrid>>
+    class PSATDTimeStaggeredT : public SpectralFieldSolver<psatd_time_staggered::SchemeParams>
     {
     public:
 
-        using GridType = PSATDTimeStaggeredGrid;
-        using PmlType = PmlPsatdTimeStaggered<PSATDTimeStaggeredGrid>;
-        using FieldGeneratorType = FieldGeneratorSpectral<PSATDTimeStaggeredGrid>;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDTimeStaggeredGrid>;
+        using GridType = psatd_time_staggered::SchemeParams::GridType;
+        using PmlType = psatd_time_staggered::SchemeParams::PmlType;
+        using FieldGeneratorType = psatd_time_staggered::SchemeParams::FieldGeneratorType;
+        using PeriodicalBoundaryConditionType = psatd_time_staggered::SchemeParams::PeriodicalBoundaryConditionType;
 
         PSATDTimeStaggeredT(GridType* grid, FP dt);
 
@@ -77,7 +85,7 @@ namespace pfc {
 
     template <bool ifPoisson>
     inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid, FP dt) :
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt),
+        SpectralFieldSolver<psatd_time_staggered::SchemeParams>(grid, dt),
         tmpJx(this->complexGrid->numCells),
         tmpJy(this->complexGrid->numCells),
         tmpJz(this->complexGrid->numCells)
@@ -85,7 +93,7 @@ namespace pfc {
 
     template <bool ifPoisson>
     inline PSATDTimeStaggeredT<ifPoisson>::PSATDTimeStaggeredT(GridType* grid) :
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid),
+        SpectralFieldSolver<psatd_time_staggered::SchemeParams>(grid),
         tmpJx(this->complexGrid->numCells),
         tmpJy(this->complexGrid->numCells),
         tmpJz(this->complexGrid->numCells)
@@ -315,7 +323,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::save(std::ostream& ostr)
     {
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+        SpectralFieldSolver<psatd_time_staggered::SchemeParams>::save(ostr);
 
         tmpJx.save(ostr);
         tmpJy.save(ostr);
@@ -329,7 +337,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDTimeStaggeredT<ifPoisson>::load(std::istream& istr)
     {
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+        SpectralFieldSolver<psatd_time_staggered::SchemeParams>::load(istr);
         
         tmpJx.load(istr);
         tmpJy.load(istr);

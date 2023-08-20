@@ -8,14 +8,24 @@
 #include "FieldGeneratorSpectral.h"
 
 namespace pfc {
-    class PSTD : public SpectralFieldSolver<PSTDGrid, PmlPstd, FieldGeneratorSpectral<PSTDGrid>>
+
+    namespace pstd {
+        struct SchemeParams {
+            using GridType = PSTDGrid;
+            using PmlType = PmlPstd;
+            using FieldGeneratorType = FieldGeneratorSpectral<PSTDGrid>;
+            using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSTDGrid>;
+        };
+    }
+
+    class PSTD : public SpectralFieldSolver<pstd::SchemeParams>
     {
     public:
 
-        using GridType = PSTDGrid;
-        using PmlType = PmlPstd;
-        using FieldGeneratorType = FieldGeneratorSpectral<PSTDGrid>;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSTDGrid>;
+        using GridType = pstd::SchemeParams::GridType;
+        using PmlType = pstd::SchemeParams::PmlType;
+        using FieldGeneratorType = pstd::SchemeParams::FieldGeneratorType;
+        using PeriodicalBoundaryConditionType = pstd::SchemeParams::PeriodicalBoundaryConditionType;
 
         PSTD(GridType* grid, FP dt);
 
@@ -58,7 +68,7 @@ namespace pfc {
     };
 
     inline PSTD::PSTD(GridType* grid, FP dt) :
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt)
+        SpectralFieldSolver<pstd::SchemeParams>(grid, dt)
     {
         if (!isCourantConditionSatisfied(dt)) {
             std::cout
@@ -69,7 +79,7 @@ namespace pfc {
     }
 
     inline PSTD::PSTD(GridType* grid) :
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
+        SpectralFieldSolver<pstd::SchemeParams>(grid)
     {}
 
     inline void PSTD::setPeriodicalBoundaryConditions()
@@ -172,7 +182,7 @@ namespace pfc {
 
     inline void PSTD::save(std::ostream& ostr)
     {
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+        SpectralFieldSolver<pstd::SchemeParams>::save(ostr);
 
         this->saveFieldGenerator(ostr);
         this->savePML(ostr);
@@ -181,7 +191,7 @@ namespace pfc {
 
     inline void PSTD::load(std::istream& istr)
     {
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+        SpectralFieldSolver<pstd::SchemeParams>::load(istr);
 
         this->loadFieldGenerator(istr);
         this->loadPML(istr);

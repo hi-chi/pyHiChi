@@ -9,19 +9,19 @@
 #include <typeinfo>
 
 namespace pfc {
-    template<class TGrid>
+    template<class GridType>
     class FieldBoundaryCondition;
 
     // Base class for field solvers on Grid
-    template<class TGrid, class TPml, class TFieldGenerator>
+    template<class SchemeParams>
     class FieldSolver
     {
     public:
 
-        FieldSolver(TGrid* grid, FP dt);
+        FieldSolver(typename SchemeParams::GridType* grid, FP dt);
 
         // constructor for loading
-        explicit FieldSolver(TGrid* grid);
+        explicit FieldSolver(typename SchemeParams::GridType* grid);
 
         /* implement the next methods in derived classes
         void updateFields();
@@ -49,25 +49,25 @@ namespace pfc {
 
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            typename TFieldGenerator::FunctionType bxFunc, typename TFieldGenerator::FunctionType byFunc,
-            typename TFieldGenerator::FunctionType bzFunc, typename TFieldGenerator::FunctionType exFunc,
-            typename TFieldGenerator::FunctionType eyFunc, typename TFieldGenerator::FunctionType ezFunc,
+            typename typename SchemeParams::FieldGeneratorType::FunctionType bxFunc, typename typename SchemeParams::FieldGeneratorType::FunctionType byFunc,
+            typename typename SchemeParams::FieldGeneratorType::FunctionType bzFunc, typename typename SchemeParams::FieldGeneratorType::FunctionType exFunc,
+            typename typename SchemeParams::FieldGeneratorType::FunctionType eyFunc, typename typename SchemeParams::FieldGeneratorType::FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
-            const std::array<typename TFieldGenerator::FunctionType, 3>& xRightBFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& yLeftBFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& yRightBFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& zLeftBFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& zRightBFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
-            const std::array<typename TFieldGenerator::FunctionType, 3>& xRightEFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& yLeftEFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& yRightEFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& zLeftEFunc,
-            const std::array<typename TFieldGenerator::FunctionType, 3>& zRightEFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightBFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftBFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightBFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftBFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightBFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightEFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftEFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightEFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftEFunc,
+            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
         void saveFieldGenerator(std::ostream& ostr);
@@ -90,11 +90,11 @@ namespace pfc {
         */
         void resetBoundaryConditions();
 
-        TGrid* grid = nullptr;
+        typename SchemeParams::GridType* grid = nullptr;
 
-        std::unique_ptr<TPml> pml;
-        std::array<std::unique_ptr<FieldBoundaryCondition<TGrid>>, 3> boundaryConditions;
-        std::unique_ptr<TFieldGenerator> generator;
+        std::unique_ptr<typename SchemeParams::PmlType> pml;
+        std::array<std::unique_ptr<FieldBoundaryCondition<typename SchemeParams::GridType>>, 3> boundaryConditions;
+        std::unique_ptr<typename SchemeParams::FieldGeneratorType> generator;
 
         // Index space being updated in non-pml area
         Int3 internalIndexBegin, internalIndexEnd;
@@ -105,40 +105,40 @@ namespace pfc {
         FP dt = 0.0;
     };
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid, FP dt) :
+    template<class SchemeParams>
+    inline FieldSolver<SchemeParams>::FieldSolver(typename SchemeParams::GridType* grid, FP dt) :
         grid(grid), globalTime(0.0), dt(dt), domainIndexBegin(grid->getNumExternalLeftCells()),
         domainIndexEnd(grid->getNumExternalLeftCells() + grid->numInternalCells)
     {
         this->updateDomainBorders();
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline FieldSolver<TGrid, TPml, TFieldGenerator>::FieldSolver(TGrid* grid) :
+    template<class SchemeParams>
+    inline FieldSolver<SchemeParams>::FieldSolver(typename SchemeParams::GridType* grid) :
         grid(grid), domainIndexBegin(grid->getNumExternalLeftCells()),
         domainIndexEnd(grid->getNumExternalLeftCells() + grid->numInternalCells)
     {
         this->updateDomainBorders();
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::save(std::ostream& ostr)
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::save(std::ostream& ostr)
     {
         ostr.write((char*)&globalTime, sizeof(globalTime));
         ostr.write((char*)&dt, sizeof(dt));
         // implement module saving in derived classes
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::load(std::istream& istr)
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::load(std::istream& istr)
     {
         istr.read((char*)&globalTime, sizeof(globalTime));
         istr.read((char*)&dt, sizeof(dt));
         // implement module loading in derived classes
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::updateDomainBorders()
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::updateDomainBorders()
     {
         this->internalIndexBegin = this->grid->getNumExternalLeftCells();
         this->internalIndexEnd = this->internalIndexBegin + this->grid->numInternalCells;
@@ -150,31 +150,34 @@ namespace pfc {
         }
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::applyBoundaryConditionsB(FP time)
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::applyBoundaryConditionsB(FP time)
     {
         for (int d = 0; d < grid->dimensionality; d++)
             if (boundaryConditions[d])
                 boundaryConditions[d]->generateB(time);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::applyBoundaryConditionsE(FP time)
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::applyBoundaryConditionsE(FP time)
     {
         for (int d = 0; d < grid->dimensionality; d++)
             if (boundaryConditions[d])
                 boundaryConditions[d]->generateE(time);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::setFieldGenerator(
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::setFieldGenerator(
         const Int3& leftGenIndex, const Int3& rightGenIndex,
-        typename TFieldGenerator::FunctionType bxFunc, typename TFieldGenerator::FunctionType byFunc,
-        typename TFieldGenerator::FunctionType bzFunc, typename TFieldGenerator::FunctionType exFunc,
-        typename TFieldGenerator::FunctionType eyFunc, typename TFieldGenerator::FunctionType ezFunc,
+        typename typename SchemeParams::FieldGeneratorType::FunctionType bxFunc,
+        typename typename SchemeParams::FieldGeneratorType::FunctionType byFunc,
+        typename typename SchemeParams::FieldGeneratorType::FunctionType bzFunc,
+        typename typename SchemeParams::FieldGeneratorType::FunctionType exFunc,
+        typename typename SchemeParams::FieldGeneratorType::FunctionType eyFunc,
+        typename typename SchemeParams::FieldGeneratorType::FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        this->generator.reset(new TFieldGenerator(
+        this->generator.reset(new typename SchemeParams::FieldGeneratorType(
             this->grid, this->dt, this->domainIndexBegin, this->domainIndexEnd,
             leftGenIndex, rightGenIndex,
             bxFunc, byFunc, bzFunc, exFunc, eyFunc, ezFunc,
@@ -182,24 +185,24 @@ namespace pfc {
         );
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::setFieldGenerator(
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::setFieldGenerator(
         const Int3& leftGenIndex, const Int3& rightGenIndex,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
-        const std::array<typename TFieldGenerator::FunctionType, 3>& xRightBFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& yLeftBFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& yRightBFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& zLeftBFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& zRightBFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
-        const std::array<typename TFieldGenerator::FunctionType, 3>& xRightEFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& yLeftEFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& yRightEFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& zLeftEFunc,
-        const std::array<typename TFieldGenerator::FunctionType, 3>& zRightEFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightBFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftBFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightBFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftBFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightBFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightEFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftEFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightEFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftEFunc,
+        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
-        this->generator.reset(new TFieldGenerator(
+        this->generator.reset(new typename SchemeParams::FieldGeneratorType(
             this->grid, this->dt, this->domainIndexBegin, this->domainIndexEnd,
             leftGenIndex, rightGenIndex,
             xLeftBFunc, xRightBFunc, yLeftBFunc, yRightBFunc, zLeftBFunc, zRightBFunc,
@@ -208,35 +211,35 @@ namespace pfc {
         );
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::saveFieldGenerator(std::ostream& ostr)
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::saveFieldGenerator(std::ostream& ostr)
     {
         int isGenerator = this->generator ? 1 : 0;
         ostr.write((char*)&isGenerator, sizeof(isGenerator));
         if (isGenerator) this->generator->save(ostr);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::loadFieldGenerator(std::istream& istr)
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::loadFieldGenerator(std::istream& istr)
     {
         int isGenerator = 0;
         istr.read((char*)&isGenerator, sizeof(isGenerator));
         if (isGenerator) {
-            this->generator.reset(new TFieldGenerator(
+            this->generator.reset(new typename SchemeParams::FieldGeneratorType(
                 this->grid, this->dt, this->domainIndexBegin, this->domainIndexEnd));
             this->generator->load(istr);
         }
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::resetFieldGenerator()
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::resetFieldGenerator()
     {
-        if (this->generator) this->generator.reset(new TFieldGenerator(this->grid, this->dt,
+        if (this->generator) this->generator.reset(new typename SchemeParams::FieldGeneratorType(this->grid, this->dt,
             this->domainIndexBegin, this->domainIndexEnd, *(this->generator)));
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void FieldSolver<TGrid, TPml, TFieldGenerator>::resetBoundaryConditions()
+    template<class SchemeParams>
+    inline void FieldSolver<SchemeParams>::resetBoundaryConditions()
     {
         for (int d = 0; d < 3; d++)
             if (this->boundaryConditions[d])
@@ -245,18 +248,18 @@ namespace pfc {
     }
 
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    class RealFieldSolver : public FieldSolver<TGrid, TPml, TFieldGenerator>
+    template<class SchemeParams>
+    class RealFieldSolver : public FieldSolver<SchemeParams>
     {
     public:
 
-        RealFieldSolver(TGrid* grid, FP dt) :
-            FieldSolver<TGrid, TPml, TFieldGenerator>(grid, dt)
+        RealFieldSolver(typename SchemeParams::GridType* grid, FP dt) :
+            FieldSolver<SchemeParams>(grid, dt)
         {}
 
         // constructor for loading
-        explicit RealFieldSolver(TGrid* grid) :
-            FieldSolver<TGrid, TPml, TFieldGenerator>(grid)
+        explicit RealFieldSolver(typename SchemeParams::GridType* grid) :
+            FieldSolver<SchemeParams>(grid)
         {}
 
         void setPML(Int3 sizePML);
@@ -271,55 +274,55 @@ namespace pfc {
         RealFieldSolver& operator =(const RealFieldSolver&);
     };
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void RealFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(Int3 sizePML)
+    template<class SchemeParams>
+    inline void RealFieldSolver<SchemeParams>::setPML(Int3 sizePML)
     {
-        this->pml.reset(new TPml(this->grid, this->dt,
+        this->pml.reset(new typename SchemeParams::PmlType(this->grid, this->dt,
             this->domainIndexBegin, this->domainIndexEnd, sizePML));
         this->updateDomainBorders();
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void RealFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
+    template<class SchemeParams>
+    inline void RealFieldSolver<SchemeParams>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
         this->setPML(Int3(sizePMLx, sizePMLy, sizePMLz));
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void RealFieldSolver<TGrid, TPml, TFieldGenerator>::savePML(std::ostream& ostr)
+    template<class SchemeParams>
+    inline void RealFieldSolver<SchemeParams>::savePML(std::ostream& ostr)
     {
         int isPml = this->pml ? 1 : 0;
         ostr.write((char*)&isPml, sizeof(isPml));
         if (isPml) this->pml->save(ostr);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void RealFieldSolver<TGrid, TPml, TFieldGenerator>::loadPML(std::istream& istr)
+    template<class SchemeParams>
+    inline void RealFieldSolver<SchemeParams>::loadPML(std::istream& istr)
     {
         int isPml = 0;
         istr.read((char*)&isPml, sizeof(isPml));
         if (isPml) {
-            this->pml.reset(new TPml(this->grid, this->dt,
+            this->pml.reset(new typename SchemeParams::PmlType(this->grid, this->dt,
                 this->domainIndexBegin, this->domainIndexEnd));
             this->pml->load(istr);
         }
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void RealFieldSolver<TGrid, TPml, TFieldGenerator>::resetPML()
+    template<class SchemeParams>
+    inline void RealFieldSolver<SchemeParams>::resetPML()
     {
         if (this->pml) this->setPML(this->pml->sizePML);
     }
 
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    class SpectralFieldSolver : public FieldSolver<TGrid, TPml, TFieldGenerator>
+    template<class SchemeParams>
+    class SpectralFieldSolver : public FieldSolver<SchemeParams>
     {
     public:
-        SpectralFieldSolver(TGrid* grid, FP dt);
+        SpectralFieldSolver(typename SchemeParams::GridType* grid, FP dt);
 
         // constructor for loading
-        explicit SpectralFieldSolver(TGrid* grid);
+        explicit SpectralFieldSolver(typename SchemeParams::GridType* grid);
 
         void doFourierTransformB(fourier_transform::Direction direction);
         void doFourierTransformE(fourier_transform::Direction direction);
@@ -349,54 +352,54 @@ namespace pfc {
         SpectralFieldSolver& operator=(const SpectralFieldSolver&);
     };
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::SpectralFieldSolver(TGrid* grid, FP dt) :
-        FieldSolver<TGrid, TPml, TFieldGenerator>(grid, dt)
+    template<class SchemeParams>
+    inline SpectralFieldSolver<SchemeParams>::SpectralFieldSolver(typename SchemeParams::GridType* grid, FP dt) :
+        FieldSolver<SchemeParams>(grid, dt)
     {
         initComplexPart();
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::SpectralFieldSolver(TGrid* grid) :
-        FieldSolver<TGrid, TPml, TFieldGenerator>(grid)
+    template<class SchemeParams>
+    inline SpectralFieldSolver<SchemeParams>::SpectralFieldSolver(typename SchemeParams::GridType* grid) :
+        FieldSolver<SchemeParams>(grid)
     {
         initComplexPart();
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::doFourierTransformB(fourier_transform::Direction direction)
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::doFourierTransformB(fourier_transform::Direction direction)
     {
         fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::x, direction);
         fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::y, direction);
         fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, direction);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::doFourierTransformE(fourier_transform::Direction direction)
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::doFourierTransformE(fourier_transform::Direction direction)
     {
         fourierTransform.doFourierTransform(FieldEnum::E, CoordinateEnum::x, direction);
         fourierTransform.doFourierTransform(FieldEnum::E, CoordinateEnum::y, direction);
         fourierTransform.doFourierTransform(FieldEnum::E, CoordinateEnum::z, direction);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::doFourierTransformJ(fourier_transform::Direction direction)
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::doFourierTransformJ(fourier_transform::Direction direction)
     {
         fourierTransform.doFourierTransform(FieldEnum::J, CoordinateEnum::x, direction);
         fourierTransform.doFourierTransform(FieldEnum::J, CoordinateEnum::y, direction);
         fourierTransform.doFourierTransform(FieldEnum::J, CoordinateEnum::z, direction);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::doFourierTransform(fourier_transform::Direction direction)
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::doFourierTransform(fourier_transform::Direction direction)
     {
         doFourierTransformE(direction);
         doFourierTransformB(direction);
         doFourierTransformJ(direction);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline FP3 SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::getWaveVector(const Int3& ind)
+    template<class SchemeParams>
+    inline FP3 SpectralFieldSolver<SchemeParams>::getWaveVector(const Int3& ind)
     {
         const Int3 domainSize = this->domainIndexEnd - this->domainIndexBegin;
         FP kx = ((FP)2.0 * constants::pi * ((ind.x <= domainSize.x / 2) ? ind.x : ind.x - domainSize.x)) /
@@ -408,60 +411,60 @@ namespace pfc {
         return FP3(kx, ky, kz);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::initComplexPart() {
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::initComplexPart() {
         this->complexGrid.reset(new SpectralGrid<FP, complexFP>(this->grid,
             fourier_transform::getSizeOfComplexArray(this->domainIndexEnd - this->domainIndexBegin)
             ));
-        this->fourierTransform.template initialize<TGrid>(this->grid, this->complexGrid.get());
+        this->fourierTransform.template initialize<typename SchemeParams::GridType>(this->grid, this->complexGrid.get());
         this->updateComplexDomainBorders();
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::updateComplexDomainBorders()
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::updateComplexDomainBorders()
     {
         this->complexDomainIndexBegin = Int3(0, 0, 0);
         this->complexDomainIndexEnd = this->complexGrid->numCells;
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(Int3 sizePML)
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::setPML(Int3 sizePML)
     {
-        this->pml.reset(new TPml(this->grid, this->complexGrid.get(), this->dt,
+        this->pml.reset(new typename SchemeParams::PmlType(this->grid, this->complexGrid.get(), this->dt,
             this->domainIndexBegin, this->domainIndexEnd,
             this->complexDomainIndexBegin, this->complexDomainIndexEnd, sizePML));
         this->updateDomainBorders();
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
         this->setPML(Int3(sizePMLx, sizePMLy, sizePMLz));
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::savePML(std::ostream& ostr)
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::savePML(std::ostream& ostr)
     {
         int isPml = this->pml ? 1 : 0;
         ostr.write((char*)&isPml, sizeof(isPml));
         if (isPml) this->pml->save(ostr);
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::loadPML(std::istream& istr)
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::loadPML(std::istream& istr)
     {
         int isPml = 0;
         istr.read((char*)&isPml, sizeof(isPml));
         if (isPml) {
-            this->pml.reset(new TPml(this->grid, this->complexGrid.get(), this->dt,
+            this->pml.reset(new typename SchemeParams::PmlType(this->grid, this->complexGrid.get(), this->dt,
                 this->domainIndexBegin, this->domainIndexEnd,
                 this->complexDomainIndexBegin, this->complexDomainIndexEnd));
             this->pml->load(istr);
         }
     }
 
-    template<class TGrid, class TPml, class TFieldGenerator>
-    inline void SpectralFieldSolver<TGrid, TPml, TFieldGenerator>::resetPML()
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::resetPML()
     {
         if (this->pml) this->setPML(this->pml->sizePML);
     }

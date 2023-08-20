@@ -9,16 +9,24 @@
 
 namespace pfc {
 
+    namespace psatd {
+        struct SchemeParams {
+            using GridType = PSATDGrid;
+            using PmlType = PmlPsatdTimeStaggered<PSATDGrid>;
+            using FieldGeneratorType = FieldGeneratorSpectral<PSATDGrid>;
+            using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDGrid>;
+        };
+    }
+
     template <bool ifPoisson>
-    class PSATDT : public SpectralFieldSolver<PSATDGrid, PmlPsatdTimeStaggered<PSATDGrid>,
-        FieldGeneratorSpectral<PSATDGrid>>
+    class PSATDT : public SpectralFieldSolver<psatd::SchemeParams>
     {
     public:
 
-        using GridType = PSATDGrid;
-        using PmlType = PmlPsatdTimeStaggered<PSATDGrid>;
-        using FieldGeneratorType = FieldGeneratorSpectral<PSATDGrid>;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSATDGrid>;
+        using GridType = psatd::SchemeParams::GridType;
+        using PmlType = psatd::SchemeParams::PmlType;
+        using FieldGeneratorType = psatd::SchemeParams::FieldGeneratorType;
+        using PeriodicalBoundaryConditionType = psatd::SchemeParams::PeriodicalBoundaryConditionType;
 
         PSATDT(GridType* grid, FP dt);
 
@@ -69,12 +77,12 @@ namespace pfc {
 
     template <bool ifPoisson>
     inline PSATDT<ifPoisson>::PSATDT(GridType* grid, FP dt) :
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt)
+        SpectralFieldSolver<psatd::SchemeParams>(grid, dt)
     {}
 
     template <bool ifPoisson>
     inline PSATDT<ifPoisson>::PSATDT(GridType* grid) :
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
+        SpectralFieldSolver<psatd::SchemeParams>(grid)
     {}
 
     template <bool ifPoisson>
@@ -268,7 +276,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::save(std::ostream& ostr)
     {
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+        SpectralFieldSolver<psatd::SchemeParams>::save(ostr);
 
         this->saveFieldGenerator(ostr);
         this->savePML(ostr);
@@ -278,7 +286,7 @@ namespace pfc {
     template <bool ifPoisson>
     inline void PSATDT<ifPoisson>::load(std::istream& istr)
     {
-        SpectralFieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+        SpectralFieldSolver<psatd::SchemeParams>::load(istr);
 
         this->loadFieldGenerator(istr);
         this->loadPML(istr);

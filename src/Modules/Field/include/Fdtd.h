@@ -10,16 +10,26 @@
 #include <algorithm>
 
 namespace pfc {
+
+    namespace fdtd {
+        struct SchemeParams {
+            using GridType = YeeGrid;
+            using PmlType = PmlFdtd;
+            using FieldGeneratorType = FieldGeneratorFdtd;
+            using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionFdtd;
+            using ReflectBoundaryConditionType = ReflectBoundaryConditionFdtd;
+        };
+    }
     
-    class FDTD : public RealFieldSolver<YeeGrid, PmlFdtd, FieldGeneratorFdtd>
+    class FDTD : public RealFieldSolver<fdtd::SchemeParams>
     {
     public:
 
-        using GridType = YeeGrid;
-        using PmlType = PmlFdtd;
-        using FieldGeneratorType = FieldGeneratorFdtd;
-        using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionFdtd;
-        using ReflectBoundaryConditionType = ReflectBoundaryConditionFdtd;
+        using GridType = fdtd::SchemeParams::GridType;
+        using PmlType = fdtd::SchemeParams::PmlType;
+        using FieldGeneratorType = fdtd::SchemeParams::FieldGeneratorType;
+        using PeriodicalBoundaryConditionType = fdtd::SchemeParams::PeriodicalBoundaryConditionType;
+        using ReflectBoundaryConditionType = fdtd::SchemeParams::ReflectBoundaryConditionType;
 
         FDTD(GridType* grid, FP dt);
 
@@ -79,7 +89,7 @@ namespace pfc {
     };
 
     inline FDTD::FDTD(GridType* grid, FP dt) :
-        RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid, dt),
+        RealFieldSolver<fdtd::SchemeParams>(grid, dt),
         anisotropyCoeff(1, 1, 1)
     {
         if (!isCourantConditionSatisfied(dt)) {
@@ -91,7 +101,7 @@ namespace pfc {
     }
 
     inline FDTD::FDTD(GridType* grid) :
-        RealFieldSolver<GridType, PmlType, FieldGeneratorType>(grid)
+        RealFieldSolver<fdtd::SchemeParams>(grid)
     {}
 
     inline void FDTD::setPeriodicalBoundaryConditions()
@@ -365,7 +375,7 @@ namespace pfc {
 
     inline void FDTD::save(std::ostream& ostr)
     {
-        RealFieldSolver<GridType, PmlType, FieldGeneratorType>::save(ostr);
+        RealFieldSolver<fdtd::SchemeParams>::save(ostr);
         ostr.write((char*)&anisotropyCoeff, sizeof(anisotropyCoeff));
 
         this->saveFieldGenerator(ostr);
@@ -375,7 +385,7 @@ namespace pfc {
 
     inline void FDTD::load(std::istream& istr)
     {
-        RealFieldSolver<GridType, PmlType, FieldGeneratorType>::load(istr);
+        RealFieldSolver<fdtd::SchemeParams>::load(istr);
         istr.read((char*)&anisotropyCoeff, sizeof(anisotropyCoeff));
 
         this->loadFieldGenerator(istr);
