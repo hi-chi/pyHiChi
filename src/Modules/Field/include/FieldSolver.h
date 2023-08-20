@@ -49,25 +49,25 @@ namespace pfc {
 
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            typename typename SchemeParams::FieldGeneratorType::FunctionType bxFunc, typename typename SchemeParams::FieldGeneratorType::FunctionType byFunc,
-            typename typename SchemeParams::FieldGeneratorType::FunctionType bzFunc, typename typename SchemeParams::FieldGeneratorType::FunctionType exFunc,
-            typename typename SchemeParams::FieldGeneratorType::FunctionType eyFunc, typename typename SchemeParams::FieldGeneratorType::FunctionType ezFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType bxFunc, typename SchemeParams::FieldGeneratorType::FunctionType byFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType bzFunc, typename SchemeParams::FieldGeneratorType::FunctionType exFunc,
+            typename SchemeParams::FieldGeneratorType::FunctionType eyFunc, typename SchemeParams::FieldGeneratorType::FunctionType ezFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
         void setFieldGenerator(
             const Int3& leftGenIndex, const Int3& rightGenIndex,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightBFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftBFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightBFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftBFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightBFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightEFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftEFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightEFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftEFunc,
-            const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightEFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightBFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftBFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightBFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftBFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightBFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightEFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftEFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightEFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftEFunc,
+            const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightEFunc,
             const Int3& isLeftBorderEnabled = Int3(1, 1, 1),
             const Int3& isRightBorderEnabled = Int3(1, 1, 1));
         void saveFieldGenerator(std::ostream& ostr);
@@ -169,12 +169,12 @@ namespace pfc {
     template<class SchemeParams>
     inline void FieldSolver<SchemeParams>::setFieldGenerator(
         const Int3& leftGenIndex, const Int3& rightGenIndex,
-        typename typename SchemeParams::FieldGeneratorType::FunctionType bxFunc,
-        typename typename SchemeParams::FieldGeneratorType::FunctionType byFunc,
-        typename typename SchemeParams::FieldGeneratorType::FunctionType bzFunc,
-        typename typename SchemeParams::FieldGeneratorType::FunctionType exFunc,
-        typename typename SchemeParams::FieldGeneratorType::FunctionType eyFunc,
-        typename typename SchemeParams::FieldGeneratorType::FunctionType ezFunc,
+        typename SchemeParams::FieldGeneratorType::FunctionType bxFunc,
+        typename SchemeParams::FieldGeneratorType::FunctionType byFunc,
+        typename SchemeParams::FieldGeneratorType::FunctionType bzFunc,
+        typename SchemeParams::FieldGeneratorType::FunctionType exFunc,
+        typename SchemeParams::FieldGeneratorType::FunctionType eyFunc,
+        typename SchemeParams::FieldGeneratorType::FunctionType ezFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
         this->generator.reset(new typename SchemeParams::FieldGeneratorType(
@@ -188,18 +188,18 @@ namespace pfc {
     template<class SchemeParams>
     inline void FieldSolver<SchemeParams>::setFieldGenerator(
         const Int3& leftGenIndex, const Int3& rightGenIndex,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightBFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftBFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightBFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftBFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightBFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightEFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftEFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightEFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftEFunc,
-        const std::array<typename typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightEFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftBFunc,  // { bx, by, bz }
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightBFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftBFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightBFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftBFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightBFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xLeftEFunc,  // { ex, ey, ez }
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& xRightEFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yLeftEFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& yRightEFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zLeftEFunc,
+        const std::array<typename SchemeParams::FieldGeneratorType::FunctionType, 3>& zRightEFunc,
         const Int3& isLeftBorderEnabled, const Int3& isRightBorderEnabled)
     {
         this->generator.reset(new typename SchemeParams::FieldGeneratorType(
