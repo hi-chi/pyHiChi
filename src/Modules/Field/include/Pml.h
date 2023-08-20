@@ -197,8 +197,25 @@ namespace pfc {
         void updateB();
         void updateE();
 
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
+        // coefficient pre-computing
+        void computeCoeffs();
+
         SpectralGrid<FP, complexFP>* complexGrid = nullptr;
         Int3 complexDomainIndexBegin, complexDomainIndexEnd;
+
+        std::vector<FP> bCoeffX, bCoeffY, bCoeffZ, eCoeffX, eCoeffY, eCoeffZ;
+
+    private:
+
+        void computeCoeffs(
+            std::vector<FP>& coeffX, std::vector<FP>& coeffY, std::vector<FP>& coeffZ,
+            const FP3(TGrid::* positionFX)(int, int, int) const,
+            const FP3(TGrid::* positionFY)(int, int, int) const,
+            const FP3(TGrid::* positionFZ)(int, int, int) const);
+
     };
 
     template<class TGrid>
@@ -212,7 +229,9 @@ namespace pfc {
         complexGrid(complexGrid),
         complexDomainIndexBegin(complexDomainIndexBegin),
         complexDomainIndexEnd(complexDomainIndexEnd)
-    {}
+    {
+        this->computeCoeffs();
+    }
 
     template<class TGrid>
     inline PmlSpectral<TGrid>::PmlSpectral(
@@ -226,27 +245,30 @@ namespace pfc {
     {}
 
     template<class TGrid>
+    inline void PmlSpectral<TGrid>::computeCoeffs()
+    {
+        this->computeCoeffs(bCoeffX, bCoeffY, bCoeffZ,
+            &TGrid::BxPosition, &TGrid::ByPosition, &TGrid::BzPosition);
+        this->computeCoeffs(eCoeffX, eCoeffY, eCoeffZ,
+            &TGrid::ExPosition, &TGrid::EyPosition, &TGrid::EzPosition);
+    }
+
+    template<class TGrid>
     inline void PmlSpectral<TGrid>::updateB()
     {
         const int size = this->splitGrid->getNumPmlNodes();
-        const FP cdt = constants::c * this->dt;
 
         OMP_FOR()
         for (int idx = 0; idx < size; ++idx)
         {
             Int3 index = this->splitGrid->getIndex3d(idx);
 
-            FP sigmaX = this->computeSigma(this->grid->ByPosition(index.x, index.y, index.z).x, CoordinateEnum::x);
-            FP sigmaY = this->computeSigma(this->grid->BzPosition(index.x, index.y, index.z).y, CoordinateEnum::y);
-            FP sigmaZ = this->computeSigma(this->grid->BxPosition(index.x, index.y, index.z).z, CoordinateEnum::z);
-            FP coeffX = exp(-sigmaX * cdt), coeffY = exp(-sigmaY * cdt), coeffZ = exp(-sigmaZ * cdt);
-
-            this->splitGrid->bxy[idx] *= coeffY;
-            this->splitGrid->bxz[idx] *= coeffZ;
-            this->splitGrid->byz[idx] *= coeffZ;
-            this->splitGrid->byx[idx] *= coeffX;
-            this->splitGrid->bzx[idx] *= coeffX;
-            this->splitGrid->bzy[idx] *= coeffY;
+            this->splitGrid->bxy[idx] *= bCoeffY[idx];
+            this->splitGrid->bxz[idx] *= bCoeffZ[idx];
+            this->splitGrid->byz[idx] *= bCoeffZ[idx];
+            this->splitGrid->byx[idx] *= bCoeffX[idx];
+            this->splitGrid->bzx[idx] *= bCoeffX[idx];
+            this->splitGrid->bzy[idx] *= bCoeffY[idx];
 
             this->grid->Bx(index.x, index.y, index.z) = this->splitGrid->bxy[idx] + this->splitGrid->bxz[idx];
             this->grid->By(index.x, index.y, index.z) = this->splitGrid->byz[idx] + this->splitGrid->byx[idx];
@@ -265,21 +287,89 @@ namespace pfc {
         {
             Int3 index = this->splitGrid->getIndex3d(idx);
 
-            FP sigmaX = this->computeSigma(this->grid->EyPosition(index.x, index.y, index.z).x, CoordinateEnum::x);
-            FP sigmaY = this->computeSigma(this->grid->EzPosition(index.x, index.y, index.z).y, CoordinateEnum::y);
-            FP sigmaZ = this->computeSigma(this->grid->ExPosition(index.x, index.y, index.z).z, CoordinateEnum::z);
-            FP coeffX = exp(-sigmaX * cdt), coeffY = exp(-sigmaY * cdt), coeffZ = exp(-sigmaZ * cdt);
-
-            this->splitGrid->exy[idx] *= coeffY;
-            this->splitGrid->exz[idx] *= coeffZ;
-            this->splitGrid->eyz[idx] *= coeffZ;
-            this->splitGrid->eyx[idx] *= coeffX;
-            this->splitGrid->ezx[idx] *= coeffX;
-            this->splitGrid->ezy[idx] *= coeffY;
+            this->splitGrid->exy[idx] *= eCoeffY[idx];
+            this->splitGrid->exz[idx] *= eCoeffZ[idx];
+            this->splitGrid->eyz[idx] *= eCoeffZ[idx];
+            this->splitGrid->eyx[idx] *= eCoeffX[idx];
+            this->splitGrid->ezx[idx] *= eCoeffX[idx];
+            this->splitGrid->ezy[idx] *= eCoeffY[idx];
 
             this->grid->Ex(index.x, index.y, index.z) = this->splitGrid->exy[idx] + this->splitGrid->exz[idx];
             this->grid->Ey(index.x, index.y, index.z) = this->splitGrid->eyz[idx] + this->splitGrid->eyx[idx];
             this->grid->Ez(index.x, index.y, index.z) = this->splitGrid->ezx[idx] + this->splitGrid->ezy[idx];
         }
+    }
+
+    template<class TGrid>
+    inline void PmlSpectral<TGrid>::computeCoeffs(
+        std::vector<FP>& coeffX, std::vector<FP>& coeffY, std::vector<FP>& coeffZ,
+        const FP3(TGrid::* positionFX)(int, int, int) const,
+        const FP3(TGrid::* positionFY)(int, int, int) const,
+        const FP3(TGrid::* positionFZ)(int, int, int) const)
+    {
+        const int size = this->splitGrid->getNumPmlNodes();
+
+        coeffX.resize(size);
+        coeffY.resize(size);
+        coeffZ.resize(size);
+
+        const FP cdt = constants::c * this->dt;
+
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+        {
+            Int3 index = this->splitGrid->getIndex3d(idx);
+
+            // coordinates according to Yee grid or collocated grid
+            FP sigmaX = this->computeSigma((this->grid->*positionFY)(index.x, index.y, index.z).x, CoordinateEnum::x);
+            FP sigmaY = this->computeSigma((this->grid->*positionFZ)(index.x, index.y, index.z).y, CoordinateEnum::y);
+            FP sigmaZ = this->computeSigma((this->grid->*positionFX)(index.x, index.y, index.z).z, CoordinateEnum::z);
+
+            coeffX[idx] = exp(-sigmaX * cdt);
+            coeffY[idx] = exp(-sigmaY * cdt);
+            coeffZ[idx] = exp(-sigmaZ * cdt);
+        }
+    }
+
+    template<class TGrid>
+    inline void PmlSpectral<TGrid>::save(std::ostream& ostr)
+    {
+        Pml<TGrid>::save(ostr);
+
+        const int size = this->splitGrid->getNumPmlNodes();
+        ostr.write((char*)&size, sizeof(size));
+
+        ostr.write((char*)bCoeffX.data(), sizeof(FP) * size);
+        ostr.write((char*)bCoeffY.data(), sizeof(FP) * size);
+        ostr.write((char*)bCoeffZ.data(), sizeof(FP) * size);
+
+        ostr.write((char*)eCoeffX.data(), sizeof(FP) * size);
+        ostr.write((char*)eCoeffY.data(), sizeof(FP) * size);
+        ostr.write((char*)eCoeffZ.data(), sizeof(FP) * size);
+    }
+
+    template<class TGrid>
+    inline void PmlSpectral<TGrid>::load(std::istream& istr)
+    {
+        Pml<TGrid>::load(istr);
+
+        int size = 0;
+        istr.read((char*)&size, sizeof(size));
+
+        bCoeffX.resize(size);
+        bCoeffY.resize(size);
+        bCoeffZ.resize(size);
+
+        eCoeffX.resize(size);
+        eCoeffY.resize(size);
+        eCoeffZ.resize(size);
+
+        istr.read((char*)bCoeffX.data(), sizeof(FP) * size);
+        istr.read((char*)bCoeffY.data(), sizeof(FP) * size);
+        istr.read((char*)bCoeffZ.data(), sizeof(FP) * size);
+
+        istr.read((char*)eCoeffX.data(), sizeof(FP) * size);
+        istr.read((char*)eCoeffY.data(), sizeof(FP) * size);
+        istr.read((char*)eCoeffZ.data(), sizeof(FP) * size);
     }
 }
