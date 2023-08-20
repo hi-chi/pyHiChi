@@ -21,6 +21,7 @@ set(core_headers
     ${CORE_HEADER_DIR}/FourierTransform.h
     ${CORE_HEADER_DIR}/FP.h
     ${CORE_HEADER_DIR}/Grid.h
+    ${CORE_HEADER_DIR}/GridMacros.h
     ${CORE_HEADER_DIR}/GridTypes.h
     ${CORE_HEADER_DIR}/Particle.h
     ${CORE_HEADER_DIR}/ParticleArray.h
