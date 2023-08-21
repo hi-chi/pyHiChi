@@ -233,16 +233,16 @@ public:
     const int numSteps = 10;
 
     virtual void SetUp() {
-        maxAbsoluteError = std::is_base_of<RealFieldSolver<typename TSolver::SchemeParams>, TSolver>::value?
+        this->maxAbsoluteError = std::is_base_of<RealFieldSolver<typename TSolver::SchemeParams>, TSolver>::value?
             (FP)1e-1: (FP)1e-5;
-        maxRelativeError = (FP)1e-1;
-        timeStep = 1e-13;
+        this->maxRelativeError = (FP)1e-1;
+        this->timeStep = 1e-13;
 
         Int3 gridSize(19, 10, 11);
-        minCoords = FP3(-1.0, 0.0, 0.0);
-        maxCoords = FP3(1.0, 1.0, 1.0);
-        FP3 steps = (maxCoords - minCoords) / (FP3)gridSize;
-        grid = new TGrid(gridSize, minCoords, steps, gridSize);
+        this->minCoords = FP3(-1.0, 0.0, 0.0);
+        this->maxCoords = FP3(1.0, 1.0, 1.0);
+        FP3 steps = (this->maxCoords - this->minCoords) / (FP3)gridSize;
+        this->grid = new TGrid(gridSize, this->minCoords, steps, gridSize);
 
         this->solver.reset(new TSolver(this->grid, this->timeStep));
         this->solver->setPML(4, 3, 3);
@@ -506,7 +506,7 @@ TYPED_TEST(SaveLoadSolverModulesTest, old_and_new_grid_solver_and_modules_are_in
 
     this->loadGridAndSolver(sstr);
 
-    ASSERT_FALSE(compareFields(this->maxAbsoluteError));
+    ASSERT_FALSE(this->compareFields(this->maxAbsoluteError));
 
     for (int step = 0; step < this->numSteps / 2; ++step)
         this->solver2->updateFields();
