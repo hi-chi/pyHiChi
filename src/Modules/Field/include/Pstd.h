@@ -73,7 +73,7 @@ namespace pfc {
     {
         if (!isCourantConditionSatisfied(dt)) {
             std::cout
-                << "WARNING: PSTD Courant condition is not satisfied. Another time step was setted up"
+                << "WARNING: PSTD Courant condition is not satisfied. Another time step was set up"
                 << std::endl;
             this->dt = getCourantConditionTimeStep() * 0.5;
         }
@@ -101,8 +101,8 @@ namespace pfc {
     {
         if (isCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            if (this->pml) this->pml->dt = dt;
-            if (this->generator) this->generator->dt = dt;
+            if (this->pml) this->resetPML();
+            if (this->generator) this->resetFieldGenerator();
         }
         else {
             std::cout

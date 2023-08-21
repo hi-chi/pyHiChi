@@ -1,5 +1,7 @@
 #include "TestingUtility.h"
 
+#include <type_traits>
+
 #include "Fdtd.h"
 #include "Pstd.h"
 #include "Psatd.h"
@@ -212,6 +214,14 @@ TYPED_TEST(PMLTestOnly, PmlTest) {
     FP finalEnergy = this->computeEnergy();
 
     ASSERT_NEAR(finalEnergy / startEnergy, 0, this->relatedEnergyThreshold);
+}
+
+TYPED_TEST(PMLTestOnly, CanResetPmlWhenChangeTimeStep) {
+    FP oldDt = this->fieldSolver->pml->dt;
+
+    this->fieldSolver->setTimeStep(this->fieldSolver->dt * 0.5);
+
+    ASSERT_NE(oldDt, this->fieldSolver->pml->dt);
 }
 
 
