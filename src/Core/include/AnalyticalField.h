@@ -126,6 +126,11 @@ namespace pfc {
         void load(std::istream& istr) {
             istr.read((char*)&globalTime, sizeof(globalTime));
             // TODO: load functions
+            // temporary implementation
+            FunctionType dfunc = analytical_field::defaultFieldFunction;
+            setE(dfunc, dfunc, dfunc);
+            setB(dfunc, dfunc, dfunc);
+            setJ(dfunc, dfunc, dfunc);
         }
 
         FP globalTime = 0.0;

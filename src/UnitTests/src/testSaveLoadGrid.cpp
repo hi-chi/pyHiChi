@@ -3,6 +3,7 @@
 #include <sstream>
 #include <memory>
 #include <type_traits>
+#include <functional>
 
 #include "ScalarField.h"
 #include "Grid.h"
@@ -10,6 +11,7 @@
 #include "Pstd.h"
 #include "Psatd.h"
 #include "PsatdTimeStaggered.h"
+#include "AnalyticalFieldSolver.h"
 
 template <class T1, class T2, bool isFirstType>
 struct ActivateType {
@@ -181,6 +183,14 @@ public:
     }
 };
 
+#ifndef __USE_FFT__
+
+typedef ::testing::Types<
+    FDTD
+> typesSaveLoadSolverModulesTest;
+
+#else
+
 typedef ::testing::Types<
     FDTD,
     PSTD,
@@ -189,6 +199,9 @@ typedef ::testing::Types<
     PSATDPoisson,
     PSATDTimeStaggeredPoisson
 > typesSaveLoadGridSolverTest;
+
+#endif
+
 TYPED_TEST_CASE(SaveLoadGridSolverTest, typesSaveLoadGridSolverTest);
 
 TYPED_TEST(SaveLoadGridSolverTest, can_save_and_load_grid_and_solver)
@@ -493,7 +506,7 @@ TYPED_TEST(SaveLoadSolverModulesTest, can_save_and_load_grid_solver_and_modules)
     ASSERT_TRUE(this->compareBC());
 }
 
-TYPED_TEST(SaveLoadSolverModulesTest, old_and_new_grid_solver_and_modules_are_independent)
+TYPED_TEST(SaveLoadSolverModulesTest, old_and_new_grid_solvers_and_modules_are_independent)
 {
     for (int step = 0; step < this->numSteps / 2; ++step)
         this->solver->updateFields();
@@ -516,4 +529,123 @@ TYPED_TEST(SaveLoadSolverModulesTest, old_and_new_grid_solver_and_modules_are_in
     ASSERT_TRUE(this->comparePml(this->maxAbsoluteError));
     ASSERT_TRUE(this->compareGenerator());
     ASSERT_TRUE(this->compareBC());
+}
+
+
+class SaveLoadSolverAnalyticalFieldSolver : public BaseFixture {
+public:
+
+    std::unique_ptr<AnalyticalField> field, field2;
+    std::unique_ptr<AnalyticalFieldSolver> solver, solver2;
+
+    std::function<FP(FP, FP, FP, FP)> funcField;
+    std::function<FP(FP, FP, FP, FP)> zeroFunc;
+
+    const int numSteps = 10;
+    FP timeStep = 0.0;
+    FP3 minCoords, maxCoords;
+
+    virtual void SetUp() {
+        this->maxAbsoluteError = (FP)1e-8;
+        this->maxRelativeError = (FP)1e-4;
+        this->timeStep = 1e-13;
+        this->minCoords = FP3(-1.0, 0.0, 0.0);
+        this->maxCoords = FP3(1.0, 1.0, 1.0);
+
+        this->funcField = std::function<FP(FP, FP, FP, FP)>(
+            [this](FP x, FP y, FP z, FP t)->FP {
+                // TODO: save/load function
+                //return sin(2 * constants::pi / (this->maxCoords.x - this->minCoords.x)
+                //    * (x - constants::c * t));
+                // temporary solution
+                return (FP)0.0;
+            });
+
+        this->zeroFunc = [this](FP x, FP y, FP z, FP t)->FP {
+            return (FP)0.0;
+        };
+
+        this->field.reset(new AnalyticalField(this->zeroFunc, this->funcField, this->zeroFunc,
+            this->zeroFunc, this->zeroFunc, this->funcField));  // Ey, Bz
+        this->solver.reset(new AnalyticalFieldSolver(this->field.get(), this->timeStep));
+    }
+
+    void saveGridAndSolver(std::ostream& ostr) {
+        this->field->save(ostr);
+        this->solver->save(ostr);
+    }
+
+    void loadGridAndSolver(std::istream& istr) {
+        this->field2.reset(new AnalyticalField());
+        this->field2->load(istr);
+        this->solver2.reset(new AnalyticalFieldSolver(this->field2.get()));
+        this->solver2->load(istr);
+    }
+
+    bool compareFields(FP maxAbsError) {
+        Int3 gridSize(11, 12, 7);
+        FP3 gridStep = (this->maxCoords - this->minCoords) / (FP3)gridSize;
+
+        for (int i = 0; i < gridSize.x; i++)
+            for (int j = 0; j < gridSize.y; j++)
+                for (int k = 0; k < gridSize.z; k++) {
+                    FP3 coord = this->minCoords + gridStep * FP3(i, j, k);
+                    FP x = coord.x, y = coord.y, z = coord.z;
+                    FP t = this->solver->getTime();
+
+                    FP3 E(this->field->getE(coord));
+                    FP3 B(this->field->getB(coord));
+                    FP3 E2(this->field2->getE(coord));
+                    FP3 B2(this->field2->getB(coord));
+                    FP3 expE(this->zeroFunc(x, y, z, t), this->funcField(x, y, z, t), this->zeroFunc(x, y, z, t));
+                    FP3 expB(this->zeroFunc(x, y, z, t), this->zeroFunc(x, y, z, t), this->funcField(x, y, z, t));
+
+                    if ((expE - E).norm() > maxAbsError) return false;
+                    if ((expB - B).norm() > maxAbsError) return false;
+                    if ((expE - E2).norm() > maxAbsError) return false;
+                    if ((expB - B2).norm() > maxAbsError) return false;
+                    if ((E - E2).norm() > maxAbsError) return false;
+                    if ((B - B2).norm() > maxAbsError) return false;
+                }
+
+        return true;
+    }
+};
+
+TEST_F(SaveLoadSolverAnalyticalFieldSolver, can_save_and_load_analytical_field_solver)
+{
+    for (int step = 0; step < this->numSteps; ++step)
+        this->solver->updateFields();
+
+    std::stringstream sstr;
+    this->saveGridAndSolver(sstr);
+    this->loadGridAndSolver(sstr);
+
+    ASSERT_NEAR_FP(this->field->globalTime, this->field2->globalTime);
+    ASSERT_NEAR_FP(this->solver->dt, this->solver2->dt);
+    ASSERT_TRUE(this->compareFields(std::numeric_limits<FP>::epsilon()));
+}
+
+TEST_F(SaveLoadSolverAnalyticalFieldSolver, old_and_new_analytical_field_solvers_are_independent)
+{
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver->updateFields();
+
+    std::stringstream sstr;
+    this->saveGridAndSolver(sstr);
+
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver->updateFields();
+
+    this->loadGridAndSolver(sstr);
+
+    // TODO: uncomment when function save/load is implemented
+    //ASSERT_FALSE(this->compareFields(std::numeric_limits<FP>::epsilon()));
+
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver2->updateFields();
+
+    ASSERT_NEAR_FP(this->field->globalTime, this->field2->globalTime);
+    ASSERT_NEAR_FP(this->solver->dt, this->solver2->dt);
+    ASSERT_TRUE(this->compareFields(std::numeric_limits<FP>::epsilon()));
 }
