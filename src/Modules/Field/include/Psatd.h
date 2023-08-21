@@ -23,6 +23,7 @@ namespace pfc {
     {
     public:
 
+        using SchemeParams = psatd::SchemeParams;
         using GridType = psatd::SchemeParams::GridType;
         using PmlType = psatd::SchemeParams::PmlType;
         using FieldGeneratorType = psatd::SchemeParams::FieldGeneratorType;

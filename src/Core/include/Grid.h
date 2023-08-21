@@ -32,7 +32,7 @@ namespace pfc {
         static const GridTypes gridType = gridType_;
         static const bool isComplex = std::is_same<complexFP, Data>::value;
 
-        Grid() {}
+        explicit Grid() {}
         Grid(const Int3& _numInternalCells,
             const FP3& minCoords, const FP3& _steps,
             const Int3& globalGridDims) {}

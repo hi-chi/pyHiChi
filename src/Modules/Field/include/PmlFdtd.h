@@ -31,7 +31,7 @@ namespace pfc {
         void computeCoeffs();
 
         std::vector<FP> bCoeff1X, bCoeff1Y, bCoeff1Z, eCoeff1X, eCoeff1Y, eCoeff1Z;  // e^(-sigma*dt)
-        std::vector<FP> bCoeff2X, bCoeff2Y, bCoeff2Z, eCoeff2X, eCoeff2Y, eCoeff2Z;  // -(e^(-sigma*dt) - 1) / (sigma*dt)
+        std::vector<FP> bCoeff2X, bCoeff2Y, bCoeff2Z, eCoeff2X, eCoeff2Y, eCoeff2Z;  // (e^(-sigma*dt) - 1) / (sigma*dx)
 
     private:
 

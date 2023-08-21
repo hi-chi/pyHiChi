@@ -25,6 +25,7 @@ namespace pfc {
     {
     public:
 
+        using SchemeParams = fdtd::SchemeParams;
         using GridType = fdtd::SchemeParams::GridType;
         using PmlType = fdtd::SchemeParams::PmlType;
         using FieldGeneratorType = fdtd::SchemeParams::FieldGeneratorType;

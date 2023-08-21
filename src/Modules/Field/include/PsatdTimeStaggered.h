@@ -23,6 +23,7 @@ namespace pfc {
     {
     public:
 
+        using SchemeParams = psatd_time_staggered::SchemeParams;
         using GridType = psatd_time_staggered::SchemeParams::GridType;
         using PmlType = psatd_time_staggered::SchemeParams::PmlType;
         using FieldGeneratorType = psatd_time_staggered::SchemeParams::FieldGeneratorType;

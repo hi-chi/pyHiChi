@@ -213,5 +213,12 @@ namespace pfc
         istr.read((char*)&isLeftBorderEnabled, sizeof(isLeftBorderEnabled));
         istr.read((char*)&isRightBorderEnabled, sizeof(isRightBorderEnabled));
         // TODO: load functions
+        // temporary implementation
+        for (int side = 0; side < 2; side++)
+            for (int edge = 0; edge < 3; edge++)
+                for (int fieldComponent = 0; fieldComponent < 3; fieldComponent++) {
+                    bFunc[(int)side][(int)edge][(int)fieldComponent] = field_generator::defaultFieldFunction;
+                    eFunc[(int)side][(int)edge][(int)fieldComponent] = field_generator::defaultFieldFunction;
+                }
     }
 }
