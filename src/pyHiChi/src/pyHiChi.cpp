@@ -466,6 +466,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyYeeField)
         SET_SCALAR_FIELD_METHODS(pyYeeField)
         SET_COMMON_FIELD_METHODS(pyYeeField)
+        SET_FIELD_INTERPOLATION_METHODS(pyYeeField)
         .def("set_PML", (void (pyYeeField::*)(int, int, int))& pyYeeField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
         .def("set_PML", (void (pyYeeField::*)(const FP3&))& pyYeeField::setPML,
@@ -491,6 +492,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSTDField)
         SET_SCALAR_FIELD_METHODS(pyPSTDField)
         SET_COMMON_FIELD_METHODS(pyPSTDField)
+        SET_FIELD_INTERPOLATION_METHODS(pyPSTDField)
         .def("set_PML", (void (pyPSTDField::*)(int, int, int))& pyPSTDField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
         .def("set_PML", (void (pyPSTDField::*)(const FP3&))& pyPSTDField::setPML,
@@ -515,6 +517,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDField)
         SET_SCALAR_FIELD_METHODS(pyPSATDField)
         SET_COMMON_FIELD_METHODS(pyPSATDField)
+        SET_FIELD_INTERPOLATION_METHODS(pyPSATDField)
         .def("set_PML", (void (pyPSATDField::*)(int, int, int))& pyPSATDField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
         .def("set_PML", (void (pyPSATDField::*)(const FP3&))& pyPSATDField::setPML,
@@ -539,6 +542,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDPoissonField)
         SET_SCALAR_FIELD_METHODS(pyPSATDPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDPoissonField)
+        SET_FIELD_INTERPOLATION_METHODS(pyPSATDPoissonField)
         .def("set_PML", (void (pyPSATDPoissonField::*)(int, int, int))& pyPSATDPoissonField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
         .def("set_PML", (void (pyPSATDPoissonField::*)(const FP3&))& pyPSATDPoissonField::setPML,
@@ -563,6 +567,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStaggeredField)
         SET_SCALAR_FIELD_METHODS(pyPSATDTimeStaggeredField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStaggeredField)
+        SET_FIELD_INTERPOLATION_METHODS(pyPSATDTimeStaggeredField)
         .def("set_PML", (void (pyPSATDTimeStaggeredField::*)(int, int, int))& pyPSATDTimeStaggeredField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
         .def("set_PML", (void (pyPSATDTimeStaggeredField::*)(const FP3&))& pyPSATDTimeStaggeredField::setPML,
@@ -588,6 +593,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         SET_SUM_AND_MAP_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
         SET_SCALAR_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
         SET_COMMON_FIELD_METHODS(pyPSATDTimeStaggeredPoissonField)
+        SET_FIELD_INTERPOLATION_METHODS(pyPSATDTimeStaggeredPoissonField)
         .def("set_PML", (void (pyPSATDTimeStaggeredPoissonField::*)(int, int, int))& pyPSATDTimeStaggeredPoissonField::setPML,
             py::arg("pml_size_x"), py::arg("pml_size_y"), py::arg("pml_size_z"))
         .def("set_PML", (void (pyPSATDTimeStaggeredPoissonField::*)(const FP3&))& pyPSATDTimeStaggeredPoissonField::setPML,

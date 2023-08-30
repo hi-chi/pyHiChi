@@ -217,3 +217,14 @@
         py::arg("is_left_x_border_enabled") = true, py::arg("is_left_y_border_enabled") = true,       \
         py::arg("is_left_z_border_enabled") = true, py::arg("is_right_x_border_enabled") = true,      \
         py::arg("is_right_y_border_enabled") = true, py::arg("is_right_z_border_enabled") = true)
+
+
+// ------------------- Interpolation setter methods -------------------
+
+
+#define SET_FIELD_INTERPOLATION_METHODS(pyFieldType)                                            \
+    .def("set_CIC_interpolation", &pyFieldType::setInterpolationCIC)                            \
+    .def("set_TSC_interpolation", &pyFieldType::setInterpolationTSC)                            \
+    .def("set_PCS_interpolation", &pyFieldType::setInterpolationPCS)                            \
+    .def("set_second_order_interpolation", &pyFieldType::setInterpolationSecondOrder)           \
+    .def("set_fourth_order_interpolation", &pyFieldType::setInterpolationFourthOrder)

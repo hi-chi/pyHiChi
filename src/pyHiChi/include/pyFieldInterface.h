@@ -811,7 +811,29 @@ namespace pfc
         public pyPeriodicalBoundaryConditionSolverInterface<TFieldSolver, TPyField, isFieldSolverSupportPeriodicalBoundaryCondition<TFieldSolver>::value>,
         public pyReflectBoundaryConditionSolverInterface<TFieldSolver, TPyField, isFieldSolverSupportReflectBoundaryCondition<TFieldSolver>::value>,
         public pyPMLSolverInterface<TFieldSolver, TPyField, isFieldSolverSupportPml<TFieldSolver>::value>
-    {};
+    {
+    public:
+
+        void setInterpolationCIC() {
+            static_cast<const TPyField*>(this)->getGrid()->setInterpolationType(InterpolationType::Interpolation_CIC);
+        }
+
+        void setInterpolationTSC() {
+            static_cast<const TPyField*>(this)->getGrid()->setInterpolationType(InterpolationType::Interpolation_TSC);
+        }
+
+        void setInterpolationPCS() {
+            static_cast<const TPyField*>(this)->getGrid()->setInterpolationType(InterpolationType::Interpolation_PCS);
+        }
+
+        void setInterpolationSecondOrder() {
+            static_cast<const TPyField*>(this)->getGrid()->setInterpolationType(InterpolationType::Interpolation_SecondOrder);
+        }
+
+        void setInterpolationFourthOrder() {
+            static_cast<const TPyField*>(this)->getGrid()->setInterpolationType(InterpolationType::Interpolation_FourthOrder);
+        }
+    };
     
     // Interface for analytical fields
     template<class TFieldSolver, class TPyField>
