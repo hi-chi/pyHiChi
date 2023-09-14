@@ -7,19 +7,14 @@
 #include "ParticleTypes.h"
 #include "Vectors.h"
 #include "VectorsProxy.h"
+#include "Enums.h"
 
 #include "gtest/gtest.h"
 
 #include <vector>
+#include <fstream>
 
 using namespace pfc;
-
-// if project was built without FFT then don't run tests with FFT
-#ifdef __USE_FFT__
-#define ADD_TEST_FFT_PREFIX(name) name
-#else
-#define ADD_TEST_FFT_PREFIX(name) DISABLED_ ## name
-#endif
 
 #define ASSERT_EQ_COMPLEXFP(expected, actual) \
     ASSERT_EQ((expected).real, (actual).real); \
@@ -317,4 +312,14 @@ protected:
     {
         delete(grid);
     }
+};
+
+// necessary to run test with different fields and dimensions (1d, 2d, 3d)
+// wave proparates along VAxis (x, y, z)
+template <class TFieldSolver, int VDimension, CoordinateEnum VAxis>
+struct TypeDefinitionsFieldTest
+{
+    using FieldSolverType = TFieldSolver;
+    static const int dimension = VDimension;
+    static const CoordinateEnum axis = VAxis;
 };

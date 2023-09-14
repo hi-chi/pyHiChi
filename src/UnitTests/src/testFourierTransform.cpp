@@ -72,7 +72,9 @@ public:
 
 };
 
-TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform)) {
+TEST_F(FourierTransformTest, DirectAndInverseTransform) {
+
+#ifdef __USE_FFT__
 
     fourierTransform.doFourierTransform(fourier_transform::Direction::RtoC);
     fourierTransform.doFourierTransform(fourier_transform::Direction::CtoR);
@@ -81,9 +83,16 @@ TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform)) {
         for (int j = 0; j < size.y; j++)
             for (int k = 0; k < size.z; k++)
                 ASSERT_NEAR_FP(fSin3(i, j, k), field(i, j, k));
+
+    // shows that some tests were skipped
+#else
+    GTEST_SKIP();
+#endif
 }
 
-TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
+TEST_F(FourierTransformTest, TransformSinus) {
+
+#ifdef __USE_FFT__
 
     setField(&FourierTransformTest::fSin);
 
@@ -94,9 +103,16 @@ TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
             for (int k = 0; k < sizeComplex.z; k++)
                 if (!(i == 1 && j == 0 && k == 0 || i == sizeComplex.x - 1 && j == 0 && k == 0))
                     ASSERT_NEAR_MODULE_COMPLEXFP(complexFP(0), complexField(i, j, k));
+
+    // shows that some tests were skipped
+#else
+    GTEST_SKIP();
+#endif
 }
 
-TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(Lag)) {
+TEST_F(FourierTransformTest, Lag) {
+
+#ifdef __USE_FFT__
 
     fourierTransform.doFourierTransform(fourier_transform::Direction::RtoC);
     doShift();
@@ -106,6 +122,11 @@ TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(Lag)) {
         for (int j = 0; j < size.y; j++)
             for (int k = 0; k < size.z; k++)
                 ASSERT_NEAR_FP(fSin3(i - stepX, j - stepY, k - stepZ), field(i, j, k));
+
+    // shows that some tests were skipped
+#else
+    GTEST_SKIP();
+#endif
 }
 
 
@@ -183,7 +204,9 @@ public:
 };
 
 
-TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform)) {
+TEST_F(FourierTransformSolverTest, DirectAndInverseTransform) {
+
+#ifdef __USE_FFT__
 
     pstd->fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, fourier_transform::Direction::RtoC);
     pstd->fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, fourier_transform::Direction::CtoR);
@@ -192,9 +215,16 @@ TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(DirectAndInverseTransform
         for (int j = 0; j < grid->numCells.y; j++)
             for (int k = 0; k < grid->numCells.z; k++)
                 ASSERT_NEAR_FP(fSin3(i, j, k), grid->Bz(i, j, k));
+
+    // shows that some tests were skipped
+#else
+    GTEST_SKIP();
+#endif
 }
 
-TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
+TEST_F(FourierTransformSolverTest, TransformSinus) {
+
+#ifdef __USE_FFT__
 
     setBz(&FourierTransformSolverTest::fSin);
 
@@ -205,9 +235,16 @@ TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
             for (int k = 0; k < complexGrid->numCells.z; k++)
                 if (!(i == 1 && j == 0 && k == 0 || i == complexGrid->numCells.x - 1 && j == 0 && k == 0))
                     ASSERT_NEAR_MODULE_COMPLEXFP(complexFP(0), complexGrid->Bz(i, j, k));
+
+    // shows that some tests were skipped
+#else
+    GTEST_SKIP();
+#endif
 }
 
-TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(Lag)) {
+TEST_F(FourierTransformSolverTest, Lag) {
+
+#ifdef __USE_FFT__
 
     pstd->fourierTransform.doFourierTransform(FieldEnum::B, CoordinateEnum::z, fourier_transform::Direction::RtoC);
     doShift();
@@ -217,4 +254,9 @@ TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(Lag)) {
         for (int j = 0; j < grid->numCells.y; j++)
             for (int k = 0; k < grid->numCells.z; k++)
                 ASSERT_NEAR_FP(fSin3(i - stepX, j - stepY, k - stepZ), grid->Bz(i, j, k));
+
+    // shows that some tests were skipped
+#else
+    GTEST_SKIP();
+#endif
 }

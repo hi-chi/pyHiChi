@@ -16,16 +16,29 @@ namespace pfc {
     public:
 
         SpectralScalarField(ScalarField<RealData>* scalarField, Int3 size) :
-            scalarField(scalarField), size(size) {
+            SpectralScalarField(scalarField, size,
+                { size.x, size.y, size.z * 2 })
+        {}
+
+        SpectralScalarField(ScalarField<RealData>* scalarField, Int3 size, Int3 sizeStorage) :
+            scalarField(scalarField), size(size), sizeStorage(sizeStorage)
+        {
             this->raw = reinterpret_cast<SpectralData*>(scalarField->getData());
         }
 
-        SpectralData* getData() {
+        SpectralData* getData()
+        {
             return raw;
         }
 
-        Int3 getSize() const {
+        Int3 getSize() const
+        {
             return size;
+        }
+
+        Int3 getMemSize() const  // returns memory size in FP
+        {
+            return sizeStorage;
         }
 
         /* Read-only access by scalar indexes */
@@ -56,7 +69,8 @@ namespace pfc {
 
         ScalarField<RealData>* scalarField;
         SpectralData* raw;
-        Int3 size;
+        Int3 size;  // spectral size
+        Int3 sizeStorage;   // at the moment FP memory size = sizeStorage.volume() == size.volume()*2
     };
 
 
@@ -66,28 +80,29 @@ namespace pfc {
     public:
 
         template <class GridType>
-        SpectralGrid(const Int3& _numCells, const Int3& globalGridDims,
-            GridType* grid) {}
+        SpectralGrid(GridType* grid, const Int3& _numSpectralCells) {}
 
-        Int3 globalGridDims;
-        Int3 numCells;
-        Int3 sizeStorage;
-        int dimensionality;
+        Int3 numCells;  // spectral numCells
+        Int3 sizeStorage;  // in real type memory cells
 
         SpectralScalarField<RealData, SpectralData> Ex, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz;
     };
 
     template<>
     template <class GridType>
-    inline SpectralGrid<FP, complexFP>::SpectralGrid(const Int3& _numCells,
-        const Int3& _globalGridDims, GridType* grid) :
-        globalGridDims(_globalGridDims),
+    inline SpectralGrid<FP, complexFP>::SpectralGrid(GridType* grid,
+        const Int3& _numCells) :
         numCells(_numCells),
-        sizeStorage(_numCells),
-        Ex(&grid->Ex, sizeStorage), Ey(&grid->Ey, sizeStorage), Ez(&grid->Ez, sizeStorage),
-        Bx(&grid->Bx, sizeStorage), By(&grid->By, sizeStorage), Bz(&grid->Bz, sizeStorage),
-        Jx(&grid->Jx, sizeStorage), Jy(&grid->Jy, sizeStorage), Jz(&grid->Jz, sizeStorage),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+        sizeStorage(grid->sizeStorage),
+        Ex(&grid->Ex, numCells, sizeStorage),
+        Ey(&grid->Ey, numCells, sizeStorage),
+        Ez(&grid->Ez, numCells, sizeStorage),
+        Bx(&grid->Bx, numCells, sizeStorage),
+        By(&grid->By, numCells, sizeStorage),
+        Bz(&grid->Bz, numCells, sizeStorage),
+        Jx(&grid->Jx, numCells, sizeStorage),
+        Jy(&grid->Jy, numCells, sizeStorage),
+        Jz(&grid->Jz, numCells, sizeStorage)
     {}
 
 }

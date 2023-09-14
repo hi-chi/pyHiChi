@@ -3,38 +3,77 @@
 #include "FieldSolver.h"
 #include "Grid.h"
 #include "PmlFdtd.h"
+#include "FieldBoundaryConditionFdtd.h"
+#include "FieldGeneratorFdtd.h"
 #include "Vectors.h"
 
 #include <algorithm>
 
 namespace pfc {
-    
-    class FDTD : public RealFieldSolver<YeeGridType>
-    {
 
+    namespace fdtd {
+        struct SchemeParams {
+            using GridType = YeeGrid;
+            using PmlType = PmlFdtd;
+            using FieldGeneratorType = FieldGeneratorFdtd;
+            using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionFdtd;
+            using ReflectBoundaryConditionType = ReflectBoundaryConditionFdtd;
+        };
+    }
+    
+    class FDTD : public RealFieldSolver<fdtd::SchemeParams>
+    {
     public:
-        FDTD(YeeGrid* grid, FP dt);
+
+        using SchemeParams = fdtd::SchemeParams;
+        using GridType = fdtd::SchemeParams::GridType;
+        using PmlType = fdtd::SchemeParams::PmlType;
+        using FieldGeneratorType = fdtd::SchemeParams::FieldGeneratorType;
+        using PeriodicalBoundaryConditionType = fdtd::SchemeParams::PeriodicalBoundaryConditionType;
+        using ReflectBoundaryConditionType = fdtd::SchemeParams::ReflectBoundaryConditionType;
+
+        FDTD(GridType* grid, FP dt);
+
+        // constructor for loading
+        explicit FDTD(GridType* grid);
 
         void updateFields();
-
-        void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setFieldGenerator(FieldGeneratorYee * _generator);
 
         void updateHalfB();
         void updateE();
 
+        void setPeriodicalBoundaryConditions();
+        void setPeriodicalBoundaryConditions(CoordinateEnum axis);
+
+        void setReflectBoundaryConditions();
+        void setReflectBoundaryConditions(CoordinateEnum axis);
+
         void setTimeStep(FP dt);
 
-        FP getCourantCondition() const {
-            double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
-                1.0 / (grid->steps.y*grid->steps.y) +
-                1.0 / (grid->steps.z*grid->steps.z));
+        static FP getCourantConditionTimeStep(const FP3& gridSteps) {
+            FP tmp = sqrt(1.0 / (gridSteps.x * gridSteps.x) +
+                1.0 / (gridSteps.y * gridSteps.y) +
+                1.0 / (gridSteps.z * gridSteps.z));
             return 1.0 / (constants::c * tmp);
         }
 
-        bool ifCourantConditionSatisfied(FP dt) const {
-            return dt < getCourantCondition();
+        FP getCourantConditionTimeStep() const {
+            return getCourantConditionTimeStep(this->grid->steps);
         }
+
+        bool isCourantConditionSatisfied(FP dt) const {
+            return dt < getCourantConditionTimeStep();
+        }
+
+        static bool isTimeStaggered() {
+            return true;
+        }
+
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
+        void saveBoundaryConditions(std::ostream& ostr);
+        void loadBoundaryConditions(std::istream& istr);
 
     private:
 
@@ -50,48 +89,62 @@ namespace pfc {
 
     };
 
-    inline FDTD::FDTD(YeeGrid* grid, FP dt) :
-        RealFieldSolver(grid, dt, 0.0, 0.5*dt, 0.0)
+    inline FDTD::FDTD(GridType* grid, FP dt) :
+        RealFieldSolver<fdtd::SchemeParams>(grid, dt),
+        anisotropyCoeff(1, 1, 1)
     {
-        if (!ifCourantConditionSatisfied(dt)) {
+        if (!isCourantConditionSatisfied(dt)) {
             std::cout
-                << "WARNING: FDTD Courant condition is not satisfied. Another time step was setted up"
+                << "WARNING: FDTD Courant condition is not satisfied. Another time step was set up"
                 << std::endl;
-            this->dt = getCourantCondition() * 0.5;
+            this->dt = getCourantConditionTimeStep() * 0.5;
         }
-        updateDims();
-        pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));
-        generator.reset(new ReflectFieldGeneratorYee(this));
-        updateInternalDims();
-        anisotropyCoeff = FP3(1, 1, 1);
     }
 
-    inline void FDTD::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
+    inline FDTD::FDTD(GridType* grid) :
+        RealFieldSolver<fdtd::SchemeParams>(grid)
+    {}
+
+    inline void FDTD::setPeriodicalBoundaryConditions()
     {
-        pml.reset(new PmlFdtd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
-        updateInternalDims();
+        for (int d = 0; d < this->grid->dimensionality; d++)
+            this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
+    }
+
+    inline void FDTD::setPeriodicalBoundaryConditions(CoordinateEnum axis)
+    {
+        if ((int)axis < this->grid->dimensionality)
+            this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
+    }
+
+    inline void FDTD::setReflectBoundaryConditions()
+    {
+        for (int d = 0; d < this->grid->dimensionality; d++)
+            this->boundaryConditions[d].reset(new ReflectBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd));
+    }
+
+    inline void FDTD::setReflectBoundaryConditions(CoordinateEnum axis)
+    {
+        if ((int)axis < this->grid->dimensionality)
+            this->boundaryConditions[(int)axis].reset(new ReflectBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
     }
 
     inline void FDTD::setTimeStep(FP dt)
     {
-        if (ifCourantConditionSatisfied(dt)) {
+        if (isCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            this->timeShiftB = 0.5*dt;
-            if (pml->sizePML == Int3(0, 0, 0))
-                pml.reset(new Pml<GridTypes::YeeGridType>(this, Int3(0, 0, 0)));
-            else pml.reset(new PmlFdtd(this, pml->sizePML));
-            generator.reset(generator->createInstance(this));
+            if (this->pml) this->resetPML();
+            if (this->generator) this->resetFieldGenerator();
         }
         else {
             std::cout
                 << "WARNING: FDTD Courant condition is not satisfied. Time step was not changed"
                 << std::endl;
         }
-    }
-
-    inline void FDTD::setFieldGenerator(FieldGeneratorYee * _generator)
-    {
-        generator.reset(_generator->createInstance(this));
     }
 
     inline void FDTD::setAnisotropy(FP frequency, int axis)
@@ -135,16 +188,21 @@ namespace pfc {
     inline void FDTD::updateFields()
     {
         updateHalfB();
-        pml->updateB();
-        generator->generateB();
+        if (pml) pml->updateB();
+        if (generator) generator->generateB(globalTime);  // send current E time
+        applyBoundaryConditionsB(globalTime + dt * 0.5);
+
         updateE();
-        pml->updateE();
-        generator->generateE();
+        if (pml) pml->updateE();
+        if (generator) generator->generateE(globalTime + dt * 0.5);  // send current B time
+        applyBoundaryConditionsE(globalTime + dt);
+
         updateHalfB();
+        applyBoundaryConditionsB(globalTime + dt);
+
         globalTime += dt;
     }
 
-    // Update grid values of magnetic field in FDTD.
     inline void FDTD::updateHalfB()
     {
         if (grid->dimensionality == 3)
@@ -157,15 +215,6 @@ namespace pfc {
 
     inline void FDTD::updateHalfB3D()
     {
-        updateBAreaBegin = Int3(1, 1, 1);
-        updateBAreaEnd = grid->numCells - Int3(1, 1, 1);
-        for (int d = 0; d < 3; ++d)
-        {
-            internalBAreaBegin[d] = std::max(updateBAreaBegin[d], pml->leftDims[d]);
-            internalBAreaEnd[d] = std::min(updateBAreaEnd[d],
-                grid->numCells[d] - pml->rightDims[d]);
-        }
-
         const FP cdt = constants::c * dt * (FP)0.5;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
@@ -174,15 +223,9 @@ namespace pfc {
         const FP coeffZX = cdt / (grid->steps.z * anisotropyCoeff.x);
         const FP coeffZY = cdt / (grid->steps.z * anisotropyCoeff.y);
 
-        // In central area use b(i, j, k) += c * dt * -rot(e(i, j, k)), which is:
-        // b.x(i, j, k) += c * dt * ((e.y(i, j, k) - e.y(i, j, k-1)) / eps_z * dz -
-        //     (e.z(i, j, k) - e.z(i, j-1, k)) / eps_y * dy),
-        // b.y(i, j, k) += c * dt * ((e.z(i, j, k) - e.z(i-1, j, k)) / eps_x * dx -
-        //     (e.x(i, j, k) - e.x(i, j, k-1)) / eps_z * dz),
-        // b.z(i, j, k) += c * dt * ((e.x(i, j, k) - e.x(i, j-1, k)) / eps_y * dy -
-        //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
-        const Int3 begin = internalBAreaBegin;
-        const Int3 end = internalBAreaEnd;
+        const Int3 begin = this->internalIndexBegin;
+        const Int3 end = this->internalIndexEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -202,33 +245,18 @@ namespace pfc {
 
     inline void FDTD::updateHalfB2D()
     {
-        updateBAreaBegin = Int3(1, 1, 0);
-        updateBAreaEnd = grid->numCells - Int3(1, 1, 0);
-        for (int d = 0; d < 2; ++d)
-        {
-            internalBAreaBegin[d] = std::max(updateBAreaBegin[d], pml->leftDims[d]);
-            internalBAreaEnd[d] = std::min(updateBAreaEnd[d],
-                grid->numCells[d] - pml->rightDims[d]);
-        }
-
         const FP cdt = constants::c * dt * (FP)0.5;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
         const FP coeffYZ = cdt / (grid->steps.y * anisotropyCoeff.z);
 
-        // In central area use b(i, j, k) += c * dt * -rot(e(i, j, k)), which is:
-        // b.x(i, j, k) += c * dt * ((e.y(i, j, k) - e.y(i, j, k-1)) / eps_z * dz -
-        //     (e.z(i, j, k) - e.z(i, j-1, k)) / eps_y * dy),
-        // b.y(i, j, k) += c * dt * ((e.z(i, j, k) - e.z(i-1, j, k)) / eps_x * dx -
-        //     (e.x(i, j, k) - e.x(i, j, k-1)) / eps_z * dz),
-        // b.z(i, j, k) += c * dt * ((e.x(i, j, k) - e.x(i, j-1, k)) / eps_y * dy -
-        //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
-        const Int3 begin = internalBAreaBegin;
-        const Int3 end = internalBAreaEnd;
+        const Int3 begin = this->internalIndexBegin;
+        const Int3 end = this->internalIndexEnd;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
-        OMP_SIMD()
+            OMP_SIMD()
             for (int j = begin.y; j < end.y; j++)
             {
                 grid->Bx(i, j, 0) += -coeffYX * (grid->Ez(i, j, 0) - grid->Ez(i, j - 1, 0));
@@ -241,28 +269,13 @@ namespace pfc {
 
     inline void FDTD::updateHalfB1D()
     {
-        updateBAreaBegin = Int3(1, 0, 0);
-        updateBAreaEnd = grid->numCells - Int3(1, 0, 0);
-        for (int d = 0; d < 1; ++d)
-        {
-            internalBAreaBegin[d] = std::max(updateBAreaBegin[d], pml->leftDims[d]);
-            internalBAreaEnd[d] = std::min(updateBAreaEnd[d],
-                grid->numCells[d] - pml->rightDims[d]);
-        }
-
         const FP cdt = constants::c * dt * (FP)0.5;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
-        // In central area use b(i, j, k) += c * dt * -rot(e(i, j, k)), which is:
-        // b.x(i, j, k) += c * dt * ((e.y(i, j, k) - e.y(i, j, k-1)) / eps_z * dz -
-        //     (e.z(i, j, k) - e.z(i, j-1, k)) / eps_y * dy),
-        // b.y(i, j, k) += c * dt * ((e.z(i, j, k) - e.z(i-1, j, k)) / eps_x * dx -
-        //     (e.x(i, j, k) - e.x(i, j, k-1)) / eps_z * dz),
-        // b.z(i, j, k) += c * dt * ((e.x(i, j, k) - e.x(i, j-1, k)) / eps_y * dy -
-        //     (e.y(i, j, k) - e.y(i-1, j, k)) / eps_x * dx),
-        const Int3 begin = internalBAreaBegin;
-        const Int3 end = internalBAreaEnd;
+        const Int3 begin = this->internalIndexBegin;
+        const Int3 end = this->internalIndexEnd;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             grid->By(i, 0, 0) += coeffXY * (grid->Ez(i, 0, 0) - grid->Ez(i - 1, 0, 0));
@@ -270,7 +283,6 @@ namespace pfc {
         }
     }
 
-    // Update grid values of electric field in FDTD.
     inline void FDTD::updateE()
     {
         if (grid->dimensionality == 3)
@@ -283,15 +295,6 @@ namespace pfc {
 
     inline void FDTD::updateE3D()
     {
-        updateEAreaBegin = Int3(0, 0, 0);
-        updateEAreaEnd = grid->numCells - Int3(1, 1, 1);
-        for (int d = 0; d < 3; ++d)
-        {
-            internalEAreaBegin[d] = std::max(updateEAreaBegin[d], pml->leftDims[d]);
-            internalEAreaEnd[d] = std::min(updateEAreaEnd[d],
-                grid->numCells[d] - pml->rightDims[d]);
-        }
-
         const FP coeffCurrent = -(FP)4 * constants::pi * dt;
         const FP cdt = constants::c * dt;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
@@ -301,15 +304,9 @@ namespace pfc {
         const FP coeffZX = cdt / (grid->steps.z * anisotropyCoeff.x);
         const FP coeffZY = cdt / (grid->steps.z * anisotropyCoeff.y);
 
-        // In internal area use:
-        // e.x(i, j, k) += dt * -4pi * j.x(i, j, k) + c * dt * ((b.z(i, j+1, k) -
-        //     b.z(i, j, k)) / eps_y * dy - (b.y(i, j, k+1) - b.y(i, j, k)) / eps_z * dz),
-        // e.y(i, j, k) += dt * -4pi * j.y(i, j, k) + c * dt * ((b.x(i, j, k+1) -
-        //     b.x(i, j, k)) / eps_z * dz - (b.z(i+1, j, k) - b.z(i, j, k)) / eps_x * dx),
-        // e.z(i, j, k) += dt * -4pi * j.z(i, j, k) + c * dt * ((b.y(i+1, j, k) -
-        //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
-        const Int3 begin = internalEAreaBegin;
-        const Int3 end = internalEAreaEnd;
+        const Int3 begin = this->internalIndexBegin;
+        const Int3 end = this->internalIndexEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
@@ -328,51 +325,10 @@ namespace pfc {
                         coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
                 }
             }
-
-        // Process edge values
-        if (updateEAreaEnd.x == grid->numCells.x - 1)
-        {
-            int i = updateEAreaEnd.x;
-            OMP_FOR()
-            for (int j = begin.y; j < end.y; j++)
-                for (int k = begin.z; k < end.z; k++)
-                    grid->Ex(i, j, k) += coeffCurrent * grid->Jx(i, j, k) +
-                    coeffYX * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k)) -
-                    coeffZX * (grid->By(i, j, k + 1) - grid->By(i, j, k));
-        }
-        if (updateEAreaEnd.y == grid->numCells.y - 1)
-        {
-            int j = updateEAreaEnd.y;
-            OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                for (int k = begin.z; k < end.z; k++)
-                    grid->Ey(i, j, k) += coeffCurrent * grid->Jy(i, j, k) +
-                    coeffZY * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k)) -
-                    coeffXY * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-        }
-        if (updateEAreaEnd.z == grid->numCells.z - 1)
-        {
-            int k = updateEAreaEnd.z;
-            OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                for (int j = begin.y; j < end.y; j++)
-                    grid->Ez(i, j, k) += coeffCurrent * grid->Jz(i, j, k) +
-                    coeffXZ * (grid->By(i + 1, j, k) - grid->By(i, j, k)) -
-                    coeffYZ * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
-        }
     }
 
     inline void FDTD::updateE2D()
     {
-        updateEAreaBegin = Int3(0, 0, 0);
-        updateEAreaEnd = grid->numCells - Int3(1, 1, 0);
-        for (int d = 0; d < 2; ++d)
-        {
-            internalEAreaBegin[d] = std::max(updateEAreaBegin[d], pml->leftDims[d]);
-            internalEAreaEnd[d] = std::min(updateEAreaEnd[d],
-                grid->numCells[d] - pml->rightDims[d]);
-        }
-
         const FP coeffCurrent = -(FP)4 * constants::pi * dt;
         const FP cdt = constants::c * dt;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
@@ -380,15 +336,9 @@ namespace pfc {
         const FP coeffYX = cdt / (grid->steps.y * anisotropyCoeff.x);
         const FP coeffYZ = cdt / (grid->steps.y * anisotropyCoeff.z);
 
-        // In internal area use:
-        // e.x(i, j, k) += dt * -4pi * j.x(i, j, k) + c * dt * ((b.z(i, j+1, k) -
-        //     b.z(i, j, k)) / eps_y * dy - (b.y(i, j, k+1) - b.y(i, j, k)) / eps_z * dz),
-        // e.y(i, j, k) += dt * -4pi * j.y(i, j, k) + c * dt * ((b.x(i, j, k+1) -
-        //     b.x(i, j, k)) / eps_z * dz - (b.z(i+1, j, k) - b.z(i, j, k)) / eps_x * dx),
-        // e.z(i, j, k) += dt * -4pi * j.z(i, j, k) + c * dt * ((b.y(i+1, j, k) -
-        //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
-        const Int3 begin = internalEAreaBegin;
-        const Int3 end = internalEAreaEnd;
+        const Int3 begin = this->internalIndexBegin;
+        const Int3 end = this->internalIndexEnd;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             OMP_SIMD()
@@ -402,51 +352,18 @@ namespace pfc {
                     coeffYZ * (grid->Bx(i, j + 1, 0) - grid->Bx(i, j, 0));
             }
         }
-
-        // Process edge values
-        if (updateEAreaEnd.x == grid->numCells.x - 1)
-        {
-            int i = updateEAreaEnd.x;
-            OMP_FOR()
-            for (int j = begin.y; j < end.y; j++)
-                grid->Ex(i, j, 0) += coeffCurrent * grid->Jx(i, j, 0) +
-                coeffYX * (grid->Bz(i, j + 1, 0) - grid->Bz(i, j, 0));
-        }
-        if (updateEAreaEnd.y == grid->numCells.y - 1)
-        {
-            int j = updateEAreaEnd.y;
-            OMP_FOR()
-            for (int i = begin.x; i < end.x; i++)
-                grid->Ey(i, j, 0) += coeffCurrent * grid->Jy(i, j, 0) -
-                coeffXY * (grid->Bz(i + 1, j, 0) - grid->Bz(i, j, 0));
-        }
     }
 
     inline void FDTD::updateE1D()
     {
-        updateEAreaBegin = Int3(0, 0, 0);
-        updateEAreaEnd = grid->numCells - Int3(1, 0, 0);
-        for (int d = 0; d < 1; ++d)
-        {
-            internalEAreaBegin[d] = std::max(updateEAreaBegin[d], pml->leftDims[d]);
-            internalEAreaEnd[d] = std::min(updateEAreaEnd[d],
-                grid->numCells[d] - pml->rightDims[d]);
-        }
-
         const FP coeffCurrent = -(FP)4 * constants::pi * dt;
         const FP cdt = constants::c * dt;
         const FP coeffXY = cdt / (grid->steps.x * anisotropyCoeff.y);
         const FP coeffXZ = cdt / (grid->steps.x * anisotropyCoeff.z);
 
-        // In internal area use:
-        // e.x(i, j, k) += dt * -4pi * j.x(i, j, k) + c * dt * ((b.z(i, j+1, k) -
-        //     b.z(i, j, k)) / eps_y * dy - (b.y(i, j, k+1) - b.y(i, j, k)) / eps_z * dz),
-        // e.y(i, j, k) += dt * -4pi * j.y(i, j, k) + c * dt * ((b.x(i, j, k+1) -
-        //     b.x(i, j, k)) / eps_z * dz - (b.z(i+1, j, k) - b.z(i, j, k)) / eps_x * dx),
-        // e.z(i, j, k) += dt * -4pi * j.z(i, j, k) + c * dt * ((b.y(i+1, j, k) -
-        //     b.y(i, j, k)) / eps_x * dx - (b.x(i, j+1, k) - b.x(i, j, k)) / eps_y * dy),
-        const Int3 begin = internalEAreaBegin;
-        const Int3 end = internalEAreaEnd;
+        const Int3 begin = this->internalIndexBegin;
+        const Int3 end = this->internalIndexEnd;
+
         OMP_FOR()
         for (int i = begin.x; i < end.x; i++) {
             grid->Ex(i, 0, 0) += coeffCurrent * grid->Jx(i, 0, 0);
@@ -457,4 +374,59 @@ namespace pfc {
         }
     }
 
+    inline void FDTD::save(std::ostream& ostr)
+    {
+        RealFieldSolver<fdtd::SchemeParams>::save(ostr);
+        ostr.write((char*)&anisotropyCoeff, sizeof(anisotropyCoeff));
+
+        this->saveFieldGenerator(ostr);
+        this->savePML(ostr);
+        this->saveBoundaryConditions(ostr);
+    }
+
+    inline void FDTD::load(std::istream& istr)
+    {
+        RealFieldSolver<fdtd::SchemeParams>::load(istr);
+        istr.read((char*)&anisotropyCoeff, sizeof(anisotropyCoeff));
+
+        this->loadFieldGenerator(istr);
+        this->loadPML(istr);
+        this->loadBoundaryConditions(istr);
+    }
+
+    inline void FDTD::saveBoundaryConditions(std::ostream& ostr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            int isReflectBC = dynamic_cast<ReflectBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            ostr.write((char*)&isReflectBC, sizeof(isReflectBC));
+
+            if (this->boundaryConditions[d])
+                this->boundaryConditions[d]->save(ostr);
+        }
+    }
+
+    inline void FDTD::loadBoundaryConditions(std::istream& istr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = 0;
+            istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            int isReflectBC = 0;
+            istr.read((char*)&isReflectBC, sizeof(isReflectBC));
+
+            if (isPeriodicalBC) {
+                this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d]->load(istr);
+            }
+            else if (isReflectBC) {
+                this->boundaryConditions[d].reset(new ReflectBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d]->load(istr);
+            }
+        }
+    }
 }

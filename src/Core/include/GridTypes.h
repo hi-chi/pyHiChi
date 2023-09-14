@@ -1,12 +1,12 @@
 #pragma once
 
 namespace pfc {
-    enum GridTypes {
+    enum class GridTypes {
         YeeGridType = 0,
         StraightGridType = 1,
         PSTDGridType = 2,
         PSATDGridType = 3, 
-        PSATDTimeStraggeredGridType = 4
+        PSATDTimeStaggeredGridType = 4
     };
 
     /* Yee grid for FDTD method. Implementation is based on Computational
@@ -27,15 +27,14 @@ namespace pfc {
     // auxiliary structs to describe some properties of a grid type
 
     template <GridTypes gridTypes>
-    struct LabelFieldsSpatialStraggered {
-        static const bool ifFieldsSpatialStraggered = gridTypes == GridTypes::YeeGridType;
+    struct LabelFieldsSpatialStaggered {
+        static const bool ifFieldsSpatialStaggered = gridTypes == GridTypes::YeeGridType;
     };
 
     template <GridTypes gridTypes>
-    struct LabelFieldsTimeStraggered {
-        static const bool ifFieldsTimeStraggered = gridTypes == GridTypes::YeeGridType ||
-            gridTypes == GridTypes::PSTDGridType ||
-            gridTypes == GridTypes::PSATDTimeStraggeredGridType;
+    struct LabelMethodRequiredNumberOfExternalCells {
+        static const int numExternalCells = (gridTypes == GridTypes::YeeGridType ||
+            gridTypes == GridTypes::StraightGridType) ? 1 : 0;
     };
 
 } // namespace pfc

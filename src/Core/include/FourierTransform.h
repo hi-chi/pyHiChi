@@ -148,14 +148,15 @@ namespace pfc
 
         FourierTransformField() : ArrayFourierTransform3d() {}
         FourierTransformField(ScalarField<FP>* _realData,
-            SpectralScalarField<FP, complexFP>* _complexData, Int3 _size) :
-            ArrayFourierTransform3d(_realData->getData(), _complexData->getData(),
-                _size, _realData->getSize()) {}
+            SpectralScalarField<FP, complexFP>* _complexData, Int3 _size)
+        {
+            this->initialize(_realData, _complexData, _size);
+        }
 
         void initialize(ScalarField<FP>* _realData,
             SpectralScalarField<FP, complexFP>* _complexData, Int3 _size) {
             ArrayFourierTransform3d::initialize(_realData->getData(),
-                _complexData->getData(), _size, _realData->getSize());
+                _complexData->getData(), _size, _realData->getMemSize());
         }
     };
 
@@ -168,19 +169,19 @@ namespace pfc
 
         FourierTransformGrid() {}
         
-        template<GridTypes gridType>
-        void initialize(Grid<FP, gridType>* gridFP, SpectralGrid<FP, complexFP>* gridCFP) {
-            transform[(int)FieldEnum::E][(int)CoordinateEnum::x].initialize(&gridFP->Ex, &gridCFP->Ex, gridFP->numCells);
-            transform[(int)FieldEnum::E][(int)CoordinateEnum::y].initialize(&gridFP->Ey, &gridCFP->Ey, gridFP->numCells);
-            transform[(int)FieldEnum::E][(int)CoordinateEnum::z].initialize(&gridFP->Ez, &gridCFP->Ez, gridFP->numCells);
+        template<class TGrid>
+        void initialize(TGrid* gridInTime, SpectralGrid<FP, complexFP>* gridInSpectral) {
+            transform[(int)FieldEnum::E][(int)CoordinateEnum::x].initialize(&gridInTime->Ex, &gridInSpectral->Ex, gridInTime->numCells);
+            transform[(int)FieldEnum::E][(int)CoordinateEnum::y].initialize(&gridInTime->Ey, &gridInSpectral->Ey, gridInTime->numCells);
+            transform[(int)FieldEnum::E][(int)CoordinateEnum::z].initialize(&gridInTime->Ez, &gridInSpectral->Ez, gridInTime->numCells);
 
-            transform[(int)FieldEnum::B][(int)CoordinateEnum::x].initialize(&gridFP->Bx, &gridCFP->Bx, gridFP->numCells);
-            transform[(int)FieldEnum::B][(int)CoordinateEnum::y].initialize(&gridFP->By, &gridCFP->By, gridFP->numCells);
-            transform[(int)FieldEnum::B][(int)CoordinateEnum::z].initialize(&gridFP->Bz, &gridCFP->Bz, gridFP->numCells);
+            transform[(int)FieldEnum::B][(int)CoordinateEnum::x].initialize(&gridInTime->Bx, &gridInSpectral->Bx, gridInTime->numCells);
+            transform[(int)FieldEnum::B][(int)CoordinateEnum::y].initialize(&gridInTime->By, &gridInSpectral->By, gridInTime->numCells);
+            transform[(int)FieldEnum::B][(int)CoordinateEnum::z].initialize(&gridInTime->Bz, &gridInSpectral->Bz, gridInTime->numCells);
 
-            transform[(int)FieldEnum::J][(int)CoordinateEnum::x].initialize(&gridFP->Jx, &gridCFP->Jx, gridFP->numCells);
-            transform[(int)FieldEnum::J][(int)CoordinateEnum::y].initialize(&gridFP->Jy, &gridCFP->Jy, gridFP->numCells);
-            transform[(int)FieldEnum::J][(int)CoordinateEnum::z].initialize(&gridFP->Jz, &gridCFP->Jz, gridFP->numCells);
+            transform[(int)FieldEnum::J][(int)CoordinateEnum::x].initialize(&gridInTime->Jx, &gridInSpectral->Jx, gridInTime->numCells);
+            transform[(int)FieldEnum::J][(int)CoordinateEnum::y].initialize(&gridInTime->Jy, &gridInSpectral->Jy, gridInTime->numCells);
+            transform[(int)FieldEnum::J][(int)CoordinateEnum::z].initialize(&gridInTime->Jz, &gridInSpectral->Jz, gridInTime->numCells);
         }
 
         void doDirectFourierTransform(FieldEnum field, CoordinateEnum coord) {

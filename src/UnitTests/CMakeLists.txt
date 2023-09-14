@@ -7,10 +7,12 @@ include_directories(
     ${FFT_INCLUDES})
 
 add_executable(tests
+    src/testBoundaryConditions.cpp
     src/testConstants.cpp
     src/testDimension.cpp
     src/testEnsemble.cpp
-    src/testFDTD.cpp
+    src/testFieldGenerator.cpp
+    src/testFieldSolvers.cpp
     src/testFourierTransform.cpp
     src/testFP.cpp
     src/testGrid.cpp
@@ -19,9 +21,6 @@ add_executable(tests
     src/testParticleArray.cpp
     src/testParticleProxy.cpp
     src/testPML.cpp
-    src/testPSATD.cpp
-    src/testPSATDTimeStraggered.cpp
-    src/testPSTD.cpp
     src/testPusherAndHandler.cpp
     src/testSaveLoadParticle.cpp
     src/testSaveLoadGrid.cpp

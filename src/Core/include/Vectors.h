@@ -829,8 +829,4 @@ inline const FP3 VP(const FP3& v1, const FP3& v2)
         v1.x * v2.y - v1.y * v2.x);
 }
 
-typedef FP Vector3<FP>::* MemberOfFP3;
-typedef complexFP Vector3<complexFP>::* MemberOfComplexFP3;
-
-
 } // namespace pfc

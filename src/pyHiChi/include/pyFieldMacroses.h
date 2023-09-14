@@ -1,6 +1,5 @@
 #pragma once
 
-
 #define SET_FIELD_CONFIGURATIONS_GRID_METHODS(pyFieldType)                \
     .def("set", &pyFieldType::setFieldConfiguration<NullField>,           \
         py::arg("field_configuration"))                                   \
@@ -164,3 +163,68 @@
     SET_PYFIELDBASE_FIELD_SECTION_METHODS(SET_PYFIELDBASE_Y_LINE_METHOD, "_y_line")    \
     SET_PYFIELDBASE_FIELD_SECTION_METHODS(SET_PYFIELDBASE_Z_LINE_METHOD, "_z_line")    \
     SET_PYFIELDBASE_FIELD_SECTION_METHODS(SET_PYFIELDBASE_3D_AREA_METHOD, "")
+
+
+// ------------------- Field generator setter methods -------------------
+
+
+#define SET_FIELD_GENERATOR_METHODS()                                                                 \
+    .def("set_field_generator", &pyYeeField::setFieldGenerator,                                       \
+        py::arg("left_index"), py::arg("right_index"),                                                \
+        py::arg("bx_func"), py::arg("by_func"), py::arg("bz_func"),                                   \
+        py::arg("ex_func"), py::arg("ey_func"), py::arg("ez_func"),                                   \
+        py::arg("is_left_x_border_enabled") = true, py::arg("is_left_y_border_enabled") = true,       \
+        py::arg("is_left_z_border_enabled") = true, py::arg("is_right_x_border_enabled") = true,      \
+        py::arg("is_right_y_border_enabled") = true, py::arg("is_right_z_border_enabled") = true)     \
+    .def("set_field_generator", &pyYeeField::setFieldGeneratorAllFunctions,                           \
+        py::arg("left_index"), py::arg("right_index"),                                                \
+        py::arg("left_x_bx_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_x_by_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_x_bz_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_x_bx_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_x_by_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_x_bz_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_y_bx_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_y_by_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_y_bz_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_y_bx_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_y_by_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_y_bz_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_z_bx_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_z_by_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_z_bz_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_z_bx_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_z_by_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_z_bz_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_x_ex_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_x_ey_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_x_ez_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_x_ex_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_x_ey_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_x_ez_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_y_ex_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_y_ey_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_y_ez_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_y_ex_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_y_ey_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_y_ez_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("left_z_ex_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_z_ey_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("left_z_ez_func") = (CFunctionPointer)field_generator::defaultFieldFunction,    \
+        py::arg("right_z_ex_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_z_ey_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("right_z_ez_func") = (CFunctionPointer)field_generator::defaultFieldFunction,   \
+        py::arg("is_left_x_border_enabled") = true, py::arg("is_left_y_border_enabled") = true,       \
+        py::arg("is_left_z_border_enabled") = true, py::arg("is_right_x_border_enabled") = true,      \
+        py::arg("is_right_y_border_enabled") = true, py::arg("is_right_z_border_enabled") = true)
+
+
+// ------------------- Interpolation setter methods -------------------
+
+
+#define SET_FIELD_INTERPOLATION_METHODS(pyFieldType)                                            \
+    .def("set_CIC_interpolation", &pyFieldType::setInterpolationCIC)                            \
+    .def("set_TSC_interpolation", &pyFieldType::setInterpolationTSC)                            \
+    .def("set_PCS_interpolation", &pyFieldType::setInterpolationPCS)                            \
+    .def("set_second_order_interpolation", &pyFieldType::setInterpolationSecondOrder)           \
+    .def("set_fourth_order_interpolation", &pyFieldType::setInterpolationFourthOrder)

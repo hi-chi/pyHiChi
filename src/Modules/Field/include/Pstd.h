@@ -4,68 +4,105 @@
 #include "Grid.h"
 #include "Vectors.h"
 #include "PmlPstd.h"
+#include "FieldBoundaryConditionSpectral.h"
+#include "FieldGeneratorSpectral.h"
 
 namespace pfc {
-    class PSTD : public SpectralFieldSolver<PSTDGridType>
-    {
 
+    namespace pstd {
+        struct SchemeParams {
+            using GridType = PSTDGrid;
+            using PmlType = PmlPstd;
+            using FieldGeneratorType = FieldGeneratorSpectral<PSTDGrid>;
+            using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionSpectral<PSTDGrid>;
+        };
+    }
+
+    class PSTD : public SpectralFieldSolver<pstd::SchemeParams>
+    {
     public:
-        PSTD(PSTDGrid * grid, double dt);
+
+        using SchemeParams = pstd::SchemeParams;
+        using GridType = pstd::SchemeParams::GridType;
+        using PmlType = pstd::SchemeParams::PmlType;
+        using FieldGeneratorType = pstd::SchemeParams::FieldGeneratorType;
+        using PeriodicalBoundaryConditionType = pstd::SchemeParams::PeriodicalBoundaryConditionType;
+
+        PSTD(GridType* grid, FP dt);
+
+        // constructor for loading
+        explicit PSTD(GridType* grid);
 
         void updateFields();
 
         void updateHalfB();
         void updateE();
 
-        void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setPeriodicalBoundaryConditions();
+        void setPeriodicalBoundaryConditions(CoordinateEnum axis);
 
         void setTimeStep(FP dt);
 
-        FP getCourantCondition() const {
-            double tmp = sqrt(1.0 / (grid->steps.x*grid->steps.x) +
-                1.0 / (grid->steps.y*grid->steps.y) +
-                1.0 / (grid->steps.z*grid->steps.z));
+        static FP getCourantConditionTimeStep(const FP3& gridSteps) {
+            FP tmp = sqrt(1.0 / (gridSteps.x * gridSteps.x) +
+                1.0 / (gridSteps.y * gridSteps.y) +
+                1.0 / (gridSteps.z * gridSteps.z));
             return 2.0 / (constants::pi * constants::c * tmp);
         }
-
-        bool ifCourantConditionSatisfied(FP dt) const {
-            return dt < getCourantCondition();
+        FP getCourantConditionTimeStep() const {
+            return getCourantConditionTimeStep(grid->steps);
         }
 
-    private:
-
-        PmlSpectral<GridTypes::PSTDGridType>* getPml() {
-            return (PmlSpectral<GridTypes::PSTDGridType>*)pml.get();
+        bool isCourantConditionSatisfied(FP dt) const {
+            return dt < getCourantConditionTimeStep();
         }
 
+        static bool isTimeStaggered() {
+            return true;
+        }
+
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
+        void saveBoundaryConditions(std::ostream& ostr);
+        void loadBoundaryConditions(std::istream& istr);
     };
 
-    inline PSTD::PSTD(PSTDGrid* grid, double dt) :
-        SpectralFieldSolver<GridTypes::PSTDGridType>(grid, dt, 0.0, 0.5*dt, 0.5*dt)
+    inline PSTD::PSTD(GridType* grid, FP dt) :
+        SpectralFieldSolver<pstd::SchemeParams>(grid, dt)
     {
-        if (!ifCourantConditionSatisfied(dt)) {
+        if (!isCourantConditionSatisfied(dt)) {
             std::cout
-                << "WARNING: PSTD Courant condition is not satisfied. Another time step was setted up"
+                << "WARNING: PSTD Courant condition is not satisfied. Another time step was set up"
                 << std::endl;
-            this->dt = getCourantCondition() * 0.5;
+            this->dt = getCourantConditionTimeStep() * 0.5;
         }
-        updateDims();
-        updateInternalDims();
     }
 
-    inline void PSTD::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
+    inline PSTD::PSTD(GridType* grid) :
+        SpectralFieldSolver<pstd::SchemeParams>(grid)
+    {}
+
+    inline void PSTD::setPeriodicalBoundaryConditions()
     {
-        pml.reset(new PmlPstd(this, Int3(sizePMLx, sizePMLy, sizePMLz)));
-        updateInternalDims();
+        for (int d = 0; d < this->grid->dimensionality; d++)
+            this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
+    }
+
+    inline void PSTD::setPeriodicalBoundaryConditions(CoordinateEnum axis)
+    {
+        if ((int)axis < this->grid->dimensionality)
+            this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
+                this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
     }
 
     inline void PSTD::setTimeStep(FP dt)
     {
-        if (ifCourantConditionSatisfied(dt)) {
+        if (isCourantConditionSatisfied(dt)) {
             this->dt = dt;
-            this->timeShiftB = 0.5*dt;
-            this->timeShiftJ = 0.5*dt;
-            if (pml.get()) pml.reset(new PmlPstd(this, pml->sizePML));
+            if (this->pml) this->resetPML();
+            if (this->generator) this->resetFieldGenerator();
         }
         else {
             std::cout
@@ -76,34 +113,41 @@ namespace pfc {
 
     inline void PSTD::updateFields()
     {
+        // TODO: consider boundary conditions and generator
+
         doFourierTransform(fourier_transform::Direction::RtoC);
 
-        if (pml.get()) getPml()->updateBSplit();
+        if (pml) pml->updateBSplit();
         updateHalfB();
+        // if (generator) generator->generateB(globalTime);  // send current E time
+        // applyBoundaryConditionsB(globalTime + dt * 0.5);
 
-        if (pml.get()) getPml()->updateESplit();
+        if (pml) pml->updateESplit();
         updateE();
+        // if (generator) generator->generateE(globalTime + dt * 0.5);  // send current B time
+        // applyBoundaryConditionsE(globalTime + dt);
 
-        if (pml.get()) getPml()->updateBSplit();
         updateHalfB();
+        // applyBoundaryConditionsB(globalTime + dt);
 
         doFourierTransform(fourier_transform::Direction::CtoR);
 
-        if (pml.get()) getPml()->doSecondStep();
+        if (pml) pml->updateB();
+        if (pml) pml->updateE();
 
         globalTime += dt;
     }
 
     inline void PSTD::updateHalfB()
     {
-        const Int3 begin = updateComplexBAreaBegin;
-        const Int3 end = updateComplexBAreaEnd;
-        double dt = 0.5 * this->dt;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
+
+        FP dt = 0.5 * this->dt;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
-            {
-//#pragma omp simd
                 for (int k = begin.z; k < end.z; k++)
                 {
                     ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
@@ -114,18 +158,16 @@ namespace pfc {
                     complexGrid->By(i, j, k) += coeff * crossKE.y;
                     complexGrid->Bz(i, j, k) += coeff * crossKE.z;
                 }
-            }
     }
 
     inline void PSTD::updateE()
     {
-        const Int3 begin = updateComplexEAreaBegin;
-        const Int3 end = updateComplexEAreaEnd;
+        const Int3 begin = this->complexDomainIndexBegin;
+        const Int3 end = this->complexDomainIndexEnd;
+
         OMP_FOR_COLLAPSE()
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
-            {
-//#pragma omp simd
                 for (int k = begin.z; k < end.z; k++)
                 {
                     ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));
@@ -137,7 +179,49 @@ namespace pfc {
                     complexGrid->Ey(i, j, k) += coeff * crossKB.y - 4 * constants::pi * dt * J.y;
                     complexGrid->Ez(i, j, k) += coeff * crossKB.z - 4 * constants::pi * dt * J.z;
                 }
+    }
+
+    inline void PSTD::save(std::ostream& ostr)
+    {
+        SpectralFieldSolver<pstd::SchemeParams>::save(ostr);
+
+        this->saveFieldGenerator(ostr);
+        this->savePML(ostr);
+        this->saveBoundaryConditions(ostr);
+    }
+
+    inline void PSTD::load(std::istream& istr)
+    {
+        SpectralFieldSolver<pstd::SchemeParams>::load(istr);
+
+        this->loadFieldGenerator(istr);
+        this->loadPML(istr);
+        this->loadBoundaryConditions(istr);
+    }
+
+    inline void PSTD::saveBoundaryConditions(std::ostream& ostr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (this->boundaryConditions[d])
+                this->boundaryConditions[d]->save(ostr);
+        }
+    }
+
+    inline void PSTD::loadBoundaryConditions(std::istream& istr)
+    {
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = 0;
+            istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (isPeriodicalBC) {
+                this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d]->load(istr);
             }
+        }
     }
 
 }

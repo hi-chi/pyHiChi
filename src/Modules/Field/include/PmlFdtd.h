@@ -1,20 +1,37 @@
 #pragma once
-#include "Grid.h"
-#include "FieldSolver.h"
-#include "Fdtd.h"
+#include <limits>
+
 #include "Pml.h"
 
 namespace pfc {
-    class FDTD;
 
-    class PmlFdtd : public PmlReal<YeeGridType>
+    class PmlFdtd : public PmlReal<YeeGrid>
     {
     public:
-        PmlFdtd(FDTD * solver, Int3 sizePML) :
-            PmlReal((RealFieldSolver<YeeGridType>*)solver, sizePML) {}
+
+        PmlFdtd(YeeGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
+            Int3 sizePML, FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+            PmlReal(grid, dt, domainIndexBegin, domainIndexEnd, sizePML, nPmlParam, r0PmlParam)
+        {
+            this->computeCoeffs();
+        }
+
+        // constructor for loading
+        explicit PmlFdtd(YeeGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd) :
+            PmlReal(grid, dt, domainIndexBegin, domainIndexEnd)
+        {}
 
         void updateB();
         void updateE();
+
+        void save(std::ostream& ostr);
+        void load(std::istream& istr);
+
+        // coefficient pre-computing
+        void computeCoeffs();
+
+        std::vector<FP> bCoeff1X, bCoeff1Y, bCoeff1Z, eCoeff1X, eCoeff1Y, eCoeff1Z;  // e^(-sigma*dt)
+        std::vector<FP> bCoeff2X, bCoeff2Y, bCoeff2Z, eCoeff2X, eCoeff2Y, eCoeff2Z;  // (e^(-sigma*dt) - 1) / (sigma*dx)
 
     private:
 
@@ -24,269 +41,320 @@ namespace pfc {
         void updateE3D();
         void updateE2D();
         void updateE1D();
+
+        void computeCoeffs(
+            std::vector<FP>& coeff1X, std::vector<FP>& coeff1Y, std::vector<FP>& coeff1Z,
+            std::vector<FP>& coeff2X, std::vector<FP>& coeff2Y, std::vector<FP>& coeff2Z,
+            const FP3(YeeGrid::* positionFX)(int, int, int) const,
+            const FP3(YeeGrid::* positionFY)(int, int, int) const,
+            const FP3(YeeGrid::* positionFZ)(int, int, int) const);
     };
-    
+
+    inline void PmlFdtd::computeCoeffs()
+    {
+        this->computeCoeffs(bCoeff1X, bCoeff1Y, bCoeff1Z, bCoeff2X, bCoeff2Y, bCoeff2Z,
+            &YeeGrid::BxPosition, &YeeGrid::ByPosition, &YeeGrid::BzPosition);
+        this->computeCoeffs(eCoeff1X, eCoeff1Y, eCoeff1Z, eCoeff2X, eCoeff2Y, eCoeff2Z,
+            &YeeGrid::ExPosition, &YeeGrid::EyPosition, &YeeGrid::EzPosition);
+    }
+
+    inline void PmlFdtd::computeCoeffs(
+        std::vector<FP>& coeff1X, std::vector<FP>& coeff1Y, std::vector<FP>& coeff1Z,
+        std::vector<FP>& coeff2X, std::vector<FP>& coeff2Y, std::vector<FP>& coeff2Z,
+        const FP3(YeeGrid::* positionFX)(int, int, int) const,
+        const FP3(YeeGrid::* positionFY)(int, int, int) const,
+        const FP3(YeeGrid::* positionFZ)(int, int, int) const)
+    {
+        const int size = this->splitGrid->getNumPmlNodes();
+
+        coeff1X.resize(size);
+        coeff1Y.resize(size);
+        coeff1Z.resize(size);
+        coeff2X.resize(size);
+        coeff2Y.resize(size);
+        coeff2Z.resize(size);
+
+        const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
+
+        const FP cdt = constants::c * this->dt;
+        const FP threshold = std::numeric_limits<FP>::epsilon();
+
+        OMP_FOR()
+        for (int idx = 0; idx < size; ++idx)
+        {
+            Int3 index = this->splitGrid->getIndex3d(idx);
+
+            // coordinates according to Yee grid
+            FP sigmaX = this->computeSigma((this->grid->*positionFY)(index.x, index.y, index.z).x, CoordinateEnum::x);
+            FP sigmaY = this->computeSigma((this->grid->*positionFZ)(index.x, index.y, index.z).y, CoordinateEnum::y);
+            FP sigmaZ = this->computeSigma((this->grid->*positionFX)(index.x, index.y, index.z).z, CoordinateEnum::z);
+
+            coeff1X[idx] = exp(-sigmaX * cdt);
+            coeff1Y[idx] = exp(-sigmaY * cdt);
+            coeff1Z[idx] = exp(-sigmaZ * cdt);
+
+            if (this->grid->dimensionality >= 1)
+                coeff2X[idx] = sigmaX >= threshold ? (coeff1X[idx] - (FP)1) / (sigmaX * dx) : -cdt / dx;
+            if (this->grid->dimensionality >= 2)
+                coeff2Y[idx] = sigmaY >= threshold ? (coeff1Y[idx] - (FP)1) / (sigmaY * dy) : -cdt / dy;
+            if (this->grid->dimensionality >= 3)
+                coeff2Z[idx] = sigmaZ >= threshold ? (coeff1Z[idx] - (FP)1) / (sigmaZ * dz) : -cdt / dz;
+        }
+    }
+
     inline void PmlFdtd::updateB()
     {
-        if (fieldSolver->grid->dimensionality == 3)
+        if (this->grid->dimensionality == 3)
             updateB3D();
-        else if (fieldSolver->grid->dimensionality == 2)
+        else if (this->grid->dimensionality == 2)
             updateB2D();
-        else if (fieldSolver->grid->dimensionality == 1)
+        else if (this->grid->dimensionality == 1)
             updateB1D();
     }
 
-
     inline void PmlFdtd::updateB3D()
     {
-        // For all cells (i, j, k) in PML use following computational scheme
-        // with precomputed coefficients coeffBa, coeffBb:
-        //
-        // byx(i, j, k) = coeffBa.x(i, j, k) * byx(i, j, k) +
-        //     coeffBb.x(i, j, k) * (e.z(i, j, k) - e.z(i - 1, j, k)),
-        // bzx(i, j, k) = coeffBa.x(i, j, k) * bzx(i, j, k) -
-        //     coeffBb.x(i, j, k) * (e.y(i, j, k) - e.y(i - 1, j, k));
-        //
-        // bxy(i, j, k) = coeffBa.y(i, j, k) * bxy(i, j, k) -
-        //     coeffBb.y(i, j, k) * (e.z(i, j, k) - e.z(i, j - 1, k)),
-        // bzy(i, j, k) = coeffBa.y(i, j, k) * bzy(i, j, k) +
-        //     coeffBb.y(i, j, k) * (e.x(i, j, k) - e.x(i, j - 1, k));
-        //
-        // bxz(i, j, k) = coeffBa.z(i, j, k) * bxz(i, j, k) +
-        //     coeffBb.z(i, j, k) * (e.y(i, j, k) - e.y(i, j, k - 1)),
-        // byz(i, j, k) = coeffBa.z(i, j, k) * byz(i, j, k) -
-        //     coeffBb.z(i, j, k) * (e.x(i, j, k) - e.x(i, j, k - 1));
-        //
-        // b.x(i, j, k) = bxy(i, j, k) + bxz(i, j, k),
-        // b.y(i, j, k) = byx(i, j, k) + byz(i, j, k),
-        // b.z(i, j, k) = bzx(i, j, k) + bzy(i, j, k).
-        YeeGrid * grid = fieldSolver->grid;
+        const int size = this->splitGrid->getNumPmlNodes();
+        const FP cdt = constants::c * this->dt;
+        const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
+
         OMP_FOR()
-        for (int idx = 0; idx < numCells; ++idx)
+        for (int idx = 0; idx < size; ++idx)
         {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+            Int3 index3d = this->splitGrid->getIndex3d(idx);
+            int i = index3d.x, j = index3d.y, k = index3d.z;
 
-            byx[idx] = coeffBa[idx].x * byx[idx] + coeffBb[idx].x *
-                (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k));
-            bzx[idx] = coeffBa[idx].x * bzx[idx] - coeffBb[idx].x *
-                (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
+            this->splitGrid->byx[idx] = bCoeff1X[idx] * this->splitGrid->byx[idx] - bCoeff2X[idx] *
+                (this->grid->Ez(i, j, k) - this->grid->Ez(i - 1, j, k));
+            this->splitGrid->bzx[idx] = bCoeff1X[idx] * this->splitGrid->bzx[idx] + bCoeff2X[idx] *
+                (this->grid->Ey(i, j, k) - this->grid->Ey(i - 1, j, k));
 
-            bxy[idx] = coeffBa[idx].y * bxy[idx] - coeffBb[idx].y *
-                (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
-            bzy[idx] = coeffBa[idx].y * bzy[idx] + coeffBb[idx].y *
-                (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k));
+            this->splitGrid->bxy[idx] = bCoeff1Y[idx] * this->splitGrid->bxy[idx] + bCoeff2Y[idx] *
+                (this->grid->Ez(i, j, k) - this->grid->Ez(i, j - 1, k));
+            this->splitGrid->bzy[idx] = bCoeff1Y[idx] * this->splitGrid->bzy[idx] - bCoeff2Y[idx] *
+                (this->grid->Ex(i, j, k) - this->grid->Ex(i, j - 1, k));
 
-            bxz[idx] = coeffBa[idx].z * bxz[idx] + coeffBb[idx].z *
-                (grid->Ey(i, j, k) - grid->Ey(i, j, k - 1));
-            byz[idx] = coeffBa[idx].z * byz[idx] - coeffBb[idx].z *
-                (grid->Ex(i, j, k) - grid->Ex(i, j, k - 1));
+            this->splitGrid->bxz[idx] = bCoeff1Z[idx] * this->splitGrid->bxz[idx] - bCoeff2Z[idx] *
+                (this->grid->Ey(i, j, k) - this->grid->Ey(i, j, k - 1));
+            this->splitGrid->byz[idx] = bCoeff1Z[idx] * this->splitGrid->byz[idx] + bCoeff2Z[idx] *
+                (this->grid->Ex(i, j, k) - this->grid->Ex(i, j, k - 1));
 
-            grid->Bx(i, j, k) = bxy[idx] + bxz[idx];
-            grid->By(i, j, k) = byx[idx] + byz[idx];
-            grid->Bz(i, j, k) = bzx[idx] + bzy[idx];
+            this->grid->Bx(i, j, k) = this->splitGrid->bxy[idx] + this->splitGrid->bxz[idx];
+            this->grid->By(i, j, k) = this->splitGrid->byx[idx] + this->splitGrid->byz[idx];
+            this->grid->Bz(i, j, k) = this->splitGrid->bzx[idx] + this->splitGrid->bzy[idx];
         }
     }
-
 
     inline void PmlFdtd::updateB2D()
     {
-        YeeGrid * grid = fieldSolver->grid;
+        const int size = this->splitGrid->getNumPmlNodes();
+        const FP cdt = constants::c * this->dt;
+        const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
+
         OMP_FOR()
-        for (int idx = 0; idx < numCells; ++idx)
+        for (int idx = 0; idx < size; ++idx)
         {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+            Int3 index3d = this->splitGrid->getIndex3d(idx);
+            int i = index3d.x, j = index3d.y, k = index3d.z;
 
-            byx[idx] = coeffBa[idx].x * byx[idx] + coeffBb[idx].x *
-                (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k));
-            bzx[idx] = coeffBa[idx].x * bzx[idx] - coeffBb[idx].x *
-                (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
+            this->splitGrid->byx[idx] = bCoeff1X[idx] * this->splitGrid->byx[idx] - bCoeff2X[idx] *
+                (this->grid->Ez(i, j, k) - this->grid->Ez(i - 1, j, k));
+            this->splitGrid->bzx[idx] = bCoeff1X[idx] * this->splitGrid->bzx[idx] + bCoeff2X[idx] *
+                (this->grid->Ey(i, j, k) - this->grid->Ey(i - 1, j, k));
 
-            bxy[idx] = coeffBa[idx].y * bxy[idx] - coeffBb[idx].y *
-                (grid->Ez(i, j, k) - grid->Ez(i, j - 1, k));
-            bzy[idx] = coeffBa[idx].y * bzy[idx] + coeffBb[idx].y *
-                (grid->Ex(i, j, k) - grid->Ex(i, j - 1, k));
+            this->splitGrid->bxy[idx] = bCoeff1Y[idx] * this->splitGrid->bxy[idx] + bCoeff2Y[idx] *
+                (this->grid->Ez(i, j, k) - this->grid->Ez(i, j - 1, k));
+            this->splitGrid->bzy[idx] = bCoeff1Y[idx] * this->splitGrid->bzy[idx] - bCoeff2Y[idx] *
+                (this->grid->Ex(i, j, k) - this->grid->Ex(i, j - 1, k));
 
-            bxz[idx] = coeffBa[idx].z * bxz[idx];
-            byz[idx] = coeffBa[idx].z * byz[idx];
+            this->splitGrid->bxz[idx] = bCoeff1Z[idx] * this->splitGrid->bxz[idx];
+            this->splitGrid->byz[idx] = bCoeff1Z[idx] * this->splitGrid->byz[idx];
 
-            grid->Bx(i, j, k) = bxy[idx] + bxz[idx];
-            grid->By(i, j, k) = byx[idx] + byz[idx];
-            grid->Bz(i, j, k) = bzx[idx] + bzy[idx];
+            this->grid->Bx(i, j, k) = this->splitGrid->bxy[idx] + this->splitGrid->bxz[idx];
+            this->grid->By(i, j, k) = this->splitGrid->byx[idx] + this->splitGrid->byz[idx];
+            this->grid->Bz(i, j, k) = this->splitGrid->bzx[idx] + this->splitGrid->bzy[idx];
         }
     }
-
 
     inline void PmlFdtd::updateB1D()
     {
-        YeeGrid * grid = fieldSolver->grid;
+        const int size = this->splitGrid->getNumPmlNodes();
+        const FP cdt = constants::c * this->dt;
+        const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
+
         OMP_FOR()
-        for (int idx = 0; idx < numCells; ++idx)
+        for (int idx = 0; idx < size; ++idx)
         {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
+            Int3 index3d = this->splitGrid->getIndex3d(idx);
+            int i = index3d.x, j = index3d.y, k = index3d.z;
 
-            byx[idx] = coeffBa[idx].x * byx[idx] + coeffBb[idx].x *
-                (grid->Ez(i, j, k) - grid->Ez(i - 1, j, k));
-            bzx[idx] = coeffBa[idx].x * bzx[idx] - coeffBb[idx].x *
-                (grid->Ey(i, j, k) - grid->Ey(i - 1, j, k));
+            this->splitGrid->byx[idx] = bCoeff1X[idx] * this->splitGrid->byx[idx] - bCoeff2X[idx] *
+                (this->grid->Ez(i, j, k) - this->grid->Ez(i - 1, j, k));
+            this->splitGrid->bzx[idx] = bCoeff1X[idx] * this->splitGrid->bzx[idx] + bCoeff2X[idx] *
+                (this->grid->Ey(i, j, k) - this->grid->Ey(i - 1, j, k));
 
-            bxy[idx] = coeffBa[idx].y * bxy[idx];
-            bzy[idx] = coeffBa[idx].y * bzy[idx];
+            this->splitGrid->bxy[idx] = bCoeff1Y[idx] * this->splitGrid->bxy[idx];
+            this->splitGrid->bzy[idx] = bCoeff1Y[idx] * this->splitGrid->bzy[idx];
 
-            bxz[idx] = coeffBa[idx].z * bxz[idx];
-            byz[idx] = coeffBa[idx].z * byz[idx];
+            this->splitGrid->bxz[idx] = bCoeff1Z[idx] * this->splitGrid->bxz[idx];
+            this->splitGrid->byz[idx] = bCoeff1Z[idx] * this->splitGrid->byz[idx];
 
-            grid->Bx(i, j, k) = bxy[idx] + bxz[idx];
-            grid->By(i, j, k) = byx[idx] + byz[idx];
-            grid->Bz(i, j, k) = bzx[idx] + bzy[idx];
+            this->grid->Bx(i, j, k) = this->splitGrid->bxy[idx] + this->splitGrid->bxz[idx];
+            this->grid->By(i, j, k) = this->splitGrid->byx[idx] + this->splitGrid->byz[idx];
+            this->grid->Bz(i, j, k) = this->splitGrid->bzx[idx] + this->splitGrid->bzy[idx];
         }
     }
-
 
     inline void PmlFdtd::updateE()
     {
-        if (fieldSolver->grid->dimensionality == 3)
+        if (this->grid->dimensionality == 3)
             updateE3D();
-        else if (fieldSolver->grid->dimensionality == 2)
+        else if (this->grid->dimensionality == 2)
             updateE2D();
-        else if (fieldSolver->grid->dimensionality == 1)
+        else if (this->grid->dimensionality == 1)
             updateE1D();
     }
 
-
     inline void PmlFdtd::updateE3D()
     {
-        // For all nodes (i, j, k) in PML use following computational scheme
-        // with precomputed coefficients coeffEa, coeffEb:
-        //
-        // eyx(i, j, k) = coeffEa.x(i, j, k) * eyx(i, j, k) +
-        //     coeffEb.x(i, j, k) * (b.z(i + 1, j, k) - b.z(i, j, k)),
-        // ezx(i, j, k) = coeffEa.x(i, j, k) * ezx(i, j, k) -
-        //     coeffEb.x(i, j, k) * (b.y(i + 1, j, k) - b.y(i, j, k));
-        //
-        // exy(i, j, k) = coeffEa.y(i, j, k) * exy(i, j, k) -
-        //     coeffEb.y(i, j, k) * (b.z(i, j + 1, k) - b.z(i, j, k)),
-        // ezy(i, j, k) = coeffEa.y(i, j, k) * ezy(i, j, k) +
-        //     coeffEb.y(i, j, k) * (b.x(i, j + 1, k) - b.x(i, j, k));
-        //
-        // exz(i, j, k) = coeffEa.z(i, j, k) * exz(i, j, k) +
-        //     coeffEb.z(i, j, k) * (b.y(i, j, k + 1) - b.y(i, j, k)),
-        // eyz(i, j, k) = coeffEa.z(i, j, k) * eyz(i, j, k) -
-        //     coeffEb.z(i, j, k) * (b.x(i, j, k + 1) - b.x(i, j, k));
-        //
-        // e.x(i, j, k) = exy(i, j, k) + exz(i, j, k),
-        // e.y(i, j, k) = eyx(i, j, k) + eyz(i, j, k),
-        // e.z(i, j, k) = ezx(i, j, k) + ezy(i, j, k).
-        YeeGrid * grid = fieldSolver->grid;
-        Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
+        const int size = this->splitGrid->getNumPmlNodes();
+        const FP cdt = constants::c * this->dt;
+        const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
+
         OMP_FOR()
-        for (int idx = 0; idx < numNodes; ++idx)
+        for (int idx = 0; idx < size; ++idx)
         {
-            int i = nodeIndex[idx].x;
-            int j = nodeIndex[idx].y;
-            int k = nodeIndex[idx].z;
+            Int3 index3d = this->splitGrid->getIndex3d(idx);
+            int i = index3d.x, j = index3d.y, k = index3d.z;
 
-            if (i != edgeIdx.x)
-            {
-                eyx[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].x * eyx[idx] +
-                    coeffEb[idx].x * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                ezx[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].x * ezx[idx] -
-                    coeffEb[idx].x * (grid->By(i + 1, j, k) - grid->By(i, j, k));
-            }
+            this->splitGrid->eyx[idx] = eCoeff1X[idx] * this->splitGrid->eyx[idx] + eCoeff2X[idx] *
+                (this->grid->Bz(i + 1, j, k) - this->grid->Bz(i, j, k));
+            this->splitGrid->ezx[idx] = eCoeff1X[idx] * this->splitGrid->ezx[idx] - eCoeff2X[idx] *
+                (this->grid->By(i + 1, j, k) - this->grid->By(i, j, k));
 
-            if (j != edgeIdx.y)
-            {
-                exy[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].y * exy[idx] -
-                    coeffEb[idx].y * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k));
-                ezy[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].y * ezy[idx] +
-                    coeffEb[idx].y * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
-            }
+            this->splitGrid->exy[idx] = eCoeff1Y[idx] * this->splitGrid->exy[idx] - eCoeff2Y[idx] *
+                (this->grid->Bz(i, j + 1, k) - this->grid->Bz(i, j, k));
+            this->splitGrid->ezy[idx] = eCoeff1Y[idx] * this->splitGrid->ezy[idx] + eCoeff2Y[idx] *
+                (this->grid->Bx(i, j + 1, k) - this->grid->Bx(i, j, k));
 
-            if (k != edgeIdx.z)
-            {
-                exz[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].z * exz[idx] +
-                    coeffEb[idx].z * (grid->By(i, j, k + 1) - grid->By(i, j, k));
-                eyz[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].z * eyz[idx] -
-                    coeffEb[idx].z * (grid->Bx(i, j, k + 1) - grid->Bx(i, j, k));
-            }
+            this->splitGrid->exz[idx] = eCoeff1Z[idx] * this->splitGrid->exz[idx] + eCoeff2Z[idx] *
+                (this->grid->By(i, j, k + 1) - this->grid->By(i, j, k));
+            this->splitGrid->eyz[idx] = eCoeff1Z[idx] * this->splitGrid->eyz[idx] - eCoeff2Z[idx] *
+                (this->grid->Bx(i, j, k + 1) - this->grid->Bx(i, j, k));
 
-            grid->Ex(i, j, k) = exy[idx] + exz[idx];
-            grid->Ey(i, j, k) = eyx[idx] + eyz[idx];
-            grid->Ez(i, j, k) = ezx[idx] + ezy[idx];
+            this->grid->Ex(i, j, k) = this->splitGrid->exy[idx] + this->splitGrid->exz[idx];
+            this->grid->Ey(i, j, k) = this->splitGrid->eyx[idx] + this->splitGrid->eyz[idx];
+            this->grid->Ez(i, j, k) = this->splitGrid->ezx[idx] + this->splitGrid->ezy[idx];
         }
     }
-
 
     inline void PmlFdtd::updateE2D()
     {
-        YeeGrid * grid = fieldSolver->grid;
-        Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
+        const int size = this->splitGrid->getNumPmlNodes();
+        const FP cdt = constants::c * this->dt;
+        const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
+
         OMP_FOR()
-        for (int idx = 0; idx < numNodes; ++idx)
+        for (int idx = 0; idx < size; ++idx)
         {
-            int i = nodeIndex[idx].x;
-            int j = nodeIndex[idx].y;
-            int k = nodeIndex[idx].z;
+            Int3 index3d = this->splitGrid->getIndex3d(idx);
+            int i = index3d.x, j = index3d.y, k = index3d.z;
 
-            if (i != edgeIdx.x)
-            {
-                eyx[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].x * eyx[idx] +
-                    coeffEb[idx].x * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                ezx[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].x * ezx[idx] -
-                    coeffEb[idx].x * (grid->By(i + 1, j, k) - grid->By(i, j, k));
-            }
+            this->splitGrid->eyx[idx] = eCoeff1X[idx] * this->splitGrid->eyx[idx] + eCoeff2X[idx] *
+                (this->grid->Bz(i + 1, j, k) - this->grid->Bz(i, j, k));
+            this->splitGrid->ezx[idx] = eCoeff1X[idx] * this->splitGrid->ezx[idx] - eCoeff2X[idx] *
+                (this->grid->By(i + 1, j, k) - this->grid->By(i, j, k));
 
-            if (j != edgeIdx.y)
-            {
-                exy[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].y * exy[idx] -
-                    coeffEb[idx].y * (grid->Bz(i, j + 1, k) - grid->Bz(i, j, k));
-                ezy[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].y * ezy[idx] +
-                    coeffEb[idx].y * (grid->Bx(i, j + 1, k) - grid->Bx(i, j, k));
-            }
+            this->splitGrid->exy[idx] = eCoeff1Y[idx] * this->splitGrid->exy[idx] - eCoeff2Y[idx] *
+                (this->grid->Bz(i, j + 1, k) - this->grid->Bz(i, j, k));
+            this->splitGrid->ezy[idx] = eCoeff1Y[idx] * this->splitGrid->ezy[idx] + eCoeff2Y[idx] *
+                (this->grid->Bx(i, j + 1, k) - this->grid->Bx(i, j, k));
 
-            exz[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].z * exz[idx];
-            eyz[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].z * eyz[idx];
+            this->splitGrid->exz[idx] = eCoeff1Z[idx] * this->splitGrid->exz[idx];
+            this->splitGrid->eyz[idx] = eCoeff1Z[idx] * this->splitGrid->eyz[idx];
 
-            grid->Ex(i, j, k) = exy[idx] + exz[idx];
-            grid->Ey(i, j, k) = eyx[idx] + eyz[idx];
-            grid->Ez(i, j, k) = ezx[idx] + ezy[idx];
+            this->grid->Ex(i, j, k) = this->splitGrid->exy[idx] + this->splitGrid->exz[idx];
+            this->grid->Ey(i, j, k) = this->splitGrid->eyx[idx] + this->splitGrid->eyz[idx];
+            this->grid->Ez(i, j, k) = this->splitGrid->ezx[idx] + this->splitGrid->ezy[idx];
         }
     }
 
-
     inline void PmlFdtd::updateE1D()
     {
-        YeeGrid * grid = fieldSolver->grid;
-        Int3 edgeIdx = grid->numCells - Int3(1, 1, 1);
+        const int size = this->splitGrid->getNumPmlNodes();
+        const FP cdt = constants::c * this->dt;
+        const FP dx = this->grid->steps.x, dy = this->grid->steps.y, dz = this->grid->steps.z;
+
         OMP_FOR()
-        for (int idx = 0; idx < numNodes; ++idx)
+        for (int idx = 0; idx < size; ++idx)
         {
-            int i = nodeIndex[idx].x;
-            int j = nodeIndex[idx].y;
-            int k = nodeIndex[idx].z;
+            Int3 index3d = this->splitGrid->getIndex3d(idx);
+            int i = index3d.x, j = index3d.y, k = index3d.z;
 
-            if (i != edgeIdx.x)
-            {
-                eyx[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].x * eyx[idx] +
-                    coeffEb[idx].x * (grid->Bz(i + 1, j, k) - grid->Bz(i, j, k));
-                ezx[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].x * ezx[idx] -
-                    coeffEb[idx].x * (grid->By(i + 1, j, k) - grid->By(i, j, k));
-            }
+            this->splitGrid->eyx[idx] = eCoeff1X[idx] * this->splitGrid->eyx[idx] + eCoeff2X[idx] *
+                (this->grid->Bz(i + 1, j, k) - this->grid->Bz(i, j, k));
+            this->splitGrid->ezx[idx] = eCoeff1X[idx] * this->splitGrid->ezx[idx] - eCoeff2X[idx] *
+                (this->grid->By(i + 1, j, k) - this->grid->By(i, j, k));
 
-            exy[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].y * exy[idx];
-            ezy[idx] = coeffJ[idx] * grid->Jz(i, j, k) + coeffEa[idx].y * ezy[idx];
+            this->splitGrid->exy[idx] = eCoeff1Y[idx] * this->splitGrid->exy[idx];
+            this->splitGrid->ezy[idx] = eCoeff1Y[idx] * this->splitGrid->ezy[idx];
 
-            exz[idx] = coeffJ[idx] * grid->Jx(i, j, k) + coeffEa[idx].z * exz[idx];
-            eyz[idx] = coeffJ[idx] * grid->Jy(i, j, k) + coeffEa[idx].z * eyz[idx];
+            this->splitGrid->exz[idx] = eCoeff1Z[idx] * this->splitGrid->exz[idx];
+            this->splitGrid->eyz[idx] = eCoeff1Z[idx] * this->splitGrid->eyz[idx];
 
-            grid->Ex(i, j, k) = exy[idx] + exz[idx];
-            grid->Ey(i, j, k) = eyx[idx] + eyz[idx];
-            grid->Ez(i, j, k) = ezx[idx] + ezy[idx];
+            this->grid->Ex(i, j, k) = this->splitGrid->exy[idx] + this->splitGrid->exz[idx];
+            this->grid->Ey(i, j, k) = this->splitGrid->eyx[idx] + this->splitGrid->eyz[idx];
+            this->grid->Ez(i, j, k) = this->splitGrid->ezx[idx] + this->splitGrid->ezy[idx];
         }
+    }
+
+    inline void PmlFdtd::save(std::ostream& ostr)
+    {
+        PmlReal<YeeGrid>::save(ostr);
+
+        const int size = this->splitGrid->getNumPmlNodes();
+        ostr.write((char*)&size, sizeof(size));
+
+        ostr.write((char*)bCoeff1X.data(), sizeof(FP) * size);
+        ostr.write((char*)bCoeff1Y.data(), sizeof(FP) * size);
+        ostr.write((char*)bCoeff1Z.data(), sizeof(FP) * size);
+        ostr.write((char*)bCoeff2X.data(), sizeof(FP) * size);
+        ostr.write((char*)bCoeff2Y.data(), sizeof(FP) * size);
+        ostr.write((char*)bCoeff2Z.data(), sizeof(FP) * size);
+
+        ostr.write((char*)eCoeff1X.data(), sizeof(FP) * size);
+        ostr.write((char*)eCoeff1Y.data(), sizeof(FP) * size);
+        ostr.write((char*)eCoeff1Z.data(), sizeof(FP) * size);
+        ostr.write((char*)eCoeff2X.data(), sizeof(FP) * size);
+        ostr.write((char*)eCoeff2Y.data(), sizeof(FP) * size);
+        ostr.write((char*)eCoeff2Z.data(), sizeof(FP) * size);
+    }
+
+    inline void PmlFdtd::load(std::istream& istr)
+    {
+        PmlReal<YeeGrid>::load(istr);
+
+        int size = 0;
+        istr.read((char*)&size, sizeof(size));
+
+        bCoeff1X.resize(size); bCoeff1Y.resize(size); bCoeff1Z.resize(size);
+        bCoeff2X.resize(size); bCoeff2Y.resize(size); bCoeff2Z.resize(size);
+
+        eCoeff1X.resize(size); eCoeff1Y.resize(size); eCoeff1Z.resize(size);
+        eCoeff2X.resize(size); eCoeff2Y.resize(size); eCoeff2Z.resize(size);
+
+        istr.read((char*)bCoeff1X.data(), sizeof(FP) * size);
+        istr.read((char*)bCoeff1Y.data(), sizeof(FP) * size);
+        istr.read((char*)bCoeff1Z.data(), sizeof(FP) * size);
+        istr.read((char*)bCoeff2X.data(), sizeof(FP) * size);
+        istr.read((char*)bCoeff2Y.data(), sizeof(FP) * size);
+        istr.read((char*)bCoeff2Z.data(), sizeof(FP) * size);
+
+        istr.read((char*)eCoeff1X.data(), sizeof(FP) * size);
+        istr.read((char*)eCoeff1Y.data(), sizeof(FP) * size);
+        istr.read((char*)eCoeff1Z.data(), sizeof(FP) * size);
+        istr.read((char*)eCoeff2X.data(), sizeof(FP) * size);
+        istr.read((char*)eCoeff2Y.data(), sizeof(FP) * size);
+        istr.read((char*)eCoeff2Z.data(), sizeof(FP) * size);
     }
 }

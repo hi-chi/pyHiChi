@@ -1,84 +1,143 @@
 #pragma once
 #include "Vectors.h"
 
+#include <functional>
+
 
 namespace pfc {
 
-    class AnalyticalField {
+    namespace analytical_field {
+        FP defaultFieldFunction(FP x, FP y, FP z, FP t) {
+            return (FP)0.0;
+        }
+    };
 
+    // Implements general grid methods for analytical field
+    class AnalyticalField
+    {
     public:
 
-        typedef FP(*TFunc)(FP, FP, FP, FP);
+        using FunctionType = std::function<FP(FP, FP, FP, FP)>;
 
-        AnalyticalField(FP dt) : dt(dt), globalTime(0.0) {}
+        AnalyticalField()
+        {
+            FunctionType dfunc = analytical_field::defaultFieldFunction;
+            setE(dfunc, dfunc, dfunc);
+            setB(dfunc, dfunc, dfunc);
+            setJ(dfunc, dfunc, dfunc);
+        }
 
-        void setTimeStep(FP dt) { this->dt = dt; }
-        void updateFields() { this->globalTime += dt; }
+        AnalyticalField(FunctionType funcEx, FunctionType funcEy, FunctionType funcEz,
+            FunctionType funcBx, FunctionType funcBy, FunctionType funcBz,
+            FunctionType funcJx, FunctionType funcJy, FunctionType funcJz)
+        {
+            setE(funcEx, funcEy, funcEz);
+            setB(funcBx, funcBy, funcBz);
+            setJ(funcJx, funcJy, funcJz);
+        }
 
-        void setTime(FP t) { this->globalTime = t; }
-        FP getTime() { return this->globalTime; }
+        AnalyticalField(FunctionType funcEx, FunctionType funcEy, FunctionType funcEz,
+            FunctionType funcBx, FunctionType funcBy, FunctionType funcBz)
+        {
+            setE(funcEx, funcEy, funcEz);
+            setB(funcBx, funcBy, funcBz);
+            FunctionType dfunc = analytical_field::defaultFieldFunction;
+            setJ(dfunc, dfunc, dfunc);
+        }
 
-        void setE(TFunc funcEx, TFunc funcEy, TFunc funcEz) { 
+        void setE(FunctionType funcEx, FunctionType funcEy, FunctionType funcEz) { 
             this->funcEx = funcEx;
             this->funcEy = funcEy;
             this->funcEz = funcEz;
         }      
-        void setB(TFunc funcBx, TFunc funcBy, TFunc funcBz) {
+        void setB(FunctionType funcBx, FunctionType funcBy, FunctionType funcBz) {
             this->funcBx = funcBx;
             this->funcBy = funcBy;
             this->funcBz = funcBz;
         }
-        void setJ(TFunc funcJx, TFunc funcJy, TFunc funcJz) {
+        void setJ(FunctionType funcJx, FunctionType funcJy, FunctionType funcJz) {
             this->funcJx = funcJx;
             this->funcJy = funcJy;
             this->funcJz = funcJz;
         }
 
         FP3 getE(FP x, FP y, FP z, FP t) const {
-            return FP3(this->funcEx(x, y, z, t),
+            return FP3(
+                this->funcEx(x, y, z, t),
                 this->funcEy(x, y, z, t),
                 this->funcEz(x, y, z, t));
         }
         FP3 getB(FP x, FP y, FP z, FP t) const {
-            return FP3(this->funcBx(x, y, z, t),
+            return FP3(
+                this->funcBx(x, y, z, t),
                 this->funcBy(x, y, z, t),
                 this->funcBz(x, y, z, t));
         }
         FP3 getJ(FP x, FP y, FP z, FP t) const {
-            return FP3(this->funcJx(x, y, z, t),
+            return FP3(
+                this->funcJx(x, y, z, t),
                 this->funcJy(x, y, z, t),
                 this->funcJz(x, y, z, t));
         }
 
-        FP3 getE(const FP3& coord) const {
-            return this->getE(coord.x, coord.y, coord.z, this->globalTime);
+        FP getEx(FP x, FP y, FP z, FP t) const { return this->funcEx(x, y, z, t); }
+        FP getEy(FP x, FP y, FP z, FP t) const { return this->funcEy(x, y, z, t); }
+        FP getEz(FP x, FP y, FP z, FP t) const { return this->funcEz(x, y, z, t); }        
+        FP getBx(FP x, FP y, FP z, FP t) const { return this->funcBx(x, y, z, t); }
+        FP getBy(FP x, FP y, FP z, FP t) const { return this->funcBy(x, y, z, t); }
+        FP getBz(FP x, FP y, FP z, FP t) const { return this->funcBz(x, y, z, t); }        
+        FP getJx(FP x, FP y, FP z, FP t) const { return this->funcJx(x, y, z, t); }
+        FP getJy(FP x, FP y, FP z, FP t) const { return this->funcJy(x, y, z, t); }
+        FP getJz(FP x, FP y, FP z, FP t) const { return this->funcJz(x, y, z, t); }
+
+        FP3 getE(const FP3& coords) const {
+            return FP3(
+                this->funcEx(coords.x, coords.y, coords.z, this->globalTime),
+                this->funcEy(coords.x, coords.y, coords.z, this->globalTime),
+                this->funcEz(coords.x, coords.y, coords.z, this->globalTime));
         }
-        FP3 getB(const FP3& coord) const {
-            return this->getB(coord.x, coord.y, coord.z, this->globalTime);
+        FP3 getB(const FP3& coords) const {
+            return FP3(
+                this->funcBx(coords.x, coords.y, coords.z, this->globalTime),
+                this->funcBy(coords.x, coords.y, coords.z, this->globalTime),
+                this->funcBz(coords.x, coords.y, coords.z, this->globalTime));
         }
-        FP3 getJ(const FP3& coord) const {
-            return this->getJ(coord.x, coord.y, coord.z, this->globalTime);
+        FP3 getJ(const FP3& coords) const {
+            return FP3(
+                this->funcJx(coords.x, coords.y, coords.z, this->globalTime),
+                this->funcJy(coords.x, coords.y, coords.z, this->globalTime),
+                this->funcJz(coords.x, coords.y, coords.z, this->globalTime));
         }
 
-        FP getEx(const FP3& coord) const { return this->funcEx(coord.x, coord.y, coord.z, this->globalTime); }
-        FP getEy(const FP3& coord) const { return this->funcEy(coord.x, coord.y, coord.z, this->globalTime); }
-        FP getEz(const FP3& coord) const { return this->funcEz(coord.x, coord.y, coord.z, this->globalTime); }
+        FP getEx(const FP3& coords) const { return this->funcEx(coords.x, coords.y, coords.z, this->globalTime); }
+        FP getEy(const FP3& coords) const { return this->funcEy(coords.x, coords.y, coords.z, this->globalTime); }
+        FP getEz(const FP3& coords) const { return this->funcEz(coords.x, coords.y, coords.z, this->globalTime); }
+        FP getBx(const FP3& coords) const { return this->funcBx(coords.x, coords.y, coords.z, this->globalTime); }
+        FP getBy(const FP3& coords) const { return this->funcBy(coords.x, coords.y, coords.z, this->globalTime); }
+        FP getBz(const FP3& coords) const { return this->funcBz(coords.x, coords.y, coords.z, this->globalTime); }
+        FP getJx(const FP3& coords) const { return this->funcJx(coords.x, coords.y, coords.z, this->globalTime); }
+        FP getJy(const FP3& coords) const { return this->funcJy(coords.x, coords.y, coords.z, this->globalTime); }
+        FP getJz(const FP3& coords) const { return this->funcJz(coords.x, coords.y, coords.z, this->globalTime); }
 
-        FP getBx(const FP3& coord) const { return this->funcBx(coord.x, coord.y, coord.z, this->globalTime); }
-        FP getBy(const FP3& coord) const { return this->funcBy(coord.x, coord.y, coord.z, this->globalTime); }
-        FP getBz(const FP3& coord) const { return this->funcBz(coord.x, coord.y, coord.z, this->globalTime); }
+        void save(std::ostream& ostr) {
+            ostr.write((char*)&globalTime, sizeof(globalTime));
+            // TODO: save functions
+        }
+        void load(std::istream& istr) {
+            istr.read((char*)&globalTime, sizeof(globalTime));
+            // TODO: load functions
+            // temporary implementation
+            FunctionType dfunc = analytical_field::defaultFieldFunction;
+            setE(dfunc, dfunc, dfunc);
+            setB(dfunc, dfunc, dfunc);
+            setJ(dfunc, dfunc, dfunc);
+        }
 
-        FP getJx(const FP3& coord) const { return this->funcJx(coord.x, coord.y, coord.z, this->globalTime); }
-        FP getJy(const FP3& coord) const { return this->funcJy(coord.x, coord.y, coord.z, this->globalTime); }
-        FP getJz(const FP3& coord) const { return this->funcJz(coord.x, coord.y, coord.z, this->globalTime); }
-
-        FP globalTime;
-        FP dt;
-        FP timeShiftE = 0.0, timeShiftB = 0.0, timeShiftJ = 0.0;
+        FP globalTime = 0.0;
 
     private:
 
-        TFunc funcEx, funcEy, funcEz, funcBx, funcBy, funcBz, funcJx, funcJy, funcJz;
+        FunctionType funcEx, funcEy, funcEz, funcBx, funcBy, funcBz, funcJx, funcJy, funcJz;
 
     };
 
