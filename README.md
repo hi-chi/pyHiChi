@@ -73,6 +73,7 @@ Authors
 - Dr. Arkady Gonoskov
 - [Dr. Iosif Meyerov](https://sites.google.com/site/iosifmeyeroveng/)
 - [Valentin Volokitin](https://github.com/ValentinV95)
+- [Elena Panova](https://github.com/PanovaElena)
 
 ### Contributions and Thanks
 
