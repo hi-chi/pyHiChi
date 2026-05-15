@@ -86,14 +86,14 @@ namespace pfc {
     inline void PSTD::setPeriodicalBoundaryConditions()
     {
         for (int d = 0; d < this->grid->dimensionality; d++)
-            this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+            this->boundaryConditions[d].first.reset(new PeriodicalBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
     }
 
     inline void PSTD::setPeriodicalBoundaryConditions(CoordinateEnum axis)
     {
         if ((int)axis < this->grid->dimensionality)
-            this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
+            this->boundaryConditions[(int)axis].first.reset(new PeriodicalBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
     }
 
@@ -199,14 +199,24 @@ namespace pfc {
         this->loadBoundaryConditions(istr);
     }
 
+    // TO DO: Adjust boundary condition saving logic
+
     inline void PSTD::saveBoundaryConditions(std::ostream& ostr)
     {
         for (int d = 0; d < 3; d++) {
-            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].first.get()) ? 1 : 0;
             ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
 
-            if (this->boundaryConditions[d])
-                this->boundaryConditions[d]->save(ostr);
+            if (this->boundaryConditions[d].first)
+                this->boundaryConditions[d].first->save(ostr);
+        }
+
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].second.get()) ? 1 : 0;
+            ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (this->boundaryConditions[d].second)
+                this->boundaryConditions[d].second->save(ostr);
         }
     }
 
@@ -217,9 +227,20 @@ namespace pfc {
             istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
 
             if (isPeriodicalBC) {
-                this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                this->boundaryConditions[d].first.reset(new PeriodicalBoundaryConditionType(
                     this->grid, this->domainIndexBegin, this->domainIndexEnd));
-                this->boundaryConditions[d]->load(istr);
+                this->boundaryConditions[d].first->load(istr);
+            }
+        }
+
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = 0;
+            istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (isPeriodicalBC) {
+                this->boundaryConditions[d].second.reset(new PeriodicalBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d].second->load(istr);
             }
         }
     }

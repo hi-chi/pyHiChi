@@ -119,4 +119,57 @@ namespace pfc
                 this->grid->Ez(indexR) = (FP)0.0;
             }
     }
+
+    class ReflectBoundaryConditionMonoDirectionFdtd : public FieldBoundaryCondition<YeeGrid>
+    {
+    protected:
+        SideEnum direction_;
+
+    public:
+
+        ReflectBoundaryConditionMonoDirectionFdtd(YeeGrid* grid,
+            Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis, SideEnum direction) :
+            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex, axis), direction_(direction)
+        {}
+
+        // constructor for loading
+        explicit ReflectBoundaryConditionMonoDirectionFdtd(YeeGrid* grid,
+            Int3 leftBorderIndex, Int3 rightBorderIndex) :
+            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex)
+        {}
+
+        void generateB(FP time) override {}
+        void generateE(FP time) override;
+
+        FieldBoundaryCondition<YeeGrid>* createInstance(
+            YeeGrid* grid, Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) override {
+            return new ReflectBoundaryConditionMonoDirectionFdtd(grid, leftBorderIndex, rightBorderIndex, axis, direction_);
+        }
+    };
+
+    inline void ReflectBoundaryConditionMonoDirectionFdtd::generateE(FP time)
+    {
+        int dim0 = (int)axis;
+        int dim1 = (dim0 + 1) % 3;
+        int dim2 = (dim0 + 2) % 3;
+        int begin1 = 0;
+        int begin2 = 0;
+        int end1 = this->grid->numCells[dim1];
+        int end2 = this->grid->numCells[dim2];
+
+        OMP_FOR_COLLAPSE()
+        for (int j = begin1; j < end1; j++)
+            for (int k = begin2; k < end2; k++)
+            {
+                Int3 index;
+                index[dim1] = j;
+                index[dim2] = k;
+
+                index[dim0] = (direction_ == SideEnum::RIGHT) ? (this->rightBorderIndex[dim0] - 1) : (this->leftBorderIndex[dim0] - 1);
+
+                this->grid->Ex(index) = (FP)0.0;
+                this->grid->Ey(index) = (FP)0.0;
+                this->grid->Ez(index) = (FP)0.0;
+            }
+    }
 }

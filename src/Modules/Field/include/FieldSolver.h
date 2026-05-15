@@ -96,7 +96,10 @@ namespace pfc {
         typename SchemeParams::GridType* grid = nullptr;
 
         std::unique_ptr<typename SchemeParams::PmlType> pml;
-        std::array<std::unique_ptr<FieldBoundaryCondition<typename SchemeParams::GridType>>, 3> boundaryConditions;
+        std::array<std::pair<   
+                             std::unique_ptr<FieldBoundaryCondition<typename SchemeParams::GridType>>, // +Axis
+                             std::unique_ptr<FieldBoundaryCondition<typename SchemeParams::GridType>> // -Axis
+                            >, 3> boundaryConditions;
         std::unique_ptr<typename SchemeParams::FieldGeneratorType> generator;
 
         // Index space being updated in non-pml area
@@ -157,16 +160,26 @@ namespace pfc {
     inline void FieldSolver<SchemeParams>::applyBoundaryConditionsB(FP time)
     {
         for (int d = 0; d < grid->dimensionality; d++)
-            if (boundaryConditions[d])
-                boundaryConditions[d]->generateB(time);
+        {
+            if (boundaryConditions[d].first)
+                boundaryConditions[d].first->generateB(time);
+
+            if (boundaryConditions[d].second)
+                boundaryConditions[d].second->generateB(time);
+        }
     }
 
     template<class SchemeParams>
     inline void FieldSolver<SchemeParams>::applyBoundaryConditionsE(FP time)
     {
         for (int d = 0; d < grid->dimensionality; d++)
-            if (boundaryConditions[d])
-                boundaryConditions[d]->generateE(time);
+        {
+            if (boundaryConditions[d].first)
+                boundaryConditions[d].first->generateE(time);
+
+            if (boundaryConditions[d].second)
+                boundaryConditions[d].second->generateE(time);
+        }
     }
 
     template<class SchemeParams>
@@ -245,9 +258,15 @@ namespace pfc {
     inline void FieldSolver<SchemeParams>::resetBoundaryConditions()
     {
         for (int d = 0; d < 3; d++)
-            if (this->boundaryConditions[d])
-                this->boundaryConditions[d].reset(this->boundaryConditions[d]->createInstance(this->grid,
-                    this->domainIndexBegin, this->domainIndexEnd, this->boundaryConditions[d]->axis));
+        {
+            if (this->boundaryConditions[d].first)
+                this->boundaryConditions[d].first.reset(this->boundaryConditions[d].first->createInstance(this->grid,
+                    this->domainIndexBegin, this->domainIndexEnd, this->boundaryConditions[d].first->axis));
+
+            if (this->boundaryConditions[d].second)
+                this->boundaryConditions[d].second.reset(this->boundaryConditions[d].second->createInstance(this->grid,
+                    this->domainIndexBegin, this->domainIndexEnd, this->boundaryConditions[d].second->axis));
+        }
     }
 
 
