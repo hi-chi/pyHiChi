@@ -141,6 +141,9 @@ namespace pfc
         void generateB(FP time) override {}
         void generateE(FP time) override;
 
+        virtual void save(std::ostream& ostr);
+        virtual void load(std::istream& istr);
+
         FieldBoundaryCondition<YeeGrid>* createInstance(
             YeeGrid* grid, Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) override {
             return new ReflectBoundaryConditionMonoDirectionFdtd(grid, leftBorderIndex, rightBorderIndex, axis, direction_);
@@ -171,5 +174,19 @@ namespace pfc
                 this->grid->Ey(index) = (FP)0.0;
                 this->grid->Ez(index) = (FP)0.0;
             }
+    }
+
+    inline void ReflectBoundaryConditionMonoDirectionFdtd::save(std::ostream& ostr)
+    {
+        FieldBoundaryCondition<YeeGrid>::save(ostr);
+
+        ostr.write((char*)&direction_, sizeof(direction_));
+    }
+
+    inline void ReflectBoundaryConditionMonoDirectionFdtd::load(std::istream& istr)
+    {
+        FieldBoundaryCondition<YeeGrid>::load(istr);
+
+        istr.read((char*)&direction_, sizeof(direction_));
     }
 }

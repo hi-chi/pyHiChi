@@ -417,6 +417,9 @@ namespace pfc {
             int isReflectBC = dynamic_cast<ReflectBoundaryConditionType*>(this->boundaryConditions[d].first.get()) ? 1 : 0;
             ostr.write((char*)&isReflectBC, sizeof(isReflectBC));
 
+            int isMonoDirectionReflectBC = dynamic_cast<ReflectBoundaryConditionMonoDirectionType*>(this->boundaryConditions[d].first.get()) ? 1 : 0;
+            ostr.write((char*)&isMonoDirectionReflectBC, sizeof(isMonoDirectionReflectBC));
+
             if (this->boundaryConditions[d].first)
                 this->boundaryConditions[d].first->save(ostr);
         }
@@ -427,6 +430,9 @@ namespace pfc {
 
             int isReflectBC = dynamic_cast<ReflectBoundaryConditionType*>(this->boundaryConditions[d].second.get()) ? 1 : 0;
             ostr.write((char*)&isReflectBC, sizeof(isReflectBC));
+
+            int isMonoDirectionReflectBC = dynamic_cast<ReflectBoundaryConditionMonoDirectionType*>(this->boundaryConditions[d].second.get()) ? 1 : 0;
+            ostr.write((char*)&isMonoDirectionReflectBC, sizeof(isMonoDirectionReflectBC));
 
             if (this->boundaryConditions[d].second)
                 this->boundaryConditions[d].second->save(ostr);
@@ -442,6 +448,9 @@ namespace pfc {
             int isReflectBC = 0;
             istr.read((char*)&isReflectBC, sizeof(isReflectBC));
 
+            int isMonoDirectionReflectBC = 0;
+            istr.read((char*)&isMonoDirectionReflectBC, sizeof(isMonoDirectionReflectBC));
+
             if (isPeriodicalBC) {
                 this->boundaryConditions[d].first.reset(new PeriodicalBoundaryConditionType(
                     this->grid, this->domainIndexBegin, this->domainIndexEnd));
@@ -449,6 +458,11 @@ namespace pfc {
             }
             else if (isReflectBC) {
                 this->boundaryConditions[d].first.reset(new ReflectBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d].first->load(istr);
+            }
+            else if (isMonoDirectionReflectBC) {
+                this->boundaryConditions[d].first.reset(new ReflectBoundaryConditionMonoDirectionType(
                     this->grid, this->domainIndexBegin, this->domainIndexEnd));
                 this->boundaryConditions[d].first->load(istr);
             }
@@ -461,6 +475,9 @@ namespace pfc {
             int isReflectBC = 0;
             istr.read((char*)&isReflectBC, sizeof(isReflectBC));
 
+            int isMonoDirectionReflectBC = 0;
+            istr.read((char*)&isMonoDirectionReflectBC, sizeof(isMonoDirectionReflectBC));
+
             if (isPeriodicalBC) {
                 this->boundaryConditions[d].second.reset(new PeriodicalBoundaryConditionType(
                     this->grid, this->domainIndexBegin, this->domainIndexEnd));
@@ -468,6 +485,11 @@ namespace pfc {
             }
             else if (isReflectBC) {
                 this->boundaryConditions[d].second.reset(new ReflectBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d].second->load(istr);
+            }
+            else if (isMonoDirectionReflectBC) {
+                this->boundaryConditions[d].second.reset(new ReflectBoundaryConditionMonoDirectionType(
                     this->grid, this->domainIndexBegin, this->domainIndexEnd));
                 this->boundaryConditions[d].second->load(istr);
             }
