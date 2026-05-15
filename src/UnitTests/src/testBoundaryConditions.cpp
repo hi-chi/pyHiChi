@@ -281,3 +281,81 @@ TYPED_TEST(ReflectBoundaryConditionTest, MixedPeriodicAndReflectBoundaryConditio
                 ASSERT_NEAR((expectedB - actualB).norm(), 0.0, this->maxError);
             }
 }
+
+
+template <class TTypeDefinitionsFieldTest>
+class ReflectBoundaryConditionMonoDirectionTest : public BoundaryConditionTest<TTypeDefinitionsFieldTest> {
+public:
+
+    ReflectBoundaryConditionMonoDirectionTest() {
+        this->fieldSolver->setReflectBoundaryConditions(this->axis, SideEnum::LEFT);
+        this->fieldSolver->setReflectBoundaryConditions(this->axis, SideEnum::RIGHT);
+
+        for (int d = 1; d < 3; d++) {
+            int dim = ((int)this->axis + d) % 3;
+            if (dim < this->grid->dimensionality)
+                this->fieldSolver->setPeriodicalBoundaryConditions((CoordinateEnum)dim);
+        }
+    }
+
+};
+
+typedef ::testing::Types <
+    TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
+    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>
+> typesReflectMonoDirection;
+
+TYPED_TEST_CASE(ReflectBoundaryConditionMonoDirectionTest, typesReflectMonoDirection);
+
+TYPED_TEST(ReflectBoundaryConditionMonoDirectionTest, MixedPeriodicAndReflectBoundaryConditionTest)
+{
+    for (int step = 0; step < this->numSteps; ++step)
+    {
+        this->fieldSolver->updateFields();
+    }
+
+    // signal should be the same as at the beginning
+    // because signal is symmetric
+    FP startT = 0;
+
+    Int3 begin = this->fieldSolver->internalIndexBegin;
+    Int3 end = this->fieldSolver->internalIndexEnd;
+
+    for (int i = begin.x; i < end.x; ++i)
+        for (int j = begin.y; j < end.y; ++j)
+            for (int k = begin.z; k < end.z; ++k)
+            {
+                FP3 expectedE, actualE;
+                FP3 coords = this->grid->ExPosition(i, j, k);
+                expectedE.x = this->eTest(coords.x, coords.y, coords.z, startT).x;
+                coords = this->grid->EyPosition(i, j, k);
+                expectedE.y = this->eTest(coords.x, coords.y, coords.z, startT).y;
+                coords = this->grid->EzPosition(i, j, k);
+                expectedE.z = this->eTest(coords.x, coords.y, coords.z, startT).z;
+                actualE.x = this->grid->Ex(i, j, k);
+                actualE.y = this->grid->Ey(i, j, k);
+                actualE.z = this->grid->Ez(i, j, k);
+                ASSERT_NEAR((expectedE - actualE).norm(), 0.0, this->maxError);
+            }
+
+    for (int i = begin.x; i < end.x; ++i)
+        for (int j = begin.y; j < end.y; ++j)
+            for (int k = begin.z; k < end.z; ++k)
+            {
+                FP3 expectedB, actualB;
+                FP3 coords = this->grid->BxPosition(i, j, k);
+                expectedB.x = this->bTest(coords.x, coords.y, coords.z, startT).x;
+                coords = this->grid->ByPosition(i, j, k);
+                expectedB.y = this->bTest(coords.x, coords.y, coords.z, startT).y;
+                coords = this->grid->BzPosition(i, j, k);
+                expectedB.z = this->bTest(coords.x, coords.y, coords.z, startT).z;
+                actualB.x = this->grid->Bx(i, j, k);
+                actualB.y = this->grid->By(i, j, k);
+                actualB.z = this->grid->Bz(i, j, k);
+                ASSERT_NEAR((expectedB - actualB).norm(), 0.0, this->maxError);
+            }
+}
