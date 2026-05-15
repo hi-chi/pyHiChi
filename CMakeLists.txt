@@ -8,6 +8,8 @@ option(USE_OMP ON)
 
 project(hiChi)
 
+find_package(MPI REQUIRED)
+
 if (USE_OMP)
 	add_definitions(-D__USE_OMP__)
 
