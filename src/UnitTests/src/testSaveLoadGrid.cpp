@@ -1,7 +1,5 @@
 #include "TestingUtility.h"
 
-#include "gtest/gtest.h"
-
 #include <sstream>
 #include <memory>
 #include <type_traits>
