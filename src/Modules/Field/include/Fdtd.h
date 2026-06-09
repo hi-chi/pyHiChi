@@ -18,6 +18,7 @@ namespace pfc {
             using FieldGeneratorType = FieldGeneratorFdtd;
             using PeriodicalBoundaryConditionType = PeriodicalBoundaryConditionFdtd;
             using ReflectBoundaryConditionType = ReflectBoundaryConditionFdtd;
+            using ReflectBoundaryConditionMonoDirectionType = ReflectBoundaryConditionMonoDirectionFdtd;
         };
     }
     
@@ -31,6 +32,7 @@ namespace pfc {
         using FieldGeneratorType = fdtd::SchemeParams::FieldGeneratorType;
         using PeriodicalBoundaryConditionType = fdtd::SchemeParams::PeriodicalBoundaryConditionType;
         using ReflectBoundaryConditionType = fdtd::SchemeParams::ReflectBoundaryConditionType;
+        using ReflectBoundaryConditionMonoDirectionType = fdtd::SchemeParams::ReflectBoundaryConditionMonoDirectionType;
 
         FDTD(GridType* grid, FP dt);
 
@@ -47,6 +49,7 @@ namespace pfc {
 
         void setReflectBoundaryConditions();
         void setReflectBoundaryConditions(CoordinateEnum axis);
+        void setReflectBoundaryConditions(CoordinateEnum axis, SideEnum side);
 
         void setTimeStep(FP dt);
 
@@ -108,29 +111,40 @@ namespace pfc {
     inline void FDTD::setPeriodicalBoundaryConditions()
     {
         for (int d = 0; d < this->grid->dimensionality; d++)
-            this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+            this->boundaryConditions[d].first.reset(new PeriodicalBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd, (CoordinateEnum)d));
     }
 
     inline void FDTD::setPeriodicalBoundaryConditions(CoordinateEnum axis)
     {
         if ((int)axis < this->grid->dimensionality)
-            this->boundaryConditions[(int)axis].reset(new PeriodicalBoundaryConditionType(
+            this->boundaryConditions[(int)axis].first.reset(new PeriodicalBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
     }
 
     inline void FDTD::setReflectBoundaryConditions()
     {
         for (int d = 0; d < this->grid->dimensionality; d++)
-            this->boundaryConditions[d].reset(new ReflectBoundaryConditionType(
+            this->boundaryConditions[d].first.reset(new ReflectBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd));
     }
 
     inline void FDTD::setReflectBoundaryConditions(CoordinateEnum axis)
     {
         if ((int)axis < this->grid->dimensionality)
-            this->boundaryConditions[(int)axis].reset(new ReflectBoundaryConditionType(
+            this->boundaryConditions[(int)axis].first.reset(new ReflectBoundaryConditionType(
                 this->grid, this->domainIndexBegin, this->domainIndexEnd, axis));
+    }
+
+    inline void FDTD::setReflectBoundaryConditions(CoordinateEnum axis, SideEnum side)
+    {
+        if (!((int)axis < this->grid->dimensionality))
+            return;
+
+        auto& b_condition_p = (side == SideEnum::RIGHT) ? (this->boundaryConditions[(int)axis].first) : 
+                                                          (this->boundaryConditions[(int)axis].second);
+        b_condition_p.reset(new ReflectBoundaryConditionMonoDirectionType(
+            this->grid, this->domainIndexBegin, this->domainIndexEnd, axis, side));
     }
 
     inline void FDTD::setTimeStep(FP dt)
@@ -397,14 +411,31 @@ namespace pfc {
     inline void FDTD::saveBoundaryConditions(std::ostream& ostr)
     {
         for (int d = 0; d < 3; d++) {
-            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].first.get()) ? 1 : 0;
             ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
 
-            int isReflectBC = dynamic_cast<ReflectBoundaryConditionType*>(this->boundaryConditions[d].get()) ? 1 : 0;
+            int isReflectBC = dynamic_cast<ReflectBoundaryConditionType*>(this->boundaryConditions[d].first.get()) ? 1 : 0;
             ostr.write((char*)&isReflectBC, sizeof(isReflectBC));
 
-            if (this->boundaryConditions[d])
-                this->boundaryConditions[d]->save(ostr);
+            int isMonoDirectionReflectBC = dynamic_cast<ReflectBoundaryConditionMonoDirectionType*>(this->boundaryConditions[d].first.get()) ? 1 : 0;
+            ostr.write((char*)&isMonoDirectionReflectBC, sizeof(isMonoDirectionReflectBC));
+
+            if (this->boundaryConditions[d].first)
+                this->boundaryConditions[d].first->save(ostr);
+        }
+
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].second.get()) ? 1 : 0;
+            ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            int isReflectBC = dynamic_cast<ReflectBoundaryConditionType*>(this->boundaryConditions[d].second.get()) ? 1 : 0;
+            ostr.write((char*)&isReflectBC, sizeof(isReflectBC));
+
+            int isMonoDirectionReflectBC = dynamic_cast<ReflectBoundaryConditionMonoDirectionType*>(this->boundaryConditions[d].second.get()) ? 1 : 0;
+            ostr.write((char*)&isMonoDirectionReflectBC, sizeof(isMonoDirectionReflectBC));
+
+            if (this->boundaryConditions[d].second)
+                this->boundaryConditions[d].second->save(ostr);
         }
     }
 
@@ -417,15 +448,50 @@ namespace pfc {
             int isReflectBC = 0;
             istr.read((char*)&isReflectBC, sizeof(isReflectBC));
 
+            int isMonoDirectionReflectBC = 0;
+            istr.read((char*)&isMonoDirectionReflectBC, sizeof(isMonoDirectionReflectBC));
+
             if (isPeriodicalBC) {
-                this->boundaryConditions[d].reset(new PeriodicalBoundaryConditionType(
+                this->boundaryConditions[d].first.reset(new PeriodicalBoundaryConditionType(
                     this->grid, this->domainIndexBegin, this->domainIndexEnd));
-                this->boundaryConditions[d]->load(istr);
+                this->boundaryConditions[d].first->load(istr);
             }
             else if (isReflectBC) {
-                this->boundaryConditions[d].reset(new ReflectBoundaryConditionType(
+                this->boundaryConditions[d].first.reset(new ReflectBoundaryConditionType(
                     this->grid, this->domainIndexBegin, this->domainIndexEnd));
-                this->boundaryConditions[d]->load(istr);
+                this->boundaryConditions[d].first->load(istr);
+            }
+            else if (isMonoDirectionReflectBC) {
+                this->boundaryConditions[d].first.reset(new ReflectBoundaryConditionMonoDirectionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d].first->load(istr);
+            }
+        }
+
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = 0;
+            istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            int isReflectBC = 0;
+            istr.read((char*)&isReflectBC, sizeof(isReflectBC));
+
+            int isMonoDirectionReflectBC = 0;
+            istr.read((char*)&isMonoDirectionReflectBC, sizeof(isMonoDirectionReflectBC));
+
+            if (isPeriodicalBC) {
+                this->boundaryConditions[d].second.reset(new PeriodicalBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d].second->load(istr);
+            }
+            else if (isReflectBC) {
+                this->boundaryConditions[d].second.reset(new ReflectBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d].second->load(istr);
+            }
+            else if (isMonoDirectionReflectBC) {
+                this->boundaryConditions[d].second.reset(new ReflectBoundaryConditionMonoDirectionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d].second->load(istr);
             }
         }
     }

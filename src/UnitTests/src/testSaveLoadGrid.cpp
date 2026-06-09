@@ -401,26 +401,44 @@ public:
     }
 
     bool compareBC() {
-        PeriodicalBCType* bc1[3] = {
-            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[0].get()),
-            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[1].get()),
-            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[2].get())
+        std::pair<PeriodicalBCType*, PeriodicalBCType*> bc1[3] = {
+            {   dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[0].first.get()), 
+                dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[0].second.get())},
+            {   dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[1].first.get()), 
+                dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[1].second.get())},
+            {   dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[2].first.get()), 
+                dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[2].second.get())}
         };
 
-        PeriodicalBCType* bc2[3] = {
-            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[0].get()),
-            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[1].get()),
-            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[2].get())
+        std::pair<PeriodicalBCType*, PeriodicalBCType*> bc2[3] = {
+            {   dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[0].first.get()), 
+                dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[0].second.get())},
+            {   dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[1].first.get()), 
+                dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[1].second.get())},
+            {   dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[2].first.get()), 
+                dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[2].second.get())}
         };
 
-        if (!bc1[0] || !bc1[1] || !bc1[2]) return false;
-        if (!bc2[0] || !bc2[1] || !bc2[2]) return false;
+        if ((bc1[0].first != nullptr) != (bc2[0].first != nullptr) ) return false;
+        if ((bc1[1].first != nullptr) != (bc2[1].first != nullptr) ) return false;
+        if ((bc1[2].first != nullptr) != (bc2[2].first != nullptr) ) return false;
+
+        if ((bc1[0].second != nullptr) != (bc2[0].second != nullptr) ) return false;
+        if ((bc1[1].second != nullptr) != (bc2[1].second != nullptr) ) return false;
+        if ((bc1[2].second != nullptr) != (bc2[2].second != nullptr) ) return false;
 
         bool res = true;
         for (int d = 0; d < 3; d++) {
-            res = res && (bc1[d]->axis == bc2[d]->axis);
-            res = res && (bc1[d]->leftBorderIndex == bc2[d]->leftBorderIndex);
-            res = res && (bc1[d]->rightBorderIndex == bc2[d]->rightBorderIndex);
+            if (bc1[d].first) {
+                res = res && (bc1[d].first->axis == bc2[d].first->axis);
+                res = res && (bc1[d].first->leftBorderIndex == bc2[d].first->leftBorderIndex);
+                res = res && (bc1[d].first->rightBorderIndex == bc2[d].first->rightBorderIndex);
+            }
+            if (bc1[d].second) {
+                res = res && (bc1[d].second->axis == bc2[d].second->axis);
+                res = res && (bc1[d].second->leftBorderIndex == bc2[d].second->leftBorderIndex);
+                res = res && (bc1[d].second->rightBorderIndex == bc2[d].second->rightBorderIndex);
+            }
         }
 
         return res;
@@ -531,6 +549,48 @@ TYPED_TEST(SaveLoadSolverModulesTest, old_and_new_grid_solvers_and_modules_are_i
     ASSERT_TRUE(this->compareBC());
 }
 
+template <class TSolver>
+class SaveLoadSolverModulesMonoBCTest : public SaveLoadSolverModulesTest<TSolver> {
+public:
+    virtual void SetUp() override 
+    {
+        SaveLoadSolverModulesTest<TSolver>::SetUp();
+
+        this->solver->setReflectBoundaryConditions(CoordinateEnum::x, SideEnum::LEFT);
+        this->solver->setReflectBoundaryConditions(CoordinateEnum::x, SideEnum::RIGHT); 
+    }
+};
+
+typedef ::testing::Types<
+    FDTD
+> typesMonoDirectionBCSaveLoadSolverModulesTest;
+
+TYPED_TEST_CASE(SaveLoadSolverModulesMonoBCTest, typesMonoDirectionBCSaveLoadSolverModulesTest);
+
+TYPED_TEST(SaveLoadSolverModulesMonoBCTest, mono_direction_boundary_conditions)
+{
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver->updateFields();
+
+    std::stringstream sstr;
+    this->saveGridAndSolver(sstr);
+
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver->updateFields();
+
+    this->loadGridAndSolver(sstr);
+
+    ASSERT_FALSE(this->compareFields(this->maxAbsoluteError));
+
+    for (int step = 0; step < this->numSteps / 2; ++step)
+        this->solver2->updateFields();
+
+    ASSERT_TRUE(this->compareBC());
+    ASSERT_EQ(this->solver->dt, this->solver2->dt);
+    ASSERT_TRUE(this->comparePml(this->maxAbsoluteError));
+    ASSERT_TRUE(this->compareGenerator());
+    ASSERT_TRUE(this->compareFields(this->maxAbsoluteError));
+}
 
 class SaveLoadSolverAnalyticalFieldSolver : public BaseFixture {
 public:
