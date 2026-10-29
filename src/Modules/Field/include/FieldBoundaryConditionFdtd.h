@@ -36,33 +36,37 @@ namespace pfc
         int dim0 = (int)axis;
         int dim1 = (dim0 + 1) % 3;
         int dim2 = (dim0 + 2) % 3;
-        int begin1 = 0;
-        int begin2 = 0;
-        int end1 = this->grid->numCells[dim1];
-        int end2 = this->grid->numCells[dim2];
+        int nExternalCells = grid->getNumExternalLeftCells()[dim0];
 
-        OMP_FOR_COLLAPSE()
-        for (int j = begin1; j < end1; j++)
-            for (int k = begin2; k < end2; k++)
-            {
-                Int3 indexL, indexR;
-                indexL[dim1] = indexR[dim1] = j;
-                indexL[dim2] = indexR[dim2] = k;
+        for (int i = 0; i < nExternalCells; i++) {
+            int begin1 = 0;
+            int begin2 = 0;
+            int end1 = this->grid->numCells[dim1];
+            int end2 = this->grid->numCells[dim2];
 
-                indexL[dim0] = this->leftBorderIndex[dim0] - 1;
-                indexR[dim0] = this->rightBorderIndex[dim0] - 1;
+            OMP_FOR_COLLAPSE()
+            for (int j = begin1; j < end1; j++)
+                for (int k = begin2; k < end2; k++)
+                {
+                    Int3 indexL, indexR;
+                    indexL[dim1] = indexR[dim1] = j;
+                    indexL[dim2] = indexR[dim2] = k;
 
-                fx(indexL) = fx(indexR);
-                fy(indexL) = fy(indexR);
-                fz(indexL) = fz(indexR);
+                    indexL[dim0] = this->leftBorderIndex[dim0] - 1 - i;
+                    indexR[dim0] = this->rightBorderIndex[dim0] - 1 - i;
 
-                indexL[dim0]++;
-                indexR[dim0]++;
+                    fx(indexL) = fx(indexR);
+                    fy(indexL) = fy(indexR);
+                    fz(indexL) = fz(indexR);
 
-                fx(indexR) = fx(indexL);
-                fy(indexR) = fy(indexL);
-                fz(indexR) = fz(indexL);
-            }
+                    indexL[dim0] = this->leftBorderIndex[dim0] + i;
+                    indexR[dim0] = this->rightBorderIndex[dim0] + i;
+
+                    fx(indexR) = fx(indexL);
+                    fy(indexR) = fy(indexL);
+                    fz(indexR) = fz(indexL);
+                }
+        }
     }
 
 

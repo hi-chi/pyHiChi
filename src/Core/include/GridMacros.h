@@ -27,6 +27,24 @@ forceinline Int3 funcname(const FP3& coords) const {               \
     return idx;                                                    \
 }
 
+// method to return grid internal coords for given physical coords
+#define GRID_GET_INTERNAL_COORDS_IMPL(funcname, shift)             \
+forceinline FP3 funcname(const FP3& coords) const {                \
+    FP3 internalCoords;                                            \
+    Int3 idx;                                                      \
+    getGridCoords(coords, shift, idx, internalCoords);             \
+    return internalCoords;                                         \
+}
+
+// method to return closest (left or right) grid internal coords for given physical coords
+#define GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(funcname, shift)     \
+forceinline FP3 funcname(const FP3& coords) const {                \
+    FP3 internalCoords;                                            \
+    Int3 idx;                                                      \
+    getClosestGridCoords(coords, shift, idx, internalCoords);      \
+    return internalCoords;                                         \
+}
+
 // method to return true if coords is inside of the area that grid defines (without external cells)
 #define GRID_IS_INSIDE_IMPL(funcname, shift)                       \
 forceinline bool funcname(const FP3& coords) const {               \

@@ -20,6 +20,7 @@ add_executable(tests
     src/testParticle.cpp
     src/testParticleArray.cpp
     src/testParticleProxy.cpp
+    src/testParticleBoundaries.cpp
     src/testPML.cpp
     src/testPusherAndHandler.cpp
     src/testSaveLoadParticle.cpp
@@ -30,7 +31,9 @@ add_executable(tests
     src/testVectors.cpp
     src/testVectorsProxy.cpp
     src/TestingUtility.cpp
-    src/Main.cpp)
+    src/Main.cpp
+    src/testCurrentDeposition.cpp
+    src/testParticleGenerator.cpp)
 
 if (APPLE)
     target_link_libraries(tests

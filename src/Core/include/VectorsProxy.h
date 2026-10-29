@@ -64,7 +64,7 @@ namespace pfc {
             return *this;
         }
 
-        inline Vector1<T> toVector()
+        inline Vector1<T> toVector() const
         {
             return Vector1<T>(x.get());
         }
@@ -253,7 +253,7 @@ namespace pfc {
             return *this;
         }
 
-        inline Vector2<T> toVector()
+        inline Vector2<T> toVector() const
         {
             return Vector2<T>(x.get(), y.get());
         }
@@ -450,7 +450,7 @@ namespace pfc {
             return *this;
         }
 
-        inline Vector3<T> toVector()
+        inline Vector3<T> toVector() const
         {
             return Vector3<T>(x.get(), y.get(), z.get());
         }

@@ -66,6 +66,10 @@ namespace pfc {
             return raw[index.z + (index.y + index.x * sizeStorage.y) * sizeStorage.z];
         }
 
+        void zeroize() {
+            elements.assign(elements.size(), (FP)0.0);
+        }
+
         /* Interpolation: with given base index and coefficients */
         FP interpolateCIC(const Int3& baseIdx, const FP3& coeffs) const;
         FP interpolateTSC(const Int3& baseIdx, const FP3& coeffs) const;

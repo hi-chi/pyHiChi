@@ -9,6 +9,7 @@
 
 #include "pyField.h"
 #include "pyFieldMacroses.h"
+#include "pyModule.h"
 
 #include "Constants.h"
 #include "Dimension.h"
@@ -236,6 +237,50 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("__call__", (void (RadiationReaction::*)(ParticleProxy3d*, ValueField&, FP)) &RadiationReaction::operator())
         .def("__call__", (void (RadiationReaction::*)(Particle3d*, ValueField&, FP)) &RadiationReaction::operator())
         .def("__call__", (void (RadiationReaction::*)(ParticleArray3d*, std::vector<ValueField>&, FP)) &RadiationReaction::operator())
+        ;
+
+    // ------------------- current deposition ----------------------
+
+    py::class_<pyCurrentDepositionCIC<YeeGrid, FDTD>>(object, "DepositionCIC")
+        .def(py::init<pyYeeField*, double>())
+        .def("__call__", (void (pyCurrentDepositionCIC<YeeGrid, FDTD>::*)(ParticleArray3d*)) &pyCurrentDepositionCIC<YeeGrid, FDTD>::operator())
+        .def("getJ", &pyCurrentDepositionCIC<YeeGrid, FDTD>::getJ)
+        ;
+
+    // ------------------- periodical conditions for current --------
+
+    py::class_<pyPeriodicalCurrentBC<FDTD>>(object, "periodical_J_BC")
+        .def(py::init<pyYeeField*>())
+        .def("update", &pyPeriodicalCurrentBC<FDTD>::update)
+        ;
+
+    // ------------------ periodical conditions for particles --------
+
+    py::class_<pyPeriodicalParticleBoundaryConditions<FDTD>>(object, "periodical_particle_BC")
+        .def(py::init<pyYeeField*>())
+        .def("update", (void (pyPeriodicalParticleBoundaryConditions<FDTD>::*)(ParticleArray3d*)) &pyPeriodicalParticleBoundaryConditions<FDTD>::update)
+        ;
+
+    // ------------------particle generator ------------------------
+
+    py::class_<pyParticleGenerator<FDTD>>(object, "ParticleGenerator")
+        .def(py::init<pyYeeField*>())
+        .def("__call__", (void (pyParticleGenerator<FDTD>::*)(ParticleArray3d*, int64_t, int64_t, FP, ParticleTypes)) &pyParticleGenerator<FDTD>::operator())
+        ;
+
+    // -------------------interpolation-------------------------------
+
+    py::class_<pyInterpolation<FDTD>>(object, "InterpolationCIC")
+        .def(py::init<pyYeeField*>())
+        .def("getExCIC", &pyInterpolation<FDTD>::getExCIC)
+        .def("getEyCIC", &pyInterpolation<FDTD>::getEyCIC)
+        .def("getEzCIC", &pyInterpolation<FDTD>::getEzCIC)
+        .def("getBxCIC", &pyInterpolation<FDTD>::getBxCIC)
+        .def("getByCIC", &pyInterpolation<FDTD>::getByCIC)
+        .def("getBzCIC", &pyInterpolation<FDTD>::getBzCIC)
+        .def("getJxCIC", &pyInterpolation<FDTD>::getJxCIC)
+        .def("getJyCIC", &pyInterpolation<FDTD>::getJyCIC)
+        .def("getJzCIC", &pyInterpolation<FDTD>::getJzCIC)
         ;
 
     // -------------------------- QED ---------------------------

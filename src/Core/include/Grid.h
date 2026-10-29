@@ -72,20 +72,46 @@ namespace pfc {
         GRID_GET_INDEX_IMPL(getIndexEz, shiftEJz);
         GRID_GET_INDEX_IMPL(getIndexJx, shiftEJx);
         GRID_GET_INDEX_IMPL(getIndexJy, shiftEJy);
-        GRID_GET_INDEX_IMPL(getIndexJz, shiftEJz);     
+        GRID_GET_INDEX_IMPL(getIndexJz, shiftEJz);
 
         /* returns the closest (left or right) grid index for given coords, uses 'getClosestGridCoords' method */
         /* signature: 'forceinline Int3 funcname(const FP3& coords) const' */
-        GRID_GET_INDEX_IMPL(getClosestBaseIndex, ZERO_SHIFT);
-        GRID_GET_INDEX_IMPL(getClosestIndexBx, shiftBx);
-        GRID_GET_INDEX_IMPL(getClosestIndexBy, shiftBy);
-        GRID_GET_INDEX_IMPL(getClosestIndexBz, shiftBz);
-        GRID_GET_INDEX_IMPL(getClosestIndexEx, shiftEJx);
-        GRID_GET_INDEX_IMPL(getClosestIndexEy, shiftEJy);
-        GRID_GET_INDEX_IMPL(getClosestIndexEz, shiftEJz);
-        GRID_GET_INDEX_IMPL(getClosestIndexJx, shiftEJx);
-        GRID_GET_INDEX_IMPL(getClosestIndexJy, shiftEJy);
-        GRID_GET_INDEX_IMPL(getClosestIndexJz, shiftEJz);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestBaseIndex, ZERO_SHIFT);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexBx, shiftBx);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexBy, shiftBy);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexBz, shiftBz);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexEx, shiftEJx);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexEy, shiftEJy);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexEz, shiftEJz);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexJx, shiftEJx);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexJy, shiftEJy);
+        GRID_GET_CLOSEST_INDEX_IMPL(getClosestIndexJz, shiftEJz);
+
+        /* returns grid internal coords for given physical coords */
+        /* signature: 'forceinline FP3 funcname(const FP3& coords) const' */
+        GRID_GET_INTERNAL_COORDS_IMPL(getBaseInternalCoords, ZERO_SHIFT);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsBx, shiftBx);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsBy, shiftBy);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsBz, shiftBz);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsEx, shiftEJx);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsEy, shiftEJy);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsEz, shiftEJz);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsJx, shiftEJx);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsJy, shiftEJy);
+        GRID_GET_INTERNAL_COORDS_IMPL(getInternalCoordsJz, shiftEJz);
+
+        /* returns closest (left or right) grid internal coords for given physical coords */
+        /* signature: 'forceinline FP3 funcname(const FP3& coords) const' */
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestBaseInternalCoords, ZERO_SHIFT);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsBx, shiftBx);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsBy, shiftBy);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsBz, shiftBz);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsEx, shiftEJx);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsEy, shiftEJy);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsEz, shiftEJz);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsJx, shiftEJx);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsJy, shiftEJy);
+        GRID_GET_CLOSEST_INTERNAL_COORDS_IMPL(getClosestInternalCoordsJz, shiftEJz);
 
         /* returns interpolated field value in arbitrary coords, uses 'isInside' method */
         /* signature: 'forceinline bool funcname(const FP3& coords) const' */

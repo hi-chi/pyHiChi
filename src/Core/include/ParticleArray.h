@@ -21,7 +21,6 @@ namespace pfc {
         pArray_t* pPArray;
         size_t index;
     public:
-
         iteratorPArray(pArray_t* _pArray) : pPArray(_pArray), index(0) {};
         iteratorPArray(pArray_t* _pArray, size_t _index): pPArray(_pArray), index(_index) {};
         iteratorPArray(const iteratorPArray &it): pPArray(it.pPArray), index(it.index){};
@@ -29,6 +28,7 @@ namespace pfc {
         size_t getIdx() { return index; };
 
         ParticleType operator *() { return pPArray->operator[](index); }
+        ParticleType operator *() const { return pPArray->operator[](index); }
         const iteratorPArray &operator ++() { ++index; return *this; }
         const iteratorPArray &operator --() { --index; return *this; }
         iteratorPArray operator ++(int) 
@@ -43,12 +43,12 @@ namespace pfc {
             --index;
             return copy;
         }
-        iteratorPArray & operator =(const iteratorPArray & other) 
-        {
+        iteratorPArray & operator =(const iteratorPArray & other) = default;
+        /*{
             this->pParray = other.pPArray;
             this->index = other.index;
-            return *this; 
-        }
+            return *this;
+        }*/
 
         bool operator ==(const iteratorPArray &other) const
         { return index == other.index; }
@@ -63,7 +63,7 @@ namespace pfc {
         bool operator  >=(const iteratorPArray &other) const
         { return index >= other.index; }
 
-        iteratorPArray & operator +(const size_t &add) const {
+        iteratorPArray operator +(const size_t &add) const {
             iteratorPArray copy(*this);
             copy.index += add;
             return copy;
@@ -72,7 +72,7 @@ namespace pfc {
             index += add;
             return *this;
         }
-        iteratorPArray & operator -(const size_t &add) const {
+        iteratorPArray operator -(const size_t &add) const {
             iteratorPArray copy(*this);
             copy.index -= add;
             return copy;
@@ -84,8 +84,14 @@ namespace pfc {
 
         ParticleType operator [](const size_t &n) const
         { return *pPArray[index + n]; }
-    };
 
+        friend size_t operator -(const iteratorPArray& it1, const iteratorPArray& it2)
+        {
+            size_t n = it1.index - it2.index;
+            return n;
+        }
+
+    };
 
     enum ParticleRepresentation { ParticleRepresentation_AoS, ParticleRepresentation_SoA };
 
@@ -133,7 +139,11 @@ namespace pfc {
         inline ParticleProxyType operator[](int idx) 
         {
             return ParticleProxyType(particles[idx]);
-        } 
+        }
+
+        void changeParticle(const ParticleProxyType& particle, int idx) {
+            particles[idx] = ParticleType(particle);
+        }
 
         inline ParticleProxyType back()
         { return operator[](this->size() - 1); }
@@ -275,6 +285,22 @@ namespace pfc {
             }
             
         }
+
+        inline void changeParticle(ConstParticleRef particle, int idx)
+        {
+            if (particle.getType() == typeIndex)
+            {
+                const PositionType position = particle.getPosition();
+                for (int d = 0; d < positionDimension; d++)
+                    positions[d][idx] = position[d];
+                const MomentumType p = particle.getP();
+                for (int d = 0; d < momentumDimension; d++)
+                    ps[d][idx] = p[d];
+                weights[idx] = particle.getWeight();
+                gammas[idx] = particle.getGamma();
+            }
+        }
+
         inline void popBack()
         {
             for (int d = 0; d < positionDimension; d++)

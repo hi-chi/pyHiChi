@@ -619,5 +619,4 @@ namespace pfc
         FP factor = 1.0;
         std::shared_ptr<pyFieldBase> pyWrappedField;
     };
-
 }

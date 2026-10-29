@@ -297,7 +297,7 @@ TEST(VectorsProxyTest, Int3Greater)
     ASSERT_FALSE(v3P > v2P);
 }
 
-TEST(VectorsPoxyTest, Int3GreaterOrEqual)
+TEST(VectorsProxyTest, Int3GreaterOrEqual)
 {
     Int3 v1(13, 25, 21), v2(6, 8, 2), v3(14, 8, 1);
     Int3Proxy v1P(v1), v2P(v2), v3P(v3);
