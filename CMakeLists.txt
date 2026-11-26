@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 4.2)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 option(USE_MKL OFF)
 option(USE_FFTW OFF)
@@ -8,29 +8,37 @@ option(USE_OMP ON)
 
 project(hiChi)
 
+include(cmake/patch_libstdcxx_noexcept.cmake)
+
+add_compile_options(
+	"$<$<AND:$<COMPILE_LANG_AND_ID:C,IntelLLVM>,$<PLATFORM_ID:Windows>>:/fp:precise>"
+	"$<$<AND:$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>,$<PLATFORM_ID:Windows>>:/fp:precise>"
+	"$<$<AND:$<COMPILE_LANG_AND_ID:C,IntelLLVM>,$<NOT:$<PLATFORM_ID:Windows>>>:-fp-model=precise>"
+	"$<$<AND:$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>,$<NOT:$<PLATFORM_ID:Windows>>>:-fp-model=precise>"
+)
+
+if (USE_MPI)
+	add_definitions(-D__USE_MPI__)
+	find_package(MPI REQUIRED)
+endif()
+
 if (USE_OMP)
 	add_definitions(-D__USE_OMP__)
-
-	find_package(OpenMP)
-	if (OPENMP_FOUND)
-		set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-	endif()
+	find_package(OpenMP REQUIRED)
 endif()
 
 if (USE_MKL OR USE_FFTW)
 	add_definitions(-D__USE_FFT__)
-
-	include(cmake/functions.cmake)
+	include(cmake/find_fft.cmake)
 	if(USE_MKL)
-		link_mkl_fft()
+		find_mkl_fft()
 	else()
-		link_fftw()
+		find_fftw()
 	endif()
 endif()
 
 
+set(PYBIND11_FINDPYTHON NEW)
 add_subdirectory(3rdparty/pybind11)
 
 if (USE_TESTS)
