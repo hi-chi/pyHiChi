@@ -45,7 +45,7 @@ namespace pfc
                         FP3 cEx[chunkSize], cEy[chunkSize], cEz[chunkSize];
                         FP3 cBx[chunkSize], cBy[chunkSize], cBz[chunkSize];
                         int kLast = chunk == nChunks ? chunkRem : chunkSize;
-                        OMP_SIMD()
+
                         for (int k = 0; k < kLast; k++) {
                             cEx[k] = derived->convertCoords(grid->ExPosition(i, j, chunk * chunkSize),
                                 fieldSolver->timeShiftE);
@@ -61,7 +61,6 @@ namespace pfc
                             cBz[k] = derived->convertCoords(grid->BzPosition(i, j, chunk * chunkSize),
                                 fieldSolver->timeShiftB);
                         }
-                        OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
                             grid->Ex(i, j, k) = fieldConf->getE(cEx[k].x, cEx[k].y, cEx[k].z).x;
                             grid->Ey(i, j, k) = fieldConf->getE(cEy[k].x, cEy[k].y, cEy[k].z).y;
@@ -98,12 +97,11 @@ namespace pfc
                         FP3 coords[chunkSize];
                         int kLast = chunk == nChunks ? chunkRem : chunkSize;
                         FP3 startPosition = grid->ExPosition(i, j, chunk * chunkSize);
-                        OMP_SIMD()
+
                         for (int k = 0; k < kLast; k++) {
                             FP3 position(startPosition.x, startPosition.y, startPosition.z + k * grid->steps.z);
                             coords[k] = derived->convertCoords(position);
                         }
-                        OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
                             FP3 E, B;
                             fieldConf->getEB(coords[k].x, coords[k].y, coords[k].z, &E, &B);
@@ -159,13 +157,12 @@ namespace pfc
                         FP3 coords[chunkSize];
                         int kLast = chunk == nChunks ? chunkRem : chunkSize;
                         FP3 startPosition = grid->ExPosition(i, j, chunk * chunkSize);
-                        OMP_SIMD()
+
                         for (int k = 0; k < kLast; k++) {
                             FP3 position(startPosition.x, startPosition.y,
                                 startPosition.z + k * grid->steps.z);
                             coords[k] = derived->convertCoords(position);
                         }
-                        OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
                             ValueField field(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
                             fValueField(coords[k].x, coords[k].y, coords[k].z, &(field.E.x));
@@ -227,13 +224,12 @@ namespace pfc
                         FP3 coords[chunkSize];
                         int kLast = chunk == nChunks ? chunkRem : chunkSize;
                         FP3 startPosition = grid->ExPosition(i, j, chunk * chunkSize);
-                        OMP_SIMD()
+
                         for (int k = 0; k < kLast; k++) {
                             FP3 position(startPosition.x, startPosition.y,
                                 startPosition.z + k * grid->steps.z);
                             coords[k] = derived->convertCoords(position);
                         }
-                        OMP_SIMD()
                         for (int k = 0; k < kLast; k++) {
                             int zIndex = k + chunk * chunkSize;
                             ValueField field(grid->Ex(i, j, zIndex),
