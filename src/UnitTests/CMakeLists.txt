@@ -1,54 +1,31 @@
-include_directories(
-    include
-    ../../3rdparty/google/googletest/googletest/include
-    ../Core/include
-    ../Modules/Particle/include
-    ../Modules/Field/include
-    ${FFT_INCLUDES})
+cmake_minimum_required(VERSION 4.2)
 
-add_executable(tests
-    src/testConstants.cpp
-    src/testDimension.cpp
-    src/testEnsemble.cpp
-    src/testFDTD.cpp
-    src/testFourierTransform.cpp
-    src/testFP.cpp
-    src/testGrid.cpp
-    src/testMerging.cpp
-    src/testParticle.cpp
-    src/testParticleArray.cpp
-    src/testParticleProxy.cpp
-    src/testPML.cpp
-    src/testPSATD.cpp
-    src/testPSATDTimeStraggered.cpp
-    src/testPSTD.cpp
-    src/testPusherAndHandler.cpp
-    src/testSaveLoadParticle.cpp
-    src/testSaveLoadGrid.cpp
-    src/testScalarField.cpp
-    src/testSpecies.cpp
-    src/testThinning.cpp
-    src/testVectors.cpp
-    src/testVectorsProxy.cpp
-    src/TestingUtility.cpp
-    src/Main.cpp)
+project(tests)
 
-if (APPLE)
-    target_link_libraries(tests
-        -Wl,-all_load
-        gtest
-        ${FFT_LIBS}
-        -Wl,-noall_load)
-elseif (UNIX)
-    target_link_libraries(tests
-        -Wl,-whole-archive
-        gtest
-        -Wl,--start-group ${FFT_LIBS} -Wl,--end-group
-        -Wl,-no-whole-archive)
-else()
-    target_link_libraries(tests
-        gtest
-        ${FFT_LIBS})
+set(CMAKE_CXX_STANDARD 17)
+
+set(TESTS_INCLUDE_DIRS
+	include
+	../../3rdparty/google/googletest/googletest/include
+	../Core/include
+	../Modules/Particle/include
+	../Modules/Field/include
+)
+set(TESTS_HEADER_DIR include)
+set(TESTS_SOURCE_DIR src)
+
+file(GLOB_RECURSE tests_includes CONFIGURE_DEPENDS "${TESTS_HEADER_DIR}/*.h*")
+file(GLOB_RECURSE tests_sources CONFIGURE_DEPENDS "${TESTS_SOURCE_DIR}/*.c*")
+
+add_executable(tests ${tests_sources} ${tests_includes})
+
+target_include_directories(tests PUBLIC ${TESTS_INCLUDE_DIRS})
+target_link_libraries(tests PUBLIC gtest ${FFT_TARGET})
+if (USE_MPI)
+	target_link_libraries(tests PUBLIC MPI::MPI_CXX)
+endif()
+if (USE_OMP)
+    target_link_libraries(tests PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 set_target_properties(gtest PROPERTIES FOLDER UnitTests)

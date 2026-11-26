@@ -1,20 +1,18 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 4.2)
 
 project(particleModules)
 
-include_directories(include
-    ../../Core/include)
+set(PARTICLEMODULES_INCLUDE_DIRS include ../../Core/include)
+set(PARTICLEMODULES_HEADER_DIR include)
 
-add_library(particleModules_interface INTERFACE)
-set(PARTICLEMODULES_INCLUDE_DIR include)	
-set(PARTICLEMODULES_HEADER_DIR ${PARTICLEMODULES_INCLUDE_DIR})
-set(particleModules_headers
-    ${PARTICLEMODULES_HEADER_DIR}/Pusher.h
-    ${PARTICLEMODULES_HEADER_DIR}/QED_AEG.h
-    ${PARTICLEMODULES_HEADER_DIR}/Species.h
-    ${PARTICLEMODULES_HEADER_DIR}/synchrotron.h
+file(GLOB_RECURSE particleModules_headers CONFIGURE_DEPENDS "${PARTICLEMODULES_HEADER_DIR}/*.h*")
 
-    ${PARTICLEMODULES_HEADER_DIR}/Merging.h
-    ${PARTICLEMODULES_HEADER_DIR}/Thinning.h
-)
-add_custom_target(particleModules SOURCES ${particleModules_headers})
+add_library(particleModules INTERFACE ${particleModules_headers})
+
+target_include_directories(particleModules INTERFACE ${CORE_INCLUDE_DIRS})
+if (USE_MPI)
+	target_link_libraries(particleModules INTERFACE MPI::MPI_CXX)
+endif()
+if (USE_OMP)
+    target_link_libraries(particleModules INTERFACE OpenMP::OpenMP_CXX)
+endif()

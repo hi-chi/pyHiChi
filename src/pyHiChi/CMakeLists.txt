@@ -1,37 +1,28 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 4.2)
 
 project(pyHiChi)
 
-include_directories(include
-    ../Core/include
-    ../Modules/Particle/include
-    ../Modules/Field/include
-    ../Modules/Field/include/Mapping
-    ../Modules/Field/include/FieldConfiguration
-    ${FFT_INCLUDES})
+set(PYHICHI_INCLUDE_DIRS
+	include
+	../Core/include
+	../Modules/Particle/include
+	../Modules/Field/include
+)
+set(PYHICHI_HEADER_DIR include)
+set(PYHICHI_SOURCE_DIR src)
 
-if (USE_OMP)
-    find_package(OpenMP)
-    if (OPENMP_FOUND)
-        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-    endif()
-endif()
+file(GLOB_RECURSE pyHiChi_includes CONFIGURE_DEPENDS "${PYHICHI_HEADER_DIR}/*.h*")
+file(GLOB_RECURSE pyHiChi_sources CONFIGURE_DEPENDS "${PYHICHI_SOURCE_DIR}/*.c*")
 
-set(pyHiChi_source
-    include/pyField.h
-    include/pyFieldInterface.h
-    include/pyFieldMacroses.h
-    src/pyHiChi.cpp)
+set(pyHiChi_source ${pyHiChi_sources} ${pyHiChi_includes})
 
 pybind11_add_module(pyHiChi ${pyHiChi_source})
 
-if (APPLE)
-    target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
-elseif (UNIX)
-    target_link_libraries(pyHiChi PUBLIC -Wl,--start-group ${FFT_LIBS} -Wl,--end-group)
-else()
-    target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
+target_include_directories(pyHiChi PUBLIC ${PYHICHI_INCLUDE_DIRS})
+target_link_libraries(pyHiChi PUBLIC ${FFT_TARGET})
+if (USE_MPI)
+    target_link_libraries(pyHiChi PUBLIC MPI::MPI_CXX)
 endif()
-
+if (USE_OMP)
+    target_link_libraries(pyHiChi PUBLIC OpenMP::OpenMP_CXX)
+endif()
