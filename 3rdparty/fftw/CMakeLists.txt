@@ -1,21 +1,34 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 4.2)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 option(USE_OMP ON)
 
 project(fftw)
 
+add_compile_options(
+	"$<$<AND:$<COMPILE_LANG_AND_ID:C,IntelLLVM>,$<PLATFORM_ID:Windows>>:/fp:precise>"
+	"$<$<AND:$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>,$<PLATFORM_ID:Windows>>:/fp:precise>"
+	"$<$<AND:$<COMPILE_LANG_AND_ID:C,IntelLLVM>,$<NOT:$<PLATFORM_ID:Windows>>>:-fp-model=precise>"
+	"$<$<AND:$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>,$<NOT:$<PLATFORM_ID:Windows>>>:-fp-model=precise>"
+)
+
 if (USE_OMP)
-	find_package(OpenMP)
-	if (OPENMP_FOUND)
-		set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-		set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-	endif()
+	add_definitions(-D__USE_OMP__)
+	find_package(OpenMP REQUIRED)
 endif()
 
-set(FFTW_VERSION 3.3.8)
+# Rewrites the cmake version of FFTW
+# This is correct and does not generate build problems
+set(FFTW_CMAKE_PATH_FILE "${CMAKE_BINARY_DIR}/patch_fftw.cmake")
+file(WRITE ${FFTW_CMAKE_PATH_FILE}
+"   file(READ \"\${FILE}\" TEXT)\n\
+    string(REGEX REPLACE \"cmake_minimum_required[^\\n]*\" \"cmake_minimum_required(VERSION 4.2)\" TEXT \"\${TEXT}\")\n\
+    file(WRITE \"\${FILE}\" \"\${TEXT}\")
+"
+)
+
+set(FFTW_VERSION 3.3.10)
 set(FFTW_DIR "${CMAKE_SOURCE_DIR}")
 set(FFTW_INSTALL_DIR "${FFTW_DIR}/fftw-install")
 set(FFTW_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -30,6 +43,8 @@ ExternalProject_Add(fftw
 		TMP_DIR ${FFTW_BUILD_DIR}/tmp
 		STAMP_DIR ${FFTW_BUILD_DIR}/stamp
 		BINARY_DIR ${FFTW_BUILD_DIR}/build
+        BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release -j
+		PATCH_COMMAND ${CMAKE_COMMAND} -DFILE=<SOURCE_DIR>/CMakeLists.txt -P ${FFTW_CMAKE_PATH_FILE}
 		CMAKE_ARGS
 			"-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
 			"-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
