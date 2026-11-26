@@ -16,7 +16,7 @@ public:
 };
 
 typedef ::testing::Types<Particle1d, Particle2d, Particle3d> types;
-TYPED_TEST_CASE(ParticleTest, types);
+TYPED_TEST_SUITE(ParticleTest, types);
 
 TYPED_TEST(ParticleTest, DefaultConstructor)
 {
@@ -41,7 +41,6 @@ TYPED_TEST(ParticleTest, Constructor)
     typedef typename ParticleTest<TypeParam>::MomentumType MomentumType;
     typedef typename ParticleTest<TypeParam>::GammaType GammaType;
     typedef typename ParticleTest<TypeParam>::WeightType WeightType;
-    typedef typename ParticleTest<TypeParam>::TypeIndexType TypeIndexType;
 
     PositionType position = this->getPosition(3.1, -32.1, 4.3e-5);
     MomentumType momentum(-231.3e9, 0.0, 1.23e-5);
@@ -66,7 +65,6 @@ TYPED_TEST(ParticleTest, ConstructorDefaultWeight)
     typedef typename ParticleTest<TypeParam>::Particle ParticleType;
     typedef typename ParticleTest<TypeParam>::PositionType PositionType;
     typedef typename ParticleTest<TypeParam>::MomentumType MomentumType;
-    typedef typename ParticleTest<TypeParam>::GammaType GammaType;
     typedef typename ParticleTest<TypeParam>::WeightType WeightType;
 
     PositionType position = this->getPosition(-12.34, 0.2, 423.12e-2);
@@ -88,9 +86,7 @@ TYPED_TEST(ParticleTest, CopyConstructor)
     typedef typename ParticleTest<TypeParam>::Particle ParticleType;
     typedef typename ParticleTest<TypeParam>::PositionType PositionType;
     typedef typename ParticleTest<TypeParam>::MomentumType MomentumType;
-    typedef typename ParticleTest<TypeParam>::GammaType GammaType;
     typedef typename ParticleTest<TypeParam>::WeightType WeightType;
-    typedef typename ParticleTest<TypeParam>::TypeIndexType TypeIndexType;
 
     PositionType position = this->getPosition(-134.12, 412.6342, 2346.562);
     MomentumType momentum(-4531.23e5, 6534.123e3, 12.32);
@@ -107,9 +103,7 @@ TYPED_TEST(ParticleTest, Assignment)
     typedef typename ParticleTest<TypeParam>::Particle ParticleType;
     typedef typename ParticleTest<TypeParam>::PositionType PositionType;
     typedef typename ParticleTest<TypeParam>::MomentumType MomentumType;
-    typedef typename ParticleTest<TypeParam>::GammaType GammaType;
     typedef typename ParticleTest<TypeParam>::WeightType WeightType;
-    typedef typename ParticleTest<TypeParam>::TypeIndexType TypeIndexType;
 
     PositionType position = this->getPosition(432.453, -3452.15, -15.125);
     MomentumType momentum(431.124, -54.12, 5643.176);
@@ -162,8 +156,7 @@ TYPED_TEST(ParticleTest, GetSetVelocity)
     particle.setVelocity(newVelocity);
     this->maxRelativeError = 1e-12;
 
-    MomentumType v = particle.getVelocity();
-    
+    //MomentumType v = particle.getVelocity();
     ASSERT_NEAR_VECTOR(newVelocity, particle.getVelocity());
 }
 

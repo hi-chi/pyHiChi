@@ -5,7 +5,7 @@
 
 #include <chrono>
 
-static void CustomArguments(benchmark::internal::Benchmark* b) {
+static void CustomArguments(benchmark::Benchmark* b) {
     b->Args({ 1000000, 1000 });
     b->Iterations(1);
 }
@@ -14,7 +14,7 @@ using particleArrayAoS = PusherTest<ParticleArrayAoS3d>;
 BENCHMARK_DEFINE_F(particleArrayAoS, pusher)(benchmark::State& state) {
     BorisPusher pusher;
     while (state.KeepRunning()) {
-        for(size_t iter = 0; iter < state.range_y(); iter ++)
+        for(size_t iter = 0; iter < state.range(1); iter ++)
             pusher(particles, fields, dt);
     }
 }
@@ -24,7 +24,7 @@ using particleArraySoA = PusherTest<ParticleArray3d>;
 BENCHMARK_DEFINE_F(particleArraySoA, pusher)(benchmark::State& state) {
     BorisPusher pusher;
     while (state.KeepRunning()) {
-        for (size_t iter = 0; iter < state.range_y(); iter++)
+        for (size_t iter = 0; iter < state.range(2); iter++)
             pusher(particles, fields, dt);
     }
 }

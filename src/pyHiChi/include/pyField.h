@@ -43,6 +43,8 @@ namespace pfc
     class pyFieldBase {
     public:
 
+        virtual ~pyFieldBase() {}
+
         virtual FP getEx(const FP3& coords) const = 0;
         virtual FP getEy(const FP3& coords) const = 0;
         virtual FP getEz(const FP3& coords) const = 0;
@@ -78,7 +80,7 @@ namespace pfc
             CoordinateEnum axis, FP minCoord, FP maxCoord, size_t size,
             FP(pyFieldBase::*getFieldValue)(const FP3&) const)
         {
-            py::array_t<FP> res({ static_cast<pybind11::size_t>(size) });
+            py::array_t<FP> res{ static_cast<pybind11::ssize_t>(size) };
             auto accRes = res.mutable_unchecked<1>();
             FP step = (maxCoord - minCoord) / size;
             OMP_FOR()
@@ -98,8 +100,8 @@ namespace pfc
             CoordinateEnum axis2, FP minCoord2, FP maxCoord2, size_t size2,
             FP(pyFieldBase::*getFieldValue)(const FP3&) const)
         {
-            py::array_t<FP> res({ static_cast<pybind11::size_t>(size1),
-                                  static_cast<pybind11::size_t>(size2) });
+            py::array_t<FP> res({ static_cast<pybind11::ssize_t>(size1),
+                                  static_cast<pybind11::ssize_t>(size2) });
             auto accRes = res.mutable_unchecked<2>();
             FP step1 = (maxCoord1 - minCoord1) / size1,
                 step2 = (maxCoord2 - minCoord2) / size2;
@@ -121,9 +123,9 @@ namespace pfc
             CoordinateEnum axis3, FP minCoord3, FP maxCoord3, size_t size3,
             FP(pyFieldBase::*getFieldValue)(const FP3&) const)
         {
-            py::array_t<FP> res({ static_cast<pybind11::size_t>(size1),
-                                  static_cast<pybind11::size_t>(size2),
-                                  static_cast<pybind11::size_t>(size3) });
+            py::array_t<FP> res({ static_cast<pybind11::ssize_t>(size1),
+                                  static_cast<pybind11::ssize_t>(size2),
+                                  static_cast<pybind11::ssize_t>(size3) });
             auto accRes = res.mutable_unchecked<3>();
             FP step1 = (maxCoord1 - minCoord1) / size1,
                 step2 = (maxCoord2 - minCoord2) / size2,
@@ -616,8 +618,8 @@ namespace pfc
 
     private:
 
-        FP factor = 1.0;
         std::shared_ptr<pyFieldBase> pyWrappedField;
+        FP factor = 1.0;
     };
 
 }

@@ -15,7 +15,7 @@
 namespace pfc {
 
     template<typename pArray_t, typename ParticleType>
-    class iteratorPArray : public std::iterator<std::random_access_iterator_tag, ParticleType, size_t>
+    class iteratorPArray
     {
     private:
         pArray_t* pPArray;

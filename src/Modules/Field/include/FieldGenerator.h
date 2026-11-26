@@ -16,6 +16,7 @@ namespace pfc
     public:
 
         FieldGenerator(RealFieldSolver<gridTypes>* fieldSolver = 0);
+        virtual ~FieldGenerator() {}
 
         // copy constructor, other fieldSolver is possible
         FieldGenerator(const FieldGenerator& gen, RealFieldSolver<gridTypes>* fieldSolver = 0);
@@ -88,7 +89,7 @@ namespace pfc
             int begin2 = fieldSolver->internalBAreaBegin[dim2];
             int end1 = fieldSolver->internalBAreaEnd[dim1];
             int end2 = fieldSolver->internalBAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
+            // OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -145,7 +146,7 @@ namespace pfc
             int begin2 = fieldSolver->internalEAreaBegin[dim2];
             int end1 = fieldSolver->internalEAreaEnd[dim1];
             int end2 = fieldSolver->internalEAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
+            // OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -200,8 +201,8 @@ namespace pfc
             FieldGenerator<gridTypes>(gen, fieldSolver) {
         }
 
-        virtual void generateB();
-        virtual void generateE();
+        void generateB() override;
+        void generateE() override;
 
         FieldGenerator<gridTypes>* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
             return new PeriodicalFieldGenerator(*this, fieldSolver);
@@ -222,7 +223,7 @@ namespace pfc
             int begin2 = this->fieldSolver->internalEAreaBegin[dim2];
             int end1 = this->fieldSolver->internalEAreaEnd[dim1];
             int end2 = this->fieldSolver->internalEAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
+            // OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -234,7 +235,6 @@ namespace pfc
                     indexR[dim0] = this->fieldSolver->internalEAreaEnd[dim0] - 3;
                     indexR[dim1] = j;
                     indexR[dim2] = k;
-
 
                     grid->Bx(indexL) = grid->Bx(indexR);
                     grid->By(indexL) = grid->By(indexR);
@@ -263,7 +263,7 @@ namespace pfc
             int begin2 = 0;
             int end1 = grid->numCells[dim1];
             int end2 = grid->numCells[dim2];
-//OMP_FOR_COLLAPSE()
+            // OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -303,8 +303,8 @@ namespace pfc
             FieldGenerator<gridTypes>(gen, fieldSolver) {
         }
 
-        virtual void generateB();
-        virtual void generateE();
+        void generateB() override;
+        void generateE() override;
 
         FieldGenerator<gridTypes>* createInstance(RealFieldSolver<gridTypes>* fieldSolver) override {
             return new ReflectFieldGenerator(*this, fieldSolver);
@@ -325,7 +325,7 @@ namespace pfc
             int begin2 = this->fieldSolver->internalBAreaBegin[dim2];
             int end1 = this->fieldSolver->internalBAreaEnd[dim1];
             int end2 = this->fieldSolver->internalBAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
+            // OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -361,7 +361,7 @@ namespace pfc
             int begin2 = this->fieldSolver->internalEAreaBegin[dim2];
             int end1 = this->fieldSolver->internalEAreaEnd[dim1];
             int end2 = this->fieldSolver->internalEAreaEnd[dim2];
-//OMP_FOR_COLLAPSE()
+            // OMP_FOR_COLLAPSE()
             for (int j = begin1; j < end1; j++)
                 for (int k = begin2; k < end2; k++)
                 {
@@ -373,7 +373,6 @@ namespace pfc
                     indexR[dim0] = this->fieldSolver->internalEAreaEnd[dim0] - 1;
                     indexR[dim1] = j;
                     indexR[dim2] = k;
-
 
                     grid->Ex(indexL) = (FP)0.0;
                     grid->Ey(indexL) = (FP)0.0;

@@ -14,7 +14,7 @@ typedef ::testing::Types<
     ParticleArray<Two, ParticleRepresentation_SoA>::Type,
     ParticleArray<Three, ParticleRepresentation_SoA>::Type
 > types;
-TYPED_TEST_CASE(ParticleArrayTest, types);
+TYPED_TEST_SUITE(ParticleArrayTest, types);
 
 TYPED_TEST(ParticleArrayTest, DefaultConstructor)
 {

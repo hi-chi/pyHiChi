@@ -92,8 +92,9 @@ TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
     for (int i = 0; i < sizeComplex.x; i++)
         for (int j = 0; j < sizeComplex.y; j++)
             for (int k = 0; k < sizeComplex.z; k++)
-                if (!(i == 1 && j == 0 && k == 0 || i == sizeComplex.x - 1 && j == 0 && k == 0))
+                if (!((i == 1 && j == 0 && k == 0) || (i == sizeComplex.x - 1 && j == 0 && k == 0))) {
                     ASSERT_NEAR_MODULE_COMPLEXFP(complexFP(0), complexField(i, j, k));
+                }
 }
 
 TEST_F(FourierTransformTest, ADD_TEST_FFT_PREFIX(Lag)) {
@@ -203,8 +204,9 @@ TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(TransformSinus)) {
     for (int i = 0; i < complexGrid->numCells.x; i++)
         for (int j = 0; j < complexGrid->numCells.y; j++)
             for (int k = 0; k < complexGrid->numCells.z; k++)
-                if (!(i == 1 && j == 0 && k == 0 || i == complexGrid->numCells.x - 1 && j == 0 && k == 0))
+                if (!((i == 1 && j == 0 && k == 0) || (i == complexGrid->numCells.x - 1 && j == 0 && k == 0))) {
                     ASSERT_NEAR_MODULE_COMPLEXFP(complexFP(0), complexGrid->Bz(i, j, k));
+                }
 }
 
 TEST_F(FourierTransformSolverTest, ADD_TEST_FFT_PREFIX(Lag)) {

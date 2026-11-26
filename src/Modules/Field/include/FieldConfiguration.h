@@ -42,10 +42,10 @@ namespace pfc {
         FP wavelength;
         FP pulselength;
         FP totalPower;
-        FP openingAngle;
         FP edgeSmoothingAngle;
         FP3 polarisation;
         FP exclusionRadius;
+        FP openingAngle;
         FP ampl;
 
         FieldConfiguration(FP f_number, FP R0, FP wavelength, FP pulselength, FP totalPower,

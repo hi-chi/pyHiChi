@@ -72,12 +72,6 @@ public:
     virtual void SetUp(const ::benchmark::State& st)
     {
         BaseFixture::SetUp(st);
-
-        ParticleInfo::typesVector = { { constants::electronMass, constants::electronCharge },
-        { constants::electronMass, -constants::electronCharge },
-        { constants::protonMass, -constants::electronCharge } };
-        ParticleInfo::types = &ParticleInfo::typesVector[0];
-        ParticleInfo::numTypes = sizeParticleTypes;
     }
 
     // Helper function to unify initialization of positions for 1d, 2d and 3d
@@ -136,7 +130,7 @@ public:
     {
         BaseParticleFixture<Particle>::SetUp(st);
         particles = new ParticleArray();
-        for (size_t index = 0; index < st.range_x(); index++)
+        for (size_t index = 0; index < st.range(0); index++)
             particles->pushBack(randomParticle());
     }
 
@@ -163,7 +157,7 @@ public:
         dt = 0.001;
         FP3 minField(-10, -10, 10), maxField(10, 10, 10);
 
-        for (size_t index = 0; index < st.range_x(); index++)
+        for (size_t index = 0; index < st.range(0); index++)
             fields.push_back(ValueField(urandFP3(minField, maxField), urandFP3(minField, maxField)));
     }
 

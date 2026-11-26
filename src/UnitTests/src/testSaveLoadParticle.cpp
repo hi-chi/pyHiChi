@@ -30,7 +30,7 @@ public:
 };
 
 typedef ::testing::Types<Particle1d, Particle2d, Particle3d> types;
-TYPED_TEST_CASE(SaveLoadParticle, types);
+TYPED_TEST_SUITE(SaveLoadParticle, types);
 
 TYPED_TEST(SaveLoadParticle, testParticle)
 {
@@ -66,7 +66,7 @@ typedef ::testing::Types<
     ParticleArray<Two, ParticleRepresentation_SoA>::Type,
     ParticleArray<Three, ParticleRepresentation_SoA>::Type
 > typesArray;
-TYPED_TEST_CASE(ParticleArrayTest, typesArray);
+TYPED_TEST_SUITE(ParticleArrayTest, typesArray);
 
 TYPED_TEST(ParticleArrayTest, testParticlesSaveLoad)
 {

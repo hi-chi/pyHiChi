@@ -103,7 +103,7 @@ namespace pfc {
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
-//#pragma omp simd
+                // OMP_SIMD()
                 for (int k = begin.z; k < end.z; k++)
                 {
                     ComplexFP3 E(complexGrid->Ex(i, j, k), complexGrid->Ey(i, j, k), complexGrid->Ez(i, j, k));
@@ -125,7 +125,7 @@ namespace pfc {
         for (int i = begin.x; i < end.x; i++)
             for (int j = begin.y; j < end.y; j++)
             {
-//#pragma omp simd
+                // OMP_SIMD()
                 for (int k = begin.z; k < end.z; k++)
                 {
                     ComplexFP3 B(complexGrid->Bx(i, j, k), complexGrid->By(i, j, k), complexGrid->Bz(i, j, k));

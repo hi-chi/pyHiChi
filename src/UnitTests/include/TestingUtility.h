@@ -115,14 +115,6 @@ public:
     virtual void SetUp()
     {
         BaseFixture::SetUp();
-
-        ParticleInfo::typesVector = { {constants::electronMass, constants::electronCharge},//electron
-                                    {constants::electronMass, -constants::electronCharge},//positron
-                                    {constants::protonMass, -constants::electronCharge},//proton
-                                    {constants::electronMass, 0.0}//photon
-                                    };
-        ParticleInfo::types = &ParticleInfo::typesVector[0];
-        ParticleInfo::numTypes = sizeParticleTypes;
     }
 
     // Helper function to unify initialization of positions for 1d, 2d and 3d

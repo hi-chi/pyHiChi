@@ -10,7 +10,7 @@ class ConstantsTest : public ::testing::Test {
 };
 
 typedef ::testing::Types<float, double> types;
-TYPED_TEST_CASE(ConstantsTest, types);
+TYPED_TEST_SUITE(ConstantsTest, types);
 
 TYPED_TEST(ConstantsTest, Values)
 {

@@ -93,7 +93,7 @@ typedef ::testing::Types<
     PSATDGrid,
     PSATDTimeStraggeredGrid
 > typesSaveLoadGridTest;
-TYPED_TEST_CASE(SaveLoadGridTest, typesSaveLoadGridTest);
+TYPED_TEST_SUITE(SaveLoadGridTest, typesSaveLoadGridTest);
 
 TYPED_TEST(SaveLoadGridTest, can_save_and_load_grid)
 {
@@ -195,7 +195,7 @@ typedef ::testing::Types<
     GridSolverTypes<PSATDGrid, PSATDPoisson>,
     GridSolverTypes<PSATDTimeStraggeredGrid, PSATDTimeStraggeredPoisson>
 > typesSaveLoadGridSolverTest;
-TYPED_TEST_CASE(SaveLoadGridSolverTest, typesSaveLoadGridSolverTest);
+TYPED_TEST_SUITE(SaveLoadGridSolverTest, typesSaveLoadGridSolverTest);
 
 TYPED_TEST(SaveLoadGridSolverTest, can_save_and_load_grid_and_solver)
 {

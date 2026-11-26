@@ -17,7 +17,7 @@ public:
 };
 
 typedef ::testing::Types<Particle1d, Particle2d, Particle3d> types;
-TYPED_TEST_CASE(ParticleTest, types);
+TYPED_TEST_SUITE(ParticleTest, types);
 
 TYPED_TEST(ParticleTest, DefaultConstructorProxy)
 {
@@ -46,7 +46,6 @@ TYPED_TEST(ParticleTest, ConstructorProxy)
     typedef typename ParticleTest<TypeParam>::MomentumType MomentumType;
     typedef typename ParticleTest<TypeParam>::GammaType GammaType;
     typedef typename ParticleTest<TypeParam>::WeightType WeightType;
-    typedef typename ParticleTest<TypeParam>::TypeIndexType TypeIndexType;
 
     static const Dimension dimension = Dimension(VectorDimensionHelper<PositionType>::dimension);
 
@@ -71,7 +70,6 @@ TYPED_TEST(ParticleTest, ConstructorProxy)
 
 TYPED_TEST(ParticleTest, PiecemealConstructorProxy)
 {
-    typedef typename ParticleTest<TypeParam>::Particle ParticleType;
     typedef typename ParticleTest<TypeParam>::PositionType PositionType;
     typedef typename ParticleTest<TypeParam>::MomentumType MomentumType;
     typedef typename ParticleTest<TypeParam>::GammaType GammaType;
@@ -104,9 +102,7 @@ TYPED_TEST(ParticleTest, CopyConstructorProxy)
     typedef typename ParticleTest<TypeParam>::Particle ParticleType;
     typedef typename ParticleTest<TypeParam>::PositionType PositionType;
     typedef typename ParticleTest<TypeParam>::MomentumType MomentumType;
-    typedef typename ParticleTest<TypeParam>::GammaType GammaType;
     typedef typename ParticleTest<TypeParam>::WeightType WeightType;
-    typedef typename ParticleTest<TypeParam>::TypeIndexType TypeIndexType;
 
     static const Dimension dimension = Dimension(VectorDimensionHelper<PositionType>::dimension);
 

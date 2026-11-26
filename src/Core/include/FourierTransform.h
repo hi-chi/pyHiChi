@@ -1,5 +1,4 @@
 #pragma once
-#include <omp.h>
 #include "ScalarField.h"
 #include "Grid.h"
 #include "SpectralGrid.h"
@@ -66,7 +65,7 @@ namespace pfc
         {
             fftw_execute(plans[fourier_transform::Direction::CtoR]);
             FP normCoeff = (FP)size.volume();
-            int nx = memSizeRealData.x, ny = memSizeRealData.y, nz = memSizeRealData.z;
+            int ny = memSizeRealData.y, nz = memSizeRealData.z;
             OMP_FOR_COLLAPSE()
             for (int i = 0; i < size.x; i++)
                 for (int j = 0; j < size.y; j++)

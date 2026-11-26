@@ -152,7 +152,7 @@ namespace pfc
             }
         }
 
-        enum Features
+        enum class Features
         {
             Energy,
             Momentum, Momentum_x, Momentum_y, Momentum_z,
@@ -166,33 +166,33 @@ namespace pfc
 
         void thinningConservative(ParticleArray& particles, int m, std::set<Features>& features)
         {
-            auto searchM = features.find(Momentum);
-            auto searchP = features.find(Position);
-            auto searchDM = features.find(Dispersion_Momentum);
-            auto searchDP = features.find(Dispersion_Position);
+            auto searchM = features.find(Features::Momentum);
+            auto searchP = features.find(Features::Position);
+            auto searchDM = features.find(Features::Dispersion_Momentum);
+            auto searchDP = features.find(Features::Dispersion_Position);
             if (searchM != features.end()) {
-                features.erase(Momentum);
-                features.insert(Momentum_x);
-                features.insert(Momentum_y);
-                features.insert(Momentum_z);
+                features.erase(Features::Momentum);
+                features.insert(Features::Momentum_x);
+                features.insert(Features::Momentum_y);
+                features.insert(Features::Momentum_z);
             }
             if (searchP != features.end()) {
-                features.erase(Position);
-                features.insert(Position_x);
-                features.insert(Position_y);
-                features.insert(Position_z);
+                features.erase(Features::Position);
+                features.insert(Features::Position_x);
+                features.insert(Features::Position_y);
+                features.insert(Features::Position_z);
             }
             if (searchDM != features.end()) {
-                features.erase(Dispersion_Momentum);
-                features.insert(Dispersion_Momentum_x);
-                features.insert(Dispersion_Momentum_y);
-                features.insert(Dispersion_Momentum_z);
+                features.erase(Features::Dispersion_Momentum);
+                features.insert(Features::Dispersion_Momentum_x);
+                features.insert(Features::Dispersion_Momentum_y);
+                features.insert(Features::Dispersion_Momentum_z);
             }
             if (searchDP != features.end()) {
-                features.erase(Dispersion_Position);
-                features.insert(Dispersion_Position_x);
-                features.insert(Dispersion_Position_y);
-                features.insert(Dispersion_Position_z);
+                features.erase(Features::Dispersion_Position);
+                features.insert(Features::Dispersion_Position_x);
+                features.insert(Features::Dispersion_Position_y);
+                features.insert(Features::Dispersion_Position_z);
             }
 
             std::vector<double> weight;
@@ -260,56 +260,57 @@ namespace pfc
                     {
                         switch (*it)
                         {
-                        case Energy:
+                        case Features::Energy:
                             components[indexFeat][indexPart] = sqrt(mc2 + partParticleArray[indexPart].getMomentum().norm2());
                             break;
-                        case Momentum_x:
+                        case Features::Momentum_x:
                             components[indexFeat][indexPart] = partParticleArray[indexPart].getMomentum().x;
                             break;
-                        case Momentum_y:
+                        case Features::Momentum_y:
                             components[indexFeat][indexPart] = partParticleArray[indexPart].getMomentum().y;
                             break;
-                        case Momentum_z:
+                        case Features::Momentum_z:
                             components[indexFeat][indexPart] = partParticleArray[indexPart].getMomentum().z;
                             break;
-                        case Position_x:
+                        case Features::Position_x:
                             components[indexFeat][indexPart] = partParticleArray[indexPart].getPosition().x;
                             break;
-                        case Position_y:
+                        case Features::Position_y:
                             components[indexFeat][indexPart] = partParticleArray[indexPart].getPosition().y;
                             break;
-                        case Position_z:
+                        case Features::Position_z:
                             components[indexFeat][indexPart] = partParticleArray[indexPart].getPosition().z;
                             break;
 
-                        case Dispersion_Energy:
+                        case Features::Dispersion_Energy:
                             components[indexFeat][indexPart] =
                                 sqr(sqrt(mc2 + partParticleArray[indexPart].getMomentum().norm2()) - mean_energy);
                             break;
-                        case Dispersion_Momentum_x:
+                        case Features::Dispersion_Momentum_x:
                             components[indexFeat][indexPart] =
                                 sqr(partParticleArray[indexPart].getMomentum().x - mean_momentum.x);
                             break;
-                        case Dispersion_Momentum_y:
+                        case Features::Dispersion_Momentum_y:
                             components[indexFeat][indexPart] =
                                 sqr(partParticleArray[indexPart].getMomentum().y - mean_momentum.y);
                             break;
-                        case Dispersion_Momentum_z:
+                        case Features::Dispersion_Momentum_z:
                             components[indexFeat][indexPart] =
                                 sqr(partParticleArray[indexPart].getMomentum().z - mean_momentum.z);
                             break;
-                        case Dispersion_Position_x:
+                        case Features::Dispersion_Position_x:
                             components[indexFeat][indexPart] =
                                 sqr(partParticleArray[indexPart].getPosition().x - mean_position.x);
                             break;
-                        case Dispersion_Position_y:
+                        case Features::Dispersion_Position_y:
                             components[indexFeat][indexPart] =
                                 sqr(partParticleArray[indexPart].getPosition().y - mean_position.y);
                             break;
-                        case Dispersion_Position_z:
+                        case Features::Dispersion_Position_z:
                             components[indexFeat][indexPart] =
                                 sqr(partParticleArray[indexPart].getPosition().z - mean_position.z);
                             break;
+                        default: break;
                         }
                     }
                 }

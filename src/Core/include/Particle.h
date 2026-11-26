@@ -27,9 +27,12 @@ namespace pfc {
     };
     namespace ParticleInfo
     {
-        extern std::vector<ParticleType> typesVector;
-        extern const ParticleType* types;
-        extern short numTypes;
+        static const std::vector<ParticleType> types = {
+            { constants::electronMass, constants::electronCharge },   //electron
+            { constants::electronMass, -constants::electronCharge },  //positron
+            { constants::protonMass, -constants::electronCharge },    //proton
+            { constants::electronMass, 0.0 }                          //photon
+        };
     };
 
     template<Dimension dimension>
@@ -240,10 +243,10 @@ namespace pfc {
     private:
 
         PositionTypeProxy position;
-        MomentumTypeProxy p;
         WeightTypeProxy weight;
-        GammaTypeProxy gamma;
         TypeIndexTypeProxy typeIndex;
+        MomentumTypeProxy p;
+        GammaTypeProxy gamma;
     };
 
     typedef ParticleProxy<One> ParticleProxy1d;

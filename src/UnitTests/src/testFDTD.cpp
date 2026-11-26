@@ -78,7 +78,7 @@ typedef ::testing::Types<
     axisY,
     axisZ
 > types;
-TYPED_TEST_CASE(GridFDTDTest, types);
+TYPED_TEST_SUITE(GridFDTDTest, types);
 
 class GridFDTDTestZ : public GridFDTDTest<axisZ>
 {};
@@ -89,7 +89,6 @@ TYPED_TEST(GridFDTDTest, FDTD_periodical)
     PeriodicalFieldGeneratorYee periodicalBC(this->fdtd);
     this->fdtd->setFieldGenerator(&periodicalBC);
 
-    int numCells = this->grid->numCells.volume();
     // e0(x, y, z) = eTest(x, y, z, 0), b0(x, y, z) = bTest(x, y, z, dt/2)
     for (int i = 0; i < this->grid->numCells.x; ++i)
         for (int j = 0; j < this->grid->numCells.y; ++j)

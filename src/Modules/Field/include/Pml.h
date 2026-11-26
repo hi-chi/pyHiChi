@@ -28,6 +28,7 @@ namespace pfc {
     {
     public:
         Pml(FieldSolver<gridTypes>* _fieldSolver, Int3 _sizePML);
+        virtual ~Pml() {}
 
         // only for real solvers
         virtual void updateB() {};
@@ -81,7 +82,6 @@ namespace pfc {
             if (leftDims[d])
                 leftDims[d] += grid->getNumExternalLeftCells()[d];
 
-            int pmlRightBorder = grid->numInternalCells[d] - globalRightDims[d];
             rightDims[d] = globalRightDims[d] -
                 (grid->globalGridDims[d] - grid->numInternalCells[d]);
             if (rightDims[d])
@@ -186,8 +186,6 @@ namespace pfc {
         // Fill data of PML values of electric field
         const Int3 leftPmlEnd = this->leftDims;
         const Int3 rightPmlBegin = grid->numCells - this->rightDims;
-        const int maxSize = grid->numCells.volume() -
-            (grid->numCells - this->leftDims - this->rightDims).volume();
         Int3 begin = this->fieldSolver->updateEAreaBegin;
         Int3 end = this->fieldSolver->updateEAreaEnd + Int3(1, 1, 1); // + 1 for edge values of E
         for (int i = grid->dimensionality; i < 3; i++)
@@ -260,12 +258,6 @@ namespace pfc {
             for (int d = 0; d < 3; d++)
             {
                 FP3 sigma = this->computeSigma(eCoords[d]);
-                int axis1 = (d + 1) % 3, axis2 = (d + 2) % 3;
-                if (d == 1)
-                {
-                    axis1 = 0;
-                    axis2 = 2;
-                }
                 if (sigma[d] > threshold)
                 {
                     FP expCoeff = exp(-sigma[d] * cdt);
@@ -296,12 +288,6 @@ namespace pfc {
             for (int d = 0; d < 3; d++)
             {
                 FP3 sigma = this->computeSigma(bCoords[d]);
-                int axis1 = (d + 1) % 3, axis2 = (d + 2) % 3;
-                if (d == 1)
-                {
-                    axis1 = 0;
-                    axis2 = 2;
-                }
                 if (sigma[d] > threshold)
                 {
                     FP expCoeff = exp(-sigma[d] * cdt);
@@ -372,9 +358,6 @@ namespace pfc {
 
         const Int3 leftPmlEnd = this->leftDims;
         const Int3 rightPmlBegin = grid->numCells - this->rightDims;
-        const int maxSize = grid->numCells.volume() -
-            (grid->numCells - this->leftDims - this->rightDims).volume();
-
         Int3 begin = this->fieldSolver->updateEAreaBegin; // num nodes B = num nodes E
         Int3 end = this->fieldSolver->updateEAreaEnd;
         for (int i = begin.x; i < end.x; i++)
@@ -447,10 +430,6 @@ namespace pfc {
     {
         for (int idx = 0; idx < numCells; ++idx)
         {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
-
             this->eyx[idx] *= coeff[idx].y;
             this->ezx[idx] *= coeff[idx].z;
             this->ezy[idx] *= coeff[idx].z;
@@ -465,10 +444,6 @@ namespace pfc {
     {
         for (int idx = 0; idx < numCells; ++idx)
         {
-            int i = cellIndex[idx].x;
-            int j = cellIndex[idx].y;
-            int k = cellIndex[idx].z;
-
             this->byx[idx] *= coeff[idx].y;
             this->bzx[idx] *= coeff[idx].z;
             this->bzy[idx] *= coeff[idx].z;

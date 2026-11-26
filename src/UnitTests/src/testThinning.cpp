@@ -11,7 +11,7 @@ typedef ::testing::Types<
     ParticleArray<Three, ParticleRepresentation_AoS>::Type,
     ParticleArray<Three, ParticleRepresentation_SoA>::Type
 > types;
-TYPED_TEST_CASE(ThinningTest, types);
+TYPED_TEST_SUITE(ThinningTest, types);
 
 TYPED_TEST(ThinningTest, simpleThinning)
 {
@@ -40,11 +40,11 @@ TYPED_TEST(ThinningTest, levelingThinning)
     ParticleArray particles;
     int numberParticles = 100;
     this->addRandomParticles(particles, numberParticles);
-    FP originalTotalWeight = this->totalWeight(particles);
+    //FP originalTotalWeight = this->totalWeight(particles);
 
     thin.leveling(particles);
 
-    FP modifiedTotalWeight = this->totalWeight(particles);
+    //FP modifiedTotalWeight = this->totalWeight(particles);
     ASSERT_TRUE(particles.size() < numberParticles);
 }
 

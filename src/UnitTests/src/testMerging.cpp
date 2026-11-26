@@ -11,7 +11,7 @@ typedef ::testing::Types<
     ParticleArray<Three, ParticleRepresentation_AoS>::Type,
     ParticleArray<Three, ParticleRepresentation_SoA>::Type
 > types;
-TYPED_TEST_CASE(ThinningTest, types);
+TYPED_TEST_SUITE(ThinningTest, types);
 
 TYPED_TEST(ThinningTest, kmeansMerging)
 {

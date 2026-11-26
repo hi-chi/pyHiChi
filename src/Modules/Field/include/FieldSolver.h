@@ -31,6 +31,7 @@ namespace pfc {
             this->globalTime = (FP)0.0;
             this->generator.reset(nullptr);
         }
+        virtual ~FieldSolver() {}
 
         Grid<FP, gridType>* grid;
 

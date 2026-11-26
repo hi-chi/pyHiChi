@@ -21,6 +21,7 @@ namespace pfc {
         }
 
         virtual Mapping* createInstance() = 0;
+        virtual ~Mapping() {}
 
     protected:
 
@@ -87,8 +88,8 @@ namespace pfc {
             return new PeriodicalMapping(*this);
         }
 
-        FP cMin, cMax, D;
         CoordinateEnum axis = CoordinateEnum::x;
+        FP cMin, cMax, D;
 
     };
 
@@ -205,8 +206,8 @@ namespace pfc {
             return new ScaleMapping(*this);
         }
 
-        FP coef;
         CoordinateEnum axis;
+        FP coef;
 
     };
 
@@ -226,7 +227,6 @@ namespace pfc {
 
         FP3 getDirectCoords(const FP3& coords, FP time = 0.0, bool* status = 0) override {
             FP ct = constants::c*time;
-            FP r = coords.norm();
 
             FP3 directCoords = coords;
             if (ifCut) this->setFailStatus(status);

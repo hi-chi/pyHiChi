@@ -5,8 +5,7 @@
 #include "AnalyticalField.h"
 #include "Pusher.h"
 #include "synchrotron.h"
-
-#include <omp.h>
+#include "macros.h"
 #include <random>
 
 using namespace constants;
@@ -32,13 +31,7 @@ namespace pfc
             coeffPair_probability = 0.0;
 
             distribution = std::uniform_real_distribution<FP>(0.0, 1.0);
-            int max_threads;
-
-#ifdef __USE_OMP__
-            max_threads = omp_get_max_threads();
-#else
-            max_threads = 1;
-#endif
+            int max_threads = OMP_GET_MAX_THREADS();
             AvalanchePhotons.resize(max_threads);
             AvalancheParticles.resize(max_threads);
             afterAvalanchePhotons.resize(max_threads);
@@ -48,12 +41,7 @@ namespace pfc
 
         void processParticles(Ensemble3d* particles, TGrid* grid, FP timeStep)
         {
-            int max_threads;
-#ifdef __USE_OMP__
-            max_threads = omp_get_max_threads();
-#else
-            max_threads = 1;
-#endif
+            int max_threads = OMP_GET_MAX_THREADS();
 
             for (int th = 0; th < max_threads; th++)
             {
@@ -110,15 +98,10 @@ namespace pfc
         void HandlePhotons(ParticleArray3d& particles, TGrid* grid, FP timeStep)
         {
             FP dt = timeStep;
-#pragma omp parallel for schedule(dynamic, 1)
+            OMP_FOR_DYNAMIC_SCHEDULE(1)
             for (int i = 0; i < particles.size(); i++)
             {
-                int thread_id;
-#ifdef __USE_OMP__
-                thread_id = omp_get_thread_num();
-#else
-                thread_id = 0;
-#endif
+                int thread_id = OMP_GET_THREAD_NUM();
                 FP3 pPos = particles[i].getPosition();
                 FP3 k = particles[i].getVelocity();
                 FP3 e, b;
@@ -190,15 +173,10 @@ namespace pfc
         void HandleParticles(ParticleArray3d& particles, TGrid* grid, FP timeStep)
         {
             FP dt = timeStep;
-#pragma omp parallel for schedule(dynamic, 1)
+            OMP_FOR_DYNAMIC_SCHEDULE(1)
             for (int i = 0; i < particles.size(); i++)
             {
-                int thread_id;
-#ifdef __USE_OMP__
-                thread_id = omp_get_thread_num();
-#else
-                thread_id = 0;
-#endif
+                int thread_id = OMP_GET_THREAD_NUM();
                 FP3 pPos = particles[i].getPosition();
                 FP3 v = particles[i].getVelocity();
                 FP3 e, b;
@@ -271,12 +249,7 @@ namespace pfc
 
         void RunAvalanche(double H_eff_global, const FP3& E, const FP3& B, int SeedType, double gamma, double dt)
         {
-            int thread_id;
-#ifdef __USE_OMP__
-            thread_id = omp_get_thread_num();
-#else
-            thread_id = 0;
-#endif
+            int thread_id = OMP_GET_THREAD_NUM();
             vector<Particle3d>& AvalancheParticles = this->AvalancheParticles[thread_id];
             vector<Particle3d>& AvalanchePhotons = this->AvalanchePhotons[thread_id];
             gamma = max(gamma, 1.0);
@@ -430,7 +403,7 @@ namespace pfc
         FP random_number_omp()
         {
             FP rand_n;
-#pragma omp critical
+            OMP_CRITICAL()
             rand_n = distribution(rand_generator);
             return rand_n;
         }

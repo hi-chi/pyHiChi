@@ -15,7 +15,7 @@ typedef ::testing::Types<
     Species<Three, Positron, ParticleRepresentation_SoA>,
     Species<Three, Proton, ParticleRepresentation_SoA>
 > types;
-TYPED_TEST_CASE(PusherTest, types);
+TYPED_TEST_SUITE(PusherTest, types);
 
 TYPED_TEST(PusherTest, BorisPusherSaveEnergyForOneParticle)
 {

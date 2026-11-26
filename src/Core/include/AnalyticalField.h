@@ -10,7 +10,7 @@ namespace pfc {
 
         typedef FP(*TFunc)(FP, FP, FP, FP);
 
-        AnalyticalField(FP dt) : dt(dt), globalTime(0.0) {}
+        AnalyticalField(FP dt) : globalTime(0.0), dt(dt) {}
 
         void setTimeStep(FP dt) { this->dt = dt; }
         void updateFields() { this->globalTime += dt; }

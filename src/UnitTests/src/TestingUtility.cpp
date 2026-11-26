@@ -9,16 +9,6 @@
 
 using namespace pfc;
 
-namespace pfc {
-
-    namespace ParticleInfo {
-        std::vector<ParticleType> typesVector;
-        const ParticleType* types;
-        short numTypes;
-    } // namespace ParticleInfo
-
-} // namespace pica
-
 void BaseFixture::SetUp() {
     srand(1);
     maxAbsoluteError = (FP)1e-4;

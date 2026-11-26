@@ -25,7 +25,7 @@ protected:
 };
 
 typedef ::testing::Types<FP> types;
-TYPED_TEST_CASE(ScalarFieldTest, types);
+TYPED_TEST_SUITE(ScalarFieldTest, types);
 
 TYPED_TEST(ScalarFieldTest, Constructor) {
     typedef typename ScalarFieldTest<TypeParam>::ScalarFieldType ScalarField;

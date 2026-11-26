@@ -83,9 +83,9 @@ namespace pfc {
             (this->*interpolationFields)(coords, e, b);
         }
 
-        virtual FP3 getJ(const FP3& coords) const;
-        virtual FP3 getE(const FP3& coords) const;
-        virtual FP3 getB(const FP3& coords) const;
+        FP3 getJ(const FP3& coords) const;
+        FP3 getE(const FP3& coords) const;
+        FP3 getB(const FP3& coords) const;
 
         void getFieldsCIC(const FP3& coords, FP3& e, FP3& b) const;
         void getFieldsTSC(const FP3& coords, FP3& e, FP3& b) const;
@@ -399,6 +399,10 @@ namespace pfc {
         numInternalCells(_numCells),
         numCells(numInternalCells + getNumExternalLeftCells() + getNumExternalRightCells()),
         sizeStorage(numCells),
+        origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
+            minCoords.y - steps.y * getNumExternalLeftCells().y,
+            minCoords.z - steps.z * getNumExternalLeftCells().z),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1)),
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
@@ -407,11 +411,7 @@ namespace pfc {
         shiftEJz(FP3(0.5, 0.5, 0)* steps),
         shiftBx(FP3(0.5, 0, 0)* steps),
         shiftBy(FP3(0, 0.5, 0)* steps),
-        shiftBz(FP3(0, 0, 0.5)* steps),
-        origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
-            minCoords.y - steps.y * getNumExternalLeftCells().y,
-            minCoords.z - steps.z * getNumExternalLeftCells().z),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+        shiftBz(FP3(0, 0, 0.5)* steps)
     {
         setInterpolationType(Interpolation_CIC);
         setInterpolationType(Interpolation_CIC);
@@ -425,6 +425,10 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells + getNumExternalLeftCells() + getNumExternalRightCells()),
         sizeStorage(numCells),
+        origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
+            minCoords.y - steps.y * getNumExternalLeftCells().y,
+            minCoords.z - steps.z * getNumExternalLeftCells().z),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1)),
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
@@ -433,11 +437,7 @@ namespace pfc {
         shiftEJz(FP3(0, 0, 0)* steps),
         shiftBx(FP3(0, 0, 0)* steps),
         shiftBy(FP3(0, 0, 0)* steps),
-        shiftBz(FP3(0, 0, 0)* steps),
-        origin(minCoords.x - steps.x * getNumExternalLeftCells().x,
-            minCoords.y - steps.y * getNumExternalLeftCells().y,
-            minCoords.z - steps.z * getNumExternalLeftCells().z),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+        shiftBz(FP3(0, 0, 0)* steps)
     {
         setInterpolationType(Interpolation_CIC);
     }
@@ -451,6 +451,8 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
+        origin(minCoords),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1)),
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
@@ -459,9 +461,7 @@ namespace pfc {
         shiftEJz(FP3(0, 0, 0)* steps),
         shiftBx(FP3(0, 0, 0)* steps),
         shiftBy(FP3(0, 0, 0)* steps),
-        shiftBz(FP3(0, 0, 0)* steps),
-        origin(minCoords),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+        shiftBz(FP3(0, 0, 0)* steps)
     {
         setInterpolationType(Interpolation_CIC);
     }
@@ -474,6 +474,8 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
+        origin(minCoords),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1)),
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
@@ -482,9 +484,7 @@ namespace pfc {
         shiftEJz(FP3(0, 0, 0)* steps),
         shiftBx(FP3(0, 0, 0)* steps),
         shiftBy(FP3(0, 0, 0)* steps),
-        shiftBz(FP3(0, 0, 0)* steps),
-        origin(minCoords),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+        shiftBz(FP3(0, 0, 0)* steps)
     {
         setInterpolationType(Interpolation_CIC);
     }
@@ -497,6 +497,8 @@ namespace pfc {
         numInternalCells(_numInternalCells),
         numCells(numInternalCells),
         sizeStorage(Int3(numCells.x, numCells.y, 2 * (numCells.z / 2 + 1))),
+        origin(minCoords),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1)),
         Ex(sizeStorage), Ey(sizeStorage), Ez(sizeStorage),
         Bx(sizeStorage), By(sizeStorage), Bz(sizeStorage),
         Jx(sizeStorage), Jy(sizeStorage), Jz(sizeStorage),
@@ -505,9 +507,7 @@ namespace pfc {
         shiftEJz(FP3(0, 0, 0)* steps),
         shiftBx(FP3(0, 0, 0)* steps),
         shiftBy(FP3(0, 0, 0)* steps),
-        shiftBz(FP3(0, 0, 0)* steps),
-        origin(minCoords),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+        shiftBz(FP3(0, 0, 0)* steps)
     {
         setInterpolationType(Interpolation_CIC);
     }
@@ -905,7 +905,7 @@ namespace pfc {
     inline void Grid<FP, YeeGridType>::dumpB(FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx)
     {
         Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
+        OMP_FOR_COLLAPSE()
         for (int i = 0; i < numCells.x; ++i)
             for (int j = 0; j < numCells.y; ++j)
                 for (int k = 0; k < numCells.z; ++k)
@@ -922,7 +922,7 @@ namespace pfc {
     inline void Grid<FP, YeeGridType>::dumpE(FP3 * e, const Int3 * minCellIdx, const Int3 * maxCellIdx)
     {
         Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
+        OMP_FOR_COLLAPSE()
         for (int i = 0; i < numCells.x; ++i)
             for (int j = 0; j < numCells.y; ++j)
                 for (int k = 0; k < numCells.z; ++k)
@@ -940,7 +940,7 @@ namespace pfc {
         const Int3 * maxCellIdx)
     {
         Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
+        OMP_FOR_COLLAPSE()
         for (int i = 0; i < numCells.x; ++i)
             for (int j = 0; j < numCells.y; ++j)
                 for (int k = 0; k < numCells.z; ++k)
@@ -958,7 +958,7 @@ namespace pfc {
     inline void Grid<FP, YeeGridType>::loadE(const FP3 * e, const Int3 * minCellIdx, const Int3 * maxCellIdx)
     {
         Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
+        OMP_FOR_COLLAPSE()
         for (int i = 0; i < numCells.x; i++)
             for (int j = 0; j < numCells.y; j++)
                 for (int k = 0; k < numCells.z; k++)
@@ -975,7 +975,7 @@ namespace pfc {
     inline void Grid<FP, YeeGridType>::loadB(const FP3 * b, const Int3 * minCellIdx, const Int3 * maxCellIdx)
     {
         Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
+        OMP_FOR_COLLAPSE()
         for (int i = 0; i < numCells.x; ++i)
             for (int j = 0; j < numCells.y; ++j)
                 for (int k = 0; k < numCells.z; ++k)
@@ -992,7 +992,7 @@ namespace pfc {
     inline void Grid<FP, YeeGridType>::loadCurrents(const FP3 * currents, const Int3 * minCellIdx, const Int3 * maxCellIdx)
     {
         Int3 numCells = *maxCellIdx - *minCellIdx;
-#pragma omp parallel for collapse(3)
+        OMP_FOR_COLLAPSE()
         for (int i = 0; i < numCells.x; i++)
             for (int j = 0; j < numCells.y; j++)
                 for (int k = 0; k < numCells.z; k++)

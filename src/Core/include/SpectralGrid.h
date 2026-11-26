@@ -84,10 +84,10 @@ namespace pfc {
         globalGridDims(_globalGridDims),
         numCells(_numCells),
         sizeStorage(_numCells),
+        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1)),
         Ex(&grid->Ex, sizeStorage), Ey(&grid->Ey, sizeStorage), Ez(&grid->Ez, sizeStorage),
         Bx(&grid->Bx, sizeStorage), By(&grid->By, sizeStorage), Bz(&grid->Bz, sizeStorage),
-        Jx(&grid->Jx, sizeStorage), Jy(&grid->Jy, sizeStorage), Jz(&grid->Jz, sizeStorage),
-        dimensionality((_globalGridDims.x != 1) + (_globalGridDims.y != 1) + (_globalGridDims.z != 1))
+        Jx(&grid->Jx, sizeStorage), Jy(&grid->Jy, sizeStorage), Jz(&grid->Jz, sizeStorage)
     {}
 
 }

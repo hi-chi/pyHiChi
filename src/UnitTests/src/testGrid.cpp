@@ -5,7 +5,7 @@ class GridTest : public BaseGridFixture<gridType> {
 };
 
 typedef ::testing::Types<YeeGrid, SimpleGrid> types;
-TYPED_TEST_CASE(GridTest, types);
+TYPED_TEST_SUITE(GridTest, types);
 
 /*TYPED_TEST(GridTest, LoadDumpE)
 {

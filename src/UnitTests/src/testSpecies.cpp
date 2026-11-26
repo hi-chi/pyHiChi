@@ -22,7 +22,7 @@ typedef ::testing::Types<
     Species<Two, Proton, ParticleRepresentation_SoA>,
     Species<Three, Proton, ParticleRepresentation_SoA>
 > types;
-TYPED_TEST_CASE(SpeciesTest, types);
+TYPED_TEST_SUITE(SpeciesTest, types);
 
 TYPED_TEST(SpeciesTest, DefaultConstructor)
 {
